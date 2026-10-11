@@ -1,6 +1,6 @@
 import React, { Component, useState, useEffect, useCallback, type ReactNode } from "react";
 
-type Role = "citizen" | "posko" | "responder";
+export type Role = "citizen" | "posko" | "responder";
 type Screen = "home" | "login" | "portal";
 
 const PHOTO =
@@ -95,11 +95,11 @@ const icons: Record<string, React.ReactNode> = {
   menu: <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
 };
 
-function Icon({ name }: { name: string }) {
+export function Icon({ name }: { name: string }) {
   return <span className="icon">{icons[name]}</span>;
 }
 
-const getFieldEvidencePhoto = (item?: string, fotoBukti?: string) => {
+export const getFieldEvidencePhoto = (item?: string, fotoBukti?: string) => {
   if (fotoBukti && typeof fotoBukti === "string" && fotoBukti.trim() !== "" && fotoBukti !== "null") {
     if (fotoBukti.startsWith("data:") || fotoBukti.startsWith("http") || fotoBukti.startsWith("/") || fotoBukti.startsWith("blob:")) {
       return fotoBukti;
@@ -124,7 +124,7 @@ const getFieldEvidencePhoto = (item?: string, fotoBukti?: string) => {
   return "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
 };
 
-const getCategoryEmoji = (category?: string) => {
+export const getCategoryEmoji = (category?: string) => {
   const cat = (category || "").toLowerCase();
   if (cat.includes("air") || cat.includes("sanitasi") || cat.includes("tandon")) return "💧";
   if (cat.includes("makan") || cat.includes("sembako") || cat.includes("dapur") || cat.includes("pangan") || cat.includes("beras")) return "🍚";
@@ -135,7 +135,7 @@ const getCategoryEmoji = (category?: string) => {
   return "📦";
 };
 
-const getCaseProgress = (status?: string): number => {
+export const getCaseProgress = (status?: string): number => {
   switch (status) {
     case "Diajukan":
     case "Dalam Verifikasi":
@@ -168,7 +168,7 @@ function Logo({ light = false }: { light?: boolean }) {
   );
 }
 
-function Button({
+export function Button({
   children, variant = "primary", onClick, disabled = false, type = "button", className = "", style,
 }: {
   children: React.ReactNode; variant?: "primary" | "secondary" | "text" | "light"; onClick?: () => void; disabled?: boolean; type?: "button" | "submit"; className?: string; style?: React.CSSProperties;
@@ -176,15 +176,18 @@ function Button({
   return <button type={type} disabled={disabled} style={style} className={`btn btn-${variant} ${className}`.trim()} onClick={onClick}>{children}</button>;
 }
 
-function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: string }) {
+export function Pill({ children, tone = "neutral" }: { children: React.ReactNode; tone?: string }) {
   return <span className={`pill pill-${tone}`}>{children}</span>;
 }
 
-function Progress({ value = 70 }: { value?: number }) {
+export function Progress({ value = 70 }: { value?: number }) {
   return <div className="progress" aria-label={`${value}%`}><span style={{ width: `${value}%` }} /></div>;
 }
 
 import { LeafletMap } from "./components/LeafletMap";
+import { CitizenDashboard } from "./components/citizen/CitizenDashboard";
+import { CitizenReport } from "./components/citizen/CitizenReport";
+import { CitizenCaseList } from "./components/citizen/CitizenCaseList";
 import { apiService, BursaItem, MisiItem, PenawaranItem } from "./services/api";
 import { PoskoVerifikasiLaporan } from "./components/posko/PoskoVerifikasiLaporan";
 import { PoskoKebutuhanBursa } from "./components/posko/PoskoKebutuhanBursa";
@@ -224,7 +227,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallbac
   }
 }
 
-function MapView({ 
+export function MapView({ 
   operational = false, 
   hideCard = false, 
   showRoute = false,
@@ -280,6 +283,7 @@ function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
         <Logo light />
         <nav>
           <a href="#tentang" onClick={scrollTo("tentang")}>Tentang REKSA</a>
+          <a href="#peta" onClick={scrollTo("peta")}>Peta Posko</a>
           <a href="#cara" onClick={scrollTo("cara")}>Cara Kerja</a>
         </nav>
         <div className="nav-actions">
@@ -364,6 +368,91 @@ function Home({ navigate }: { navigate: (s: Screen) => void }) {
           </div>
         </section>
 
+        {/* INTERACTIVE OPERATIONAL MAP SHOWCASE */}
+        <section className="map-showcase-section shell" id="peta" style={{ margin: "50px auto 70px" }}>
+          <div className="section-header" style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 28px" }}>
+            <span className="eyebrow"><Icon name="pin" /> Pemantauan Sebaran Wilayah</span>
+            <h2>Sebaran Posko BPBD &amp; Titik Logistik Terpadu</h2>
+            <p className="section-lead" style={{ color: "#4b5563" }}>
+              Pantau kesiapan posko koordinasi BPBD, kapasitas tampung, serta titik komando tanggap darurat secara real-time di seluruh wilayah operasional.
+            </p>
+          </div>
+
+          <div
+            className="map-showcase-container"
+            style={{
+              background: "#ffffff",
+              borderRadius: "24px",
+              boxShadow: "0 20px 40px -15px rgba(1, 50, 32, 0.12)",
+              border: "1px solid #e2ded4",
+              overflow: "hidden",
+            }}
+          >
+            {/* MAP HEADER STATS BAR */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "14px",
+                padding: "18px 24px",
+                background: "#fbfcfb",
+                borderBottom: "1px solid #ebe8de",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 0 4px rgba(16, 185, 129, 0.2)" }} />
+                <strong style={{ color: "#013220", fontSize: "0.95rem" }}>Status Operasional: Siaga Penuh 24 Jam</strong>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", fontSize: "0.85rem" }}>
+                <span style={{ color: "#4b5563" }}>
+                  📍 <strong>3</strong> Posko Induk Wilayah
+                </span>
+                <span style={{ color: "#4b5563" }}>
+                  🏠 <strong>750+ KK</strong> Kapasitas Terdata
+                </span>
+                <span style={{ background: "#e8f3ea", color: "#013220", padding: "4px 12px", borderRadius: "20px", fontWeight: 700 }}>
+                  OpenStreetMap Interaktif
+                </span>
+              </div>
+            </div>
+
+            {/* EMBEDDED LEAFLET MAP VIEW */}
+            <div style={{ position: "relative", height: "460px", width: "100%", background: "#f5f4ef" }}>
+              <MapView operational />
+            </div>
+
+            {/* MAP FOOTER HINT */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "10px",
+                padding: "14px 24px",
+                background: "#faf9f5",
+                borderTop: "1px solid #ebe8de",
+                fontSize: "0.82rem",
+                color: "#6b7280",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <Icon name="check" />
+                <span>Klik ikon marker pada peta untuk melihat detail posko, kontak darurat, dan daya tampung pengungsi.</span>
+              </div>
+              <Button
+                variant="text"
+                onClick={() => navigate("login")}
+                style={{ fontSize: "0.84rem", fontWeight: 700, color: "#013220", padding: 0 }}
+              >
+                Buka Peta Lengkap Petugas <Icon name="arrow" />
+              </Button>
+            </div>
+          </div>
+        </section>
+
         <section className="journey-banner" id="cara">
           <img 
             className="journey-bg" 
@@ -441,6 +530,11 @@ function Home({ navigate }: { navigate: (s: Screen) => void }) {
               const el = document.getElementById("tentang");
               if (el) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 84), behavior: "smooth" });
             }}>Tentang REKSA</a>
+            <a href="#peta" onClick={(e) => {
+              e.preventDefault();
+              const el = document.getElementById("peta");
+              if (el) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 84), behavior: "smooth" });
+            }}>Peta Posko</a>
             <a href="#cara" onClick={(e) => {
               e.preventDefault();
               const el = document.getElementById("cara");
@@ -827,8 +921,13 @@ function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: 
           {/* CLEAN CREDENTIALS INFO CARD (TANPA TOMBOL QUICK LOGIN KLIK) */}
           {mode === "login" && (
             <div style={{ marginTop: "24px", background: "#f5f4ef", border: "1px solid #dcdad0", borderRadius: "12px", padding: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, color: "#013220", fontSize: "0.9rem", marginBottom: "8px" }}>
-                <Icon name="check" /> Akun Demo Terdaftar di Database (Kata Sandi: <code>password</code>)
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontWeight: 700, color: "#013220", fontSize: "0.9rem", marginBottom: "8px" }}>
+                <span style={{ display: "inline-flex", marginTop: "2px", flexShrink: 0 }}><Icon name="check" /></span>
+                <div>
+                  <div>Akun Demo Terdaftar di Database</div>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#48554a", marginTop: "2px" }}>(Kata Sandi: <code>password</code>)</div>
+                </div>
+                
               </div>
               <ul style={{ margin: 0, paddingLeft: "18px", color: "#48554a", fontSize: "0.84rem", lineHeight: 1.6 }}>
                 <li><strong>Masyarakat:</strong> <code>andi.masyarakat@reksa.id</code></li>
@@ -843,7 +942,7 @@ function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: 
   );
 }
 
-type UserProfile = {
+export type UserProfile = {
   name: string;
   email: string;
   phone: string;
@@ -853,7 +952,7 @@ type UserProfile = {
   role: string;
 };
 
-type SharedState = { 
+export type SharedState = { 
   status: string; 
   priority: string; 
   allocated: number; 
@@ -874,9 +973,9 @@ type SharedState = {
   activeMisiId?: number;
 };
 
-type PortalPage = "dashboard" | "cases" | "case" | "report" | "notifications" | "history" | "profile" | "help" | "settings" | "map" | "resources" | "assignments" | "activity" | "tasks" | "active" | "offers" | "bursa" | "my-offers";
+export type PortalPage = "dashboard" | "cases" | "case" | "report" | "notifications" | "history" | "profile" | "help" | "settings" | "map" | "resources" | "assignments" | "activity" | "tasks" | "active" | "offers" | "bursa" | "my-offers";
 
-type RouterProps = {
+export type RouterProps = {
   page: PortalPage;
   setPage: (p: PortalPage | "logout") => void;
   state: SharedState;
@@ -1112,7 +1211,7 @@ function MobileNav({ role, page, go }: { role: Role; page: PortalPage; go: (p: P
   return <nav className="mobile-bottom">{items.map((x) => <button className={page === x.page ? "active" : ""} onClick={() => go(x.page as PortalPage)} key={x.label}><Icon name={x.icon} /><span>{x.label}</span></button>)}</nav>;
 }
 
-function PageHead({ eyebrow, title, copy, action }: { eyebrow: string; title: string; copy: string; action?: React.ReactNode }) {
+export function PageHead({ eyebrow, title, copy, action }: { eyebrow: string; title: string; copy: string; action?: React.ReactNode }) {
   return <div className="workspace-title"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{copy}</p></div>{action}</div>;
 }
 
@@ -1120,1640 +1219,14 @@ function CitizenRouter({ page, setPage, state, update, notify, name = "Andi Prat
   if (page === "dashboard") return <CitizenDashboard state={state} update={update} setPage={setPage} name={name} />;
   if (page === "report") return <CitizenReport complete={() => setPage("cases")} update={update} state={state} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
-  if (page === "cases") return <CaseList title="Laporan Saya" copy="Semua kebutuhan yang pernah Anda laporkan." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} own state={state} update={update} />;
-  if (page === "history") return <CaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed state={state} update={update} />;
+  if (page === "cases") return <CitizenCaseList title="Laporan Saya" copy="Semua kebutuhan yang pernah Anda laporkan." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} own state={state} update={update} />;
+  if (page === "history") return <CitizenCaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed state={state} update={update} />;
   if (page === "notifications") return <Notifications role="citizen" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Masyarakat" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
   return <Help />;
 }
 
-function CitizenReport({ complete, update, state }: { complete: () => void; update: RouterProps["update"]; state?: SharedState }) {
-  const [step, setStep] = useState(1);
-  const [success, setSuccess] = useState(false);
-  const [submittedCaseId, setSubmittedCaseId] = useState("");
-  
-  // Step 1: Kebutuhan
-  const [category, setCategory] = useState("Air Bersih");
-  const [customCategory, setCustomCategory] = useState("");
-  const [amount, setAmount] = useState("850");
-  const [customUnit, setCustomUnit] = useState("");
-  const [notes, setNotes] = useState("");
-
-  // Step 2: Lokasi & Posko BPBD (Sinkron dengan Profil Akun & Titik Peta Interaktif)
-  const [applicantNik, setApplicantNik] = useState(state?.userProfile?.nik || "3202110482910002");
-  const [poskoTarget, setPoskoTarget] = useState(state?.poskoName || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)");
-  const [shelterStatus, setShelterStatus] = useState("Rumah Tinggal Pribadi (Terdampak Langsung)");
-  const [province, setProvince] = useState("Jawa Timur");
-  const [regency, setRegency] = useState("Kota Surabaya");
-  const [district, setDistrict] = useState("Gubeng");
-  const [village, setVillage] = useState("Gubeng");
-  const [pickedLat, setPickedLat] = useState<number>(-7.2654);
-  const [pickedLng, setPickedLng] = useState<number>(112.7521);
-
-  // Auto-detect real GPS position on mount if available
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setPickedLat(Number(pos.coords.latitude.toFixed(6)));
-          setPickedLng(Number(pos.coords.longitude.toFixed(6)));
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 6000 }
-      );
-    }
-  }, []);
-
-  // Step 3: Kondisi Terdampak
-  const [affectedPeople, setAffectedPeople] = useState<number | "">(21);
-  const [familyCount, setFamilyCount] = useState<number | "">(5);
-  const [vulnerableList, setVulnerableList] = useState<string[]>(["Lansia", "Balita"]);
-  const [availabilityCondition, setAvailabilityCondition] = useState("Tidak tersedia");
-  const [citizenUrgency, setCitizenUrgency] = useState("Sangat mendesak");
-  const [conditionDescription, setConditionDescription] = useState("");
-
-  const handleToggleVulnerable = (item: string) => {
-    if (item === "Tidak ada") {
-      if (vulnerableList.includes("Tidak ada")) {
-        setVulnerableList([]);
-      } else {
-        setVulnerableList(["Tidak ada"]);
-      }
-    } else {
-      let next = vulnerableList.filter((x) => x !== "Tidak ada");
-      if (next.includes(item)) {
-        next = next.filter((x) => x !== item);
-      } else {
-        next.push(item);
-      }
-      setVulnerableList(next);
-    }
-  };
-
-  // Step 4: Bukti Unggahan
-  const [fileName, setFileName] = useState("");
-  const [fotoBukti, setFotoBukti] = useState<string | undefined>(undefined);
-
-  // Satuan Menyesuaikan Kategori Kebutuhan
-  const getUnit = () => {
-    if (category === "Air Bersih") return "Liter (L)";
-    if (category === "Pangan") return "Porsi / Paket";
-    if (category === "Kesehatan") return "Paket / Unit";
-    if (category === "Hunian & Tempat Tinggal") return "Unit / Paket";
-    if (category === "Sanitasi & Kebersihan") return "Paket / Unit";
-    if (category === "Penerangan & Energi") return "Unit / Paket";
-    if (category === "Sandang & Kebutuhan Dasar") return "Paket / Unit";
-    return customUnit || "Unit / Paket";
-  };
-
-  const categories = [
-    "Air Bersih",
-    "Pangan",
-    "Kesehatan",
-    "Hunian & Tempat Tinggal",
-    "Sanitasi & Kebersihan",
-    "Penerangan & Energi",
-    "Sandang & Kebutuhan Dasar",
-    "Lainnya",
-  ];
-
-  const getCategoryIcon = (cat: string) => {
-    if (cat === "Air Bersih") return "pin";
-    if (cat === "Pangan") return "box";
-    if (cat === "Kesehatan") return "file";
-    if (cat === "Hunian & Tempat Tinggal") return "map";
-    if (cat === "Sanitasi & Kebersihan") return "check";
-    if (cat === "Penerangan & Energi") return "settings";
-    if (cat === "Sandang & Kebutuhan Dasar") return "box";
-    return "plus";
-  };
-
-  const getAvailabilityConfig = (cat: string) => {
-    if (cat === "Air Bersih") {
-      return {
-        label: "Bagaimana akses air saat ini?",
-        options: ["Masih tersedia", "Terbatas", "Tidak tersedia"],
-      };
-    }
-    if (cat === "Pangan") {
-      return {
-        label: "Bagaimana ketersediaan makanan?",
-        options: ["Cukup", "Terbatas", "Tidak tersedia"],
-      };
-    }
-    if (cat === "Hunian & Tempat Tinggal") {
-      return {
-        label: "Bagaimana kondisi tempat tinggal?",
-        options: ["Dapat ditempati", "Rusak sebagian", "Tidak dapat ditempati"],
-      };
-    }
-    if (cat === "Kesehatan") {
-      return {
-        label: "Bagaimana ketersediaan layanan & fasilitas kesehatan?",
-        options: ["Masih memadai", "Terbatas", "Tidak tersedia"],
-      };
-    }
-    if (cat === "Sanitasi & Kebersihan") {
-      return {
-        label: "Bagaimana kondisi fasilitas sanitasi & kebersihan?",
-        options: ["Masih berfungsi", "Terbatas", "Tidak dapat digunakan"],
-      };
-    }
-    if (cat === "Penerangan & Energi") {
-      return {
-        label: "Bagaimana pasokan listrik & penerangan?",
-        options: ["Normal", "Terputus berkala", "Padam total"],
-      };
-    }
-    if (cat === "Sandang & Kebutuhan Dasar") {
-      return {
-        label: "Bagaimana ketersediaan sandang & kebutuhan dasar?",
-        options: ["Masih mencukupi", "Terbatas", "Habis / Sangat mendesak"],
-      };
-    }
-    return {
-      label: "Bagaimana ketersediaan kebutuhan saat ini?",
-      options: ["Masih tersedia", "Terbatas", "Tidak tersedia"],
-    };
-  };
-
-  const titles = ["Kebutuhan", "Lokasi & Posko", "Kondisi", "Bukti", "Review"];
-  const stepHeadlines = [
-    "Apa kebutuhan utama yang sedang Anda alami?",
-    "Tentukan Posko Wilayah & Titik Lokasi",
-    "Bagaimana kondisi yang Anda alami?",
-    "Unggah dokumen atau foto pendukung",
-    "Periksa Laporan Anda",
-  ];
-  const stepDescriptions = [
-    "Pilih kebutuhan yang paling mendesak setelah bencana dan tentukan perkiraan jumlah yang dibutuhkan.",
-    "Tentukan titik administratif tempat tinggal Anda. Laporan akan otomatis diteruskan ke Posko BPBD yang menaungi wilayah Anda.",
-    "Informasi ini membantu REKSA memahami tingkat kebutuhan dan menentukan penanganan yang sesuai.",
-    "Lampirkan bukti foto lapangan atau surat pengantar RT/RW sebagai data pendukung kebutuhan Anda.",
-    "Pastikan informasi kebutuhan, lokasi, kondisi, dan bukti sudah sesuai sebelum laporan dikirim.",
-  ];
-
-  const stepShades = [
-    { bg: "#d8eada", text: "#013220", numBg: "#c2ddc6", sub: "Jenis & Jumlah" },
-    { bg: "#b2d7bb", text: "#013220", numBg: "#96c6a1", sub: "Posko & Wilayah" },
-    { bg: "#6fa880", text: "#ffffff", numBg: "#548e66", sub: "Kondisi Terdampak" },
-    { bg: "#2e774f", text: "#ffffff", numBg: "#1c5a39", sub: "Foto / Dokumen" },
-    { bg: "#013220", text: "#ffffff", numBg: "#0a4530", sub: "Periksa Laporan" },
-  ];
-
-  if (success) {
-    return (
-      <main className="workspace report-workspace">
-        <div className="report-success-card">
-          <div className="report-success-icon-wrap">
-            <div className="report-success-icon"><Icon name="check" /></div>
-          </div>
-          <span className="eyebrow">Laporan Berhasil Diterbitkan</span>
-          <h1>Laporan Diterima {(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}</h1>
-          <p>
-            Data kebutuhan Anda telah tercatat resmi di <strong>{poskoTarget}</strong>. Petugas Posko BPBD akan memvalidasi data dan mempublikasikan kebutuhan terbuka ke seluruh Mitra &amp; Instansi penyalur.
-          </p>
-          <div className="report-success-code-box">
-            <span className="code-box-label">KODE PELACAKAN KASUS</span>
-            <div className="code-box-val">{submittedCaseId}</div>
-            <small className="code-box-sub">Tercatat di {poskoTarget}</small>
-          </div>
-          <div className="report-success-actions">
-            <Button onClick={complete} className="btn-success-primary">
-              Buka Laporan Saya <Icon name="next" />
-            </Button>
-            <Button 
-              variant="secondary" 
-              onClick={() => { setSuccess(false); setStep(1); }} 
-              className="btn-success-close"
-            >
-              Tutup &amp; Buat Laporan Baru
-            </Button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main className="workspace report-workspace">
-      <PageHead 
-        eyebrow={`Langkah ${step} dari 5`} 
-        title="Laporkan Kebutuhan Darurat" 
-        copy="Sampaikan kondisi dan kebutuhan lapangan secara akurat untuk integrasi posko wilayah BPBD dan mitra responder." 
-        action={<div className="trust-badge"><Icon name="check" /> Terhubung ke {(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}</div>}
-      />
-
-      {/* TOP TRAPEZOID / CHEVRON STEPPER BAR */}
-      <div className="report-stepper-container">
-        <div className="report-stepper-bar">
-          {titles.map((x, i) => {
-            const isDone = step > i + 1;
-            const isActive = step === i + 1;
-            const shade = stepShades[i];
-            return (
-              <button
-                key={x}
-                type="button"
-                className={`step-trapezoid ${isActive ? "active" : ""} ${isDone ? "done" : ""}`}
-                style={{
-                  background: isDone || isActive ? shade.bg : "#e8ede7",
-                  color: isDone || isActive ? shade.text : "#758378",
-                }}
-                onClick={() => i + 1 <= step && setStep(i + 1)}
-              >
-                <span 
-                  className="step-trapezoid-num"
-                  style={{ 
-                    background: isDone || isActive ? shade.numBg : "#d4ded3", 
-                    color: isDone || isActive ? shade.text : "#758378" 
-                  }}
-                >
-                  {isDone ? <Icon name="check" /> : i + 1}
-                </span>
-                <div className="step-trapezoid-text">
-                  <b>{x}</b>
-                  <small>{shade.sub}</small>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 2-COLUMN FORM + GUIDANCE LAYOUT */}
-      <div className="report-content-grid">
-        {/* LEFT MAIN FORM PANEL */}
-        <div className="report-form-card">
-          <div className="report-form-header">
-            <span className="eyebrow">0{step} — {titles[step - 1]}</span>
-            <h2>{stepHeadlines[step - 1]}</h2>
-            <p>{stepDescriptions[step - 1]}</p>
-          </div>
-
-          <div className="report-form-body">
-            {/* STEP 1: KEBUTUHAN */}
-            {step === 1 && (
-              <div className="form-fields-group">
-                <div className="form-group">
-                  <label className="form-label">Kategori Kebutuhan</label>
-                  <div className="category-pills-row" style={{ flexWrap: "wrap", gap: "8px" }}>
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        className={`cat-pill-btn ${category === cat ? "active" : ""}`}
-                        onClick={() => {
-                          setCategory(cat);
-                          const cfg = getAvailabilityConfig(cat);
-                          setAvailabilityCondition(cfg.options[cfg.options.length - 1]);
-                        }}
-                      >
-                        <Icon name={getCategoryIcon(cat)} />
-                        <span>{cat}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {category === "Lainnya" && (
-                  <div className="form-row-two" style={{ marginTop: "10px" }}>
-                    <div className="form-group">
-                      <label className="form-label">Tulis Nama Kategori Kebutuhan</label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        value={customCategory} 
-                        onChange={(e) => setCustomCategory(e.target.value)} 
-                        placeholder="Contoh: Susu Bayi, Selimut Balita, dll."
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Tulis Satuan Kebutuhan</label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        value={customUnit} 
-                        onChange={(e) => setCustomUnit(e.target.value)} 
-                        placeholder="Contoh: Kotak, Dus, Pcs"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="form-row-two">
-                  <div className="form-group">
-                    <label className="form-label">Perkiraan Jumlah Kebutuhan</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={amount} 
-                      onChange={(e) => setAmount(e.target.value)} 
-                      placeholder="Contoh: 1000, 250, 50" 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Satuan Kebutuhan (Otomatis)</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={getUnit()} 
-                      disabled
-                      style={{ background: "#f5f4ef", fontWeight: 600, color: "#013220" }}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Jelaskan Kebutuhan</label>
-                  <textarea 
-                    className="form-control textarea" 
-                    rows={4}
-                    value={notes} 
-                    onChange={(e) => setNotes(e.target.value)} 
-                    placeholder="Jelaskan kebutuhan dan kondisi yang membuat kebutuhan ini diperlukan."
-                  />
-                  <small style={{ color: "#758378", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
-                    Contoh: Sumber air warga tercemar dan tidak dapat digunakan sejak kejadian bencana.
-                  </small>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: LOKASI, NIK, STATUS DOMISILI & POSKO BPBD */}
-            {step === 2 && (
-              <div className="form-fields-group">
-                <div className="form-row-two">
-                  <div className="form-group">
-                    <label className="form-label">NIK Pemohon / ID Warga</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={applicantNik} 
-                      onChange={(e) => setApplicantNik(e.target.value)} 
-                      placeholder="3202110482910002"
-                      maxLength={16}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Status Domisili / Lokasi Warga</label>
-                    <select 
-                      className="form-control select" 
-                      value={shelterStatus} 
-                      onChange={(e) => setShelterStatus(e.target.value)}
-                    >
-                      <option>Rumah Tinggal Pribadi (Terdampak Langsung)</option>
-                      <option>Posko Pengungsian Komunal</option>
-                      <option>Menumpang di Kerabat / Tetangga</option>
-                      <option>Fasilitas Umum / Tempat Ibadah</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-row-two">
-                  <div className="form-group">
-                    <label className="form-label">Provinsi</label>
-                    <select className="form-control select" value={province} onChange={(e) => setProvince(e.target.value)}>
-                      {[province, "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", "DI Yogyakarta", "Bali", "Sumatera Utara", "Sulawesi Selatan", "Kalimantan Timur"].filter((v, i, a) => a.indexOf(v) === i).map((p) => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Kabupaten / Kota</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={regency} 
-                      onChange={(e) => setRegency(e.target.value)} 
-                      placeholder="Contoh: Kota Surabaya / Kab. Sukabumi"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row-two">
-                  <div className="form-group">
-                    <label className="form-label">Kecamatan</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={district} 
-                      onChange={(e) => setDistrict(e.target.value)} 
-                      placeholder="Contoh: Rungkut / Cibadak"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Desa / Kelurahan</label>
-                    <input 
-                      type="text" 
-                      className="form-control" 
-                      value={village} 
-                      onChange={(e) => setVillage(e.target.value)} 
-                      placeholder="Contoh: Rungkut Menanggal / Desa Sukamaju"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Posko BPBD Wilayah Rujukan</label>
-                  <select 
-                    className="form-control select" 
-                    value={poskoTarget} 
-                    onChange={(e) => setPoskoTarget(e.target.value)}
-                  >
-                    {[
-                      poskoTarget,
-                      "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
-                      "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)",
-                      "Posko BPBD Kabupaten Sukabumi (Posko Induk)",
-                      "Posko Darurat Kecamatan Cibadak",
-                      "Posko Induk BPBD DKI Jakarta",
-                    ].filter((v, i, a) => a.indexOf(v) === i).map((pos) => (
-                      <option key={pos} value={pos}>{pos}</option>
-                    ))}
-                  </select>
-                  <small style={{ color: "#6a7369", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
-                    ℹ️ Laporan otomatis diteruskan dan dikoordinasikan oleh Posko BPBD yang menaungi wilayah administrasi Anda.
-                  </small>
-                </div>
-
-                <div className="form-group">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-                    <div>
-                      <label className="form-label" style={{ margin: 0 }}>Titik Lokasi Warga pada Peta</label>
-                      <small style={{ color: "#758378", display: "block", fontSize: "0.8rem" }}>
-                        Titik Terpilih: <b>{(Number(pickedLat) || -7.2654).toFixed(5)}, {(Number(pickedLng) || 112.7521).toFixed(5)}</b> (Klik peta atau gunakan tombol GPS)
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (navigator.geolocation) {
-                          navigator.geolocation.getCurrentPosition(
-                            (pos) => {
-                              if (pos?.coords) {
-                                const lat = Number(pos.coords.latitude);
-                                const lng = Number(pos.coords.longitude);
-                                if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                                  setPickedLat(Number(lat.toFixed(6)));
-                                  setPickedLng(Number(lng.toFixed(6)));
-                                }
-                              }
-                            },
-                            () => alert("GPS tidak aktif atau izin lokasi browser belum diizinkan."),
-                            { enableHighAccuracy: true, timeout: 8000 }
-                          );
-                        }
-                      }}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        background: "#e8f3ea",
-                        color: "#013220",
-                        border: "1px solid #b2d7bb",
-                        padding: "5px 12px",
-                        borderRadius: "8px",
-                        fontSize: "0.82rem",
-                        fontWeight: 600,
-                        cursor: "pointer"
-                      }}
-                    >
-                      <Icon name="pin" /> Gunakan Posisi Saya
-                    </button>
-                  </div>
-                  <div className="report-map-wrapper">
-                    <MapView 
-                      hideCard 
-                      pickLocation 
-                      initialLat={Number.isFinite(Number(pickedLat)) ? Number(pickedLat) : -7.2654}
-                      initialLng={Number.isFinite(Number(pickedLng)) ? Number(pickedLng) : 112.7521}
-                      onLocationPicked={(info) => {
-                        if (info?.desa) setVillage(info.desa);
-                        if (info?.kecamatan) setDistrict(info.kecamatan);
-                        if (info?.kabupaten) setRegency(info.kabupaten);
-                        if (info?.provinsi) setProvince(info.provinsi);
-                        if (info?.poskoName) setPoskoTarget(info.poskoName);
-                        if (info?.lat != null && info?.lng != null && !isNaN(Number(info.lat)) && !isNaN(Number(info.lng))) {
-                          setPickedLat(Number(info.lat));
-                          setPickedLng(Number(info.lng));
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: KONDISI TERDAMPAK */}
-            {step === 3 && (
-              <div className="form-fields-group">
-                {/* 1. JUMLAH ORANG TERDAMPAK & JUMLAH KK TERDAMPAK (INPUT MANUAL USER) */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Berapa orang yang terdampak? (Jiwa)</label>
-                    <input 
-                      type="number" 
-                      min={1}
-                      className="form-control" 
-                      value={affectedPeople} 
-                      onChange={(e) => setAffectedPeople(e.target.value ? Number(e.target.value) : "")} 
-                      placeholder="Contoh: 21 jiwa"
-                    />
-                    <small style={{ color: "#758378", marginTop: "4px", display: "block", fontSize: "0.82rem" }}>
-                      Total jiwa warga terdampak langsung di lokasi.
-                    </small>
-                  </div>
-
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Berapa KK yang terdampak?</label>
-                    <input 
-                      type="number" 
-                      min={1}
-                      className="form-control" 
-                      value={familyCount} 
-                      onChange={(e) => setFamilyCount(e.target.value ? Number(e.target.value) : "")} 
-                      placeholder="Contoh: 5 KK"
-                    />
-                    <small style={{ color: "#758378", marginTop: "4px", display: "block", fontSize: "0.82rem" }}>
-                      Jumlah Kepala Keluarga (KK).
-                    </small>
-                  </div>
-                </div>
-
-                {/* 2. KELOMPOK RENTAN */}
-                <div className="form-group">
-                  <label className="form-label">Apakah ada kelompok rentan?</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "6px" }}>
-                    {[
-                      { id: "Balita", label: "👶 Balita" },
-                      { id: "Anak-anak", label: "🧒 Anak-anak" },
-                      { id: "Lansia", label: "👵 Lansia" },
-                      { id: "Ibu hamil", label: "🤰 Ibu hamil" },
-                      { id: "Penyandang disabilitas", label: "♿ Penyandang disabilitas" },
-                      { id: "Tidak ada", label: "⚪ Tidak ada" },
-                    ].map((v) => {
-                      const isNoneSelected = vulnerableList.includes("Tidak ada");
-                      const isChecked = vulnerableList.includes(v.id);
-                      const isDisabled = isNoneSelected && v.id !== "Tidak ada";
-                      return (
-                        <label 
-                          key={v.id} 
-                          style={{ 
-                            display: "flex", 
-                            alignItems: "center", 
-                            gap: "8px", 
-                            fontSize: "0.88rem", 
-                            background: isChecked ? "#e8ede7" : "#f5f4ef", 
-                            padding: "10px 14px", 
-                            borderRadius: "10px", 
-                            cursor: isDisabled ? "not-allowed" : "pointer", 
-                            border: isChecked ? "1.5px solid #013220" : "1px solid #e2ded4",
-                            opacity: isDisabled ? 0.45 : 1,
-                          }}
-                        >
-                          <input 
-                            type="checkbox" 
-                            disabled={isDisabled}
-                            checked={isChecked} 
-                            onChange={() => handleToggleVulnerable(v.id)} 
-                            style={{ accentColor: "#013220", width: "16px", height: "16px" }} 
-                          />
-                          <span style={{ fontWeight: isChecked ? 600 : 400, color: isChecked ? "#013220" : "#2d3748" }}>
-                            {v.label}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  <small style={{ color: "#758378", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
-                    Pilihan "Tidak ada" akan menonaktifkan kelompok rentan lainnya.
-                  </small>
-                </div>
-
-                {/* 3. KONDISI KETERSEDIAAN (MENYESUAIKAN KATEGORI) */}
-                {(() => {
-                  const availCfg = getAvailabilityConfig(category);
-                  return (
-                    <div className="form-group">
-                      <label className="form-label">{availCfg.label}</label>
-                      <select 
-                        className="form-control select" 
-                        value={availabilityCondition} 
-                        onChange={(e) => setAvailabilityCondition(e.target.value)}
-                      >
-                        {availCfg.options.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
-                    </div>
-                  );
-                })()}
-
-                {/* 4. URGENSI MENURUT PELAPOR */}
-                <div className="form-group">
-                  <label className="form-label">Seberapa mendesak kebutuhan ini menurut Anda?</label>
-                  <select 
-                    className="form-control select" 
-                    value={citizenUrgency} 
-                    onChange={(e) => setCitizenUrgency(e.target.value)}
-                  >
-                    <option value="Bisa menunggu">Bisa menunggu</option>
-                    <option value="Perlu segera">Perlu segera</option>
-                    <option value="Sangat mendesak">Sangat mendesak</option>
-                  </select>
-                  <small style={{ color: "#758378", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
-                    *Masukan estimasi langsung dari pelapor. Sistem REKSA akan menganalisis data ini dan divalidasi oleh Koordinator Tanggap Bencana Posko BPBD.
-                  </small>
-                </div>
-
-                {/* 5. DESKRIPSI KONDISI */}
-                <div className="form-group">
-                  <label className="form-label">Jelaskan kondisi yang Anda alami</label>
-                  <textarea 
-                    className="form-control textarea" 
-                    rows={3}
-                    value={conditionDescription} 
-                    onChange={(e) => setConditionDescription(e.target.value)} 
-                    placeholder="Contoh: Sumber air warga tercemar dan tidak dapat digunakan sejak kejadian bencana."
-                  />
-                </div>
-
-                {/* CATATAN PANDUAN PENGISIAN KONDISI */}
-                <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "14px 18px", borderRadius: "12px", marginTop: "6px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#135200", fontWeight: 700, fontSize: "0.86rem" }}>
-                    <Icon name="check" /> Fakta Kondisi untuk Analisis REKSA
-                  </div>
-                  <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#386134", lineHeight: 1.5 }}>
-                    Data kondisi dan tingkat urgensi yang Anda laporkan akan diproses dalam sistem koordinasi pascabencana untuk verifikasi dan validasi kebutuhan riil warga terdampak.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: BUKTI UNGGAHAN (FOTO RIIL & DOKUMEN) */}
-            {step === 4 && (
-              <div className="form-fields-group">
-                <div className="form-group">
-                  <label className="form-label">Lampirkan Foto Kondisi Lapangan atau Surat RT/RW</label>
-                  <label className="report-upload-box">
-                    <input 
-                      type="file" 
-                      accept="image/*,.pdf" 
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          const file = e.target.files[0];
-                          setFileName(file.name);
-                          if (file.type.startsWith("image/")) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => {
-                              const rawResult = ev.target?.result;
-                              if (typeof rawResult === "string") {
-                                const img = new Image();
-                                img.onload = () => {
-                                  try {
-                                    const canvas = document.createElement("canvas");
-                                    const maxDim = 1280;
-                                    let width = img.width;
-                                    let height = img.height;
-                                    if (width > maxDim || height > maxDim) {
-                                      if (width > height) {
-                                        height = Math.round((height * maxDim) / width);
-                                        width = maxDim;
-                                      } else {
-                                        width = Math.round((width * maxDim) / height);
-                                        height = maxDim;
-                                      }
-                                    }
-                                    canvas.width = width;
-                                    canvas.height = height;
-                                    const ctx = canvas.getContext("2d");
-                                    if (ctx) {
-                                      ctx.drawImage(img, 0, 0, width, height);
-                                      const compressed = canvas.toDataURL("image/jpeg", 0.82);
-                                      setFotoBukti(compressed);
-                                    } else {
-                                      setFotoBukti(rawResult);
-                                    }
-                                  } catch (err) {
-                                    setFotoBukti(rawResult);
-                                  }
-                                };
-                                img.onerror = () => {
-                                  setFotoBukti(rawResult);
-                                };
-                                img.src = rawResult;
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          } else {
-                            setFotoBukti(undefined);
-                          }
-                        }
-                      }} 
-                    />
-                    <div className="upload-box-icon"><Icon name="plus" /></div>
-                    <strong>Pilih foto atau dokumen bukti</strong>
-                    <p>Mendukung format JPG, PNG, atau PDF · Maksimal 10 MB</p>
-                    {fileName ? (
-                      <div className="uploaded-file-chip">
-                        <Icon name="check" /> {fileName}
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: "0.82rem", color: "#80866e", marginTop: "4px" }}>
-                        (Foto kondisi riil membantu posko memprioritaskan bantuan)
-                      </span>
-                    )}
-                  </label>
-
-                  {fotoBukti && (
-                    <div style={{ marginTop: "14px", borderRadius: "12px", overflow: "hidden", border: "1px solid #c1c3ac", maxHeight: "200px" }}>
-                      <img src={fotoBukti} alt="Pratinjau Bukti Lapangan" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* STEP 5: REVIEW LAPORAN */}
-            {step === 5 && (
-              <div className="form-fields-group">
-                <div className="report-review-box">
-                  <div className="review-top-banner">
-                    <div>
-                      <span className="review-code-badge">DRAF LAPORAN KEBUTUHAN</span>
-                      <h3>{category === "Lainnya" && customCategory ? customCategory : category}</h3>
-                    </div>
-                    <div style={{ 
-                      background: "rgba(255, 255, 255, 0.16)", 
-                      border: "1px solid rgba(255, 255, 255, 0.3)", 
-                      padding: "6px 14px", 
-                      borderRadius: "20px", 
-                      fontSize: "0.82rem", 
-                      fontWeight: 700,
-                      color: "#ffffff",
-                      letterSpacing: "0.04em"
-                    }}>
-                      Status Awal: Diajukan
-                    </div>
-                  </div>
-
-                  <div className="review-details-grid">
-                    {/* SECTION 1 — KEBUTUHAN */}
-                    <div className="review-item wide" style={{ borderBottom: "1px solid rgba(1, 50, 32, 0.08)", paddingBottom: "8px", marginTop: "4px" }}>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#013220", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                        1. Kebutuhan
-                      </span>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Kategori Kebutuhan</span>
-                      <strong>{category === "Lainnya" && customCategory ? customCategory : category}</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Perkiraan Jumlah Kebutuhan</span>
-                      <strong>{amount || "850"} {getUnit()}</strong>
-                    </div>
-                    <div className="review-item wide">
-                      <span className="review-label">Deskripsi Kebutuhan</span>
-                      <p>{notes || "Sumber air warga tercemar dan tidak dapat digunakan sejak kejadian bencana."}</p>
-                    </div>
-
-                    {/* SECTION 2 — LOKASI */}
-                    <div className="review-item wide" style={{ borderBottom: "1px solid rgba(1, 50, 32, 0.08)", paddingBottom: "8px", marginTop: "8px" }}>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#013220", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                        2. Lokasi &amp; Posko
-                      </span>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Titik Lokasi Warga</span>
-                      <strong>{pickedLat.toFixed(5)}, {pickedLng.toFixed(5)}</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Wilayah Administratif</span>
-                      <strong>{village}, Kec. {district}, {regency}, {province}</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Posko BPBD Rujukan</span>
-                      <strong>{poskoTarget}</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Status Domisili</span>
-                      <strong>{shelterStatus}</strong>
-                    </div>
-
-                    {/* SECTION 3 — KONDISI TERDAMPAK */}
-                    <div className="review-item wide" style={{ borderBottom: "1px solid rgba(1, 50, 32, 0.08)", paddingBottom: "8px", marginTop: "8px" }}>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#013220", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                        3. Kondisi Terdampak
-                      </span>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Jumlah Orang Terdampak</span>
-                      <strong>{affectedPeople || 21} Jiwa / Orang</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Jumlah KK (Kepala Keluarga)</span>
-                      <strong>{familyCount || 5} KK</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Kelompok Rentan</span>
-                      <strong>
-                        {vulnerableList.length > 0 && !vulnerableList.includes("Tidak ada")
-                          ? vulnerableList.join(", ")
-                          : "Tidak ada"}
-                      </strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Kondisi Ketersediaan</span>
-                      <strong>{availabilityCondition || "Tidak tersedia"}</strong>
-                    </div>
-                    <div className="review-item">
-                      <span className="review-label">Urgensi Menurut Pelapor</span>
-                      <strong>{citizenUrgency || "Sangat mendesak"}</strong>
-                    </div>
-                    {conditionDescription && (
-                      <div className="review-item wide">
-                        <span className="review-label">Deskripsi Kondisi</span>
-                        <p>{conditionDescription}</p>
-                      </div>
-                    )}
-
-                    {/* SECTION 4 — BUKTI PENDUKUNG */}
-                    <div className="review-item wide" style={{ borderBottom: "1px solid rgba(1, 50, 32, 0.08)", paddingBottom: "8px", marginTop: "8px" }}>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#013220", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                        4. Bukti Pendukung
-                      </span>
-                    </div>
-                    <div className="review-item wide">
-                      {fotoBukti || fileName ? (
-                        <div>
-                          <span className="review-file-tag">
-                            <Icon name="file" /> {fileName || "Dokumentasi Foto Lapangan Terlampir"}
-                          </span>
-                          {fotoBukti && (
-                            <div style={{ marginTop: "10px", borderRadius: "10px", overflow: "hidden", border: "1px solid #c1c3ac", maxWidth: "260px", maxHeight: "150px" }}>
-                              <img src={fotoBukti} alt="Pratinjau Foto Lampiran" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span style={{ color: "#758378", fontStyle: "italic", fontSize: "0.88rem" }}>
-                          Tidak ada bukti dilampirkan
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="report-form-actions">
-            <Button 
-              variant="secondary" 
-              disabled={step === 1} 
-              onClick={() => setStep(step - 1)}
-            >
-              Kembali
-            </Button>
-            <Button 
-              onClick={() => { 
-                if (step < 5) setStep(step + 1); 
-                else { 
-                  const submitData = async () => {
-                    const displayCat = category === "Lainnya" && customCategory ? customCategory : category;
-                    const unit = getUnit();
-                    const fullVolume = `${amount || "850"} ${unit}`;
-                    const peopleCount = typeof affectedPeople === "number" && affectedPeople > 0 ? affectedPeople : 21;
-                    const finalKK = typeof familyCount === "number" && familyCount > 0 ? familyCount : 1;
-                    const vulText = vulnerableList.length > 0 && !vulnerableList.includes("Tidak ada")
-                      ? vulnerableList.join(", ")
-                      : "Tidak ada";
-
-                    const payload = {
-                      citizen_name: state?.userProfile?.name || "Andi Pratama",
-                      citizen_phone: state?.userProfile?.phone || "+62 812 4455 0188",
-                      posko_name: poskoTarget,
-                      kategori_kebutuhan: displayCat,
-                      volume_permintaan: fullVolume,
-                      jumlah_kk: finalKK,
-                      status_hunian: shelterStatus,
-                      tingkat_urgensi: citizenUrgency,
-                      status: "Diajukan",
-                      deskripsi: notes || conditionDescription || `Kebutuhan ${displayCat} sebanyak ${fullVolume} untuk ${peopleCount} jiwa (${finalKK} KK) terdampak.`,
-                      desa: village,
-                      kecamatan: district,
-                      kabupaten: regency,
-                      provinsi: province,
-                      latitude: pickedLat,
-                      longitude: pickedLng,
-                      foto_bukti: fotoBukti,
-                    };
-
-                    let finalCode = `RK-2026-00${Math.floor(100 + Math.random() * 899)}`;
-                    let createdDbItem: any = null;
-                    try {
-                      const res = await apiService.createKebutuhan(payload);
-                      if (res.success && res.data) {
-                        createdDbItem = res.data;
-                        if (res.data.kode_kasus) {
-                          finalCode = res.data.kode_kasus;
-                        }
-                      }
-                    } catch (e) {
-                      console.log("API create fallback note:", e);
-                    }
-
-                    const now = new Date();
-                    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} WIB`;
-                    const v = payload.desa || createdDbItem?.desa || "Surabaya";
-                    const d = payload.kecamatan || createdDbItem?.kecamatan;
-                    const k = payload.kabupaten || createdDbItem?.kabupaten || "Kota Surabaya";
-                    const locStr = d ? `${v}, Kec. ${d}` : `${v}, ${k}`;
-
-                    const newReport: CaseRecord = {
-                      id: finalCode,
-                      item: displayCat,
-                      location: locStr,
-                      kk: `${finalKK} KK`,
-                      qty: fullVolume,
-                      urgency: citizenUrgency || "Sangat mendesak",
-                      status: "Diajukan",
-                      isOwn: true,
-                      notes: payload.deskripsi,
-                      date: "Hari ini",
-                      posko: createdDbItem?.posko?.nama_posko || poskoTarget,
-                      applicantNik: applicantNik,
-                      applicantName: state?.userProfile?.name || "Andi Pratama",
-                      applicantPhone: state?.userProfile?.phone || "+62 812 4455 0188",
-                      shelterStatus: shelterStatus,
-                      province: province,
-                      regency: regency,
-                      district: district,
-                      village: village,
-                      lat: pickedLat,
-                      lng: pickedLng,
-                      fotoBukti: createdDbItem?.foto_bukti || fotoBukti,
-                      fileName: fileName,
-                      vulnerableDetails: vulText,
-                      affectedPeople: peopleCount,
-                      vulnerableGroupsList: vulnerableList,
-                      availabilityCondition: availabilityCondition,
-                      citizenUrgency: citizenUrgency,
-                      conditionDescription: conditionDescription,
-                      createdAtTime: timeStr,
-                      createdAtRaw: createdDbItem?.created_at || new Date().toISOString(),
-                    };
-
-                    const currentCases = state?.casesList || [];
-                    const updatedList = [newReport, ...currentCases.filter(c => c.id !== finalCode)];
-                    localStorage.setItem("reksa_cases_db", JSON.stringify(updatedList));
-
-                    if (update) {
-                      update({ 
-                        status: "Diajukan", 
-                        priority: newReport.urgency,
-                        activeCaseId: finalCode,
-                        casesList: updatedList,
-                      }, `Laporan kebutuhan ${newReport.item} (${newReport.qty}) diajukan oleh ${state?.userProfile?.name || "Andi Pratama"} ke ${(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}.`);
-                    }
-                    
-                    setSubmittedCaseId(finalCode);
-                    setSuccess(true);
-                  };
-
-                  submitData();
-                } 
-              }}
-            >
-              {step === 5 ? "Kirim Laporan" : "Lanjutkan"} <Icon name="next" />
-            </Button>
-          </div>
-        </div>
-
-        {/* RIGHT GUIDANCE SIDEBAR */}
-        <aside className="report-side-guidance">
-          <div className="guidance-card">
-            <div className="guidance-icon-circle">
-              <Icon name="check" />
-            </div>
-            <h3>Panduan Pengisian Laporan</h3>
-            <p>
-              Data yang Anda laporkan akan diteruskan ke sistem koordinasi terpadu untuk validasi posko BPBD dan penugasan responder lapangan.
-            </p>
-
-            <ul className="guidance-checklist">
-              <li>
-                <span className="check-bullet"><Icon name="check" /></span>
-                <div>
-                  <strong>Validasi Cepat</strong>
-                  <small>Petugas Posko BPBD memvalidasi kebutuhan dalam waktu &lt; 24 jam.</small>
-                </div>
-              </li>
-              <li>
-                <span className="check-bullet"><Icon name="check" /></span>
-                <div>
-                  <strong>Kerahasiaan Terlindungi</strong>
-                  <small>Titik lokasi digeneralisasi untuk menjaga privasi masyarakat terdampak.</small>
-                </div>
-              </li>
-              <li>
-                <span className="check-bullet"><Icon name="check" /></span>
-                <div>
-                  <strong>Alokasi Terarah</strong>
-                  <small>Logistik disalurkan langsung oleh mitra terverifikasi BPBD &amp; PMI.</small>
-                </div>
-              </li>
-            </ul>
-
-            <div className="guidance-footer-note">
-              <Icon name="help" />
-              <span>Butuh bantuan kedaruratan segera? Hubungi Call Center 112 atau Posko BPBD Sukabumi.</span>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </main>
-  );
-}
-
-function CitizenDashboard({ state, update, setPage, name }: { state: SharedState; update: RouterProps["update"]; setPage: RouterProps["setPage"]; name: string }) {
-  const [selectedQuick, setSelectedQuick] = useState(0);
-  const currentCases = state.casesList || [];
-  const hasCases = currentCases.length > 0;
-
-  const quickItems = [
-    { 
-      icon: "plus", 
-      title: "Buat Laporan", 
-      copy: "Sampaikan kebutuhan darurat pascabencana.", 
-      page: "report" as PortalPage,
-      badge: "Utama"
-    },
-    { 
-      icon: "file", 
-      title: "Laporan Saya", 
-      copy: "Pantau alur verifikasi & penanganan posko.", 
-      page: "cases" as PortalPage,
-      badge: hasCases ? `${currentCases.length} Aktif` : "0 Laporan"
-    },
-    { 
-      icon: "help", 
-      title: "Pusat Bantuan", 
-      copy: "Temukan SOP layanan dan kontak bantuan.", 
-      page: "help" as PortalPage,
-      badge: "Panduan"
-    }
-  ];
-
-  return (
-    <main className="workspace citizen-home">
-      <PageHead 
-        eyebrow="Layanan masyarakat" 
-        title={`Halo, ${name.split(" ")[0]}. Pantau perjalanan bantuanmu.`} 
-        copy="Setiap laporan memiliki langkah berikutnya yang jelas hingga bantuan diterima." 
-        action={<div className="trust-badge"><Icon name="check" /> Terhubung ke Posko BPBD</div>} 
-      />
-
-      {/* 1. DISASTER HERO BANNER WITH IMAGE FROM GAMBAR 3 & GREEN OPACITY */}
-      <section className="citizen-disaster-banner">
-        <img 
-          src="/beranda-disaster-banner.jpg" 
-          alt="Dokumentasi Operasi Kemanusiaan Pascabencana" 
-          className="citizen-disaster-banner-bg" 
-        />
-        <div className="citizen-disaster-banner-overlay" />
-        <div className="citizen-disaster-banner-content">
-          <div className="citizen-disaster-banner-main">
-            <h2>Tanggap Cepat Kebutuhan Logistik Warga</h2>
-            <p>
-              Sampaikan kebutuhan darurat keluarga Anda. Setiap laporan diteruskan langsung ke sistem komando Posko BPBD dan responder lapangan untuk verifikasi cepat dan distribusi terukur.
-            </p>
-            <div className="citizen-banner-action-row">
-              <Button variant="light" onClick={() => setPage("report")}>
-                <Icon name="plus" /> Buat Laporan Baru
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. REKAPITULASI KEBUTUHAN - SEMUA LAPORAN ANDA (GAMBAR 1 YANG DISETUJUI USER) */}
-      <section className="all-cases-overview-section">
-        <div className="section-title">
-          <div>
-            <span className="eyebrow">Rekapitulasi Kebutuhan</span>
-            <h2>{hasCases ? `Semua Laporan Anda (${currentCases.length})` : "Laporan Kebutuhan Anda"}</h2>
-          </div>
-          {hasCases && (
-            <button onClick={() => setPage("cases")}>
-              Buka Manajemen Laporan <Icon name="next" />
-            </button>
-          )}
-        </div>
-
-        {hasCases ? (
-          <div className="all-cases-grid">
-            {currentCases.map((c) => {
-              const cPercent = getCaseProgress(c.status);
-              const catEmoji = getCategoryEmoji(c.item);
-              return (
-                <div key={c.id} className="all-case-card">
-                  <div className="all-case-card-header">
-                    <div>
-                      <span className="case-card-code">{c.id}</span>
-                      <span className="case-card-date">{c.date || "Hari ini"}</span>
-                    </div>
-                    <Pill tone={c.urgency === "Kritis" ? "critical" : c.urgency === "Tinggi" ? "high" : "medium"}>
-                      {c.urgency}
-                    </Pill>
-                  </div>
-
-                  <div className="all-case-card-body">
-                    <div className="case-item-title-row">
-                      <div className="case-photo-badge">
-                        <img 
-                          src={getFieldEvidencePhoto(c.item, c.fotoBukti)} 
-                          alt={c.item} 
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1593113598332-cd288d649433?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=400&q=80";
-                          }}
-                        />
-                      </div>
-                      <div className="case-item-info-col">
-                        <h4>{c.item}</h4>
-                        <div className="case-item-qty-row">
-                          <strong>{c.qty}</strong>
-                          <span>({c.kk || "1 KK"})</span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="case-item-loc">
-                      <Icon name="pin" /> {c.location}
-                    </p>
-                  </div>
-
-                  <div className="all-case-card-progress">
-                    <div className="card-progress-labels">
-                      <span>{c.status}</span>
-                      <strong>{cPercent}%</strong>
-                    </div>
-                    <Progress value={cPercent} />
-                  </div>
-
-                  <div className="all-case-card-actions">
-                    <Button 
-                      onClick={() => { update({ activeCaseId: c.id }); setPage("case"); }}
-                      className="btn-case-detail-full"
-                    >
-                      Lihat Perjalanan Kasus <Icon name="next" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div style={{ padding: "40px 24px", textAlign: "center", background: "#fbfbf8", border: "1.5px dashed #b2d7bb", borderRadius: "20px" }}>
-            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: "#e8f3ea", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#013220", fontSize: "24px", marginBottom: "16px" }}>
-              <Icon name="file" />
-            </div>
-            <h2 style={{ color: "#013220", fontSize: "1.35rem", margin: "0 0 8px", fontWeight: 700 }}>Belum Ada Laporan Kasus Kebutuhan</h2>
-            <p style={{ color: "#546558", fontSize: "0.95rem", lineHeight: 1.5, margin: "0 0 20px", maxWidth: "520px", marginInline: "auto" }}>
-              Anda belum memiliki laporan kebutuhan pascabencana yang aktif di database. Sampaikan kebutuhan logistik Anda agar segera diverifikasi oleh Posko BPBD dan disalurkan oleh responder relawan.
-            </p>
-            <Button onClick={() => setPage("report")} className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 24px", fontSize: "0.92rem", fontWeight: 600 }}>
-              <Icon name="plus" /> Buat Laporan Kebutuhan Sekarang
-            </Button>
-          </div>
-        )}
-      </section>
-
-      {/* QUICK ACCESS SECTION */}
-      <section className="quick-access">
-        <div className="section-title">
-          <div>
-            <span className="eyebrow">Aksi Mandiri</span>
-            <h2>Akses Cepat Layanan</h2>
-          </div>
-          <button onClick={() => setPage("cases")}>Lihat semua laporan <Icon name="next" /></button>
-        </div>
-        <div className="quick-access-grid">
-          {quickItems.map((item, idx) => (
-            <button 
-              key={item.title} 
-              className={`quick-card ${selectedQuick === idx ? "featured" : ""}`} 
-              onMouseEnter={() => setSelectedQuick(idx)}
-              onClick={() => { setSelectedQuick(idx); setPage(item.page); }}
-            >
-              <div className="quick-card-top">
-                <div className="quick-icon-box">
-                  <Icon name={item.icon} />
-                </div>
-                <span className="quick-badge">{item.badge}</span>
-              </div>
-              <div className="quick-card-body">
-                <h3>{item.title}</h3>
-                <p>{item.copy}</p>
-              </div>
-              <div className="quick-card-action">
-                <span>Buka Layanan</span>
-                <span className="quick-arrow"><Icon name="next" /></span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* REALTIME NOTIFICATIONS SECTION */}
-      <section className="notifications-section">
-        <div className="section-title">
-          <div>
-            <span className="eyebrow">Pembaruan Langsung</span>
-            <h2>Notifikasi Terbaru</h2>
-          </div>
-          <button onClick={() => setPage("notifications")}>Lihat semua <Icon name="next" /></button>
-        </div>
-        
-        <div className="notif-card-container">
-          {hasCases ? (
-            currentCases.slice(0, 3).map((c, idx) => {
-              const notifTag = c.status === "Selesai" ? "Tuntas" : c.status === "Dalam Pengiriman" ? "Distribusi" : c.status === "Dalam Verifikasi" ? "Verifikasi Posko" : "Penyaluran";
-              const notifText = c.status === "Selesai" 
-                ? `Penyaluran bantuan ${c.item} (${c.qty}) telah selesai diterima warga.`
-                : c.status === "Dalam Pengiriman"
-                  ? `Armada responder sedang dalam perjalanan mendistribusikan ${c.item} (${c.qty}).`
-                  : c.status === "Dalam Verifikasi"
-                    ? `Laporan kebutuhan ${c.item} (${c.qty}) tercatat dan dalam proses verifikasi Posko BPBD.`
-                    : `Kebutuhan ${c.item} telah dipublikasikan ke mitra responder relawan.`;
-
-              return (
-                <button 
-                  className={`notif-item ${idx === 0 ? "unread" : ""}`} 
-                  onClick={() => { update({ activeCaseId: c.id }); setPage("case"); }} 
-                  key={c.id}
-                >
-                  <div className="notif-item-left">
-                    <div className={`notif-icon-circle ${idx === 0 ? "new" : ""}`}>
-                      <Icon name="bell" />
-                      {idx === 0 && <span className="notif-dot-pulse" />}
-                    </div>
-                    <div className="notif-item-content">
-                      <div className="notif-header-line">
-                        <span className="notif-tag">{notifTag}</span>
-                        <small>{c.date || "Hari ini"} · {c.id}</small>
-                      </div>
-                      <strong>{notifText}</strong>
-                    </div>
-                  </div>
-                  <div className="notif-item-arrow">
-                    <Icon name="next" />
-                  </div>
-                </button>
-              );
-            })
-          ) : (
-            <div style={{ padding: "28px", textAlign: "center", background: "#fbfbf8", border: "1px solid rgba(1,50,32,0.08)", borderRadius: "14px", color: "#6a7369" }}>
-              <div style={{ fontSize: "1.8rem", marginBottom: "6px" }}>🔔</div>
-              <strong>Belum Ada Notifikasi Baru</strong>
-              <p style={{ margin: "4px 0 0", fontSize: "0.88rem" }}>Aktivitas dan pembaruan penanganan akan muncul otomatis saat ada laporan yang diproses.</p>
-            </div>
-          )}
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function CaseList({
-  title, 
-  copy, 
-  onCase, 
-  own = false, 
-  completed = false,
-  state,
-  update,
-}: { 
-  title: string; 
-  copy: string; 
-  onCase: (c?: CaseRecord) => void; 
-  own?: boolean; 
-  completed?: boolean;
-  state?: SharedState;
-  update?: RouterProps["update"];
-}) {
-  const [filter, setFilter] = useState("Semua");
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  const allCases = state?.casesList ?? [];
-  const [editingCase, setEditingCase] = useState<CaseRecord | null>(null);
-  const [deletingCase, setDeletingCase] = useState<CaseRecord | null>(null);
-
-  // Edit fields
-  const [editItem, setEditItem] = useState("");
-  const [editQty, setEditQty] = useState("");
-  const [editKK, setEditKK] = useState("");
-  const [editPriority, setEditPriority] = useState("Sangat mendesak");
-
-  const normalizeCitizenUrgency = (val: string) => {
-    if (val === "Kritis") return "Sangat mendesak";
-    if (val === "Tinggi") return "Perlu segera";
-    if (val === "Sedang") return "Bisa menunggu";
-    return val || "Sangat mendesak";
-  };
-
-  const data = allCases.filter((c) => {
-    const matchesOwn = !own || c.isOwn;
-    const matchesCompleted = !completed || c.status === "Selesai";
-    const matchesFilter = filter === "Semua" || 
-      c.urgency === filter ||
-      (filter === "Sangat mendesak" && (c.urgency === "Kritis" || c.urgency === "Sangat mendesak")) ||
-      (filter === "Perlu segera" && (c.urgency === "Tinggi" || c.urgency === "Perlu segera")) ||
-      (filter === "Bisa menunggu" && (c.urgency === "Sedang" || c.urgency === "Bisa menunggu"));
-    const matchesSearch = !searchQuery || 
-      c.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      c.item.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      c.location.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesOwn && matchesCompleted && matchesFilter && matchesSearch;
-  });
-
-  const openEdit = (c: CaseRecord) => {
-    setEditingCase(c);
-    setEditItem(c.item);
-    setEditQty(c.qty);
-    setEditKK(c.kk);
-    setEditPriority(normalizeCitizenUrgency(c.urgency));
-  };
-
-  const saveEdit = async () => {
-    if (!editingCase || !update) return;
-    const parsedKK = typeof editKK === "number" ? editKK : parseInt(String(editKK).replace(/[^0-9]/g, '')) || 1;
-    const formattedKK = `${parsedKK} KK`;
-    const updated = allCases.map((c) => 
-      c.id === editingCase.id 
-        ? { ...c, item: editItem, qty: editQty, kk: formattedKK, urgency: editPriority }
-        : c
-    );
-
-    // 1. Update local state & localStorage immediately
-    localStorage.setItem("reksa_cases_db", JSON.stringify(updated));
-    update({ casesList: updated }, `Data kasus ${editingCase.id} berhasil diperbarui.`);
-    setEditingCase(null);
-
-    // 2. Sync to Laravel Database API
-    try {
-      await apiService.updateKebutuhan(editingCase.id, {
-        kategori_kebutuhan: editItem,
-        volume_permintaan: editQty,
-        jumlah_kk: parsedKK,
-        tingkat_urgensi: editPriority,
-      });
-    } catch (e) {
-      console.log("API update note:", e);
-    }
-  };
-
-  const confirmDelete = () => {
-    if (!deletingCase || !update) return;
-    const updated = allCases.filter((c) => c.id !== deletingCase.id);
-
-    // 1. Send DELETE to Laravel backend
-    apiService.deleteKebutuhan(deletingCase.id).catch((e) => console.log("API delete note:", e));
-
-    // 2. Track deleted ID in localStorage to prevent re-fetching deleted items
-    try {
-      const deletedIds: string[] = JSON.parse(localStorage.getItem("reksa_deleted_ids") || "[]");
-      if (!deletedIds.includes(deletingCase.id)) {
-        deletedIds.push(deletingCase.id);
-        localStorage.setItem("reksa_deleted_ids", JSON.stringify(deletedIds));
-      }
-    } catch (e) {}
-
-    // 3. Update local state & storage
-    update({ casesList: updated }, `Kasus ${deletingCase.id} berhasil dihapus dari sistem.`);
-    setDeletingCase(null);
-  };
-
-  const handlePantau = (c: CaseRecord) => {
-    if (update) {
-      update({ activeCaseId: c.id, priority: c.urgency, status: c.status });
-    }
-    onCase(c);
-  };
-
-  return (
-    <main className="workspace cases-workspace">
-      <PageHead 
-        eyebrow="Portal Kebutuhan" 
-        title={title} 
-        copy={copy} 
-        action={<div className="trust-badge"><Icon name="check" /> {data.length} Kasus Terdata</div>}
-      />
-
-      {/* FILTER & SEARCH BAR */}
-      <div className="cases-filter-bar">
-        <div className="cases-search-box">
-          <Icon name="file" />
-          <input 
-            type="text" 
-            placeholder="Cari kode kasus, jenis kebutuhan, atau desa..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="cases-pill-filters">
-          {["Semua", "Sangat mendesak", "Perlu segera", "Bisa menunggu"].map((x) => (
-            <button 
-              key={x} 
-              type="button" 
-              className={`case-filter-btn ${filter === x ? "active" : ""}`} 
-              onClick={() => setFilter(x)}
-            >
-              {x}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* REDESIGNED CASE CARDS GRID DENGAN AKSI LANGSUNG DI CARD (CRUD DEPAN) */}
-      <div className="case-cards-grid">
-        {data.length === 0 ? (
-          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", background: "#f5f4ef", borderRadius: "16px", color: "#80866e" }}>
-            <Icon name="file" />
-            <p style={{ marginTop: "10px", fontWeight: 600 }}>Tidak ada data laporan kasus yang sesuai filter atau data telah dihapus.</p>
-          </div>
-        ) : (
-          data.map((c) => {
-            const isCritical = c.urgency === "Kritis";
-            const isHigh = c.urgency === "Tinggi";
-            const isDone = c.status === "Selesai";
-            return (
-              <div className={`case-aesthetic-card ${isCritical ? "priority-critical" : ""}`} key={c.id}>
-                <div className="case-card-header">
-                  <div className="case-code-badge">{c.id}</div>
-                  <Pill tone={isCritical ? "critical" : isHigh ? "high" : "medium"}>{c.urgency}</Pill>
-                </div>
-
-                <div className="case-card-body">
-                  <div className="case-card-main-row">
-                    <div className="case-photo-badge">
-                      <img 
-                        src={getFieldEvidencePhoto(c.item, c.fotoBukti)} 
-                        alt={c.item} 
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1593113598332-cd288d649433?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=400&q=80";
-                        }}
-                      />
-                    </div>
-                    <div className="case-card-header-info">
-                      <h3>{c.item}</h3>
-                      <div className="case-card-location">
-                        <Icon name="pin" />
-                        <span>{c.location} · {c.kk}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="case-card-quantity">
-                    <small>Target Volume Bantuan:</small>
-                    <strong>{c.qty}</strong>
-                  </div>
-                </div>
-
-                {/* DIRECT CRUD ACTIONS ON CARD */}
-                <div className="case-card-footer" style={{ flexDirection: "column", gap: "10px", alignItems: "stretch" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div className="case-status-indicator">
-                      <i className={`status-dot ${isDone ? "done" : "active"}`} />
-                      <span>{c.status}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
-                    <button 
-                      type="button" 
-                      onClick={() => openEdit(c)}
-                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "6px 10px", background: "#ffffff", border: "1px solid #c1c3ac", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 600, color: "#013220", cursor: "pointer" }}
-                    >
-                      <Icon name="edit" /> Ubah
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setDeletingCase(c)}
-                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", padding: "6px 10px", background: "#fff1f0", border: "1px solid #ffa39e", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 600, color: "#cf1322", cursor: "pointer" }}
-                    >
-                      <Icon name="trash" /> Hapus
-                    </button>
-                    <button 
-                      type="button" 
-                      className="btn-case-action" 
-                      onClick={() => handlePantau(c)}
-                      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", padding: "6px 8px", fontSize: "0.8rem" }}
-                    >
-                      Pantau <Icon name="next" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* MODAL EDIT DATA LANGSUNG DI DEPAN (UPDATE) */}
-      {editingCase && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ background: "#ffffff", borderRadius: "16px", padding: "28px", maxWidth: "500px", width: "100%", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ margin: 0, color: "#013220", fontSize: "1.2rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                <Icon name="edit" /> Ubah Data Kasus {editingCase.id}
-              </h3>
-              <button type="button" onClick={() => setEditingCase(null)} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "#80866e" }}>×</button>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div>
-                <label className="form-label">Jenis Kebutuhan Bantuan</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={editItem} 
-                  onChange={(e) => setEditItem(e.target.value)} 
-                />
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                <div>
-                  <label className="form-label">Volume Kebutuhan</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    value={editQty} 
-                    onChange={(e) => setEditQty(e.target.value)} 
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Jumlah KK</label>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    value={editKK} 
-                    onChange={(e) => setEditKK(e.target.value)} 
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="form-label">Seberapa mendesak kebutuhan ini?</label>
-                <select 
-                  className="form-control select" 
-                  value={normalizeCitizenUrgency(editPriority)} 
-                  onChange={(e) => setEditPriority(e.target.value)}
-                >
-                  <option value="Sangat mendesak">Sangat mendesak (Kondisi genting / persediaan habis)</option>
-                  <option value="Perlu segera">Perlu segera (Menipis dalam 1-2 hari)</option>
-                  <option value="Bisa menunggu">Bisa menunggu (Masih ada sedikit persediaan)</option>
-                </select>
-                <small style={{ color: "#758378", marginTop: "4px", display: "block", fontSize: "0.82rem" }}>
-                  Penilaian tingkat kedaruratan dari sudut pandang warga di lokasi.
-                </small>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
-              <Button variant="secondary" onClick={() => setEditingCase(null)}>Batal</Button>
-              <Button onClick={saveEdit}><Icon name="check" /> Simpan Perubahan</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL KONFIRMASI HAPUS LANGSUNG DI DEPAN (DELETE) */}
-      {deletingCase && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ background: "#ffffff", borderRadius: "16px", padding: "28px", maxWidth: "440px", width: "100%", boxShadow: "0 20px 40px rgba(0,0,0,0.2)" }}>
-            <div style={{ textAlign: "center", marginBottom: "16px" }}>
-              <div style={{ fontSize: "2.5rem", marginBottom: "8px" }}>⚠️</div>
-              <h3 style={{ margin: "0 0 8px", color: "#cf1322" }}>Hapus Kasus {deletingCase.id}?</h3>
-              <p style={{ margin: 0, color: "#48554a", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                Apakah Anda yakin ingin menghapus data kebutuhan <strong>{deletingCase.item} ({deletingCase.qty})</strong>? Data akan dihapus langsung dari daftar.
-              </p>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "20px" }}>
-              <Button variant="secondary" onClick={() => setDeletingCase(null)}>Batal</Button>
-              <button 
-                type="button" 
-                onClick={confirmDelete}
-                style={{ background: "#cf1322", color: "#ffffff", border: "none", padding: "10px 20px", borderRadius: "10px", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem" }}
-              >
-                Ya, Hapus Sekarang
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
-  );
-}
 
 function CaseDetail({ 
   state, 
@@ -2787,6 +1260,9 @@ function CaseDetail({
   const [newClarificationPhoto, setNewClarificationPhoto] = useState<string>("");
   const [photoUploadName, setPhotoUploadName] = useState<string>("");
   const [isSubmittingClarification, setIsSubmittingClarification] = useState(false);
+  const [showClarificationAdjustments, setShowClarificationAdjustments] = useState(false);
+  const [clarifVolume, setClarifVolume] = useState(activeCase?.qty || "");
+  const [clarifKk, setClarifKk] = useState<number | "">(activeCase ? parseInt(activeCase.kk) || 1 : 1);
 
   // Form states for editing (UPDATE)
   const [editTitle, setEditTitle] = useState(activeCase ? `Kebutuhan ${activeCase.item} (${activeCase.kk})` : "");
@@ -2805,6 +1281,9 @@ function CaseDetail({
       setClarificationAnswer("");
       setNewClarificationPhoto("");
       setPhotoUploadName("");
+      setClarifVolume(activeCase.qty || "");
+      setClarifKk(parseInt(activeCase.kk) || 1);
+      setShowClarificationAdjustments(false);
     }
   }, [activeCase?.id, activeCase?.item, activeCase?.qty, activeCase?.kk, activeCase?.urgency, activeCase?.notes, activeCase?.location]);
 
@@ -2812,12 +1291,49 @@ function CaseDetail({
     const file = e.target.files?.[0];
     if (file) {
       setPhotoUploadName(file.name);
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const base64 = uploadEvent.target?.result as string;
-        setNewClarificationPhoto(base64);
-      };
-      reader.readAsDataURL(file);
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (uploadEvent) => {
+          const rawResult = uploadEvent.target?.result as string;
+          if (rawResult) {
+            const img = new Image();
+            img.onload = () => {
+              try {
+                const canvas = document.createElement("canvas");
+                const maxDim = 1280;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                  if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                  } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                  }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0, width, height);
+                  const compressed = canvas.toDataURL("image/jpeg", 0.82);
+                  setNewClarificationPhoto(compressed);
+                } else {
+                  setNewClarificationPhoto(rawResult);
+                }
+              } catch {
+                setNewClarificationPhoto(rawResult);
+              }
+            };
+            img.onerror = () => {
+              setNewClarificationPhoto(rawResult);
+            };
+            img.src = rawResult;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -2826,13 +1342,32 @@ function CaseDetail({
       notify?.("Mohon tuliskan jawaban klarifikasi Anda.");
       return;
     }
+    if (activeCase?.memintaLampiran && !newClarificationPhoto && !activeCase?.fotoKlarifikasi) {
+      notify?.("Petugas Posko BPBD mewajibkan unggahan foto/dokumen fisik tambahan.");
+      return;
+    }
     try {
       setIsSubmittingClarification(true);
-      const res = await apiService.jawabKlarifikasi(activeCase.id, {
-        jawaban: clarificationAnswer,
+      const payload: {
+        jawaban: string;
+        foto_klarifikasi?: string;
+        jumlah_kk?: number;
+        volume_permintaan?: string;
+        citizen_name?: string;
+      } = {
+        jawaban: clarificationAnswer.trim(),
         foto_klarifikasi: newClarificationPhoto || undefined,
         citizen_name: activeCase.applicantName || "Andi Pratama",
-      });
+      };
+      if (showClarificationAdjustments) {
+        if (clarifVolume.trim() && clarifVolume !== activeCase.qty) {
+          payload.volume_permintaan = clarifVolume.trim();
+        }
+        if (typeof clarifKk === "number" && clarifKk > 0) {
+          payload.jumlah_kk = clarifKk;
+        }
+      }
+      const res = await apiService.jawabKlarifikasi(activeCase.id, payload);
       if (res.success) {
         notify?.("Jawaban klarifikasi berhasil dikirim! Laporan Anda kini masuk antrean peninjauan ulang oleh Petugas Posko BPBD.");
         const updatedCases = currentCases.map((c) =>
@@ -2840,8 +1375,10 @@ function CaseDetail({
             ? {
                 ...c,
                 status: "Dalam Verifikasi",
-                jawabanKlarifikasi: clarificationAnswer,
+                jawabanKlarifikasi: clarificationAnswer.trim(),
                 fotoKlarifikasi: newClarificationPhoto || c.fotoKlarifikasi,
+                qty: payload.volume_permintaan || c.qty,
+                kk: payload.jumlah_kk ? `${payload.jumlah_kk} KK` : c.kk,
               }
             : c
         );
@@ -3241,6 +1778,70 @@ function CaseDetail({
                 <div>
                   <span style={{ fontSize: "0.8rem", color: "#334155", fontWeight: 600, display: "block", marginBottom: "4px" }}>Pratinjau Foto Baru:</span>
                   <img src={newClarificationPhoto} alt="Pratinjau Klarifikasi" style={{ width: "100%", height: "100px", objectFit: "cover", borderRadius: "8px", border: "1px solid #cbd5e1" }} />
+                </div>
+              )}
+            </div>
+
+            {/* TOGGLE PENYESUAIAN VOLUME / KK JIKA POSKO MEMINTA KOREKSI */}
+            <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "12px", marginBottom: "14px" }}>
+              <button
+                type="button"
+                onClick={() => setShowClarificationAdjustments(!showClarificationAdjustments)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#013220",
+                  fontWeight: 600,
+                  fontSize: "0.86rem",
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <span>{showClarificationAdjustments ? "▼ Sembunyikan Koreksi Volume/KK" : "▶ Koreksi Jumlah Volume / KK (Jika Diminta Posko)"}</span>
+              </button>
+
+              {showClarificationAdjustments && (
+                <div
+                  style={{
+                    marginTop: "10px",
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                    background: "#f9fafb",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>
+                      Volume Permintaan Baru
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={clarifVolume}
+                      onChange={(e) => setClarifVolume(e.target.value)}
+                      placeholder="Contoh: 10 Kotak"
+                      style={{ fontSize: "0.85rem", padding: "8px" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: "4px" }}>
+                      Jumlah KK Baru
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="form-control"
+                      value={clarifKk}
+                      onChange={(e) => setClarifKk(e.target.value ? Number(e.target.value) : "")}
+                      style={{ fontSize: "0.85rem", padding: "8px" }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
