@@ -19,5 +19,18 @@ export default defineConfig({
   build: {
     outDir: 'public/dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/leaflet')) {
+            return 'vendor-leaflet';
+          }
+          if (id.includes('node_modules/react') || id.includes('node_modules/scheduler')) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
   },
 })
