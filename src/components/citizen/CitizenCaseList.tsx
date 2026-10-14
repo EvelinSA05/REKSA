@@ -22,6 +22,7 @@ interface CitizenCaseListProps {
   state?: SharedState;
   update?: RouterProps["update"];
   onNavigateToReport?: () => void;
+  onNavigateToCases?: () => void;
 }
 
 export function CitizenCaseList({
@@ -33,9 +34,11 @@ export function CitizenCaseList({
   state,
   update,
   onNavigateToReport,
+  onNavigateToCases,
 }: CitizenCaseListProps) {
   const [filter, setFilter] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
+  const [historyScope, setHistoryScope] = useState<"selesai" | "semua">("selesai");
 
   const allCases = state?.casesList ?? [];
   const [editingCase, setEditingCase] = useState<CaseRecord | null>(null);
@@ -55,6 +58,12 @@ export function CitizenCaseList({
     return val || "Sangat mendesak";
   };
 
+  const userOwnCases = allCases.filter(
+    (c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))
+  );
+  const completedCases = userOwnCases.filter((c) => c.status === "Selesai");
+  const activeCases = userOwnCases.filter((c) => c.status !== "Selesai");
+
   const clarificationCount = allCases.filter(
     (c) => (!own || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))) && c.status === "Perlu Klarifikasi"
   ).length;
@@ -62,7 +71,7 @@ export function CitizenCaseList({
   const data = allCases.filter((c) => {
     const isDummy = c.id.startsWith("RK-UJI-") || c.id.includes("TEST") || c.id.startsWith("RK-MULTI-");
     const matchesOwn = !own || (Boolean(c.isOwn) && !isDummy);
-    const matchesCompleted = !completed || c.status === "Selesai";
+    const matchesCompleted = !completed || (historyScope === "semua" ? true : c.status === "Selesai");
     const matchesFilter =
       filter === "Semua" ||
       (filter === "Perlu Klarifikasi" && c.status === "Perlu Klarifikasi") ||
@@ -164,7 +173,45 @@ export function CitizenCaseList({
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="cases-pill-filters" style={{ flexWrap: "wrap", gap: "6px" }}>
+        <div className="cases-pill-filters" style={{ flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
+          {completed && (
+            <div style={{ display: "inline-flex", gap: "4px", padding: "3px", background: "#e8ede7", borderRadius: "10px", marginRight: "6px" }}>
+              <button
+                type="button"
+                className={`case-filter-btn ${historyScope === "selesai" ? "active" : ""}`}
+                style={{
+                  fontSize: "0.82rem",
+                  padding: "5px 12px",
+                  borderRadius: "7px",
+                  background: historyScope === "selesai" ? "#013220" : "transparent",
+                  color: historyScope === "selesai" ? "#ffffff" : "#4b5563",
+                  border: "none",
+                  fontWeight: historyScope === "selesai" ? 700 : 500,
+                  cursor: "pointer",
+                }}
+                onClick={() => setHistoryScope("selesai")}
+              >
+                Selesai ({completedCases.length})
+              </button>
+              <button
+                type="button"
+                className={`case-filter-btn ${historyScope === "semua" ? "active" : ""}`}
+                style={{
+                  fontSize: "0.82rem",
+                  padding: "5px 12px",
+                  borderRadius: "7px",
+                  background: historyScope === "semua" ? "#013220" : "transparent",
+                  color: historyScope === "semua" ? "#ffffff" : "#4b5563",
+                  border: "none",
+                  fontWeight: historyScope === "semua" ? 700 : 500,
+                  cursor: "pointer",
+                }}
+                onClick={() => setHistoryScope("semua")}
+              >
+                Semua Riwayat ({userOwnCases.length})
+              </button>
+            </div>
+          )}
           {[
             "Semua",
             ...(clarificationCount > 0 ? ["Perlu Klarifikasi"] : []),
@@ -201,64 +248,146 @@ export function CitizenCaseList({
       {/* CASE CARDS GRID */}
       <div className="case-cards-grid">
         {data.length === 0 ? (
-          <div
-            style={{
-              gridColumn: "1 / -1",
-              textAlign: "center",
-              padding: "48px 24px",
-              background: "#f5f4ef",
-              borderRadius: "18px",
-              border: "1px dashed #d1d5db",
-            }}
-          >
+          completed && historyScope === "selesai" && activeCases.length > 0 && !searchQuery && filter === "Semua" ? (
             <div
               style={{
-                width: "52px",
-                height: "52px",
-                borderRadius: "14px",
-                background: "#e8ebe2",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "14px",
-                color: "#013220",
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: "48px 24px",
+                background: "#f5f4ef",
+                borderRadius: "18px",
+                border: "1px dashed #d1d5db",
               }}
             >
-              <Icon name="file" />
-            </div>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#013220", margin: "0 0 6px" }}>
-              Belum Ada Laporan Diajukan
-            </h3>
-            <p
-              style={{
-                color: "#616852",
-                fontSize: "0.9rem",
-                maxWidth: "460px",
-                margin: "0 auto 20px",
-                lineHeight: 1.5,
-              }}
-            >
-              {searchQuery || filter !== "Semua"
-                ? "Tidak ada data laporan kasus yang sesuai dengan filter atau kata kunci pencarian Anda."
-                : "Anda belum mengajukan laporan kebutuhan darurat. Bila keluarga atau lingkungan Anda memerlukan bantuan pascabencana, silakan buat laporan baru."}
-            </p>
-            {onNavigateToReport && !searchQuery && filter === "Semua" && (
-              <Button
-                variant="primary"
-                onClick={onNavigateToReport}
+              <div
                 style={{
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "14px",
+                  background: "#e8ebe2",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 22px",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
+                  justifyContent: "center",
+                  marginBottom: "14px",
+                  color: "#013220",
                 }}
               >
-                <Icon name="plus" /> Laporkan Kebutuhan Sekarang
-              </Button>
-            )}
-          </div>
+                <Icon name="clock" />
+              </div>
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#013220", margin: "0 0 6px" }}>
+                Belum Ada Laporan yang Selesai
+              </h3>
+              <p
+                style={{
+                  color: "#616852",
+                  fontSize: "0.9rem",
+                  maxWidth: "520px",
+                  margin: "0 auto 20px",
+                  lineHeight: 1.6,
+                }}
+              >
+                Anda memiliki <strong>{activeCases.length} laporan aktif</strong> yang sedang berjalan (status:{" "}
+                <span style={{ background: "#eef6f0", color: "#1c5a39", padding: "2px 8px", borderRadius: "6px", fontWeight: 600 }}>
+                  {activeCases[0]?.status || "Diajukan"}
+                </span>
+                ). Laporan akan otomatis tercatat di arsip Riwayat Selesai setelah bantuan fisik telah diterima dan dikonfirmasi tuntas (BAST).
+              </p>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+                {onNavigateToCases && (
+                  <Button
+                    variant="primary"
+                    onClick={onNavigateToCases}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "10px 22px",
+                      fontWeight: 600,
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    <Icon name="file" /> Lihat di Laporan Saya
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  onClick={() => setHistoryScope("semua")}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 20px",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    background: "#ffffff",
+                  }}
+                >
+                  <Icon name="clock" /> Tampilkan Semua Riwayat ({userOwnCases.length})
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                textAlign: "center",
+                padding: "48px 24px",
+                background: "#f5f4ef",
+                borderRadius: "18px",
+                border: "1px dashed #d1d5db",
+              }}
+            >
+              <div
+                style={{
+                  width: "52px",
+                  height: "52px",
+                  borderRadius: "14px",
+                  background: "#e8ebe2",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "14px",
+                  color: "#013220",
+                }}
+              >
+                <Icon name="file" />
+              </div>
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#013220", margin: "0 0 6px" }}>
+                {completed ? "Belum Ada Riwayat Laporan" : "Belum Ada Laporan Diajukan"}
+              </h3>
+              <p
+                style={{
+                  color: "#616852",
+                  fontSize: "0.9rem",
+                  maxWidth: "460px",
+                  margin: "0 auto 20px",
+                  lineHeight: 1.5,
+                }}
+              >
+                {searchQuery || filter !== "Semua"
+                  ? "Tidak ada data laporan kasus yang sesuai dengan filter atau kata kunci pencarian Anda."
+                  : completed
+                  ? "Anda belum memiliki riwayat pengajuan bantuan kebutuhan darurat."
+                  : "Anda belum mengajukan laporan kebutuhan darurat. Bila keluarga atau lingkungan Anda memerlukan bantuan pascabencana, silakan buat laporan baru."}
+              </p>
+              {onNavigateToReport && !searchQuery && filter === "Semua" && (
+                <Button
+                  variant="primary"
+                  onClick={onNavigateToReport}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 22px",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <Icon name="plus" /> Laporkan Kebutuhan Sekarang
+                </Button>
+              )}
+            </div>
+          )
         ) : (
           data.map((c) => {
             const isCritical = c.urgency === "Kritis" || c.urgency === "Sangat mendesak";

@@ -1263,7 +1263,7 @@ function CitizenRouter({ page, setPage, state, update, notify, name = "Andi Prat
   if (page === "report") return <CitizenReport complete={() => setPage("cases")} update={update} state={state} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
   if (page === "cases") return <CitizenCaseList title="Laporan Saya" copy="Semua kebutuhan yang pernah Anda laporkan." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} own state={state} update={update} onNavigateToReport={() => setPage("report")} />;
-  if (page === "history") return <CitizenCaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed state={state} update={update} onNavigateToReport={() => setPage("report")} />;
+  if (page === "history") return <CitizenCaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed own state={state} update={update} onNavigateToReport={() => setPage("report")} onNavigateToCases={() => setPage("cases")} />;
   if (page === "notifications") return <Notifications role="citizen" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Masyarakat" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
