@@ -51,19 +51,6 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [pickedLat, setPickedLat] = useState<number>(() => (typeof initialDraft?.pickedLat === "number" ? initialDraft.pickedLat : -7.2654));
   const [pickedLng, setPickedLng] = useState<number>(() => (typeof initialDraft?.pickedLng === "number" ? initialDraft.pickedLng : 112.7521));
 
-  // Auto-detect real GPS position on mount if available (hanya jika belum ada titik tersimpan di draf)
-  useEffect(() => {
-    if (!initialDraft?.pickedLat && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setPickedLat(Number(pos.coords.latitude.toFixed(6)));
-          setPickedLng(Number(pos.coords.longitude.toFixed(6)));
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 6000 }
-      );
-    }
-  }, []);
 
   // Step 3: Kondisi Terdampak
   const [affectedPeople, setAffectedPeople] = useState<number | "">(() => initialDraft?.affectedPeople ?? "");

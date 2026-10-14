@@ -394,9 +394,9 @@ export function LeafletMap({
   useEffect(() => {
     if (pickLocation && !hasInitializedGeoRef.current) {
       hasInitializedGeoRef.current = true;
-      updateCitizenLocation(initialLat, initialLng);
+      setCitizenPos([initialLat, initialLng]);
     }
-  }, [pickLocation, initialLat, initialLng, updateCitizenLocation]);
+  }, [pickLocation, initialLat, initialLng]);
 
   // Dynamic sync if initial coordinates change externally (e.g. from GPS auto-detect or case selection)
   const lastSyncCoordsRef = useRef<string>('');
