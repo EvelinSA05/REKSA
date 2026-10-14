@@ -595,14 +595,14 @@ export function LeafletMap({
                 width: 34px;
                 height: 34px;
                 border-radius: 50%;
-                background: rgba(26, 115, 232, 0.28);
+                background: rgba(1, 50, 32, 0.22);
                 animation: gmap-pulse 2s infinite ease-out;
               "></div>
               <div style="
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
-                background: #1a73e8;
+                background: #013220;
                 border: 3.5px solid #ffffff;
                 box-shadow: 0 3px 8px rgba(0,0,0,0.4);
                 z-index: 2;
@@ -628,7 +628,10 @@ export function LeafletMap({
 
         citizenMarker.bindPopup(`
           <div style="font-size: 12px; max-width: 200px;">
-            <strong style="color: #1a73e8; font-size: 13px;">📍 Titik Lokasi Anda</strong><br>
+            <strong style="color: #013220; font-size: 13px; display: inline-flex; align-items: center; gap: 4px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              Titik Lokasi Anda
+            </strong><br>
             <div style="margin: 4px 0; font-weight: 600; color: #222;">${activeAddress}</div>
             <small style="color: #2e774f;">✓ Koordinat disinkronkan ke formulir</small>
           </div>
@@ -646,28 +649,28 @@ export function LeafletMap({
           html: `
             <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);">
               <div style="
-                background: #d9383a;
+                background: #013220;
                 color: #ffffff;
                 padding: 4px 10px;
                 border-radius: 8px;
                 font-size: 11px;
                 font-weight: 700;
-                box-shadow: 0 4px 12px rgba(217, 56, 58, 0.45);
+                box-shadow: 0 4px 12px rgba(1, 50, 32, 0.45);
                 border: 1.5px solid #ffffff;
                 white-space: nowrap;
                 display: flex;
                 align-items: center;
-                gap: 4px;
+                gap: 5px;
                 margin-bottom: 3px;
               ">
-                <span>📍</span>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
                 <span>Titik Laporan</span>
               </div>
               <div style="
                 width: 14px;
                 height: 14px;
                 border-radius: 50%;
-                background: #d9383a;
+                background: #013220;
                 border: 3px solid #ffffff;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.35);
               "></div>
@@ -684,7 +687,10 @@ export function LeafletMap({
 
         caseMarker.bindPopup(`
           <div style="font-size: 12px; line-height: 1.4;">
-            <strong style="color: #cf1322; font-size: 13px;">📍 Titik Lokasi Kebutuhan Warga</strong><br>
+            <strong style="color: #013220; font-size: 13px; display: inline-flex; align-items: center; gap: 4px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              Titik Lokasi Kebutuhan Warga
+            </strong><br>
             <small style="color: #555;">Koordinat: ${oLat.toFixed(5)}, ${oLng.toFixed(5)}</small>
           </div>
         `);
@@ -736,14 +742,28 @@ export function LeafletMap({
         <div style={{ position: 'relative', width: '100%' }}>
           <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '6px' }}>
             <div style={{ position: 'relative', flex: 1 }}>
+              <span style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#52755e',
+                display: 'inline-flex',
+                alignItems: 'center',
+                pointerEvents: 'none'
+              }}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="7" /><path d="m21 21-4.35-4.35" />
+                </svg>
+              </span>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="🔍 Ketik nama jalan, desa, kelurahan, kecamatan, atau kota..."
+                placeholder="Ketik nama jalan, desa, kelurahan, kecamatan, atau kota..."
                 style={{
                   width: '100%',
-                  padding: '10px 14px',
+                  padding: '10px 14px 10px 38px',
                   borderRadius: '10px',
                   border: '1.5px solid #c2d4c5',
                   fontSize: '0.88rem',
@@ -772,7 +792,10 @@ export function LeafletMap({
                 whiteSpace: 'nowrap',
               }}
             >
-              {isSearching ? 'Mencari...' : 'Cari Titik'}
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <span>{isSearching ? 'Mencari...' : 'Cari Titik'}</span>
             </button>
           </form>
 
@@ -814,7 +837,12 @@ export function LeafletMap({
                     onMouseEnter={(e) => (e.currentTarget.style.background = '#f2f7f3')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
                   >
-                    <span>📍</span>
+                    <span style={{ display: 'inline-flex', color: '#52755e', flexShrink: 0 }}>
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                        <circle cx="12" cy="10" r="2.5" />
+                      </svg>
+                    </span>
                     <div>
                       <strong style={{ display: 'block' }}>{name}</strong>
                       <small style={{ color: '#6a7369' }}>{state}</small>
@@ -868,15 +896,17 @@ export function LeafletMap({
             }}
           >
             {isLocating ? (
-              <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#013220" strokeWidth="2.5" strokeLinecap="round" style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
             ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#013220" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="7" />
                 <line x1="12" y1="1" x2="12" y2="4" />
                 <line x1="12" y1="20" x2="12" y2="23" />
                 <line x1="1" y1="12" x2="4" y2="12" />
                 <line x1="20" y1="12" x2="23" y2="12" />
-                <circle cx="12" cy="12" r="2.5" fill="#1a73e8" />
+                <circle cx="12" cy="12" r="2.5" fill="#013220" />
               </svg>
             )}
           </button>
@@ -906,8 +936,13 @@ export function LeafletMap({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}>
-            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#1a73e8', flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>📍 {activeAddress}</span>
+            <span style={{ display: 'inline-flex', width: '15px', height: '15px', color: '#013220', flexShrink: 0 }}>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+                <circle cx="12" cy="10" r="2.5" />
+              </svg>
+            </span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeAddress}</span>
           </div>
         )}
 

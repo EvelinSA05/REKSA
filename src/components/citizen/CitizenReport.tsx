@@ -699,10 +699,13 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         border: "1px solid #c2dfc9",
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px"
+                        gap: "6px"
                       }}
                     >
-                      🔒 Otomatis Sistem {province ? `• ${province}` : ""}
+                      <span style={{ display: "inline-flex", width: "13px", height: "13px", color: "#1c5a39" }}>
+                        <Icon name="lock" />
+                      </span>
+                      <span>Otomatis Sistem {province ? `• ${province}` : ""}</span>
                     </span>
                   </div>
                   <div style={{ position: "relative" }}>
@@ -730,17 +733,23 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         right: "14px",
                         top: "50%",
                         transform: "translateY(-50%)",
-                        fontSize: "15px",
+                        width: "16px",
+                        height: "16px",
                         color: "#52755e",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         pointerEvents: "none",
                         userSelect: "none"
                       }}
                     >
-                      🔒
+                      <Icon name="lock" />
                     </span>
                   </div>
                   <small style={{ color: "#4f6b58", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem" }}>
-                    <span>ℹ️</span>
+                    <span style={{ display: "inline-flex", width: "15px", height: "15px", flexShrink: 0, color: "#2e774f" }}>
+                      <Icon name="info" />
+                    </span>
                     <span><b>Terkunci Otomatis:</b> Posko BPBD rujukan ditetapkan otomatis oleh sistem sesuai wilayah bencana Anda dan tidak dapat diubah manual.</span>
                   </small>
                 </div>
