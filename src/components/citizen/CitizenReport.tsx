@@ -873,12 +873,72 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   <label className="form-label">Apakah ada kelompok rentan?</label>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "6px" }}>
                     {[
-                      { id: "Balita", label: "👶 Balita" },
-                      { id: "Anak-anak", label: "🧒 Anak-anak" },
-                      { id: "Lansia", label: "👵 Lansia" },
-                      { id: "Ibu hamil", label: "🤰 Ibu hamil" },
-                      { id: "Penyandang disabilitas", label: "♿ Penyandang disabilitas" },
-                      { id: "Tidak ada", label: "⚪ Tidak ada" },
+                      { 
+                        id: "Balita", 
+                        title: "Balita", 
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="8"/>
+                            <path d="M9 11h.01M15 11h.01"/>
+                            <path d="M9.5 15a3.5 3.5 0 0 0 5 0"/>
+                            <path d="M12 4c.5-1 1.5-1.5 2-1"/>
+                          </svg>
+                        ) 
+                      },
+                      { 
+                        id: "Anak-anak", 
+                        title: "Anak-anak", 
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="7" r="4"/>
+                            <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                          </svg>
+                        ) 
+                      },
+                      { 
+                        id: "Lansia", 
+                        title: "Lansia", 
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="10" cy="5" r="2.5"/>
+                            <path d="M10 8.5v6l-2.5 4.5"/>
+                            <path d="M10 11.5l3.5 1.5 1 6"/>
+                            <path d="M17 11a1.5 1.5 0 0 1 1.5 1.5V20"/>
+                          </svg>
+                        ) 
+                      },
+                      { 
+                        id: "Ibu hamil", 
+                        title: "Ibu hamil", 
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="11" cy="4" r="2"/>
+                            <path d="M9 7.5h3a3 3 0 0 1 3 3c0 2-1.5 3.5-3.5 3.5H9v6"/>
+                            <path d="M9 10.5a3.5 3.5 0 0 1 3.5 3.5c0 1.5-1 2.5-2.5 2.5"/>
+                          </svg>
+                        ) 
+                      },
+                      { 
+                        id: "Penyandang disabilitas", 
+                        title: "Penyandang disabilitas", 
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="4.5" r="2"/>
+                            <path d="M10 8.5h3.5l1.5 6h3"/>
+                            <path d="M13 14.5a4.5 4.5 0 1 1-4.5-4.5"/>
+                          </svg>
+                        ) 
+                      },
+                      { 
+                        id: "Tidak ada", 
+                        title: "Tidak ada", 
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/>
+                          </svg>
+                        ) 
+                      },
                     ].map((v) => {
                       const isNoneSelected = vulnerableList.includes("Tidak ada");
                       const isChecked = vulnerableList.includes(v.id);
@@ -889,7 +949,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                           style={{ 
                             display: "flex", 
                             alignItems: "center", 
-                            gap: "8px", 
+                            gap: "9px", 
                             fontSize: "0.88rem", 
                             background: isChecked ? "#e8ede7" : "#f5f4ef", 
                             padding: "10px 14px", 
@@ -897,6 +957,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                             cursor: isDisabled ? "not-allowed" : "pointer", 
                             border: isChecked ? "1.5px solid #013220" : "1px solid #e2ded4",
                             opacity: isDisabled ? 0.45 : 1,
+                            transition: "all 0.15s ease",
                           }}
                         >
                           <input 
@@ -906,8 +967,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                             onChange={() => handleToggleVulnerable(v.id)} 
                             style={{ accentColor: "#013220", width: "16px", height: "16px" }} 
                           />
+                          <span style={{ display: "inline-flex", alignItems: "center", color: isChecked ? "#013220" : "#6a7369", flexShrink: 0 }}>
+                            {v.icon}
+                          </span>
                           <span style={{ fontWeight: isChecked ? 600 : 400, color: isChecked ? "#013220" : "#2d3748" }}>
-                            {v.label}
+                            {v.title}
                           </span>
                         </label>
                       );
