@@ -2458,7 +2458,7 @@ function CaseDetail({
               </div>
             </div>
             <div className="case-map-container">
-              <MapView operational initialLat={caseLat} initialLng={caseLng} />
+              <MapView operational hideCard initialLat={caseLat} initialLng={caseLng} />
             </div>
           </div>
         </div>
@@ -3047,7 +3047,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           </div>
 
           <div className="ops-map-wrapper">
-            <MapView operational />
+            <MapView operational hideCard />
           </div>
         </div>
       </section>
@@ -4057,7 +4057,7 @@ function ResponderTask({ state, setPage, notify, onRefresh }: {
             </div>
 
             <div className="mission-map-wrapper">
-              <MapView operational />
+              <MapView operational hideCard />
             </div>
 
             <div className="mission-route-steps">

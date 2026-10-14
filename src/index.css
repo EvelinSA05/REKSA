@@ -5926,12 +5926,18 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(1, 50, 32, 0.1);
-  height: 260px;
+  height: 280px;
 }
 
 .ops-map-wrapper .map {
   margin: 0;
   height: 100%;
+}
+
+.ops-map-wrapper .leaflet-overlay-card,
+.case-map-container .leaflet-overlay-card,
+.mission-map-wrapper .leaflet-overlay-card {
+  display: none !important;
 }
 
 .posko-activity-panel {
