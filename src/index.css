@@ -5731,27 +5731,34 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 .workload-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 9px;
+  background: rgba(1, 50, 32, 0.06);
+  color: var(--forest);
+  border: 1px solid rgba(1, 50, 32, 0.08);
   display: grid;
   place-items: center;
+  transition: all 0.2s ease;
 }
 
 .workload-icon .icon {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
+  color: var(--forest);
+}
+
+.posko-workload-card:hover .workload-icon {
+  background: var(--forest);
+  color: #ffffff;
+}
+
+.posko-workload-card:hover .workload-icon .icon {
+  color: #ffffff;
 }
 
 .posko-workload-card.warning .workload-tag { color: #d97706; }
-.posko-workload-card.warning .workload-icon { background: rgba(217, 119, 6, 0.12); color: #d97706; }
-
 .posko-workload-card.danger .workload-tag { color: #dc2626; }
-.posko-workload-card.danger .workload-icon { background: rgba(220, 38, 38, 0.12); color: #dc2626; }
-
 .posko-workload-card.info .workload-tag { color: #2563eb; }
-.posko-workload-card.info .workload-icon { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
-
 .posko-workload-card.success .workload-tag { color: #16a34a; }
-.posko-workload-card.success .workload-icon { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
 
 .workload-number {
   font-size: 34px;

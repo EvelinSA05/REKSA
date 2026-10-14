@@ -102,6 +102,8 @@ const icons: Record<string, React.ReactNode> = {
   map: <svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z" /><path d="M9 3v15M15 6v15" /></svg>,
   box: <svg viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4Z" /><path d="M4 7v10l8 4 8-4V7M12 11v10" /></svg>,
   task: <svg viewBox="0 0 24 24"><path d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01" /></svg>,
+  bolt: <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+  handshake: <svg viewBox="0 0 24 24"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4.3-4.3a1 1 0 0 0 0-1.4l-2-2" /><path d="m13 7.1 2.3-2.3a1 1 0 0 1 1.4 0l4.3 4.3a1 1 0 0 1 0 1.4l-2.3 2.3" /><path d="m18 12 2.2 2.2a1 1 0 0 1 0 1.4l-4.4 4.4a1 1 0 0 1-1.4 0L12 17.6" /><path d="M2 13.5V20a2 2 0 0 0 2 2h6.5" /><path d="m2 13.5 4.5-4.5a1 1 0 0 1 1.4 0l3.6 3.6" /><path d="m6 9-2.5-2.5a1 1 0 0 1 0-1.4l4.3-4.3a1 1 0 0 1 1.4 0L11.7 3" /></svg>,
   clock: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>,
   user: <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>,
   mail: <svg viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>,
@@ -2935,7 +2937,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
         <div className="posko-workload-card danger" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
           <div className="workload-card-top">
             <span className="workload-tag">Kebutuhan Prioritas</span>
-            <div className="workload-icon">⚡</div>
+            <div className="workload-icon"><Icon name="bolt" /></div>
           </div>
           <strong className="workload-number">{prioritasKritis}</strong>
           <small className="workload-sub">Kritis &amp; Mendesak →</small>
@@ -2953,7 +2955,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
         <div className="posko-workload-card warning" style={{ cursor: "pointer" }} onClick={() => setPage("offers")}>
           <div className="workload-card-top">
             <span className="workload-tag">Penawaran Mitra</span>
-            <div className="workload-icon">🤝</div>
+            <div className="workload-icon"><Icon name="handshake" /></div>
           </div>
           <strong className="workload-number">{penawaranMenunggu}</strong>
           <small className="workload-sub">Menunggu Keputusan →</small>
@@ -3720,7 +3722,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
         <div className="posko-workload-card warning" style={{ cursor: "pointer" }} onClick={() => setPage("my-offers")}>
           <div className="workload-card-top">
             <span className="workload-tag">Penawaran Saya</span>
-            <div className="workload-icon">🤝</div>
+            <div className="workload-icon"><Icon name="handshake" /></div>
           </div>
           <strong className="workload-number">{pendingOffersCount}</strong>
           <small className="workload-sub">Menunggu Posko →</small>
@@ -4986,6 +4988,7 @@ export default function App() {
                 caseCode.startsWith("RK-MULTI-") ||
                 caseCode.startsWith("RK-AIR-") ||
                 caseCode.startsWith("RK-BERAS-") ||
+                
                 caseCode.startsWith("RK-LOG-") ||
                 caseCode.startsWith("RK-AUTH-");
 
