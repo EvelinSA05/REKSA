@@ -1049,7 +1049,22 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
               <div className="form-fields-group">
                 <div className="form-group">
                   <label className="form-label">Lampirkan Foto Kondisi Lapangan atau Surat RT/RW</label>
-                  <label className="report-upload-box">
+                  <label 
+                    className="report-upload-box"
+                    style={fotoBukti ? {
+                      padding: 0,
+                      overflow: "hidden",
+                      border: "2px solid #013220",
+                      background: "#081a11",
+                      borderRadius: "18px",
+                      position: "relative",
+                      minHeight: "220px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer"
+                    } : undefined}
+                  >
                     <input 
                       type="file" 
                       accept="image/*,.pdf" 
@@ -1105,25 +1120,117 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         }
                       }} 
                     />
-                    <div className="upload-box-icon"><Icon name="plus" /></div>
-                    <strong>Pilih foto atau dokumen bukti</strong>
-                    <p>Mendukung format JPG, PNG, atau PDF · Maksimal 10 MB</p>
-                    {fileName ? (
-                      <div className="uploaded-file-chip">
-                        <Icon name="check" /> {fileName}
+
+                    {fotoBukti ? (
+                      <div style={{ position: "relative", width: "100%", height: "100%", minHeight: "220px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <img 
+                          src={fotoBukti} 
+                          alt="Pratinjau Bukti Lapangan" 
+                          style={{ 
+                            width: "100%", 
+                            maxHeight: "340px", 
+                            objectFit: "contain", 
+                            display: "block",
+                            background: "#0d2116"
+                          }} 
+                        />
+                        <div style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          background: "linear-gradient(to top, rgba(1, 36, 23, 0.95), rgba(1, 36, 23, 0.4) 65%, transparent)",
+                          padding: "24px 16px 12px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          color: "#ffffff",
+                          flexWrap: "wrap",
+                          gap: "8px",
+                          zIndex: 2
+                        }}>
+                          <span style={{ 
+                            display: "inline-flex", 
+                            alignItems: "center", 
+                            gap: "6px",
+                            background: "rgba(255, 255, 255, 0.2)",
+                            backdropFilter: "blur(6px)",
+                            padding: "4px 12px", 
+                            borderRadius: "20px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                            color: "#ffffff",
+                            maxWidth: "70%",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                          }}>
+                            <Icon name="check" /> {fileName || "Foto Berhasil Terunggah"}
+                          </span>
+                          <span style={{ 
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            fontSize: "0.8rem", 
+                            background: "#ffffff", 
+                            color: "#013220", 
+                            fontWeight: 700, 
+                            padding: "6px 12px", 
+                            borderRadius: "8px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.25)"
+                          }}>
+                            <Icon name="edit" /> Ganti Foto
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setFotoBukti(undefined);
+                            setFileName("");
+                          }}
+                          style={{
+                            position: "absolute",
+                            top: "12px",
+                            right: "12px",
+                            background: "rgba(0, 0, 0, 0.65)",
+                            color: "#ffffff",
+                            border: "1px solid rgba(255, 255, 255, 0.35)",
+                            borderRadius: "50%",
+                            width: "32px",
+                            height: "32px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: 700,
+                            zIndex: 10,
+                            backdropFilter: "blur(4px)"
+                          }}
+                          title="Hapus Foto"
+                        >
+                          ✕
+                        </button>
                       </div>
                     ) : (
-                      <span style={{ fontSize: "0.82rem", color: "#80866e", marginTop: "4px" }}>
-                        (Foto kondisi riil membantu posko memprioritaskan bantuan)
-                      </span>
+                      <>
+                        <div className="upload-box-icon"><Icon name="plus" /></div>
+                        <strong>Pilih foto atau dokumen bukti</strong>
+                        <p>Mendukung format JPG, PNG, atau PDF · Maksimal 10 MB</p>
+                        {fileName ? (
+                          <div className="uploaded-file-chip">
+                            <Icon name="check" /> {fileName}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: "0.82rem", color: "#80866e", marginTop: "4px" }}>
+                            (Foto kondisi riil membantu posko memprioritaskan bantuan)
+                          </span>
+                        )}
+                      </>
                     )}
                   </label>
-
-                  {fotoBukti && (
-                    <div style={{ marginTop: "14px", borderRadius: "12px", overflow: "hidden", border: "1px solid #c1c3ac", maxHeight: "200px" }}>
-                      <img src={fotoBukti} alt="Pratinjau Bukti Lapangan" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                    </div>
-                  )}
                 </div>
               </div>
             )}
