@@ -16,6 +16,80 @@ interface CitizenReportProps {
   state?: SharedState;
 }
 
+const POSKO_DATABASE: Record<string, string[]> = {
+  "Jawa Timur": [
+    "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
+    "Posko BPBD Kabupaten Sidoarjo (Posko Induk)",
+    "Posko BPBD Kota Surabaya (Posko Induk)",
+    "Posko Darurat BPBD Kabupaten Gresik",
+    "Posko Siaga Bencana BPBD Kabupaten Malang",
+    "Posko Tanggap Darurat BPBD Kabupaten Pasuruan",
+    "Posko Penanggulangan Bencana BPBD Kab. Mojokerto",
+  ],
+  "Jawa Barat": [
+    "Posko BPBD Provinsi Jawa Barat (Pusdalops PB)",
+    "Posko BPBD Kabupaten Sukabumi (Posko Induk)",
+    "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)",
+    "Posko Darurat Kecamatan Cibadak (BPBD Sukabumi)",
+    "Posko Siaga Bencana BPBD Kota Bandung",
+    "Posko Tanggap Darurat BPBD Kabupaten Bogor",
+    "Posko Penanggulangan Bencana BPBD Kab. Cianjur",
+  ],
+  "DKI Jakarta": [
+    "Posko Induk BPBD DKI Jakarta",
+    "Posko Penanggulangan Bencana BPBD Jakarta Pusat",
+    "Posko Siaga Banjir BPBD Jakarta Timur",
+    "Posko Siaga Bencana BPBD Jakarta Selatan",
+    "Posko Darurat BPBD Jakarta Barat",
+    "Posko Pesisir & Bencana Laut BPBD Jakarta Utara",
+  ],
+  "Jawa Tengah": [
+    "Posko BPBD Provinsi Jawa Tengah (Pusdalops)",
+    "Posko BPBD Kota Semarang (Posko Induk)",
+    "Posko Darurat Bencana BPBD Kabupaten Magelang",
+    "Posko Siaga Erupsi BPBD Kabupaten Boyolali",
+    "Posko Tanggap Darurat BPBD Kabupaten Banyumas",
+  ],
+  "DI Yogyakarta": [
+    "Posko Induk TRC BPBD DI Yogyakarta",
+    "Posko Siaga Merapi BPBD Kabupaten Sleman",
+    "Posko Darurat BPBD Kabupaten Bantul",
+    "Posko Penanggulangan Bencana BPBD Kota Yogyakarta",
+    "Posko Siaga Bencana BPBD Kab. Gunungkidul",
+  ],
+  "Banten": [
+    "Posko BPBD Provinsi Banten (Pusdalops)",
+    "Posko Darurat BPBD Kabupaten Lebak",
+    "Posko Tanggap Bencana BPBD Kabupaten Pandeglang",
+    "Posko Siaga BPBD Kota Tangerang",
+    "Posko Penanggulangan Bencana BPBD Kab. Serang",
+  ],
+  "Bali": [
+    "Posko BPBD Provinsi Bali (Pusdalops Denpasar)",
+    "Posko Siaga Bencana BPBD Kabupaten Karangasem",
+    "Posko Darurat BPBD Kabupaten Badung",
+    "Posko Penanggulangan Bencana BPBD Kab. Buleleng",
+  ],
+  "Sumatera Utara": [
+    "Posko BPBD Provinsi Sumatera Utara",
+    "Posko Induk BPBD Kota Medan",
+    "Posko Darurat Bencana BPBD Kabupaten Karo",
+    "Posko Siaga Bencana BPBD Kabupaten Deli Serdang",
+  ],
+  "Sulawesi Selatan": [
+    "Posko BPBD Provinsi Sulawesi Selatan",
+    "Posko Induk BPBD Kota Makassar",
+    "Posko Tanggap Darurat BPBD Kabupaten Luwu",
+    "Posko Siaga Bencana BPBD Kabupaten Gowa",
+  ],
+  "Kalimantan Timur": [
+    "Posko BPBD Provinsi Kalimantan Timur",
+    "Posko Induk BPBD Kota Samarinda",
+    "Posko Siaga Bencana BPBD Kota Balikpapan",
+    "Posko Darurat BPBD Kabupaten Kutai Kartanegara",
+  ],
+};
+
 const getInitialDraft = () => {
   try {
     const raw = localStorage.getItem("reksa_report_draft");
@@ -189,6 +263,41 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
     if (category === "Penerangan & Energi") return "Unit / Paket";
     if (category === "Sandang & Kebutuhan Dasar") return "Paket / Unit";
     return customUnit || "Unit / Paket";
+  };
+
+  // Posko BPBD Dinamis Menyesuaikan Provinsi & Kabupaten yang Dipilih
+  const getAvailablePoskos = () => {
+    let list: string[] = [];
+
+    if (province && POSKO_DATABASE[province]) {
+      list = [...POSKO_DATABASE[province]];
+    } else if (!province) {
+      list = Object.values(POSKO_DATABASE).map((arr) => arr[0]);
+    } else {
+      list = [
+        `Posko BPBD Provinsi ${province} (Komando Wilayah)`,
+        `Posko Penanggulangan Bencana BPBD ${province}`,
+      ];
+    }
+
+    if (regency.trim()) {
+      const cleanName = regency.trim().replace(/^(Kota|Kabupaten|Kab\.|Kota\s+Adm\.)\s+/i, "");
+      const matchIdx = list.findIndex((p) => p.toLowerCase().includes(cleanName.toLowerCase()));
+      if (matchIdx > 0) {
+        const matched = list.splice(matchIdx, 1)[0];
+        list.unshift(matched);
+      } else if (matchIdx === -1 && cleanName.length >= 2) {
+        const prefix = regency.trim().toLowerCase().startsWith("kota") ? "Kota" : "Kabupaten";
+        const customPosko = `Posko BPBD ${prefix} ${cleanName} (Posko Induk)`;
+        list.unshift(customPosko);
+      }
+    }
+
+    if (poskoTarget && !list.includes(poskoTarget)) {
+      list.unshift(poskoTarget);
+    }
+
+    return list;
   };
 
   const categories = [
@@ -512,7 +621,19 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 <div className="form-row-two">
                   <div className="form-group">
                     <label className="form-label">Provinsi</label>
-                    <select className="form-control select" value={province} onChange={(e) => setProvince(e.target.value)}>
+                    <select 
+                      className="form-control select" 
+                      value={province} 
+                      onChange={(e) => {
+                        const newProv = e.target.value;
+                        setProvince(newProv);
+                        if (newProv && POSKO_DATABASE[newProv]) {
+                          setPoskoTarget(POSKO_DATABASE[newProv][0]);
+                        } else if (!newProv) {
+                          setPoskoTarget("");
+                        }
+                      }}
+                    >
                       <option value="">-- Pilih Provinsi --</option>
                       {[
                         "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", 
@@ -528,8 +649,18 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       type="text" 
                       className="form-control" 
                       value={regency} 
-                      onChange={(e) => setRegency(e.target.value)} 
-                      placeholder="Contoh: Kota Surabaya / Kab. Sukabumi"
+                      onChange={(e) => {
+                        const newReg = e.target.value;
+                        setRegency(newReg);
+                        if (province && POSKO_DATABASE[province] && newReg.trim().length >= 3) {
+                          const clean = newReg.trim().toLowerCase().replace(/^(kota|kabupaten|kab\.)\s+/i, "");
+                          const matched = POSKO_DATABASE[province].find((p) => p.toLowerCase().includes(clean));
+                          if (matched) {
+                            setPoskoTarget(matched);
+                          }
+                        }
+                      }} 
+                      placeholder="Contoh: Kabupaten Sidoarjo / Kota Surabaya / Kab. Sukabumi"
                     />
                   </div>
                 </div>
@@ -558,20 +689,21 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Posko BPBD Wilayah Rujukan</label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                    <label className="form-label" style={{ margin: 0 }}>Posko BPBD Wilayah Rujukan</label>
+                    {province && (
+                      <span style={{ fontSize: "0.78rem", color: "#1c5a39", fontWeight: 600 }}>
+                        📍 Menyesuaikan {province}
+                      </span>
+                    )}
+                  </div>
                   <select 
                     className="form-control select" 
                     value={poskoTarget} 
                     onChange={(e) => setPoskoTarget(e.target.value)}
                   >
-                    <option value="">-- Pilih Posko BPBD Rujukan --</option>
-                    {[
-                      "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
-                      "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)",
-                      "Posko BPBD Kabupaten Sukabumi (Posko Induk)",
-                      "Posko Darurat Kecamatan Cibadak",
-                      "Posko Induk BPBD DKI Jakarta",
-                    ].map((pos) => (
+                    <option value="">{province ? `-- Pilih Posko BPBD di ${province} --` : "-- Pilih Posko BPBD Rujukan --"}</option>
+                    {getAvailablePoskos().map((pos) => (
                       <option key={pos} value={pos}>{pos}</option>
                     ))}
                   </select>

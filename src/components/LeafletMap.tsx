@@ -197,6 +197,27 @@ export function LeafletMap({
         const kec = data.localityInfo?.administrative?.[3]?.name || data.locality || fallback.kecamatan;
         const desa = data.localityInfo?.administrative?.[4]?.name || data.locality || kec;
 
+        const resolvePosko = (p = "", k = "", c = "") => {
+          const lp = p.toLowerCase();
+          const lk = k.toLowerCase();
+          const lc = c.toLowerCase();
+          if (lk.includes("sidoarjo")) return "Posko BPBD Kabupaten Sidoarjo (Posko Induk)";
+          if (lk.includes("surabaya")) return "Posko Penanggulangan Bencana BPBD Kota Surabaya";
+          if (lk.includes("gresik")) return "Posko Siaga Darurat BPBD Kab. Gresik";
+          if (lk.includes("malang")) return "Posko Penanganan Bencana BPBD Kab. Malang";
+          if (lk.includes("sukabumi") || lc.includes("cibadak")) return "Posko BPBD Kabupaten Sukabumi (Posko Induk)";
+          if (lk.includes("bandung")) return "Posko Siaga Bencana BPBD Kota Bandung";
+          if (lk.includes("bogor")) return "Posko Tanggap Darurat BPBD Kabupaten Bogor";
+          if (lp.includes("dki") || lk.includes("jakarta")) return "Posko Induk BPBD DKI Jakarta";
+          if (lp.includes("jawa timur")) return "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
+          if (lp.includes("jawa barat")) return "Posko BPBD Provinsi Jawa Barat (Pusdalops PB)";
+          if (lp.includes("jawa tengah")) return "Posko BPBD Provinsi Jawa Tengah (Pusdalops)";
+          if (lp.includes("yogyakarta") || lp.includes("jogja")) return "Posko Induk TRC BPBD DI Yogyakarta";
+          if (lp.includes("banten")) return "Posko BPBD Provinsi Banten (Pusdalops)";
+          if (lp.includes("bali")) return "Posko BPBD Provinsi Bali (Pusdalops Denpasar)";
+          return k ? `Posko BPBD ${k}` : "Posko BPBD Wilayah Rujukan";
+        };
+
         const info: LocationInfo = {
           lat: Number(lat.toFixed(6)),
           lng: Number(lng.toFixed(6)),
@@ -204,11 +225,7 @@ export function LeafletMap({
           kecamatan: (kec || fallback.kecamatan).replace(/Kecamatan\s+/i, ""),
           kabupaten: (kab || fallback.kabupaten),
           provinsi: (prov || fallback.provinsi),
-          poskoName: (prov.includes("Jawa Barat") || kab.includes("Sukabumi") || kec.includes("Cibadak"))
-            ? "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)"
-            : (prov.includes("Jawa Timur") || kab.includes("Surabaya")) 
-              ? "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)" 
-              : `Posko BPBD ${kab} (${prov})`,
+          poskoName: resolvePosko(prov, kab, kec),
         };
 
         setActiveAddress(`${info.desa}, Kec. ${info.kecamatan}, ${info.kabupaten}`);
@@ -234,6 +251,27 @@ export function LeafletMap({
             const kab = addr.city || addr.town || addr.regency || addr.county || fallback.kabupaten;
             const prov = addr.state || addr.province || fallback.provinsi;
 
+            const resolvePosko = (p = "", k = "", c = "") => {
+              const lp = p.toLowerCase();
+              const lk = k.toLowerCase();
+              const lc = c.toLowerCase();
+              if (lk.includes("sidoarjo")) return "Posko BPBD Kabupaten Sidoarjo (Posko Induk)";
+              if (lk.includes("surabaya")) return "Posko Penanggulangan Bencana BPBD Kota Surabaya";
+              if (lk.includes("gresik")) return "Posko Siaga Darurat BPBD Kab. Gresik";
+              if (lk.includes("malang")) return "Posko Penanganan Bencana BPBD Kab. Malang";
+              if (lk.includes("sukabumi") || lc.includes("cibadak")) return "Posko BPBD Kabupaten Sukabumi (Posko Induk)";
+              if (lk.includes("bandung")) return "Posko Siaga Bencana BPBD Kota Bandung";
+              if (lk.includes("bogor")) return "Posko Tanggap Darurat BPBD Kabupaten Bogor";
+              if (lp.includes("dki") || lk.includes("jakarta")) return "Posko Induk BPBD DKI Jakarta";
+              if (lp.includes("jawa timur")) return "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
+              if (lp.includes("jawa barat")) return "Posko BPBD Provinsi Jawa Barat (Pusdalops PB)";
+              if (lp.includes("jawa tengah")) return "Posko BPBD Provinsi Jawa Tengah (Pusdalops)";
+              if (lp.includes("yogyakarta") || lp.includes("jogja")) return "Posko Induk TRC BPBD DI Yogyakarta";
+              if (lp.includes("banten")) return "Posko BPBD Provinsi Banten (Pusdalops)";
+              if (lp.includes("bali")) return "Posko BPBD Provinsi Bali (Pusdalops Denpasar)";
+              return k ? `Posko BPBD ${k}` : "Posko BPBD Wilayah Rujukan";
+            };
+
             const info: LocationInfo = {
               lat: Number(lat.toFixed(6)),
               lng: Number(lng.toFixed(6)),
@@ -241,11 +279,7 @@ export function LeafletMap({
               kecamatan: (kec || fallback.kecamatan).replace(/Kecamatan\s+/i, ""),
               kabupaten: (kab || fallback.kabupaten),
               provinsi: (prov || fallback.provinsi),
-              poskoName: (prov.includes("Jawa Barat") || kab.includes("Sukabumi") || kec.includes("Cibadak"))
-                ? "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)"
-                : (prov.includes("Jawa Timur") || kab.includes("Surabaya")) 
-                  ? "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)" 
-                  : `Posko BPBD ${kab} (${prov})`,
+              poskoName: resolvePosko(prov, kab, kec),
             };
 
             setActiveAddress(`${info.desa}, Kec. ${info.kecamatan}, ${info.kabupaten}`);
