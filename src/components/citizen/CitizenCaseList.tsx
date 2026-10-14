@@ -8,6 +8,7 @@ import {
   Button,
   Pill,
   getFieldEvidencePhoto,
+  removeUserReportedId,
 } from "../../App";
 import { apiService } from "../../services/api";
 import { CitizenClarificationModal } from "./CitizenClarificationModal";
@@ -20,6 +21,7 @@ interface CitizenCaseListProps {
   completed?: boolean;
   state?: SharedState;
   update?: RouterProps["update"];
+  onNavigateToReport?: () => void;
 }
 
 export function CitizenCaseList({
@@ -30,6 +32,7 @@ export function CitizenCaseList({
   completed = false,
   state,
   update,
+  onNavigateToReport,
 }: CitizenCaseListProps) {
   const [filter, setFilter] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,11 +56,12 @@ export function CitizenCaseList({
   };
 
   const clarificationCount = allCases.filter(
-    (c) => (!own || c.isOwn) && c.status === "Perlu Klarifikasi"
+    (c) => (!own || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))) && c.status === "Perlu Klarifikasi"
   ).length;
 
   const data = allCases.filter((c) => {
-    const matchesOwn = !own || c.isOwn;
+    const isDummy = c.id.startsWith("RK-UJI-") || c.id.includes("TEST") || c.id.startsWith("RK-MULTI-");
+    const matchesOwn = !own || (Boolean(c.isOwn) && !isDummy);
     const matchesCompleted = !completed || c.status === "Selesai";
     const matchesFilter =
       filter === "Semua" ||
@@ -113,6 +117,8 @@ export function CitizenCaseList({
   const confirmDelete = () => {
     if (!deletingCase || !update) return;
     const updated = allCases.filter((c) => c.id !== deletingCase.id);
+
+    removeUserReportedId(deletingCase.id);
 
     // 1. Send DELETE to Laravel backend
     apiService.deleteKebutuhan(deletingCase.id).catch((e) => console.log("API delete note:", e));
@@ -195,9 +201,63 @@ export function CitizenCaseList({
       {/* CASE CARDS GRID */}
       <div className="case-cards-grid">
         {data.length === 0 ? (
-          <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", background: "#f5f4ef", borderRadius: "16px", color: "#80866e" }}>
-            <Icon name="file" />
-            <p style={{ marginTop: "10px", fontWeight: 600 }}>Tidak ada data laporan kasus yang sesuai filter atau data telah dihapus.</p>
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              textAlign: "center",
+              padding: "48px 24px",
+              background: "#f5f4ef",
+              borderRadius: "18px",
+              border: "1px dashed #d1d5db",
+            }}
+          >
+            <div
+              style={{
+                width: "52px",
+                height: "52px",
+                borderRadius: "14px",
+                background: "#e8ebe2",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "14px",
+                color: "#013220",
+              }}
+            >
+              <Icon name="file" />
+            </div>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#013220", margin: "0 0 6px" }}>
+              Belum Ada Laporan Diajukan
+            </h3>
+            <p
+              style={{
+                color: "#616852",
+                fontSize: "0.9rem",
+                maxWidth: "460px",
+                margin: "0 auto 20px",
+                lineHeight: 1.5,
+              }}
+            >
+              {searchQuery || filter !== "Semua"
+                ? "Tidak ada data laporan kasus yang sesuai dengan filter atau kata kunci pencarian Anda."
+                : "Anda belum mengajukan laporan kebutuhan darurat. Bila keluarga atau lingkungan Anda memerlukan bantuan pascabencana, silakan buat laporan baru."}
+            </p>
+            {onNavigateToReport && !searchQuery && filter === "Semua" && (
+              <Button
+                variant="primary"
+                onClick={onNavigateToReport}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 22px",
+                  fontWeight: 600,
+                  fontSize: "0.9rem",
+                }}
+              >
+                <Icon name="plus" /> Laporkan Kebutuhan Sekarang
+              </Button>
+            )}
           </div>
         ) : (
           data.map((c) => {

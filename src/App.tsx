@@ -61,6 +61,27 @@ export type CaseRecord = {
 
 const initialCases: CaseRecord[] = [];
 
+export function getUserReportedIds(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("reksa_user_reported_ids") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function addUserReportedId(id: string): void {
+  const ids = getUserReportedIds();
+  if (!ids.includes(id)) {
+    ids.push(id);
+    localStorage.setItem("reksa_user_reported_ids", JSON.stringify(ids));
+  }
+}
+
+export function removeUserReportedId(id: string): void {
+  const ids = getUserReportedIds().filter((x) => x !== id);
+  localStorage.setItem("reksa_user_reported_ids", JSON.stringify(ids));
+}
+
 
 const accounts = [
   { role: "Masyarakat Terdampak", name: "Andi Pratama", email: "andi.masyarakat@reksa.id", type: "citizen" as Role },
@@ -1241,8 +1262,8 @@ function CitizenRouter({ page, setPage, state, update, notify, name = "Andi Prat
   if (page === "dashboard") return <CitizenDashboard state={state} update={update} setPage={setPage} name={name} />;
   if (page === "report") return <CitizenReport complete={() => setPage("cases")} update={update} state={state} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
-  if (page === "cases") return <CitizenCaseList title="Laporan Saya" copy="Semua kebutuhan yang pernah Anda laporkan." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} own state={state} update={update} />;
-  if (page === "history") return <CitizenCaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed state={state} update={update} />;
+  if (page === "cases") return <CitizenCaseList title="Laporan Saya" copy="Semua kebutuhan yang pernah Anda laporkan." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} own state={state} update={update} onNavigateToReport={() => setPage("report")} />;
+  if (page === "history") return <CitizenCaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed state={state} update={update} onNavigateToReport={() => setPage("report")} />;
   if (page === "notifications") return <Notifications role="citizen" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Masyarakat" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
@@ -4418,7 +4439,7 @@ function Profile({
   );
 
   const allCases = state?.casesList ?? [];
-  const myCases = allCases.filter((c) => c.isOwn !== false);
+  const myCases = allCases.filter((c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST")));
 
   const totalReports = myCases.length;
   const inVerify = myCases.filter((c) => c.status === "Dalam Verifikasi").length;
@@ -4875,17 +4896,24 @@ export default function App() {
       try {
         const parsed = JSON.parse(local);
         if (Array.isArray(parsed)) {
-          savedList = parsed.filter((c: any) => 
-            c.id !== "RK-2026-00272" && 
-            c.item !== "Sanitasi" &&
-            !c.id.startsWith("RK-UJI-") &&
-            !c.id.includes("TEST") &&
-            !c.id.startsWith("RK-MULTI-") &&
-            !c.id.startsWith("RK-AIR-") &&
-            !c.id.startsWith("RK-BERAS-") &&
-            !c.id.startsWith("RK-LOG-") &&
-            !c.id.startsWith("RK-AUTH-")
-          );
+          const reportedIds = getUserReportedIds();
+          savedList = parsed
+            .filter((c: any) => 
+              c.id !== "RK-2026-00272" && 
+              c.item !== "Sanitasi" &&
+              !c.id.startsWith("RK-UJI-") &&
+              !c.id.includes("TEST") &&
+              !c.id.startsWith("RK-MULTI-") &&
+              !c.id.startsWith("RK-AIR-") &&
+              !c.id.startsWith("RK-BERAS-") &&
+              !c.id.startsWith("RK-LOG-") &&
+              !c.id.startsWith("RK-AUTH-")
+            )
+            .map((c: any) => ({
+              ...c,
+              isOwn: Boolean(reportedIds.includes(c.id) || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))),
+            }));
+          localStorage.setItem("reksa_cases_db", JSON.stringify(savedList));
         }
       } catch (e) {}
     }
@@ -4934,27 +4962,45 @@ export default function App() {
       if (res.success && Array.isArray(res.data)) {
         setState((prev) => {
           const prevCasesMap = new Map((prev.casesList || []).map((c) => [c.id, c]));
-          const dbCases: CaseRecord[] = res.data.map((item) => {
-            const poskoInfo = item.posko;
-            const v = item.desa || poskoInfo?.desa || "Gubeng";
-            const d = item.kecamatan || poskoInfo?.kecamatan;
-            const k = item.kabupaten || poskoInfo?.kabupaten || "Kota Surabaya";
-            const p = item.provinsi || poskoInfo?.provinsi || "Jawa Timur";
-            const locStr = d ? `${v}, Kec. ${d}` : `${v}, ${k}`;
-            const caseCode = item.kode_kasus || `RK-2026-00${item.id}`;
-            const localCase = prevCasesMap.get(caseCode);
-            const resolvedFoto = (item.foto_bukti && item.foto_bukti !== "null") ? item.foto_bukti : (localCase?.fotoBukti || undefined);
+          const reportedIds = getUserReportedIds();
 
-            return {
-              id: caseCode,
-              rawId: item.id,
-              item: item.kategori_kebutuhan || "Kebutuhan Darurat",
-              location: locStr,
-              kk: `${item.jumlah_kk || 1} KK`,
-              qty: item.volume_permintaan || "1 Paket",
-              urgency: item.tingkat_urgensi || "Sedang",
-              status: item.status || "Dalam Verifikasi",
-              isOwn: true,
+          const dbCases: CaseRecord[] = res.data
+            .filter((item: any) => {
+              const code = item.kode_kasus || `RK-2026-00${item.id}`;
+              return !code.startsWith("RK-UJI-") && !code.includes("TEST");
+            })
+            .map((item) => {
+              const poskoInfo = item.posko;
+              const v = item.desa || poskoInfo?.desa || "Gubeng";
+              const d = item.kecamatan || poskoInfo?.kecamatan;
+              const k = item.kabupaten || poskoInfo?.kabupaten || "Kota Surabaya";
+              const p = item.provinsi || poskoInfo?.provinsi || "Jawa Timur";
+              const locStr = d ? `${v}, Kec. ${d}` : `${v}, ${k}`;
+              const caseCode = item.kode_kasus || `RK-2026-00${item.id}`;
+              const localCase = prevCasesMap.get(caseCode);
+              const resolvedFoto = (item.foto_bukti && item.foto_bukti !== "null") ? item.foto_bukti : (localCase?.fotoBukti || undefined);
+
+              const isDummy = 
+                caseCode.startsWith("RK-UJI-") || 
+                caseCode.includes("TEST") || 
+                caseCode.startsWith("RK-MULTI-") ||
+                caseCode.startsWith("RK-AIR-") ||
+                caseCode.startsWith("RK-BERAS-") ||
+                caseCode.startsWith("RK-LOG-") ||
+                caseCode.startsWith("RK-AUTH-");
+
+              const isUserOwnReport = !isDummy && (reportedIds.includes(caseCode) || (localCase?.isOwn === true && !localCase?.id?.startsWith("RK-UJI-")));
+
+              return {
+                id: caseCode,
+                rawId: item.id,
+                item: item.kategori_kebutuhan || "Kebutuhan Darurat",
+                location: locStr,
+                kk: `${item.jumlah_kk || 1} KK`,
+                qty: item.volume_permintaan || "1 Paket",
+                urgency: item.tingkat_urgensi || "Sedang",
+                status: item.status || "Dalam Verifikasi",
+                isOwn: isUserOwnReport,
               notes: item.deskripsi || item.catatan_verifikasi_posko || `Kebutuhan ${item.kategori_kebutuhan} untuk warga terdampak.`,
               date: new Date(item.created_at || Date.now()).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
               posko: poskoInfo?.nama_posko || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",

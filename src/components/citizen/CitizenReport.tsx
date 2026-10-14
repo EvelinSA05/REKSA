@@ -7,6 +7,7 @@ import {
   Icon,
   Button,
   MapView,
+  addUserReportedId,
 } from "../../App";
 import { apiService } from "../../services/api";
 
@@ -1491,6 +1492,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       createdAtTime: timeStr,
                       createdAtRaw: createdDbItem?.created_at || new Date().toISOString(),
                     };
+
+                    addUserReportedId(finalCode);
 
                     const currentCases = state?.casesList || [];
                     const updatedList = [newReport, ...currentCases.filter(c => c.id !== finalCode)];

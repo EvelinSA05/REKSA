@@ -25,7 +25,9 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
   const [selectedQuick, setSelectedQuick] = useState(0);
   const [clarificationModalCase, setClarificationModalCase] = useState<CaseRecord | null>(null);
   
-  const currentCases = state.casesList || [];
+  const currentCases = (state.casesList || []).filter(
+    (c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))
+  );
   const hasCases = currentCases.length > 0;
   const clarificationCases = currentCases.filter((c) => c.status === "Perlu Klarifikasi");
 
