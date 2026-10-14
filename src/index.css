@@ -1224,20 +1224,27 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 
 .all-case-card {
   background: var(--white);
-  border: 1.5px solid rgba(1, 50, 32, 0.10);
-  border-radius: 18px;
-  padding: 22px;
+  border: 1px solid rgba(1, 50, 32, 0.10);
+  border-radius: 20px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 16px rgba(1, 50, 32, 0.03);
-  transition: all 0.22s ease;
+  box-shadow: 0 6px 20px rgba(1, 50, 32, 0.04);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .all-case-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(1, 50, 32, 0.08);
-  border-color: rgba(1, 50, 32, 0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(1, 50, 32, 0.10);
+  border-color: var(--forest);
+}
+
+.all-case-card:hover .btn-case-action {
+  background: var(--forest);
+  color: var(--white);
 }
 
 .all-case-card-header {

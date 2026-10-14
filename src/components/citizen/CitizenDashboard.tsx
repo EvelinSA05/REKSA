@@ -232,11 +232,11 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                 <div 
                   className={`all-case-card ${isCritical ? "priority-critical" : ""}`} 
                   key={c.id}
-                  style={isClarification ? { borderColor: "#f59e0b", background: "#fffdf5" } : undefined}
+                  style={isClarification ? { borderColor: "#f59e0b", background: "#fffdfa" } : undefined}
                 >
-                  <div className="all-case-card-header">
-                    <span className="all-case-code">{c.id}</span>
-                    <div style={{ display: "flex", gap: "6px" }}>
+                  <div className="case-card-header">
+                    <div className="case-code-badge">{c.id}</div>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                       {isClarification && (
                         <span style={{ fontSize: "0.74rem", background: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
                           ⚠️ Klarifikasi
@@ -246,9 +246,9 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                     </div>
                   </div>
 
-                  <div className="all-case-card-content">
-                    <div className="all-case-main-info">
-                      <div className="all-case-photo-thumb">
+                  <div className="case-card-body">
+                    <div className="case-card-main-row">
+                      <div className="case-photo-badge">
                         <img 
                           src={getFieldEvidencePhoto(c.item, c.fotoBukti)} 
                           alt={c.item} 
@@ -257,58 +257,103 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                           }}
                         />
                       </div>
-                      <div className="all-case-text-details">
-                        <h4>{c.item}</h4>
-                        <div className="all-case-location">
+                      <div className="case-card-header-info">
+                        <h3>{c.item}</h3>
+                        <div className="case-card-location">
                           <Icon name="pin" />
                           <span>{c.location} · {c.kk}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="all-case-metrics">
-                      <div className="metric-box">
-                        <small>Jumlah Diminta</small>
-                        <strong>{c.qty}</strong>
-                      </div>
-                      <div className="metric-box">
-                        <small>Tanggal Lapor</small>
-                        <span>{c.date || "Hari ini"}</span>
-                      </div>
-                    </div>
-
                     {isClarification && (
-                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "8px", padding: "8px 10px", marginTop: "8px", fontSize: "0.8rem", color: "#92400e" }}>
-                        <strong>Petugas BPBD:</strong> "{c.pertanyaanKlarifikasi || "Mohon berikan rincian data tambahan."}"
+                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "10px", padding: "10px 12px", marginBottom: "14px", fontSize: "0.82rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#b45309", fontWeight: 700 }}>
+                          <Icon name="check" /> Instruksi Posko BPBD:
+                        </div>
+                        <div style={{ color: "#78350f", marginTop: "3px", lineHeight: 1.4, fontWeight: 500 }}>
+                          "{c.pertanyaanKlarifikasi || "Mohon berikan rincian data tambahan untuk laporan kebutuhan ini."}"
+                        </div>
                       </div>
                     )}
 
-                    <div className="all-case-progress-wrap" style={{ marginTop: "12px" }}>
-                      <div className="progress-labels">
-                        <span>Status Alur</span>
-                        <span className="status-name">{c.status}</span>
+                    <div className="case-card-quantity">
+                      <div>
+                        <small style={{ display: "block", fontSize: "0.72rem", color: "#616852", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600, marginBottom: "2px" }}>
+                          Volume Diminta
+                        </small>
+                        <strong style={{ fontSize: "1rem", color: "var(--forest)", fontWeight: 700 }}>
+                          {c.qty}
+                        </strong>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <small style={{ display: "block", fontSize: "0.72rem", color: "#616852", textTransform: "uppercase", letterSpacing: "0.04em", fontWeight: 600, marginBottom: "2px" }}>
+                          Tanggal Lapor
+                        </small>
+                        <span style={{ fontSize: "0.85rem", color: "var(--forest)", fontWeight: 600 }}>
+                          {c.date || "Hari ini"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="all-case-card-progress" style={{ margin: "14px 0 16px" }}>
+                      <div className="card-progress-labels">
+                        <span style={{ fontSize: "0.78rem", color: "#616852", fontWeight: 600 }}>Status Alur</span>
+                        <strong style={{ fontSize: "0.8rem", color: isDone ? "#15803d" : "#013220", fontWeight: 700 }}>
+                          {c.status} ({cPercent}%)
+                        </strong>
                       </div>
                       <Progress value={cPercent} />
                     </div>
                   </div>
 
-                  <div className="all-case-card-footer">
+                  <div className="case-card-footer">
                     <div className="case-status-indicator">
                       <i className={`status-dot ${isDone ? "done" : isClarification ? "warning" : "active"}`} style={isClarification ? { background: "#f59e0b" } : undefined} />
-                      <span>{c.status}</span>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 600, color: isClarification ? "#b45309" : "var(--forest)" }}>{c.status}</span>
                     </div>
                     {isClarification ? (
                       <button 
+                        type="button"
                         className="btn-case-action" 
                         onClick={() => setClarificationModalCase(c)}
-                        style={{ background: "#b45309", color: "#ffffff", border: "none", fontWeight: 700, padding: "6px 12px", borderRadius: "8px" }}
+                        style={{ 
+                          background: "#b45309", 
+                          color: "#ffffff", 
+                          border: "none", 
+                          fontWeight: 700, 
+                          padding: "7px 16px", 
+                          borderRadius: "999px",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "0.82rem",
+                          boxShadow: "0 2px 8px rgba(180, 83, 9, 0.25)"
+                        }}
                       >
                         Respon <Icon name="next" />
                       </button>
                     ) : (
                       <button 
+                        type="button"
                         className="btn-case-action" 
                         onClick={() => { update({ activeCaseId: c.id }); setPage("case"); }}
+                        style={{ 
+                          background: "var(--forest)", 
+                          color: "#ffffff", 
+                          border: "none", 
+                          fontWeight: 600, 
+                          padding: "7px 18px", 
+                          borderRadius: "999px",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "0.82rem",
+                          boxShadow: "0 2px 8px rgba(1, 50, 32, 0.15)",
+                          transition: "all 0.2s ease"
+                        }}
                       >
                         Pantau <Icon name="next" />
                       </button>
