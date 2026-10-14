@@ -265,40 +265,45 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
     return customUnit || "Unit / Paket";
   };
 
-  // Posko BPBD Dinamis Menyesuaikan Provinsi & Kabupaten yang Dipilih
-  const getAvailablePoskos = () => {
-    let list: string[] = [];
+  // Posko BPBD Otomatis Ditetapkan Menyesuaikan Provinsi & Kabupaten (Terkunci / Non-Editable)
+  const getAssignedPosko = (prov: string, reg: string) => {
+    if (!prov && !reg) return "";
+    const cleanReg = reg.trim().replace(/^(Kota|Kabupaten|Kab\.|Kota\s+Adm\.)\s+/i, "");
 
-    if (province && POSKO_DATABASE[province]) {
-      list = [...POSKO_DATABASE[province]];
-    } else if (!province) {
-      list = Object.values(POSKO_DATABASE).map((arr) => arr[0]);
-    } else {
-      list = [
-        `Posko BPBD Provinsi ${province} (Komando Wilayah)`,
-        `Posko Penanggulangan Bencana BPBD ${province}`,
-      ];
-    }
-
-    if (regency.trim()) {
-      const cleanName = regency.trim().replace(/^(Kota|Kabupaten|Kab\.|Kota\s+Adm\.)\s+/i, "");
-      const matchIdx = list.findIndex((p) => p.toLowerCase().includes(cleanName.toLowerCase()));
-      if (matchIdx > 0) {
-        const matched = list.splice(matchIdx, 1)[0];
-        list.unshift(matched);
-      } else if (matchIdx === -1 && cleanName.length >= 2) {
-        const prefix = regency.trim().toLowerCase().startsWith("kota") ? "Kota" : "Kabupaten";
-        const customPosko = `Posko BPBD ${prefix} ${cleanName} (Posko Induk)`;
-        list.unshift(customPosko);
+    if (prov && POSKO_DATABASE[prov]) {
+      const list = POSKO_DATABASE[prov];
+      if (cleanReg.length >= 2) {
+        const match = list.find((p) => p.toLowerCase().includes(cleanReg.toLowerCase()));
+        if (match) return match;
+        const prefix = reg.trim().toLowerCase().startsWith("kota") ? "Kota" : "Kabupaten";
+        return `Posko BPBD ${prefix} ${cleanReg} (Posko Induk)`;
       }
+      return list[0];
     }
 
-    if (poskoTarget && !list.includes(poskoTarget)) {
-      list.unshift(poskoTarget);
+    if (cleanReg.length >= 2) {
+      const prefix = reg.trim().toLowerCase().startsWith("kota") ? "Kota" : "Kabupaten";
+      return `Posko BPBD ${prefix} ${cleanReg} (Posko Induk)`;
     }
 
-    return list;
+    if (prov) {
+      return `Posko BPBD Provinsi ${prov} (Komando Wilayah)`;
+    }
+
+    return "";
   };
+
+  // Otomatis sinkronkan Posko BPBD rujukan saat Provinsi atau Kabupaten berubah
+  useEffect(() => {
+    if (province || regency) {
+      const assigned = getAssignedPosko(province, regency);
+      if (assigned) {
+        setPoskoTarget(assigned);
+      }
+    } else {
+      setPoskoTarget("");
+    }
+  }, [province, regency]);
 
   const categories = [
     "Air Bersih",
@@ -627,11 +632,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       onChange={(e) => {
                         const newProv = e.target.value;
                         setProvince(newProv);
-                        if (newProv && POSKO_DATABASE[newProv]) {
-                          setPoskoTarget(POSKO_DATABASE[newProv][0]);
-                        } else if (!newProv) {
-                          setPoskoTarget("");
-                        }
+                        const assigned = getAssignedPosko(newProv, regency);
+                        setPoskoTarget(assigned);
                       }}
                     >
                       <option value="">-- Pilih Provinsi --</option>
@@ -652,13 +654,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       onChange={(e) => {
                         const newReg = e.target.value;
                         setRegency(newReg);
-                        if (province && POSKO_DATABASE[province] && newReg.trim().length >= 3) {
-                          const clean = newReg.trim().toLowerCase().replace(/^(kota|kabupaten|kab\.)\s+/i, "");
-                          const matched = POSKO_DATABASE[province].find((p) => p.toLowerCase().includes(clean));
-                          if (matched) {
-                            setPoskoTarget(matched);
-                          }
-                        }
+                        const assigned = getAssignedPosko(province, newReg);
+                        if (assigned) setPoskoTarget(assigned);
                       }} 
                       placeholder="Contoh: Kabupaten Sidoarjo / Kota Surabaya / Kab. Sukabumi"
                     />
@@ -689,26 +686,62 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 </div>
 
                 <div className="form-group">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
                     <label className="form-label" style={{ margin: 0 }}>Posko BPBD Wilayah Rujukan</label>
-                    {province && (
-                      <span style={{ fontSize: "0.78rem", color: "#1c5a39", fontWeight: 600 }}>
-                        📍 Menyesuaikan {province}
-                      </span>
-                    )}
+                    <span 
+                      style={{ 
+                        fontSize: "0.78rem", 
+                        color: "#1c5a39", 
+                        fontWeight: 600,
+                        background: "#e8f3ea",
+                        padding: "3px 9px",
+                        borderRadius: "6px",
+                        border: "1px solid #c2dfc9",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}
+                    >
+                      🔒 Otomatis Sistem {province ? `• ${province}` : ""}
+                    </span>
                   </div>
-                  <select 
-                    className="form-control select" 
-                    value={poskoTarget} 
-                    onChange={(e) => setPoskoTarget(e.target.value)}
-                  >
-                    <option value="">{province ? `-- Pilih Posko BPBD di ${province} --` : "-- Pilih Posko BPBD Rujukan --"}</option>
-                    {getAvailablePoskos().map((pos) => (
-                      <option key={pos} value={pos}>{pos}</option>
-                    ))}
-                  </select>
-                  <small style={{ color: "#6a7369", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
-                    ℹ️ Laporan otomatis diteruskan dan dikoordinasikan oleh Posko BPBD yang menaungi wilayah administrasi Anda.
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      readOnly
+                      tabIndex={-1}
+                      value={poskoTarget || (province ? getAssignedPosko(province, regency) : "")}
+                      placeholder="Otomatis ditetapkan sistem sesuai Provinsi & Kabupaten..."
+                      style={{
+                        backgroundColor: "#f4f7f5",
+                        color: (poskoTarget || province || regency) ? "#013220" : "#7c8880",
+                        fontWeight: (poskoTarget || province || regency) ? 600 : 400,
+                        cursor: "not-allowed",
+                        border: "1.5px solid #d2ded5",
+                        paddingRight: "42px",
+                        userSelect: "none",
+                      }}
+                      title="Posko BPBD rujukan ditetapkan secara otomatis oleh sistem dan tidak dapat diubah manual."
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        right: "14px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        fontSize: "15px",
+                        color: "#52755e",
+                        pointerEvents: "none",
+                        userSelect: "none"
+                      }}
+                    >
+                      🔒
+                    </span>
+                  </div>
+                  <small style={{ color: "#4f6b58", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem" }}>
+                    <span>ℹ️</span>
+                    <span><b>Terkunci Otomatis:</b> Posko BPBD rujukan ditetapkan otomatis oleh sistem sesuai wilayah bencana Anda dan tidak dapat diubah manual.</span>
                   </small>
                 </div>
 
