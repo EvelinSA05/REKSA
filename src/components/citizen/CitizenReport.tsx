@@ -16,32 +16,44 @@ interface CitizenReportProps {
   state?: SharedState;
 }
 
+const getInitialDraft = () => {
+  try {
+    const raw = localStorage.getItem("reksa_report_draft");
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {}
+  return null;
+};
+
 export function CitizenReport({ complete, update, state }: CitizenReportProps) {
-  const [step, setStep] = useState(1);
+  const initialDraft = getInitialDraft();
+
+  const [step, setStep] = useState<number>(() => initialDraft?.step || 1);
   const [success, setSuccess] = useState(false);
   const [submittedCaseId, setSubmittedCaseId] = useState("");
   
   // Step 1: Kebutuhan
-  const [category, setCategory] = useState("");
-  const [customCategory, setCustomCategory] = useState("");
-  const [amount, setAmount] = useState("");
-  const [customUnit, setCustomUnit] = useState("");
-  const [notes, setNotes] = useState("");
+  const [category, setCategory] = useState<string>(() => initialDraft?.category || "");
+  const [customCategory, setCustomCategory] = useState<string>(() => initialDraft?.customCategory || "");
+  const [amount, setAmount] = useState<string>(() => initialDraft?.amount || "");
+  const [customUnit, setCustomUnit] = useState<string>(() => initialDraft?.customUnit || "");
+  const [notes, setNotes] = useState<string>(() => initialDraft?.notes || "");
 
   // Step 2: Lokasi & Posko BPBD (Sinkron dengan Profil Akun & Titik Peta Interaktif)
-  const [applicantNik, setApplicantNik] = useState("");
-  const [poskoTarget, setPoskoTarget] = useState("");
-  const [shelterStatus, setShelterStatus] = useState("");
-  const [province, setProvince] = useState("");
-  const [regency, setRegency] = useState("");
-  const [district, setDistrict] = useState("");
-  const [village, setVillage] = useState("");
-  const [pickedLat, setPickedLat] = useState<number>(-7.2654);
-  const [pickedLng, setPickedLng] = useState<number>(112.7521);
+  const [applicantNik, setApplicantNik] = useState<string>(() => initialDraft?.applicantNik || "");
+  const [poskoTarget, setPoskoTarget] = useState<string>(() => initialDraft?.poskoTarget || "");
+  const [shelterStatus, setShelterStatus] = useState<string>(() => initialDraft?.shelterStatus || "");
+  const [province, setProvince] = useState<string>(() => initialDraft?.province || "");
+  const [regency, setRegency] = useState<string>(() => initialDraft?.regency || "");
+  const [district, setDistrict] = useState<string>(() => initialDraft?.district || "");
+  const [village, setVillage] = useState<string>(() => initialDraft?.village || "");
+  const [pickedLat, setPickedLat] = useState<number>(() => (typeof initialDraft?.pickedLat === "number" ? initialDraft.pickedLat : -7.2654));
+  const [pickedLng, setPickedLng] = useState<number>(() => (typeof initialDraft?.pickedLng === "number" ? initialDraft.pickedLng : 112.7521));
 
-  // Auto-detect real GPS position on mount if available
+  // Auto-detect real GPS position on mount if available (hanya jika belum ada titik tersimpan di draf)
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (!initialDraft?.pickedLat && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setPickedLat(Number(pos.coords.latitude.toFixed(6)));
@@ -54,14 +66,87 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   }, []);
 
   // Step 3: Kondisi Terdampak
-  const [affectedPeople, setAffectedPeople] = useState<number | "">("");
-  const [familyCount, setFamilyCount] = useState<number | "">("");
-  const [vulnerableList, setVulnerableList] = useState<string[]>([]);
-  const [availabilityCondition, setAvailabilityCondition] = useState("");
-  const [citizenUrgency, setCitizenUrgency] = useState("");
-  const [conditionDescription, setConditionDescription] = useState("");
+  const [affectedPeople, setAffectedPeople] = useState<number | "">(() => initialDraft?.affectedPeople ?? "");
+  const [familyCount, setFamilyCount] = useState<number | "">(() => initialDraft?.familyCount ?? "");
+  const [vulnerableList, setVulnerableList] = useState<string[]>(() => Array.isArray(initialDraft?.vulnerableList) ? initialDraft.vulnerableList : []);
+  const [availabilityCondition, setAvailabilityCondition] = useState<string>(() => initialDraft?.availabilityCondition || "");
+  const [citizenUrgency, setCitizenUrgency] = useState<string>(() => initialDraft?.citizenUrgency || "");
+  const [conditionDescription, setConditionDescription] = useState<string>(() => initialDraft?.conditionDescription || "");
+
+  // Step 4: Bukti Unggahan
+  const [fileName, setFileName] = useState<string>(() => initialDraft?.fileName || "");
+  const [fotoBukti, setFotoBukti] = useState<string | undefined>(() => initialDraft?.fotoBukti || undefined);
+
+  // Auto-save form draft whenever any field changes
+  useEffect(() => {
+    if (success) return;
+
+    const hasAnyContent = Boolean(
+      category || customCategory || amount || customUnit || notes ||
+      applicantNik || poskoTarget || shelterStatus || province || regency || district || village ||
+      affectedPeople !== "" || familyCount !== "" || vulnerableList.length > 0 ||
+      availabilityCondition || citizenUrgency || conditionDescription || fileName || fotoBukti
+    );
+
+    if (hasAnyContent) {
+      const draft = {
+        step,
+        category,
+        customCategory,
+        amount,
+        customUnit,
+        notes,
+        applicantNik,
+        poskoTarget,
+        shelterStatus,
+        province,
+        regency,
+        district,
+        village,
+        pickedLat,
+        pickedLng,
+        affectedPeople,
+        familyCount,
+        vulnerableList,
+        availabilityCondition,
+        citizenUrgency,
+        conditionDescription,
+        fileName,
+        fotoBukti,
+      };
+      localStorage.setItem("reksa_report_draft", JSON.stringify(draft));
+    } else {
+      localStorage.removeItem("reksa_report_draft");
+    }
+  }, [
+    step,
+    category,
+    customCategory,
+    amount,
+    customUnit,
+    notes,
+    applicantNik,
+    poskoTarget,
+    shelterStatus,
+    province,
+    regency,
+    district,
+    village,
+    pickedLat,
+    pickedLng,
+    affectedPeople,
+    familyCount,
+    vulnerableList,
+    availabilityCondition,
+    citizenUrgency,
+    conditionDescription,
+    fileName,
+    fotoBukti,
+    success,
+  ]);
 
   const resetForm = () => {
+    localStorage.removeItem("reksa_report_draft");
     setCategory("");
     setCustomCategory("");
     setAmount("");
@@ -105,9 +190,6 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
     }
   };
 
-  // Step 4: Bukti Unggahan
-  const [fileName, setFileName] = useState("");
-  const [fotoBukti, setFotoBukti] = useState<string | undefined>(undefined);
 
   // Satuan Menyesuaikan Kategori Kebutuhan
   const getUnit = () => {
@@ -257,7 +339,20 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
         eyebrow={`Langkah ${step} dari 5`} 
         title="Laporkan Kebutuhan Darurat" 
         copy="Sampaikan kondisi dan kebutuhan lapangan secara akurat untuk integrasi posko wilayah BPBD dan mitra responder." 
-        action={poskoTarget ? <div className="trust-badge"><Icon name="check" /> Terhubung ke {(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}</div> : undefined}
+        action={
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+            {Boolean(category || amount || notes || applicantNik || village || affectedPeople !== "") && (
+              <div className="trust-badge" style={{ background: "#eef6f0", color: "#1c5a39", border: "1px solid #c2ddc6" }}>
+                <Icon name="check" /> Draf Tersimpan
+              </div>
+            )}
+            {poskoTarget && (
+              <div className="trust-badge">
+                <Icon name="check" /> Terhubung ke {(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}
+              </div>
+            )}
+          </div>
+        }
       />
 
       {/* TOP TRAPEZOID / CHEVRON STEPPER BAR */}
@@ -936,13 +1031,36 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
           </div>
 
           <div className="report-form-actions">
-            <Button 
-              variant="secondary" 
-              disabled={step === 1} 
-              onClick={() => setStep(step - 1)}
-            >
-              Kembali
-            </Button>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <Button 
+                variant="secondary" 
+                disabled={step === 1} 
+                onClick={() => setStep(step - 1)}
+              >
+                Kembali
+              </Button>
+              {Boolean(category || amount || notes || applicantNik || village || affectedPeople !== "") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Kosongkan semua data formulir yang telah Anda ketik?")) {
+                      resetForm();
+                    }
+                  }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#8a968d",
+                    fontSize: "0.85rem",
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                    padding: "6px 10px"
+                  }}
+                >
+                  Kosongkan Draf
+                </button>
+              )}
+            </div>
             <Button 
               onClick={() => { 
                 if (step < 5) setStep(step + 1); 
@@ -1045,6 +1163,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       }, `Laporan kebutuhan ${newReport.item} (${newReport.qty}) diajukan oleh ${state?.userProfile?.name || "Andi Pratama"} ke ${(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}.`);
                     }
                     
+                    localStorage.removeItem("reksa_report_draft");
                     setSubmittedCaseId(finalCode);
                     setSuccess(true);
                   };
