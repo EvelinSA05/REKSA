@@ -2931,7 +2931,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <div className="workload-icon"><Icon name="file" /></div>
           </div>
           <strong className="workload-number">{masukKK}</strong>
-          <small className="workload-sub">Laporan Masuk Baru →</small>
+          <small className="workload-sub">Laporan Masuk Baru</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
@@ -2940,7 +2940,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <div className="workload-icon"><Icon name="bolt" /></div>
           </div>
           <strong className="workload-number">{prioritasKritis}</strong>
-          <small className="workload-sub">Kritis &amp; Mendesak →</small>
+          <small className="workload-sub">Kritis &amp; Mendesak</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("resources")}>
@@ -2949,7 +2949,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <div className="workload-icon"><Icon name="pin" /></div>
           </div>
           <strong className="workload-number">{terbuka}</strong>
-          <small className="workload-sub">Siap Didanai Mitra →</small>
+          <small className="workload-sub">Siap Didanai Mitra</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("offers")}>
@@ -2958,7 +2958,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <div className="workload-icon"><Icon name="handshake" /></div>
           </div>
           <strong className="workload-number">{penawaranMenunggu}</strong>
-          <small className="workload-sub">Menunggu Keputusan →</small>
+          <small className="workload-sub">Menunggu Keputusan</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
@@ -2967,7 +2967,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <div className="workload-icon"><Icon name="task" /></div>
           </div>
           <strong className="workload-number">{disalurkan}</strong>
-          <small className="workload-sub">Armada Berjalan →</small>
+          <small className="workload-sub">Armada Berjalan</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
@@ -2976,7 +2976,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <div className="workload-icon"><Icon name="check" /></div>
           </div>
           <strong className="workload-number">{perluKonfirmasi}</strong>
-          <small className="workload-sub">Tiba di Titik Serah →</small>
+          <small className="workload-sub">Tiba di Titik Serah</small>
         </div>
       </div>
 
@@ -3716,7 +3716,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
             <div className="workload-icon"><Icon name="pin" /></div>
           </div>
           <strong className="workload-number">{openNeeds.length}</strong>
-          <small className="workload-sub">Di Bursa Bantuan →</small>
+          <small className="workload-sub">Di Bursa Bantuan</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("my-offers")}>
@@ -3725,7 +3725,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
             <div className="workload-icon"><Icon name="handshake" /></div>
           </div>
           <strong className="workload-number">{pendingOffersCount}</strong>
-          <small className="workload-sub">Menunggu Posko →</small>
+          <small className="workload-sub">Menunggu Posko</small>
         </div>
 
         <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("tasks")}>
@@ -3743,7 +3743,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
             <div className="workload-icon"><Icon name="check" /></div>
           </div>
           <strong className="workload-number">{misiList.filter(m => m.status_tahapan === "Selesai").length}</strong>
-          <small className="workload-sub">Diterima Tuntas →</small>
+          <small className="workload-sub">Diterima Tuntas</small>
         </div>
       </div>
 
