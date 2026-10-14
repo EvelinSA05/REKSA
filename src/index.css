@@ -5726,6 +5726,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  color: var(--forest);
 }
 
 .workload-icon {
@@ -5755,10 +5756,9 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   color: #ffffff;
 }
 
-.posko-workload-card.warning .workload-tag { color: #d97706; }
-.posko-workload-card.danger .workload-tag { color: #dc2626; }
-.posko-workload-card.info .workload-tag { color: #2563eb; }
-.posko-workload-card.success .workload-tag { color: #16a34a; }
+.posko-workload-card .workload-tag {
+  color: var(--forest);
+}
 
 .workload-number {
   font-size: 34px;

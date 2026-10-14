@@ -2925,7 +2925,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
 
       {/* 6 WORKLOAD SUMMARY METRICS CARDS PER PRD Bab 5.1 & Bab 12 */}
       <div className="posko-workload-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
-        <div className="posko-workload-card warning" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
           <div className="workload-card-top">
             <span className="workload-tag">Menunggu Verifikasi</span>
             <div className="workload-icon"><Icon name="file" /></div>
@@ -2934,7 +2934,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           <small className="workload-sub">Laporan Masuk Baru →</small>
         </div>
 
-        <div className="posko-workload-card danger" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
           <div className="workload-card-top">
             <span className="workload-tag">Kebutuhan Prioritas</span>
             <div className="workload-icon"><Icon name="bolt" /></div>
@@ -2943,7 +2943,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           <small className="workload-sub">Kritis &amp; Mendesak →</small>
         </div>
 
-        <div className="posko-workload-card info" style={{ cursor: "pointer" }} onClick={() => setPage("resources")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("resources")}>
           <div className="workload-card-top">
             <span className="workload-tag">Kekurangan Terbuka</span>
             <div className="workload-icon"><Icon name="pin" /></div>
@@ -2952,7 +2952,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           <small className="workload-sub">Siap Didanai Mitra →</small>
         </div>
 
-        <div className="posko-workload-card warning" style={{ cursor: "pointer" }} onClick={() => setPage("offers")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("offers")}>
           <div className="workload-card-top">
             <span className="workload-tag">Penawaran Mitra</span>
             <div className="workload-icon"><Icon name="handshake" /></div>
@@ -2961,7 +2961,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           <small className="workload-sub">Menunggu Keputusan →</small>
         </div>
 
-        <div className="posko-workload-card info" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
           <div className="workload-card-top">
             <span className="workload-tag">Misi Aktif</span>
             <div className="workload-icon"><Icon name="task" /></div>
@@ -2970,7 +2970,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           <small className="workload-sub">Armada Berjalan →</small>
         </div>
 
-        <div className="posko-workload-card success" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
           <div className="workload-card-top">
             <span className="workload-tag">Perlu Konfirmasi</span>
             <div className="workload-icon"><Icon name="check" /></div>
@@ -3710,7 +3710,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
 
       {/* METRIC OVERVIEW CARDS PER PRD Bab 6.1 */}
       <div className="posko-workload-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-        <div className="posko-workload-card danger" style={{ cursor: "pointer" }} onClick={() => setPage("bursa")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("bursa")}>
           <div className="workload-card-top">
             <span className="workload-tag">Kebutuhan Terbuka</span>
             <div className="workload-icon"><Icon name="pin" /></div>
@@ -3719,7 +3719,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
           <small className="workload-sub">Di Bursa Bantuan →</small>
         </div>
 
-        <div className="posko-workload-card warning" style={{ cursor: "pointer" }} onClick={() => setPage("my-offers")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("my-offers")}>
           <div className="workload-card-top">
             <span className="workload-tag">Penawaran Saya</span>
             <div className="workload-icon"><Icon name="handshake" /></div>
@@ -3728,7 +3728,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
           <small className="workload-sub">Menunggu Posko →</small>
         </div>
 
-        <div className="posko-workload-card info" style={{ cursor: "pointer" }} onClick={() => setPage("tasks")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("tasks")}>
           <div className="workload-card-top">
             <span className="workload-tag">Misi Aktif</span>
             <div className="workload-icon"><Icon name="task" /></div>
@@ -3737,7 +3737,7 @@ function ResponderDashboard({ state, setPage, notify, onRefresh }: {
           <small className="workload-sub">{activeMission ? `Status: ${activeMission.status_tahapan}` : "Tidak Ada Misi Berjalan"}</small>
         </div>
 
-        <div className="posko-workload-card success" style={{ cursor: "pointer" }} onClick={() => setPage("history")}>
+        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("history")}>
           <div className="workload-card-top">
             <span className="workload-tag">Misi Selesai</span>
             <div className="workload-icon"><Icon name="check" /></div>
