@@ -258,10 +258,15 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                         />
                       </div>
                       <div className="case-card-header-info">
-                        <h3>{c.item}</h3>
+                        <div className="case-item-name-row">
+                          <h3 className="case-item-title">{c.item}</h3>
+                          <span className="case-beneficiary-tag">
+                            <Icon name="user" /> {c.kk}
+                          </span>
+                        </div>
                         <div className="case-card-location">
                           <Icon name="pin" />
-                          <span>{c.location} · {c.kk}</span>
+                          <span className="case-location-text" title={c.location}>{c.location}</span>
                         </div>
                       </div>
                     </div>
