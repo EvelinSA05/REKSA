@@ -24,6 +24,77 @@ interface LeafletMapProps {
   onLocationPicked?: (info: LocationInfo) => void;
 }
 
+function resolveFallbackLocation(lat: number, lng: number): LocationInfo {
+  // East Java
+  if (lat < -6.8 && lat > -8.9 && lng > 111.0 && lng < 115.0) {
+    const isGayungan = Math.hypot(lat - (-7.3300), lng - 112.7250) < 0.04;
+    const isWonokromo = Math.hypot(lat - (-7.3000), lng - 112.7400) < 0.05;
+    const isRungkut = Math.hypot(lat - (-7.3200), lng - 112.7800) < 0.06;
+    const isGubeng = Math.hypot(lat - (-7.2700), lng - 112.7550) < 0.05;
+
+    const desa = isGayungan ? "Gayungan / Siwalankerto" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut Menanggal" : isGubeng ? "Gubeng" : "Surabaya";
+    const kecamatan = isGayungan ? "Gayungan" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut" : isGubeng ? "Gubeng" : "Kec. Kota";
+    const kabupaten = "Kota Surabaya";
+    const provinsi = "Jawa Timur";
+    const poskoName = "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
+
+    return {
+      lat: Number(lat.toFixed(6)),
+      lng: Number(lng.toFixed(6)),
+      desa,
+      kecamatan,
+      kabupaten,
+      provinsi,
+      poskoName,
+    };
+  }
+
+  // West Java & Sukabumi
+  if (lat < -6.4 && lat > -7.8 && lng > 106.4 && lng < 108.8) {
+    const isCibadak = Math.hypot(lat - (-6.9174639), lng - 106.9298281) < 0.15;
+    const isBandung = Math.hypot(lat - (-6.9175), lng - 107.6191) < 0.2;
+
+    const desa = isCibadak ? "Desa Sukamaju" : isBandung ? "Kel. Braga" : "Wilayah Jawa Barat";
+    const kecamatan = isCibadak ? "Cibadak" : isBandung ? "Sumur Bandung" : "Kecamatan Setempat";
+    const kabupaten = isCibadak ? "Kabupaten Sukabumi" : isBandung ? "Kota Bandung" : "Jawa Barat";
+    const provinsi = "Jawa Barat";
+    const poskoName = isCibadak ? "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)" : `Posko BPBD ${kabupaten} (Jawa Barat)`;
+
+    return {
+      lat: Number(lat.toFixed(6)),
+      lng: Number(lng.toFixed(6)),
+      desa,
+      kecamatan,
+      kabupaten,
+      provinsi,
+      poskoName,
+    };
+  }
+
+  // DKI Jakarta
+  if (lat < -6.0 && lat > -6.4 && lng > 106.6 && lng < 107.1) {
+    return {
+      lat: Number(lat.toFixed(6)),
+      lng: Number(lng.toFixed(6)),
+      desa: "Kel. Menteng",
+      kecamatan: "Menteng",
+      kabupaten: "Kota Jakarta Pusat",
+      provinsi: "DKI Jakarta",
+      poskoName: "Posko Induk BPBD DKI Jakarta",
+    };
+  }
+
+  return {
+    lat: Number(lat.toFixed(6)),
+    lng: Number(lng.toFixed(6)),
+    desa: "Wilayah Warga Terdampak",
+    kecamatan: "Kecamatan Setempat",
+    kabupaten: "Kabupaten/Kota Terkait",
+    provinsi: "Indonesia",
+    poskoName: "Posko Induk BPBD Wilayah",
+  };
+}
+
 export function LeafletMap({
   operational = false,
   hideCard = false,
@@ -41,7 +112,13 @@ export function LeafletMap({
   const citizenMarkerRef = useRef<L.Marker | null>(null);
 
   const [citizenPos, setCitizenPos] = useState<[number, number]>([initialLat, initialLng]);
-  const [activeAddress, setActiveAddress] = useState<string>("Mendeteksi titik lokasi...");
+  const [activeAddress, setActiveAddress] = useState<string>(() => {
+    if (pickLocation && Number.isFinite(Number(initialLat)) && Number.isFinite(Number(initialLng))) {
+      const fallback = resolveFallbackLocation(Number(initialLat), Number(initialLng));
+      return `${fallback.desa}, Kec. ${fallback.kecamatan}, ${fallback.kabupaten}`;
+    }
+    return "Pilih titik lokasi pada peta";
+  });
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -100,78 +177,6 @@ export function LeafletMap({
   ]);
 
   const [activePosko, setActivePosko] = useState<PoskoItem>(poskos[0]);
-
-  // Robust regional fallback resolver
-  const resolveFallbackLocation = useCallback((lat: number, lng: number): LocationInfo => {
-    // East Java
-    if (lat < -6.8 && lat > -8.9 && lng > 111.0 && lng < 115.0) {
-      const isGayungan = Math.hypot(lat - (-7.3300), lng - 112.7250) < 0.04;
-      const isWonokromo = Math.hypot(lat - (-7.3000), lng - 112.7400) < 0.05;
-      const isRungkut = Math.hypot(lat - (-7.3200), lng - 112.7800) < 0.06;
-      const isGubeng = Math.hypot(lat - (-7.2700), lng - 112.7550) < 0.05;
-
-      const desa = isGayungan ? "Gayungan / Siwalankerto" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut Menanggal" : isGubeng ? "Gubeng" : "Surabaya";
-      const kecamatan = isGayungan ? "Gayungan" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut" : isGubeng ? "Gubeng" : "Kec. Kota";
-      const kabupaten = "Kota Surabaya";
-      const provinsi = "Jawa Timur";
-      const poskoName = "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
-
-      return {
-        lat: Number(lat.toFixed(6)),
-        lng: Number(lng.toFixed(6)),
-        desa,
-        kecamatan,
-        kabupaten,
-        provinsi,
-        poskoName,
-      };
-    }
-
-    // West Java & Sukabumi
-    if (lat < -6.4 && lat > -7.8 && lng > 106.4 && lng < 108.8) {
-      const isCibadak = Math.hypot(lat - (-6.9174639), lng - 106.9298281) < 0.15;
-      const isBandung = Math.hypot(lat - (-6.9175), lng - 107.6191) < 0.2;
-
-      const desa = isCibadak ? "Desa Sukamaju" : isBandung ? "Kel. Braga" : "Wilayah Jawa Barat";
-      const kecamatan = isCibadak ? "Cibadak" : isBandung ? "Sumur Bandung" : "Kecamatan Setempat";
-      const kabupaten = isCibadak ? "Kabupaten Sukabumi" : isBandung ? "Kota Bandung" : "Jawa Barat";
-      const provinsi = "Jawa Barat";
-      const poskoName = isCibadak ? "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)" : `Posko BPBD ${kabupaten} (Jawa Barat)`;
-
-      return {
-        lat: Number(lat.toFixed(6)),
-        lng: Number(lng.toFixed(6)),
-        desa,
-        kecamatan,
-        kabupaten,
-        provinsi,
-        poskoName,
-      };
-    }
-
-    // DKI Jakarta
-    if (lat < -6.0 && lat > -6.4 && lng > 106.6 && lng < 107.1) {
-      return {
-        lat: Number(lat.toFixed(6)),
-        lng: Number(lng.toFixed(6)),
-        desa: "Kel. Menteng",
-        kecamatan: "Menteng",
-        kabupaten: "Kota Jakarta Pusat",
-        provinsi: "DKI Jakarta",
-        poskoName: "Posko Induk BPBD DKI Jakarta",
-      };
-    }
-
-    return {
-      lat: Number(lat.toFixed(6)),
-      lng: Number(lng.toFixed(6)),
-      desa: "Wilayah Warga Terdampak",
-      kecamatan: "Kecamatan Setempat",
-      kabupaten: "Kabupaten/Kota Terkait",
-      provinsi: "Indonesia",
-      poskoName: "Posko Induk BPBD Wilayah",
-    };
-  }, []);
 
   const onLocationPickedRef = useRef(onLocationPicked);
   onLocationPickedRef.current = onLocationPicked;
@@ -443,12 +448,15 @@ export function LeafletMap({
           citizenMarkerRef.current.setLatLng([initialLat, initialLng]);
         }
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo([initialLat, initialLng], 15, { animate: true, duration: 1.0 });
+          mapInstanceRef.current.flyTo([initialLat, initialLng], 16, { animate: true, duration: 1.0 });
+        }
+        if (pickLocation) {
+          updateCitizenLocation(initialLat, initialLng);
         }
       }
       lastSyncCoordsRef.current = key;
     }
-  }, [initialLat, initialLng]);
+  }, [initialLat, initialLng, pickLocation, updateCitizenLocation]);
 
   // Initialize Leaflet Map (Mount & Cleanup lifecycle)
   useEffect(() => {

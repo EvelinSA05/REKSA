@@ -124,6 +124,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [village, setVillage] = useState<string>(() => initialDraft?.village || "");
   const [pickedLat, setPickedLat] = useState<number>(() => (typeof initialDraft?.pickedLat === "number" ? initialDraft.pickedLat : -7.2654));
   const [pickedLng, setPickedLng] = useState<number>(() => (typeof initialDraft?.pickedLng === "number" ? initialDraft.pickedLng : 112.7521));
+  const [isDetectingGPS, setIsDetectingGPS] = useState<boolean>(false);
 
 
   // Step 3: Kondisi Terdampak
@@ -764,10 +765,13 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     </div>
                     <button
                       type="button"
+                      disabled={isDetectingGPS}
                       onClick={() => {
                         if (navigator.geolocation) {
+                          setIsDetectingGPS(true);
                           navigator.geolocation.getCurrentPosition(
                             (pos) => {
+                              setIsDetectingGPS(false);
                               if (pos?.coords) {
                                 const lat = Number(pos.coords.latitude);
                                 const lng = Number(pos.coords.longitude);
@@ -777,9 +781,14 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                                 }
                               }
                             },
-                            () => alert("GPS tidak aktif atau izin lokasi browser belum diizinkan."),
+                            () => {
+                              setIsDetectingGPS(false);
+                              alert("GPS tidak aktif atau izin lokasi browser belum diizinkan.");
+                            },
                             { enableHighAccuracy: true, timeout: 8000 }
                           );
+                        } else {
+                          alert("Browser Anda tidak mendukung deteksi lokasi GPS.");
                         }
                       }}
                       style={{
@@ -793,10 +802,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         borderRadius: "8px",
                         fontSize: "0.82rem",
                         fontWeight: 600,
-                        cursor: "pointer"
+                        cursor: isDetectingGPS ? "wait" : "pointer",
+                        opacity: isDetectingGPS ? 0.75 : 1
                       }}
                     >
-                      <Icon name="pin" /> Gunakan Posisi Saya
+                      <Icon name="pin" /> {isDetectingGPS ? "Mendeteksi Posisi..." : "Gunakan Posisi Saya"}
                     </button>
                   </div>
                   <div className="report-map-wrapper">
