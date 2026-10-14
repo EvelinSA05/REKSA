@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, useCallback, type ReactNode } from "react";
+import React, { Component, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 
 export type Role = "citizen" | "posko" | "responder";
 type Screen = "home" | "login" | "portal";
@@ -1166,16 +1166,34 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   logout: () => void; 
   onRefresh?: () => Promise<void> | void;
 }) {
-  const [page, setPage] = useState<PortalPage>("dashboard");
+  const [page, setPage] = useState<PortalPage>(() => {
+    const saved = localStorage.getItem("reksa_portal_page") as PortalPage;
+    const validPages: PortalPage[] = [
+      "dashboard", "cases", "case", "report", "notifications", "history", 
+      "profile", "help", "settings", "map", "resources", "assignments", 
+      "activity", "tasks", "active", "offers", "bursa", "my-offers"
+    ];
+    if (saved && validPages.includes(saved)) {
+      return saved;
+    }
+    return "report";
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 900);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [toast, setToast] = useState("");
 
-  // Auto reset page to dashboard whenever role switches
+  const isFirstMount = useRef(true);
+
+  // Auto reset page to dashboard ONLY when role actually switches (not on initial mount/refresh)
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     setPage("dashboard");
+    localStorage.setItem("reksa_portal_page", "dashboard");
   }, [role]);
 
   useEffect(() => {
@@ -1189,7 +1207,9 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   }, []);
   const go = (p: PortalPage | "logout") => {
     if (p === "logout") return setLogoutOpen(true);
-    setPage(p); window.scrollTo(0, 0);
+    setPage(p); 
+    localStorage.setItem("reksa_portal_page", p);
+    window.scrollTo(0, 0);
   };
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(""), 2800); };
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
@@ -4815,10 +4835,36 @@ function SplashScreen({ onFinish }: { onFinish: () => void }) {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [screen, setScreen] = useState<Screen>("home");
-  const [role, setRole] = useState<Role>("citizen");
-  const [name, setName] = useState("Andi Pratama");
+  const [screen, setScreen] = useState<Screen>(() => {
+    const saved = localStorage.getItem("reksa_auth_screen") as Screen;
+    if (saved && (saved === "home" || saved === "login" || saved === "portal")) {
+      return saved;
+    }
+    return "portal";
+  });
+
+  const [showSplash, setShowSplash] = useState(() => {
+    const hasVisited = sessionStorage.getItem("reksa_session_active");
+    if (hasVisited) return false;
+    sessionStorage.setItem("reksa_session_active", "true");
+    const savedScreen = localStorage.getItem("reksa_auth_screen");
+    if (savedScreen === "portal" || !savedScreen) return false;
+    return true;
+  });
+
+  const [role, setRole] = useState<Role>(() => {
+    const saved = localStorage.getItem("reksa_auth_role") as Role;
+    if (saved && (saved === "citizen" || saved === "posko" || saved === "responder")) {
+      return saved;
+    }
+    return "citizen";
+  });
+
+  const [name, setName] = useState(() => {
+    const saved = localStorage.getItem("reksa_auth_name");
+    if (saved) return saved;
+    return "Andi Pratama";
+  });
   const [state, setState] = useState<SharedState>(() => {
     let savedList: CaseRecord[] = [];
     const local = localStorage.getItem("reksa_cases_db");
@@ -5013,11 +5059,18 @@ export default function App() {
       if (changes.casesList) {
         localStorage.setItem("reksa_cases_db", JSON.stringify(changes.casesList));
       }
+      if (changes.activeCaseId) {
+        localStorage.setItem("reksa_active_case_id", changes.activeCaseId);
+      }
       return next;
     });
   };
 
-  const navigate = (s: Screen) => { setScreen(s); window.scrollTo(0, 0); };
+  const navigate = (s: Screen) => { 
+    setScreen(s); 
+    localStorage.setItem("reksa_auth_screen", s);
+    window.scrollTo(0, 0); 
+  };
 
   return (
     <>
@@ -5025,6 +5078,8 @@ export default function App() {
       {screen === "login" && <Login navigate={navigate} onLogin={(r, n) => { 
         setRole(r); 
         setName(n); 
+        localStorage.setItem("reksa_auth_role", r);
+        localStorage.setItem("reksa_auth_name", n);
         if (r === "posko") {
           setState((s) => ({
             ...s,
@@ -5059,8 +5114,10 @@ export default function App() {
           role={role} 
           setRole={(newRole) => {
             setRole(newRole);
+            localStorage.setItem("reksa_auth_role", newRole);
             if (newRole === "posko") {
               setName("Siti Rahma");
+              localStorage.setItem("reksa_auth_name", "Siti Rahma");
               setState((s) => ({
                 ...s,
                 userProfile: {
@@ -5075,6 +5132,7 @@ export default function App() {
               }));
             } else if (newRole === "responder") {
               setName("Arif Nugroho");
+              localStorage.setItem("reksa_auth_name", "Arif Nugroho");
               setState((s) => ({
                 ...s,
                 userProfile: {
@@ -5089,6 +5147,7 @@ export default function App() {
               }));
             } else {
               setName("Andi Pratama");
+              localStorage.setItem("reksa_auth_name", "Andi Pratama");
               setState((s) => ({
                 ...s,
                 userProfile: {
@@ -5104,10 +5163,17 @@ export default function App() {
             }
           }}
           name={name} 
-          setName={setName} 
+          setName={(newName) => {
+            setName(newName);
+            localStorage.setItem("reksa_auth_name", newName);
+          }} 
           state={state} 
           update={update} 
-          logout={() => navigate("login")} 
+          logout={() => {
+            localStorage.setItem("reksa_auth_screen", "login");
+            localStorage.removeItem("reksa_portal_page");
+            navigate("login");
+          }} 
           onRefresh={fetchDatabaseAll} 
         />
       )}
