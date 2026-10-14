@@ -4989,7 +4989,15 @@ export default function App() {
                 caseCode.startsWith("RK-LOG-") ||
                 caseCode.startsWith("RK-AUTH-");
 
-              const isUserOwnReport = !isDummy && (reportedIds.includes(caseCode) || (localCase?.isOwn === true && !localCase?.id?.startsWith("RK-UJI-")));
+              const isUserOwnReport = !isDummy && (
+                reportedIds.includes(caseCode) || 
+                (localCase?.isOwn === true && !localCase?.id?.startsWith("RK-UJI-")) ||
+                (Boolean(item.citizen_name) && Boolean(prev.userProfile?.name) && item.citizen_name.toLowerCase().trim() === prev.userProfile.name.toLowerCase().trim())
+              );
+
+              if (isUserOwnReport) {
+                addUserReportedId(caseCode);
+              }
 
               return {
                 id: caseCode,
@@ -5001,55 +5009,61 @@ export default function App() {
                 urgency: item.tingkat_urgensi || "Sedang",
                 status: item.status || "Dalam Verifikasi",
                 isOwn: isUserOwnReport,
-              notes: item.deskripsi || item.catatan_verifikasi_posko || `Kebutuhan ${item.kategori_kebutuhan} untuk warga terdampak.`,
-              date: new Date(item.created_at || Date.now()).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
-              posko: poskoInfo?.nama_posko || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
-              applicantNik: "3202110482910002",
-              applicantName: item.citizen_name || "Andi Pratama",
-              applicantPhone: item.citizen_phone || "+62 812 4455 0188",
-              shelterStatus: item.status_hunian || "Rumah Tinggal Pribadi (Terdampak Langsung)",
-              province: p,
-              regency: k,
-              district: d || "",
-              village: v,
-              lat: item.latitude ? Number(item.latitude) : (poskoInfo?.latitude ? Number(poskoInfo.latitude) : -7.2654),
-              lng: item.longitude ? Number(item.longitude) : (poskoInfo?.longitude ? Number(poskoInfo.longitude) : 112.7521),
-              fotoBukti: resolvedFoto,
-              fileName: undefined,
-              vulnerableDetails: item.vulnerable_group ? "Kelompok Rentan" : "Tidak ada",
-              crisisDuration: "6 - 24 Jam Pasca Bencana",
-              roadAccess: "Dapat dilalui kendaraan distribusi logistik",
-              urgencyScore: item.tingkat_urgensi === "Kritis" ? 90 : item.tingkat_urgensi === "Tinggi" ? 75 : 50,
-              priorityRationale: item.priority_rationale || `Kebutuhan ${item.kategori_kebutuhan} untuk ${item.jumlah_kk || 1} KK.`,
-              createdAtTime: new Date(item.created_at || Date.now()).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":") + " WIB",
-              createdAtRaw: item.created_at,
-              verifiedAtRaw: item.verified_at,
-              completedAtRaw: item.completed_at,
-              updatedAtRaw: item.updated_at,
-              affectedPeople: localCase?.affectedPeople,
-              vulnerableGroupsList: localCase?.vulnerableGroupsList,
-              availabilityCondition: localCase?.availabilityCondition,
-              citizenUrgency: localCase?.citizenUrgency || item.tingkat_urgensi,
-              conditionDescription: localCase?.conditionDescription,
-              pertanyaanKlarifikasi: item.pertanyaan_klarifikasi,
-              kategoriKlarifikasi: item.kategori_klarifikasi,
-              memintaLampiran: item.meminta_lampiran,
-              fotoKlarifikasi: item.foto_klarifikasi,
-              riwayatKlarifikasi: item.riwayat_klarifikasi,
-              jawabanKlarifikasi: item.jawaban_klarifikasi,
-              alasanPenolakan: item.alasan_penolakan,
-              tindakLanjutPenolakan: item.tindak_lanjut_penolakan,
-              catatanVerifikasiPosko: item.catatan_verifikasi_posko,
-              totalAlokasiResmi: item.total_alokasi_resmi,
-              totalDiterimaResmi: item.total_diterima_resmi,
-            };
-          });
+                notes: item.deskripsi || item.catatan_verifikasi_posko || `Kebutuhan ${item.kategori_kebutuhan} untuk warga terdampak.`,
+                date: new Date(item.created_at || Date.now()).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
+                posko: poskoInfo?.nama_posko || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
+                applicantNik: "3202110482910002",
+                applicantName: item.citizen_name || "Andi Pratama",
+                applicantPhone: item.citizen_phone || "+62 812 4455 0188",
+                shelterStatus: item.status_hunian || "Rumah Tinggal Pribadi (Terdampak Langsung)",
+                province: p,
+                regency: k,
+                district: d || "",
+                village: v,
+                lat: item.latitude ? Number(item.latitude) : (poskoInfo?.latitude ? Number(poskoInfo.latitude) : -7.2654),
+                lng: item.longitude ? Number(item.longitude) : (poskoInfo?.longitude ? Number(poskoInfo.longitude) : 112.7521),
+                fotoBukti: resolvedFoto,
+                fileName: undefined,
+                vulnerableDetails: item.vulnerable_group ? "Kelompok Rentan" : "Tidak ada",
+                crisisDuration: "6 - 24 Jam Pasca Bencana",
+                roadAccess: "Dapat dilalui kendaraan distribusi logistik",
+                urgencyScore: item.tingkat_urgensi === "Kritis" ? 90 : item.tingkat_urgensi === "Tinggi" ? 75 : 50,
+                priorityRationale: item.priority_rationale || `Kebutuhan ${item.kategori_kebutuhan} untuk ${item.jumlah_kk || 1} KK.`,
+                createdAtTime: new Date(item.created_at || Date.now()).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":") + " WIB",
+                createdAtRaw: item.created_at,
+                verifiedAtRaw: item.verified_at,
+                completedAtRaw: item.completed_at,
+                updatedAtRaw: item.updated_at,
+                affectedPeople: localCase?.affectedPeople,
+                vulnerableGroupsList: localCase?.vulnerableGroupsList,
+                availabilityCondition: localCase?.availabilityCondition,
+                citizenUrgency: localCase?.citizenUrgency || item.tingkat_urgensi,
+                conditionDescription: localCase?.conditionDescription,
+                pertanyaanKlarifikasi: item.pertanyaan_klarifikasi,
+                kategoriKlarifikasi: item.kategori_klarifikasi,
+                memintaLampiran: item.meminta_lampiran,
+                fotoKlarifikasi: item.foto_klarifikasi,
+                riwayatKlarifikasi: item.riwayat_klarifikasi,
+                jawabanKlarifikasi: item.jawaban_klarifikasi,
+                alasanPenolakan: item.alasan_penolakan,
+                tindakLanjutPenolakan: item.tindak_lanjut_penolakan,
+                catatanVerifikasiPosko: item.catatan_verifikasi_posko,
+                totalAlokasiResmi: item.total_alokasi_resmi,
+                totalDiterimaResmi: item.total_diterima_resmi,
+              };
+            });
 
-          localStorage.setItem("reksa_cases_db", JSON.stringify(dbCases));
+          const dbCaseIds = new Set(dbCases.map((c) => c.id));
+          const localUserReports = (prev.casesList || []).filter(
+            (c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST") && !dbCaseIds.has(c.id))
+          );
+          const mergedCases = [...localUserReports, ...dbCases];
+
+          localStorage.setItem("reksa_cases_db", JSON.stringify(mergedCases));
           return {
             ...prev,
-            casesList: dbCases,
-            activeCaseId: dbCases.some((c) => c.id === prev.activeCaseId) ? prev.activeCaseId : dbCases[0]?.id,
+            casesList: mergedCases,
+            activeCaseId: mergedCases.some((c) => c.id === prev.activeCaseId) ? prev.activeCaseId : mergedCases[0]?.id,
           };
         });
       }

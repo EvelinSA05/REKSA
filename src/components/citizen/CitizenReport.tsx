@@ -1411,16 +1411,16 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   const submitData = async () => {
                     const displayCat = category === "Lainnya" && customCategory ? customCategory : (category || "Kebutuhan Darurat");
                     const unit = getUnit();
-                    const fullVolume = amount ? `${amount} ${unit}` : "-";
-                    const peopleCount = typeof affectedPeople === "number" && affectedPeople > 0 ? affectedPeople : 0;
-                    const finalKK = typeof familyCount === "number" && familyCount > 0 ? familyCount : 0;
+                    const fullVolume = amount ? `${amount} ${unit}` : "1 Paket";
+                    const peopleCount = typeof affectedPeople === "number" && affectedPeople > 0 ? affectedPeople : 1;
+                    const finalKK = typeof familyCount === "number" && familyCount > 0 ? familyCount : 1;
                     const vulText = vulnerableList.length > 0 && !vulnerableList.includes("Tidak ada")
                       ? vulnerableList.join(", ")
                       : "Tidak ada";
 
                     const payload = {
-                      citizen_name: state?.userProfile?.name || "Masyarakat",
-                      citizen_phone: state?.userProfile?.phone || "-",
+                      citizen_name: state?.userProfile?.name || "Andi Pratama",
+                      citizen_phone: state?.userProfile?.phone || "+62 812 4455 0188",
                       posko_name: poskoTarget || "Posko BPBD Wilayah",
                       kategori_kebutuhan: displayCat,
                       volume_permintaan: fullVolume,
