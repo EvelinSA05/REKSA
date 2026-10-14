@@ -22,20 +22,20 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [submittedCaseId, setSubmittedCaseId] = useState("");
   
   // Step 1: Kebutuhan
-  const [category, setCategory] = useState("Air Bersih");
+  const [category, setCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
-  const [amount, setAmount] = useState("850");
+  const [amount, setAmount] = useState("");
   const [customUnit, setCustomUnit] = useState("");
   const [notes, setNotes] = useState("");
 
   // Step 2: Lokasi & Posko BPBD (Sinkron dengan Profil Akun & Titik Peta Interaktif)
-  const [applicantNik, setApplicantNik] = useState(state?.userProfile?.nik || "3202110482910002");
-  const [poskoTarget, setPoskoTarget] = useState(state?.poskoName || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)");
-  const [shelterStatus, setShelterStatus] = useState("Rumah Tinggal Pribadi (Terdampak Langsung)");
-  const [province, setProvince] = useState("Jawa Timur");
-  const [regency, setRegency] = useState("Kota Surabaya");
-  const [district, setDistrict] = useState("Gubeng");
-  const [village, setVillage] = useState("Gubeng");
+  const [applicantNik, setApplicantNik] = useState("");
+  const [poskoTarget, setPoskoTarget] = useState("");
+  const [shelterStatus, setShelterStatus] = useState("");
+  const [province, setProvince] = useState("");
+  const [regency, setRegency] = useState("");
+  const [district, setDistrict] = useState("");
+  const [village, setVillage] = useState("");
   const [pickedLat, setPickedLat] = useState<number>(-7.2654);
   const [pickedLng, setPickedLng] = useState<number>(112.7521);
 
@@ -54,12 +54,38 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   }, []);
 
   // Step 3: Kondisi Terdampak
-  const [affectedPeople, setAffectedPeople] = useState<number | "">(21);
-  const [familyCount, setFamilyCount] = useState<number | "">(5);
-  const [vulnerableList, setVulnerableList] = useState<string[]>(["Lansia", "Balita"]);
-  const [availabilityCondition, setAvailabilityCondition] = useState("Tidak tersedia");
-  const [citizenUrgency, setCitizenUrgency] = useState("Sangat mendesak");
+  const [affectedPeople, setAffectedPeople] = useState<number | "">("");
+  const [familyCount, setFamilyCount] = useState<number | "">("");
+  const [vulnerableList, setVulnerableList] = useState<string[]>([]);
+  const [availabilityCondition, setAvailabilityCondition] = useState("");
+  const [citizenUrgency, setCitizenUrgency] = useState("");
   const [conditionDescription, setConditionDescription] = useState("");
+
+  const resetForm = () => {
+    setCategory("");
+    setCustomCategory("");
+    setAmount("");
+    setCustomUnit("");
+    setNotes("");
+    setApplicantNik("");
+    setPoskoTarget("");
+    setShelterStatus("");
+    setProvince("");
+    setRegency("");
+    setDistrict("");
+    setVillage("");
+    setAffectedPeople("");
+    setFamilyCount("");
+    setVulnerableList([]);
+    setAvailabilityCondition("");
+    setCitizenUrgency("");
+    setConditionDescription("");
+    setFileName("");
+    setFotoBukti(undefined);
+    setStep(1);
+    setSuccess(false);
+    setSubmittedCaseId("");
+  };
 
   const handleToggleVulnerable = (item: string) => {
     if (item === "Tidak ada") {
@@ -85,6 +111,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
   // Satuan Menyesuaikan Kategori Kebutuhan
   const getUnit = () => {
+    if (!category) return "Pilih kategori";
     if (category === "Air Bersih") return "Liter (L)";
     if (category === "Pangan") return "Porsi / Paket";
     if (category === "Kesehatan") return "Paket / Unit";
@@ -213,7 +240,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
             </Button>
             <Button 
               variant="secondary" 
-              onClick={() => { setSuccess(false); setStep(1); }} 
+              onClick={resetForm} 
               className="btn-success-close"
             >
               Tutup &amp; Buat Laporan Baru
@@ -230,7 +257,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
         eyebrow={`Langkah ${step} dari 5`} 
         title="Laporkan Kebutuhan Darurat" 
         copy="Sampaikan kondisi dan kebutuhan lapangan secara akurat untuk integrasi posko wilayah BPBD dan mitra responder." 
-        action={<div className="trust-badge"><Icon name="check" /> Terhubung ke {(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}</div>}
+        action={poskoTarget ? <div className="trust-badge"><Icon name="check" /> Terhubung ke {(poskoTarget || "").split(" - ")[0] || "Posko BPBD Wilayah"}</div> : undefined}
       />
 
       {/* TOP TRAPEZOID / CHEVRON STEPPER BAR */}
@@ -380,7 +407,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       className="form-control" 
                       value={applicantNik} 
                       onChange={(e) => setApplicantNik(e.target.value)} 
-                      placeholder="3202110482910002"
+                      placeholder="Contoh: 3202110482910002 (16 digit)"
                       maxLength={16}
                     />
                   </div>
@@ -391,10 +418,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       value={shelterStatus} 
                       onChange={(e) => setShelterStatus(e.target.value)}
                     >
-                      <option>Rumah Tinggal Pribadi (Terdampak Langsung)</option>
-                      <option>Posko Pengungsian Komunal</option>
-                      <option>Menumpang di Kerabat / Tetangga</option>
-                      <option>Fasilitas Umum / Tempat Ibadah</option>
+                      <option value="">-- Pilih Status Domisili / Lokasi --</option>
+                      <option value="Rumah Tinggal Pribadi (Terdampak Langsung)">Rumah Tinggal Pribadi (Terdampak Langsung)</option>
+                      <option value="Posko Pengungsian Komunal">Posko Pengungsian Komunal</option>
+                      <option value="Menumpang di Kerabat / Tetangga">Menumpang di Kerabat / Tetangga</option>
+                      <option value="Fasilitas Umum / Tempat Ibadah">Fasilitas Umum / Tempat Ibadah</option>
                     </select>
                   </div>
                 </div>
@@ -403,7 +431,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   <div className="form-group">
                     <label className="form-label">Provinsi</label>
                     <select className="form-control select" value={province} onChange={(e) => setProvince(e.target.value)}>
-                      {[province, "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", "DI Yogyakarta", "Bali", "Sumatera Utara", "Sulawesi Selatan", "Kalimantan Timur"].filter((v, i, a) => a.indexOf(v) === i).map((p) => (
+                      <option value="">-- Pilih Provinsi --</option>
+                      {[
+                        "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", 
+                        "DI Yogyakarta", "Bali", "Sumatera Utara", "Sulawesi Selatan", "Kalimantan Timur"
+                      ].map((p) => (
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
@@ -428,7 +460,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       className="form-control" 
                       value={district} 
                       onChange={(e) => setDistrict(e.target.value)} 
-                      placeholder="Contoh: Rungkut / Cibadak"
+                      placeholder="Contoh: Gubeng / Cibadak"
                     />
                   </div>
                   <div className="form-group">
@@ -438,7 +470,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       className="form-control" 
                       value={village} 
                       onChange={(e) => setVillage(e.target.value)} 
-                      placeholder="Contoh: Rungkut Menanggal / Desa Sukamaju"
+                      placeholder="Contoh: Gubeng / Desa Sukamaju"
                     />
                   </div>
                 </div>
@@ -450,14 +482,14 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     value={poskoTarget} 
                     onChange={(e) => setPoskoTarget(e.target.value)}
                   >
+                    <option value="">-- Pilih Posko BPBD Rujukan --</option>
                     {[
-                      poskoTarget,
                       "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
                       "Posko Induk 01 - Balai Desa Sukamaju (BPBD Wilayah)",
                       "Posko BPBD Kabupaten Sukabumi (Posko Induk)",
                       "Posko Darurat Kecamatan Cibadak",
                       "Posko Induk BPBD DKI Jakarta",
-                    ].filter((v, i, a) => a.indexOf(v) === i).map((pos) => (
+                    ].map((pos) => (
                       <option key={pos} value={pos}>{pos}</option>
                     ))}
                   </select>
@@ -631,6 +663,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         value={availabilityCondition} 
                         onChange={(e) => setAvailabilityCondition(e.target.value)}
                       >
+                        <option value="">-- Pilih Kondisi Ketersediaan --</option>
                         {availCfg.options.map((opt) => (
                           <option key={opt} value={opt}>{opt}</option>
                         ))}
@@ -647,6 +680,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     value={citizenUrgency} 
                     onChange={(e) => setCitizenUrgency(e.target.value)}
                   >
+                    <option value="">-- Pilih Tingkat Urgensi --</option>
                     <option value="Bisa menunggu">Bisa menunggu</option>
                     <option value="Perlu segera">Perlu segera</option>
                     <option value="Sangat mendesak">Sangat mendesak</option>
@@ -800,11 +834,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     </div>
                     <div className="review-item">
                       <span className="review-label">Perkiraan Jumlah Kebutuhan</span>
-                      <strong>{amount || "850"} {getUnit()}</strong>
+                      <strong>{amount ? `${amount} ${getUnit()}` : "-"}</strong>
                     </div>
                     <div className="review-item wide">
                       <span className="review-label">Deskripsi Kebutuhan</span>
-                      <p>{notes || "Sumber air warga tercemar dan tidak dapat digunakan sejak kejadian bencana."}</p>
+                      <p>{notes || "-"}</p>
                     </div>
 
                     {/* SECTION 2 — LOKASI */}
@@ -814,20 +848,24 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       </span>
                     </div>
                     <div className="review-item">
+                      <span className="review-label">NIK Pemohon</span>
+                      <strong>{applicantNik || "-"}</strong>
+                    </div>
+                    <div className="review-item">
                       <span className="review-label">Titik Lokasi Warga</span>
-                      <strong>{pickedLat.toFixed(5)}, {pickedLng.toFixed(5)}</strong>
+                      <strong>{Number.isFinite(Number(pickedLat)) ? pickedLat.toFixed(5) : "-"}, {Number.isFinite(Number(pickedLng)) ? pickedLng.toFixed(5) : "-"}</strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Wilayah Administratif</span>
-                      <strong>{village}, Kec. {district}, {regency}, {province}</strong>
+                      <strong>{[village, district ? `Kec. ${district}` : "", regency, province].filter(Boolean).join(", ") || "-"}</strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Posko BPBD Rujukan</span>
-                      <strong>{poskoTarget}</strong>
+                      <strong>{poskoTarget || "-"}</strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Status Domisili</span>
-                      <strong>{shelterStatus}</strong>
+                      <strong>{shelterStatus || "-"}</strong>
                     </div>
 
                     {/* SECTION 3 — KONDISI TERDAMPAK */}
@@ -838,11 +876,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     </div>
                     <div className="review-item">
                       <span className="review-label">Jumlah Orang Terdampak</span>
-                      <strong>{affectedPeople || 21} Jiwa / Orang</strong>
+                      <strong>{affectedPeople ? `${affectedPeople} Jiwa / Orang` : "-"}</strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Jumlah KK (Kepala Keluarga)</span>
-                      <strong>{familyCount || 5} KK</strong>
+                      <strong>{familyCount ? `${familyCount} KK` : "-"}</strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Kelompok Rentan</span>
@@ -854,11 +892,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     </div>
                     <div className="review-item">
                       <span className="review-label">Kondisi Ketersediaan</span>
-                      <strong>{availabilityCondition || "Tidak tersedia"}</strong>
+                      <strong>{availabilityCondition || "-"}</strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Urgensi Menurut Pelapor</span>
-                      <strong>{citizenUrgency || "Sangat mendesak"}</strong>
+                      <strong>{citizenUrgency || "-"}</strong>
                     </div>
                     {conditionDescription && (
                       <div className="review-item wide">
@@ -910,26 +948,26 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 if (step < 5) setStep(step + 1); 
                 else { 
                   const submitData = async () => {
-                    const displayCat = category === "Lainnya" && customCategory ? customCategory : category;
+                    const displayCat = category === "Lainnya" && customCategory ? customCategory : (category || "Kebutuhan Darurat");
                     const unit = getUnit();
-                    const fullVolume = `${amount || "850"} ${unit}`;
-                    const peopleCount = typeof affectedPeople === "number" && affectedPeople > 0 ? affectedPeople : 21;
-                    const finalKK = typeof familyCount === "number" && familyCount > 0 ? familyCount : 1;
+                    const fullVolume = amount ? `${amount} ${unit}` : "-";
+                    const peopleCount = typeof affectedPeople === "number" && affectedPeople > 0 ? affectedPeople : 0;
+                    const finalKK = typeof familyCount === "number" && familyCount > 0 ? familyCount : 0;
                     const vulText = vulnerableList.length > 0 && !vulnerableList.includes("Tidak ada")
                       ? vulnerableList.join(", ")
                       : "Tidak ada";
 
                     const payload = {
-                      citizen_name: state?.userProfile?.name || "Andi Pratama",
-                      citizen_phone: state?.userProfile?.phone || "+62 812 4455 0188",
-                      posko_name: poskoTarget,
+                      citizen_name: state?.userProfile?.name || "Masyarakat",
+                      citizen_phone: state?.userProfile?.phone || "-",
+                      posko_name: poskoTarget || "Posko BPBD Wilayah",
                       kategori_kebutuhan: displayCat,
                       volume_permintaan: fullVolume,
                       jumlah_kk: finalKK,
-                      status_hunian: shelterStatus,
-                      tingkat_urgensi: citizenUrgency,
+                      status_hunian: shelterStatus || "Rumah Tinggal Pribadi",
+                      tingkat_urgensi: citizenUrgency || "Perlu segera",
                       status: "Diajukan",
-                      deskripsi: notes || conditionDescription || `Kebutuhan ${displayCat} sebanyak ${fullVolume} untuk ${peopleCount} jiwa (${finalKK} KK) terdampak.`,
+                      deskripsi: notes || conditionDescription || `Kebutuhan ${displayCat} sebanyak ${fullVolume}.`,
                       desa: village,
                       kecamatan: district,
                       kabupaten: regency,
