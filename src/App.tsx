@@ -1257,7 +1257,16 @@ function MobileNav({ role, page, go }: { role: Role; page: PortalPage; go: (p: P
 }
 
 export function PageHead({ eyebrow, title, copy, action }: { eyebrow: string; title: string; copy: string; action?: React.ReactNode }) {
-  return <div className="workspace-title"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1><p>{copy}</p></div>{action}</div>;
+  return (
+    <div className="workspace-title">
+      <div className="workspace-title-text">
+        <span className="eyebrow">{eyebrow}</span>
+        <h1>{title}</h1>
+        <p>{copy}</p>
+      </div>
+      {action && <div className="workspace-title-action">{action}</div>}
+    </div>
+  );
 }
 
 function CitizenRouter({ page, setPage, state, update, notify, name = "Andi Pratama", setName, onRefresh, setRole }: RouterProps) {
