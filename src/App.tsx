@@ -4989,10 +4989,11 @@ export default function App() {
                 caseCode.startsWith("RK-LOG-") ||
                 caseCode.startsWith("RK-AUTH-");
 
+              const currentUserName = prev.userProfile?.name ? prev.userProfile.name.toLowerCase().trim() : "";
               const isUserOwnReport = !isDummy && (
                 reportedIds.includes(caseCode) || 
                 (localCase?.isOwn === true && !localCase?.id?.startsWith("RK-UJI-")) ||
-                (Boolean(item.citizen_name) && Boolean(prev.userProfile?.name) && item.citizen_name.toLowerCase().trim() === prev.userProfile.name.toLowerCase().trim())
+                Boolean(currentUserName && item.citizen_name && item.citizen_name.toLowerCase().trim() === currentUserName)
               );
 
               if (isUserOwnReport) {
