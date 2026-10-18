@@ -798,15 +798,13 @@ export function LeafletMap({
           caseAvgLng = validCases.reduce((s, c) => s + Number(c.lng), 0) / validCases.length;
         }
 
-        // Only include poskos that are within 1.0 degree (~110km) of the active cases
-        if (Array.isArray(poskos) && validCases.length > 0) {
+        // Frame map bounds around citizen cases so all reported needs are visible
+        if (validCases.length === 0 && Array.isArray(poskos)) {
           poskos.forEach((p) => {
             const plat = Number(p.latitude);
             const plng = Number(p.longitude);
             if (Number.isFinite(plat) && Number.isFinite(plng)) {
-              if (Math.hypot(plat - caseAvgLat, plng - caseAvgLng) < 1.0) {
-                bounds.push([plat, plng]);
-              }
+              bounds.push([plat, plng]);
             }
           });
         }
@@ -991,11 +989,20 @@ export function LeafletMap({
 
         if (bounds.length > 0) {
           try {
+            map.invalidateSize();
             map.fitBounds(L.latLngBounds(bounds), {
-              padding: [45, 45],
-              maxZoom: 14,
-              minZoom: 11,
+              padding: [28, 28],
+              maxZoom: 13,
             });
+            setTimeout(() => {
+              if (mapInstanceRef.current) {
+                mapInstanceRef.current.invalidateSize();
+                mapInstanceRef.current.fitBounds(L.latLngBounds(bounds), {
+                  padding: [28, 28],
+                  maxZoom: 13,
+                });
+              }
+            }, 300);
           } catch (e) {
             map.setView(bounds[0], 12);
           }
