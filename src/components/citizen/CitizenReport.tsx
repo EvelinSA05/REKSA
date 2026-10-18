@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   SharedState,
   RouterProps,
@@ -107,6 +107,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [step, setStep] = useState<number>(() => initialDraft?.step || 1);
   const [success, setSuccess] = useState(false);
   const [submittedCaseId, setSubmittedCaseId] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
   
   // Step 1: Kebutuhan
   const [category, setCategory] = useState<string>(() => initialDraft?.category || "");
@@ -233,6 +235,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
     setStep(1);
     setSuccess(false);
     setSubmittedCaseId("");
+    isSubmittingRef.current = false;
+    setIsSubmitting(false);
   };
 
   const handleToggleVulnerable = (item: string) => {
@@ -1377,7 +1381,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <Button 
                 variant="secondary" 
-                disabled={step === 1} 
+                disabled={step === 1 || isSubmitting} 
                 onClick={() => setStep(step - 1)}
               >
                 Kembali
@@ -1385,6 +1389,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
               {Boolean(category || amount || notes || applicantNik || village || affectedPeople !== "") && (
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => {
                     if (window.confirm("Kosongkan semua data formulir yang telah Anda ketik?")) {
                       resetForm();
@@ -1395,9 +1400,10 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     border: "none",
                     color: "#8a968d",
                     fontSize: "0.85rem",
-                    cursor: "pointer",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
                     textDecoration: "underline",
-                    padding: "6px 10px"
+                    padding: "6px 10px",
+                    opacity: isSubmitting ? 0.6 : 1,
                   }}
                 >
                   Kosongkan Draf
@@ -1405,9 +1411,16 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
               )}
             </div>
             <Button 
+              disabled={isSubmitting}
               onClick={() => { 
-                if (step < 5) setStep(step + 1); 
-                else { 
+                if (step < 5) {
+                  setStep(step + 1); 
+                } else { 
+                  // Cegah pengiriman ganda: tombol hanya bisa ditekan 1x dan langsung disabled
+                  if (isSubmittingRef.current) return;
+                  isSubmittingRef.current = true;
+                  setIsSubmitting(true);
+
                   const submitData = async () => {
                     const displayCat = category === "Lainnya" && customCategory ? customCategory : (category || "Kebutuhan Darurat");
                     const unit = getUnit();
@@ -1525,11 +1538,41 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     setSuccess(true);
                   };
 
-                  submitData();
+                  submitData().catch((err) => {
+                    console.error("Gagal submit:", err);
+                    isSubmittingRef.current = false;
+                    setIsSubmitting(false);
+                  });
                 } 
               }}
             >
-              {step === 5 ? "Kirim Laporan" : "Lanjutkan"} <Icon name="next" />
+              {step === 5 ? (
+                isSubmitting ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                    <svg 
+                      viewBox="0 0 24 24" 
+                      width="16" 
+                      height="16" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      style={{ animation: "spin 1s linear infinite" }}
+                    >
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    <span>Mengirim Laporan...</span>
+                  </span>
+                ) : (
+                  <>
+                    Kirim Laporan <Icon name="next" />
+                  </>
+                )
+              ) : (
+                <>
+                  Lanjutkan <Icon name="next" />
+                </>
+              )}
             </Button>
           </div>
         </div>
