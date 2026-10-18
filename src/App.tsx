@@ -93,6 +93,7 @@ const icons: Record<string, React.ReactNode> = {
   arrow: <svg viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5" /></svg>,
   next: <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   chevron: <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  down: <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   bell: <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>,
   pin: <svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>,
   check: <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>,
@@ -2912,7 +2913,7 @@ function CaseDetail({
 
           {/* GAMBAR 3 REVISION: ACTIVITY LOG WITH DYNAMIC REAL-TIME TIMESTAMPS & CASE CODE */}
           <div className="case-section-card">
-            <Activity state={state} activeCase={activeCase} />
+            <Activity state={state} activeCase={activeCase} update={update} />
           </div>
         </div>
       </div>
@@ -3152,7 +3153,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
 
       {/* ACTIVITY LOG SECTION */}
       <div className="posko-activity-panel">
-        <Activity state={state} />
+        <Activity state={state} update={update} setPage={setPage} />
       </div>
     </main>
   );
@@ -3510,8 +3511,33 @@ function Assignments({ state, open, responder = false, onRefresh, notify, update
   );
 }
 
-function Activity({ state, activeCase }: { state: SharedState; activeCase?: CaseRecord }) {
-  const currentCase = activeCase || (state.casesList ? state.casesList.find(c => c.id === state.activeCaseId) : undefined);
+function Activity({ 
+  state, 
+  activeCase, 
+  update, 
+  setPage 
+}: { 
+  state: SharedState; 
+  activeCase?: CaseRecord;
+  update?: RouterProps["update"];
+  setPage?: RouterProps["setPage"];
+}) {
+  const allCases = state.casesList || [];
+  
+  // Sort and prioritize cases (Kritis/Tinggi first, limit to top 10 for clean performance)
+  const prioritizedCases = [...allCases].sort((a, b) => {
+    const scoreA = a.urgencyScore || (a.urgency === "Kritis" ? 90 : a.urgency === "Tinggi" ? 70 : 40);
+    const scoreB = b.urgencyScore || (b.urgency === "Kritis" ? 90 : b.urgency === "Tinggi" ? 70 : 40);
+    return scoreB - scoreA;
+  }).slice(0, 10);
+
+  const currentCase = activeCase || (allCases.find(c => c.id === state.activeCaseId) || allCases[0]);
+
+  // Ensure currentCase is included in selectableCases so the select value matches
+  const selectableCases = currentCase && !prioritizedCases.some(c => c.id === currentCase.id)
+    ? [currentCase, ...prioritizedCases]
+    : (prioritizedCases.length > 0 ? prioritizedCases : (currentCase ? [currentCase] : []));
+
   const caseId = currentCase?.id || "RK-2026-00124";
   const applicant = currentCase?.applicantName || "Andi Pratama";
   const status = currentCase?.status || "Dalam Verifikasi";
@@ -3673,8 +3699,52 @@ function Activity({ state, activeCase }: { state: SharedState; activeCase?: Case
             <span className="eyebrow">Tahapan Penanganan &amp; Alur Kasus</span>
             <div className="activity-heading-row">
               <h3>Catatan Proses Kasus</h3>
-              <span className="case-id-code-badge">{caseId}</span>
+              {!activeCase && selectableCases.length > 1 ? (
+                <div className="activity-case-select-wrapper">
+                  <select
+                    id="activity-case-picker"
+                    className="activity-case-select"
+                    value={caseId}
+                    onChange={(e) => {
+                      const newId = e.target.value;
+                      if (update) {
+                        update({ activeCaseId: newId });
+                      }
+                    }}
+                    title="Pilih kasus untuk memantau alur tahapan penanganan"
+                  >
+                    {selectableCases.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.id} — {c.item} ({c.urgency || "Mendesak"})
+                      </option>
+                    ))}
+                  </select>
+                  <span className="activity-select-icon"><Icon name="down" /></span>
+                </div>
+              ) : (
+                <span className="case-id-code-badge">{caseId}</span>
+              )}
             </div>
+          </div>
+
+          <div className="activity-header-actions">
+            <span className={`activity-status-pill status-${(status || "").toLowerCase().replace(/\s+/g, "-")}`}>
+              {status}
+            </span>
+            {setPage && !activeCase && (
+              <button 
+                type="button" 
+                className="btn-activity-open-case"
+                onClick={() => {
+                  if (update && currentCase?.id) update({ activeCaseId: currentCase.id });
+                  setPage("case");
+                }}
+                title="Buka detail lembar verifikasi kasus ini"
+              >
+                <span>Buka Detail Kasus</span>
+                <Icon name="next" />
+              </button>
+            )}
           </div>
         </div>
 
