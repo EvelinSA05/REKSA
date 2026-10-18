@@ -264,6 +264,8 @@ export function MapView({
   caseId,
   caseKk,
   caseUrgency,
+  cases,
+  onSelectCase,
   onLocationPicked,
 }: { 
   operational?: boolean; 
@@ -277,6 +279,8 @@ export function MapView({
   caseId?: string;
   caseKk?: string;
   caseUrgency?: string;
+  cases?: any[];
+  onSelectCase?: (c: any) => void;
   onLocationPicked?: (info: any) => void;
 }) {
   const safeLat = Number.isFinite(Number(initialLat)) ? Number(initialLat) : -7.336272;
@@ -295,6 +299,8 @@ export function MapView({
         caseId={caseId}
         caseKk={caseKk}
         caseUrgency={caseUrgency}
+        cases={cases}
+        onSelectCase={onSelectCase}
         onLocationPicked={onLocationPicked} 
       />
     </ErrorBoundary>
@@ -2921,7 +2927,7 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
   if (page === "resources") return <PoskoKebutuhanBursa cases={state.casesList || []} bursaList={state.bursaList || []} penawaranList={state.penawaranList || []} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
   if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} />;
   if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={state.misiList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
-  if (page === "map") return <MapPage open={() => setPage("case")} />;
+  if (page === "map") return <MapPage open={() => setPage("case")} cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
   if (page === "notifications") return <Notifications role="posko" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Petugas Posko" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
@@ -3125,6 +3131,13 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <MapView 
               operational 
               hideCard 
+              cases={allCases}
+              onSelectCase={(c) => {
+                if (c?.id) {
+                  update({ activeCaseId: c.id });
+                  setPage("case");
+                }
+              }}
               initialLat={primaryLat}
               initialLng={primaryLng}
               locationAddress={primaryAddress}
@@ -3145,8 +3158,14 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
   );
 }
 
-function MapPage({ open }: { open: () => void }) {
+function MapPage({ open, cases = [], onSelectCase }: { open: () => void; cases?: CaseRecord[]; onSelectCase?: (c: any) => void }) {
   const [priority, setPriority] = useState("Semua");
+  const filteredCases = cases.filter((c) => {
+    if (priority === "Semua") return true;
+    if (priority === "Selesai") return c.status === "Selesai";
+    return c.urgency === priority;
+  });
+
   return (
     <main className="workspace map-page-workspace">
       <PageHead 
@@ -3171,7 +3190,7 @@ function MapPage({ open }: { open: () => void }) {
       </div>
 
       <div className="map-page-wrapper">
-        <MapView operational />
+        <MapView operational cases={filteredCases} onSelectCase={onSelectCase} />
         <div className="map-page-floating-action">
           <div className="map-floating-info">
             <div className="floating-pin-icon"><Icon name="pin" /></div>
