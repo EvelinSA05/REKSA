@@ -138,28 +138,16 @@ export function PoskoVerifikasiLaporan({
         </div>
       </div>
 
-      {/* FILTER TABS & SEARCH BAR */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "14px",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "24px",
-          background: "#ffffff",
-          padding: "12px 18px",
-          borderRadius: "14px",
-          border: "1px solid rgba(1, 50, 32, 0.08)",
-        }}
-      >
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+      {/* FILTER TABS & SEARCH BAR TOOLBAR */}
+      <div className="posko-verifikasi-toolbar">
+        {/* Status Tabs Bar */}
+        <div className="posko-toolbar-tabs">
           {[
             { id: "pending", label: "Menunggu Verifikasi", count: pendingCount },
             { id: "clarify", label: "Perlu Klarifikasi", count: clarifyCount },
             { id: "verified", label: "Terverifikasi / Terbuka", count: verifiedCount },
             { id: "rejected", label: "Ditolak", count: rejectedCount },
-            { id: "all", label: "Semua", count: cases.length },
+            { id: "all", label: "Semua Laporan", count: cases.length },
           ].map((tabItem) => {
             const isActive = tab === tabItem.id;
             return (
@@ -167,42 +155,52 @@ export function PoskoVerifikasiLaporan({
                 key={tabItem.id}
                 type="button"
                 onClick={() => setTab(tabItem.id as any)}
-                style={{
-                  padding: "7px 14px",
-                  borderRadius: "20px",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  border: isActive ? "1px solid #013220" : "1px solid #e2e8f0",
-                  background: isActive ? "#013220" : "#ffffff",
-                  color: isActive ? "#ffffff" : "#475569",
-                  transition: "all 0.15s ease",
-                }}
+                className={`posko-tab-pill ${isActive ? "active" : ""}`}
               >
-                {tabItem.label} ({tabItem.count})
+                <span>{tabItem.label}</span>
+                <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
+                  {tabItem.count}
+                </span>
               </button>
             );
           })}
         </div>
 
-        <div style={{ position: "relative", minWidth: "260px" }}>
-          <div style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>
-            <AppIcon name="search" size={15} />
+        {/* Search Bar & Counter Row */}
+        <div className="posko-toolbar-search-row">
+          <div className="posko-search-input-wrap">
+            <span className="posko-search-icon">
+              <AppIcon name="search" size={15} />
+            </span>
+            <input
+              type="text"
+              placeholder="Cari berdasarkan kode kasus, nama warga, komoditas, kelurahan, atau kecamatan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="posko-search-input"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="posko-search-clear-btn"
+                title="Hapus kata kunci pencarian"
+              >
+                ×
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Cari kode kasus, warga, komoditas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "7px 12px 7px 32px",
-              borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              fontSize: "0.84rem",
-              color: "#1e293b",
-            }}
-          />
+
+          <div className="posko-search-meta">
+            <span className="posko-search-count-text">
+              Menampilkan <strong>{filterCases.length}</strong> dari {cases.length} laporan
+            </span>
+            {search && (
+              <span className="posko-search-query-tag">
+                Filter: "{search}"
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
