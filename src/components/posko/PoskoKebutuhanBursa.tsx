@@ -465,7 +465,7 @@ export function PoskoKebutuhanBursa({
                   </span>
                   <span className="posko-case-meta-item">
                     <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
-                    <span><strong>{c.kk} KK</strong> Terdampak</span>
+                    <span><strong>{(c.kk || "").toString().toLowerCase().includes("kk") ? c.kk : `${c.kk} KK`}</strong> Terdampak</span>
                   </span>
                   {(c as any).reporter && (
                     <span className="posko-case-meta-item">
