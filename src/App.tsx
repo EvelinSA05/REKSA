@@ -2939,9 +2939,29 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
   const primaryCase = allCases.find(c => c.id === state.activeCaseId) || allCases[0];
   const primaryLat = primaryCase?.lat ? Number(primaryCase.lat) : -7.336272;
   const primaryLng = primaryCase?.lng ? Number(primaryCase.lng) : 112.728881;
-  const primaryAddress = primaryCase 
-    ? (primaryCase.location || `${primaryCase.village || ''}, Kec. ${primaryCase.district || ''}, ${primaryCase.regency || ''}`)
-    : "Jalan Gayungan V, Gayungan, Kec. Gayungan, Surabaya";
+  
+  const buildFullAddress = (c?: CaseRecord | null) => {
+    if (!c) return "Jalan Gayungan V, Gayungan, Kec. Gayungan, Kota Surabaya, Prov. Jawa Timur";
+    const v = (c.village || "").trim();
+    const d = (c.district || "").trim();
+    let k = (c.regency || "").trim();
+    const p = (c.province || "").trim();
+
+    if (k.toLowerCase() === v.toLowerCase() && d && d.toLowerCase().includes("sidoarjo")) {
+      k = "Kabupaten Sidoarjo";
+    }
+
+    const parts: string[] = [];
+    if (v) parts.push(v.toLowerCase().startsWith("desa") || v.toLowerCase().startsWith("kel") || v.toLowerCase().startsWith("jalan") || v.toLowerCase().startsWith("jl") ? v : `Desa/Kel. ${v}`);
+    if (d) parts.push(d.toLowerCase().startsWith("kec") ? d : `Kec. ${d}`);
+    if (k) parts.push(k.toLowerCase().startsWith("kab") || k.toLowerCase().startsWith("kota") ? k : `Kab. ${k}`);
+    if (p) parts.push(p.toLowerCase().startsWith("prov") ? p : `Prov. ${p}`);
+    
+    if (parts.length >= 2) return parts.join(", ");
+    return c.location || parts.join(", ") || "Lokasi belum ditentukan";
+  };
+
+  const primaryAddress = buildFullAddress(primaryCase);
 
   // PRD Bab 5.1 Enam Metrik Utama Posko
   const masukKK = allCases.filter(c => (c.status || '').toLowerCase().includes('verifikasi') || c.status === 'Diajukan').length;
@@ -5047,11 +5067,21 @@ export default function App() {
             })
             .map((item) => {
               const poskoInfo = item.posko;
-              const v = item.desa || poskoInfo?.desa || "Gubeng";
-              const d = item.kecamatan || poskoInfo?.kecamatan;
-              const k = item.kabupaten || poskoInfo?.kabupaten || "Kota Surabaya";
-              const p = item.provinsi || poskoInfo?.provinsi || "Jawa Timur";
-              const locStr = d ? `${v}, Kec. ${d}` : `${v}, ${k}`;
+              const v = (item.desa || poskoInfo?.desa || "Surabaya").trim();
+              const d = (item.kecamatan || poskoInfo?.kecamatan || "").trim();
+              let k = (item.kabupaten || poskoInfo?.kabupaten || "Kota Surabaya").trim();
+              const p = (item.provinsi || poskoInfo?.provinsi || "Jawa Timur").trim();
+
+              if (k.toLowerCase() === v.toLowerCase() && d && d.toLowerCase().includes("sidoarjo")) {
+                k = "Kabupaten Sidoarjo";
+              }
+
+              const addrParts: string[] = [];
+              if (v) addrParts.push(v.toLowerCase().startsWith("desa") || v.toLowerCase().startsWith("kel") || v.toLowerCase().startsWith("jalan") || v.toLowerCase().startsWith("jl") ? v : `Desa/Kel. ${v}`);
+              if (d) addrParts.push(d.toLowerCase().startsWith("kec") ? d : `Kec. ${d}`);
+              if (k) addrParts.push(k.toLowerCase().startsWith("kab") || k.toLowerCase().startsWith("kota") ? k : `Kab. ${k}`);
+              if (p) addrParts.push(p.toLowerCase().startsWith("prov") ? p : `Prov. ${p}`);
+              const locStr = addrParts.length > 0 ? addrParts.join(", ") : (d ? `${v}, Kec. ${d}` : `${v}, ${k}`);
               const caseCode = item.kode_kasus || `RK-2026-00${item.id}`;
               const localCase = prevCasesMap.get(caseCode);
               const resolvedFoto = (item.foto_bukti && item.foto_bukti !== "null") ? item.foto_bukti : (localCase?.fotoBukti || undefined);
