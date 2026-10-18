@@ -6820,6 +6820,122 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   transform: translateY(-1px);
 }
 
+/* =========================================================
+   POSKO VERIFIKASI PAGINATION
+   ========================================================= */
+
+.posko-pagination-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(1, 50, 32, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(1, 50, 32, 0.03);
+  padding: 12px 20px;
+  margin-top: 20px;
+}
+
+.posko-pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.posko-pagination-info strong {
+  color: #013220;
+  font-weight: 700;
+}
+
+.posko-pagination-limit-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #80866e;
+  background: rgba(1, 50, 32, 0.05);
+  border: 1px solid rgba(1, 50, 32, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.posko-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.posko-page-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.posko-page-nav-btn:hover:not(:disabled) {
+  background: #f8faf8;
+  border-color: #013220;
+  color: #013220;
+  transform: translateY(-1px);
+}
+
+.posko-page-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.posko-page-num-btn {
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0 6px;
+}
+
+.posko-page-num-btn:hover:not(.active) {
+  background: #f8faf8;
+  border-color: rgba(1, 50, 32, 0.25);
+  color: #013220;
+}
+
+.posko-page-num-btn.active {
+  background: #013220;
+  border-color: #013220;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(1, 50, 32, 0.2);
+}
+
+@media (max-width: 640px) {
+  .posko-pagination-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
 .activity-live-tag {
   display: inline-flex;
   align-items: center;
