@@ -6002,6 +6002,135 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   letter-spacing: 0.02em;
 }
 
+.activity-case-select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  max-width: 340px;
+}
+
+.activity-case-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--forest);
+  background: #f4f8f4;
+  border: 1px solid rgba(1, 50, 32, 0.2);
+  border-radius: 8px;
+  padding: 5px 30px 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-case-select:hover {
+  background: #ffffff;
+  border-color: rgba(1, 50, 32, 0.4);
+  box-shadow: 0 2px 6px rgba(1, 50, 32, 0.06);
+}
+
+.activity-case-select:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: var(--forest);
+  box-shadow: 0 0 0 3px rgba(1, 50, 32, 0.12);
+}
+
+.activity-select-icon {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  color: var(--forest);
+}
+
+.activity-select-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.activity-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.activity-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.activity-status-pill.status-diajukan,
+.activity-status-pill.status-dalam-verifikasi {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #ffedd5;
+}
+
+.activity-status-pill.status-kebutuhan-terbuka {
+  background: #ecfeff;
+  color: #0e7490;
+  border-color: #cffafe;
+}
+
+.activity-status-pill.status-ditugaskan,
+.activity-status-pill.status-dalam-pengiriman {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #dbeafe;
+}
+
+.activity-status-pill.status-selesai {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.btn-activity-open-case {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(1, 50, 32, 0.06);
+  border: 1px solid rgba(1, 50, 32, 0.16);
+  color: var(--forest);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-activity-open-case:hover {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(1, 50, 32, 0.15);
+}
+
+.btn-activity-open-case svg {
+  width: 14px;
+  height: 14px;
+}
+
 .activity-live-tag {
   display: inline-flex;
   align-items: center;
