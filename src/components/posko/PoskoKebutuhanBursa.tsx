@@ -139,14 +139,7 @@ export function PoskoKebutuhanBursa({
       </div>
 
       {/* REFINED STAT METRIC CARDS */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "14px",
-          marginBottom: "24px",
-        }}
-      >
+      <div className="posko-metrics-grid-4">
         <div
           style={{
             background: "#ffffff",
