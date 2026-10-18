@@ -21,6 +21,11 @@ interface LeafletMapProps {
   pickLocation?: boolean;
   initialLat?: number;
   initialLng?: number;
+  locationAddress?: string;
+  caseTitle?: string;
+  caseId?: string;
+  caseKk?: string;
+  caseUrgency?: string;
   onLocationPicked?: (info: LocationInfo) => void;
 }
 
@@ -104,6 +109,11 @@ export function LeafletMap({
   pickLocation = false,
   initialLat = -7.3300, // Default to Surabaya coordinates
   initialLng = 112.7250,
+  locationAddress,
+  caseTitle,
+  caseId,
+  caseKk,
+  caseUrgency,
   onLocationPicked,
 }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -652,6 +662,11 @@ export function LeafletMap({
       const oLat = Number(initialLat);
       const oLng = Number(initialLng);
       if (Number.isFinite(oLat) && Number.isFinite(oLng)) {
+        const fallback = resolveFallbackLocation(oLat, oLng);
+        const resolvedAddress = (locationAddress && locationAddress.trim())
+          ? locationAddress
+          : `${fallback.desa}, Kec. ${fallback.kecamatan}, ${fallback.kabupaten}, ${fallback.provinsi}`;
+
         const casePinIcon = L.divIcon({
           className: 'case-location-pin',
           html: `
@@ -693,15 +708,48 @@ export function LeafletMap({
           zIndexOffset: 1000,
         });
 
-        caseMarker.bindPopup(`
-          <div style="font-size: 12px; line-height: 1.4;">
-            <strong style="color: #013220; font-size: 13px; display: inline-flex; align-items: center; gap: 4px;">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-              Titik Lokasi Kebutuhan Warga
-            </strong><br>
-            <small style="color: #555;">Koordinat: ${oLat.toFixed(5)}, ${oLng.toFixed(5)}</small>
+        const popupHtml = `
+          <div style="font-size: 12px; line-height: 1.45; min-width: 230px; max-width: 290px; padding: 2px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; border-bottom: 1px solid #eef2f0; padding-bottom: 5px;">
+              <strong style="color: #013220; font-size: 13px; display: inline-flex; align-items: center; gap: 5px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                Titik Lokasi Laporan
+              </strong>
+              ${caseId ? `<span style="font-size: 10px; font-weight: 700; color: #013220; background: #e8f3ec; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${caseId}</span>` : ''}
+            </div>
+
+            ${caseTitle ? `
+              <div style="margin-bottom: 6px;">
+                <div style="font-weight: 700; color: #1c2e24; font-size: 12.5px;">${caseTitle}</div>
+                ${caseKk ? `<div style="font-size: 11px; color: #555;">Penerima Manfaat: <b>${caseKk}</b></div>` : ''}
+              </div>
+            ` : ''}
+
+            <div style="background: #f4f8f5; border: 1px solid #dbeade; border-left: 3.5px solid #013220; padding: 6px 9px; border-radius: 6px; margin: 6px 0;">
+              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2e6949; margin-bottom: 2px;">
+                Alamat Lengkap:
+              </div>
+              <div style="font-size: 12px; font-weight: 600; color: #11281c; word-break: break-word; line-height: 1.35;">
+                ${resolvedAddress}
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #666; margin-top: 6px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
+              <span>Koordinat Titik:</span>
+              <span style="font-family: monospace; font-weight: 600; color: #2d3748;">${oLat.toFixed(6)}, ${oLng.toFixed(6)}</span>
+            </div>
           </div>
-        `);
+        `;
+
+        caseMarker.bindPopup(popupHtml, {
+          offset: L.point(0, -36),
+          maxWidth: 290,
+          autoPan: true,
+        });
+
+        caseMarker.on('click', () => {
+          caseMarker.openPopup();
+        });
 
         caseMarker.addTo(markerLayer);
         map.setView([oLat, oLng], 15);
@@ -741,7 +789,7 @@ export function LeafletMap({
       }
     }, 200);
 
-  }, [poskos, activePosko, operational, showRoute, pickLocation, citizenPos, activeAddress, initialLat, initialLng, updateCitizenLocation]);
+  }, [poskos, activePosko, operational, showRoute, pickLocation, citizenPos, activeAddress, initialLat, initialLng, locationAddress, caseTitle, caseId, caseKk, caseUrgency, updateCitizenLocation]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
