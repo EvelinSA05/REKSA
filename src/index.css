@@ -6328,6 +6328,191 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   }
 }
 
+/* =========================================================
+   POSKO VERIFIKASI LAPORAN TOOLBAR & FILTERS
+   ========================================================= */
+
+.posko-verifikasi-toolbar {
+  background: #ffffff;
+  border: 1px solid rgba(1, 50, 32, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(1, 50, 32, 0.03);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.posko-toolbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.posko-toolbar-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.posko-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.posko-tab-pill:hover {
+  background: #f8faf8;
+  border-color: rgba(1, 50, 32, 0.25);
+  color: #013220;
+  transform: translateY(-1px);
+}
+
+.posko-tab-pill.active {
+  background: #013220;
+  border-color: #013220;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(1, 50, 32, 0.18);
+  transform: translateY(-1px);
+}
+
+.tab-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.posko-tab-pill:hover .tab-count-badge {
+  background: #e2e8f0;
+  color: #013220;
+}
+
+.posko-tab-pill.active .tab-count-badge {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.posko-toolbar-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  background: #fafbfa;
+  border-top: 1px solid rgba(1, 50, 32, 0.06);
+  flex-wrap: wrap;
+}
+
+.posko-search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.posko-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: #8b9990;
+  pointer-events: none;
+}
+
+.posko-search-input {
+  width: 100%;
+  padding: 8px 34px 8px 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(1, 50, 32, 0.16);
+  background: #ffffff;
+  font-size: 0.84rem;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.posko-search-input::placeholder {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.posko-search-input:focus {
+  border-color: #013220;
+  box-shadow: 0 0 0 3px rgba(1, 50, 32, 0.1);
+  background: #ffffff;
+}
+
+.posko-search-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.posko-search-clear-btn:hover {
+  color: #e11d48;
+}
+
+.posko-search-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.posko-search-count-text strong {
+  color: #013220;
+  font-weight: 700;
+}
+
+.posko-search-query-tag {
+  background: rgba(1, 50, 32, 0.08);
+  color: #013220;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+@media (max-width: 640px) {
+  .posko-toolbar-search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .posko-search-meta {
+    justify-content: space-between;
+  }
+}
+
 .activity-live-tag {
   display: inline-flex;
   align-items: center;
