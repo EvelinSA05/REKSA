@@ -26,6 +26,8 @@ interface LeafletMapProps {
   caseId?: string;
   caseKk?: string;
   caseUrgency?: string;
+  cases?: any[];
+  onSelectCase?: (c: any) => void;
   onLocationPicked?: (info: LocationInfo) => void;
 }
 
@@ -116,6 +118,8 @@ export function LeafletMap({
   caseId,
   caseKk,
   caseUrgency,
+  cases,
+  onSelectCase,
   onLocationPicked,
 }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -572,8 +576,8 @@ export function LeafletMap({
       });
     };
 
-    // Render Posko Markers only on general/overview map, NOT in operational case detail view
-    if (!operational && Array.isArray(poskos)) {
+    // Render Posko Markers if available (unless in pickLocation mode)
+    if (!pickLocation && Array.isArray(poskos)) {
       poskos.forEach((posko) => {
         const lat = Number(posko?.latitude);
         const lng = Number(posko?.longitude);
@@ -661,150 +665,298 @@ export function LeafletMap({
         citizenMarkerRef.current = citizenMarker;
       }
     } else if (operational) {
-      const oLat = Number(initialLat);
-      const oLng = Number(initialLng);
-      if (Number.isFinite(oLat) && Number.isFinite(oLng)) {
-        const fallback = resolveFallbackLocation(oLat, oLng);
-        let rawAddr = (locationAddress && locationAddress.trim()) ? locationAddress.trim() : "";
+      if (Array.isArray(cases) && cases.length > 0) {
+        const bounds: [number, number][] = [];
+        const renderedCoords: [number, number][] = [];
 
-        let resolvedAddress = "";
-        if (!rawAddr) {
-          resolvedAddress = `${fallback.desa}, Kec. ${fallback.kecamatan}, ${fallback.kabupaten}, Prov. ${fallback.provinsi}`;
-        } else {
-          // Parse and build a truly complete address hierarchy: Desa, Kecamatan, Kabupaten/Kota, Provinsi
-          const parts = rawAddr.split(',').map(s => s.trim()).filter(Boolean);
-          const hasKec = parts.some(p => p.toLowerCase().includes('kec'));
-          const hasKab = parts.some(p => p.toLowerCase().includes('kab') || p.toLowerCase().includes('kota'));
-          const hasProv = parts.some(p => p.toLowerCase().includes('prov') || p.toLowerCase().includes('jawa') || p.toLowerCase().includes('dki') || p.toLowerCase().includes('banten') || p.toLowerCase().includes('bali'));
-
-          const enriched: string[] = [];
-
-          // 1. Desa / Jalan
-          const firstPart = parts[0] || fallback.desa;
-          if (firstPart) {
-            const fLower = firstPart.toLowerCase();
-            const fFormatted = (fLower.startsWith('desa') || fLower.startsWith('kel') || fLower.startsWith('jalan') || fLower.startsWith('jl'))
-              ? firstPart
-              : `Desa/Kel. ${firstPart}`;
-            enriched.push(fFormatted);
-          }
-
-          // 2. Kecamatan
-          if (hasKec) {
-            const kecPart = parts.find(p => p.toLowerCase().includes('kec'))!;
-            enriched.push(kecPart);
-          } else {
-            enriched.push(`Kec. ${fallback.kecamatan}`);
-          }
-
-          // 3. Kabupaten / Kota
-          if (hasKab) {
-            const kabPart = parts.find(p => p.toLowerCase().includes('kab') || p.toLowerCase().includes('kota'))!;
-            enriched.push(kabPart);
-          } else {
-            const kabName = fallback.kabupaten.startsWith('Kab') || fallback.kabupaten.startsWith('Kota')
-              ? fallback.kabupaten
-              : `Kab. ${fallback.kabupaten}`;
-            enriched.push(kabName);
-          }
-
-          // 4. Provinsi
-          if (hasProv) {
-            const provPart = parts.find(p => p.toLowerCase().includes('prov') || p.toLowerCase().includes('jawa') || p.toLowerCase().includes('dki') || p.toLowerCase().includes('banten') || p.toLowerCase().includes('bali'))!;
-            enriched.push(provPart.toLowerCase().startsWith('prov') ? provPart : `Prov. ${provPart}`);
-          } else {
-            enriched.push(`Prov. ${fallback.provinsi}`);
-          }
-
-          resolvedAddress = enriched.join(', ');
+        // Also add Posko locations to bounds calculation
+        if (Array.isArray(poskos)) {
+          poskos.forEach((p) => {
+            const plat = Number(p.latitude);
+            const plng = Number(p.longitude);
+            if (Number.isFinite(plat) && Number.isFinite(plng)) {
+              bounds.push([plat, plng]);
+            }
+          });
         }
 
-        const casePinIcon = L.divIcon({
-          className: 'case-location-pin',
-          html: `
-            <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);">
-              <div style="
-                background: #013220;
-                color: #ffffff;
-                padding: 4px 10px;
-                border-radius: 8px;
-                font-size: 11px;
-                font-weight: 700;
-                box-shadow: 0 4px 12px rgba(1, 50, 32, 0.45);
-                border: 1.5px solid #ffffff;
-                white-space: nowrap;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                margin-bottom: 3px;
-              ">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-                <span>Titik Laporan</span>
+        cases.forEach((c) => {
+          const rawLat = Number(c.lat);
+          const rawLng = Number(c.lng);
+          if (!Number.isFinite(rawLat) || !Number.isFinite(rawLng)) return;
+
+          // Prevent exact stacking if multiple reports have identical coordinates
+          const overlappingCount = renderedCoords.filter(
+            ([lat, lng]) => Math.hypot(lat - rawLat, lng - rawLng) < 0.0006
+          ).length;
+          renderedCoords.push([rawLat, rawLng]);
+
+          const angle = overlappingCount * 1.8;
+          const offsetDist = overlappingCount > 0 ? 0.0007 : 0;
+          const lat = rawLat + Math.sin(angle) * offsetDist;
+          const lng = rawLng + Math.cos(angle) * offsetDist;
+
+          bounds.push([lat, lng]);
+
+          const urgencyLower = (c.urgency || '').toLowerCase();
+          const isKritis = urgencyLower.includes('kritis');
+          const isTinggi = urgencyLower.includes('tinggi');
+          const tagBg = isKritis ? '#b91c1c' : isTinggi ? '#c2410c' : '#013220';
+
+          const casePinIcon = L.divIcon({
+            className: 'case-location-pin',
+            html: `
+              <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);">
+                <div style="
+                  background: ${tagBg};
+                  color: #ffffff;
+                  padding: 3px 8px;
+                  border-radius: 7px;
+                  font-size: 10.5px;
+                  font-weight: 700;
+                  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+                  border: 1.5px solid #ffffff;
+                  white-space: nowrap;
+                  display: flex;
+                  align-items: center;
+                  gap: 4px;
+                  margin-bottom: 2px;
+                ">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                  <span>${c.item || 'Titik Laporan'}</span>
+                </div>
+                <div style="
+                  width: 12px;
+                  height: 12px;
+                  border-radius: 50%;
+                  background: ${tagBg};
+                  border: 2.5px solid #ffffff;
+                  box-shadow: 0 2px 5px rgba(0,0,0,0.35);
+                "></div>
               </div>
-              <div style="
-                width: 14px;
-                height: 14px;
-                border-radius: 50%;
-                background: #013220;
-                border: 3px solid #ffffff;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-              "></div>
-            </div>
-          `,
-          iconSize: [0, 0],
-          iconAnchor: [0, 0],
-        });
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0],
+          });
 
-        const caseMarker = L.marker([oLat, oLng], {
-          icon: casePinIcon,
-          zIndexOffset: 1000,
-        });
+          const caseMarker = L.marker([lat, lng], {
+            icon: casePinIcon,
+            zIndexOffset: isKritis ? 1200 : isTinggi ? 1100 : 1000,
+          });
 
-        const popupHtml = `
-          <div style="font-size: 12px; line-height: 1.45; min-width: 230px; max-width: 290px; padding: 2px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; border-bottom: 1px solid #eef2f0; padding-bottom: 5px;">
-              <strong style="color: #013220; font-size: 13px; display: inline-flex; align-items: center; gap: 5px;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
-                Titik Lokasi Laporan
-              </strong>
-              ${caseId ? `<span style="font-size: 10px; font-weight: 700; color: #013220; background: #e8f3ec; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${caseId}</span>` : ''}
-            </div>
+          // Complete Address Hierarchy
+          const fallback = resolveFallbackLocation(rawLat, rawLng);
+          let addr = (c.location && c.location.trim()) ? c.location.trim() : '';
+          if (!addr || !addr.toLowerCase().includes('kab') || !addr.toLowerCase().includes('prov')) {
+            const parts: string[] = [];
+            const v = (c.village || fallback.desa || '').trim();
+            const d = (c.district || fallback.kecamatan || '').trim();
+            let k = (c.regency || fallback.kabupaten || '').trim();
+            const p = (c.province || fallback.provinsi || '').trim();
 
-            ${caseTitle ? `
+            if (k.toLowerCase() === v.toLowerCase() && d && d.toLowerCase().includes('sidoarjo')) {
+              k = 'Kabupaten Sidoarjo';
+            }
+
+            if (v) parts.push(v.toLowerCase().startsWith('desa') || v.toLowerCase().startsWith('kel') || v.toLowerCase().startsWith('jalan') || v.toLowerCase().startsWith('jl') ? v : `Desa/Kel. ${v}`);
+            if (d) parts.push(d.toLowerCase().startsWith('kec') ? d : `Kec. ${d}`);
+            if (k) parts.push(k.toLowerCase().startsWith('kab') || k.toLowerCase().startsWith('kota') ? k : `Kab. ${k}`);
+            if (p) parts.push(p.toLowerCase().startsWith('prov') ? p : `Prov. ${p}`);
+            addr = parts.join(', ');
+          }
+
+          const popupHtml = `
+            <div style="font-size: 12px; line-height: 1.45; min-width: 230px; max-width: 290px; padding: 2px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; border-bottom: 1px solid #eef2f0; padding-bottom: 5px;">
+                <strong style="color: ${tagBg}; font-size: 13px; display: inline-flex; align-items: center; gap: 5px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                  Titik Lokasi Laporan
+                </strong>
+                <span style="font-size: 10px; font-weight: 700; color: ${tagBg}; background: #f4f8f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid #dbeade;">${c.id}</span>
+              </div>
+
               <div style="margin-bottom: 6px;">
-                <div style="font-weight: 700; color: #1c2e24; font-size: 12.5px;">${caseTitle}</div>
-                ${caseKk ? `<div style="font-size: 11px; color: #555;">Penerima Manfaat: <b>${caseKk}</b></div>` : ''}
+                <div style="font-weight: 700; color: #1c2e24; font-size: 12.5px;">${c.item}</div>
+                <div style="font-size: 11px; color: #555;">Penerima Manfaat: <b>${c.kk || '1 KK'}</b> ${c.qty ? `(${c.qty})` : ''} · <span style="color: ${tagBg}; font-weight: 600;">${c.urgency || 'Sedang'}</span></div>
               </div>
-            ` : ''}
 
-            <div style="background: #f4f8f5; border: 1px solid #dbeade; border-left: 3.5px solid #013220; padding: 6px 9px; border-radius: 6px; margin: 6px 0;">
-              <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2e6949; margin-bottom: 2px;">
-                Alamat Lengkap:
+              <div style="background: #f4f8f5; border: 1px solid #dbeade; border-left: 3.5px solid ${tagBg}; padding: 6px 9px; border-radius: 6px; margin: 6px 0;">
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2e6949; margin-bottom: 2px;">
+                  Alamat Lengkap:
+                </div>
+                <div style="font-size: 12px; font-weight: 600; color: #11281c; word-break: break-word; line-height: 1.35;">
+                  ${addr}
+                </div>
               </div>
-              <div style="font-size: 12px; font-weight: 600; color: #11281c; word-break: break-word; line-height: 1.35;">
-                ${resolvedAddress}
+
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #666; margin-top: 6px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
+                <span>Koordinat Titik:</span>
+                <span style="font-family: monospace; font-weight: 600; color: #2d3748;">${rawLat.toFixed(6)}, ${rawLng.toFixed(6)}</span>
               </div>
             </div>
+          `;
 
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #666; margin-top: 6px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
-              <span>Koordinat Titik:</span>
-              <span style="font-family: monospace; font-weight: 600; color: #2d3748;">${oLat.toFixed(6)}, ${oLng.toFixed(6)}</span>
+          caseMarker.bindPopup(popupHtml, {
+            offset: L.point(0, -32),
+            maxWidth: 290,
+            autoPan: true,
+          });
+
+          caseMarker.on('click', () => {
+            caseMarker.openPopup();
+            onSelectCase?.(c);
+          });
+
+          caseMarker.addTo(markerLayer);
+        });
+
+        if (bounds.length > 0) {
+          try {
+            map.fitBounds(L.latLngBounds(bounds), { padding: [35, 35], maxZoom: 13 });
+          } catch (e) {
+            map.setView(bounds[0], 12);
+          }
+        }
+      } else {
+        const oLat = Number(initialLat);
+        const oLng = Number(initialLng);
+        if (Number.isFinite(oLat) && Number.isFinite(oLng)) {
+          const fallback = resolveFallbackLocation(oLat, oLng);
+          let rawAddr = (locationAddress && locationAddress.trim()) ? locationAddress.trim() : "";
+
+          let resolvedAddress = "";
+          if (!rawAddr) {
+            resolvedAddress = `${fallback.desa}, Kec. ${fallback.kecamatan}, ${fallback.kabupaten}, Prov. ${fallback.provinsi}`;
+          } else {
+            const parts = rawAddr.split(',').map(s => s.trim()).filter(Boolean);
+            const hasKec = parts.some(p => p.toLowerCase().includes('kec'));
+            const hasKab = parts.some(p => p.toLowerCase().includes('kab') || p.toLowerCase().includes('kota'));
+            const hasProv = parts.some(p => p.toLowerCase().includes('prov') || p.toLowerCase().includes('jawa') || p.toLowerCase().includes('dki') || p.toLowerCase().includes('banten') || p.toLowerCase().includes('bali'));
+
+            const enriched: string[] = [];
+            const firstPart = parts[0] || fallback.desa;
+            if (firstPart) {
+              const fLower = firstPart.toLowerCase();
+              const fFormatted = (fLower.startsWith('desa') || fLower.startsWith('kel') || fLower.startsWith('jalan') || fLower.startsWith('jl'))
+                ? firstPart
+                : `Desa/Kel. ${firstPart}`;
+              enriched.push(fFormatted);
+            }
+
+            if (hasKec) {
+              const kecPart = parts.find(p => p.toLowerCase().includes('kec'))!;
+              enriched.push(kecPart);
+            } else {
+              enriched.push(`Kec. ${fallback.kecamatan}`);
+            }
+
+            if (hasKab) {
+              const kabPart = parts.find(p => p.toLowerCase().includes('kab') || p.toLowerCase().includes('kota'))!;
+              enriched.push(kabPart);
+            } else {
+              const kabName = fallback.kabupaten.startsWith('Kab') || fallback.kabupaten.startsWith('Kota')
+                ? fallback.kabupaten
+                : `Kab. ${fallback.kabupaten}`;
+              enriched.push(kabName);
+            }
+
+            if (hasProv) {
+              const provPart = parts.find(p => p.toLowerCase().includes('prov') || p.toLowerCase().includes('jawa') || p.toLowerCase().includes('dki') || p.toLowerCase().includes('banten') || p.toLowerCase().includes('bali'))!;
+              enriched.push(provPart.toLowerCase().startsWith('prov') ? provPart : `Prov. ${provPart}`);
+            } else {
+              enriched.push(`Prov. ${fallback.provinsi}`);
+            }
+
+            resolvedAddress = enriched.join(', ');
+          }
+
+          const casePinIcon = L.divIcon({
+            className: 'case-location-pin',
+            html: `
+              <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);">
+                <div style="
+                  background: #013220;
+                  color: #ffffff;
+                  padding: 4px 10px;
+                  border-radius: 8px;
+                  font-size: 11px;
+                  font-weight: 700;
+                  box-shadow: 0 4px 12px rgba(1, 50, 32, 0.45);
+                  border: 1.5px solid #ffffff;
+                  white-space: nowrap;
+                  display: flex;
+                  align-items: center;
+                  gap: 5px;
+                  margin-bottom: 3px;
+                ">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                  <span>Titik Laporan</span>
+                </div>
+                <div style="
+                  width: 14px;
+                  height: 14px;
+                  border-radius: 50%;
+                  background: #013220;
+                  border: 3px solid #ffffff;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+                "></div>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0],
+          });
+
+          const caseMarker = L.marker([oLat, oLng], {
+            icon: casePinIcon,
+            zIndexOffset: 1000,
+          });
+
+          const popupHtml = `
+            <div style="font-size: 12px; line-height: 1.45; min-width: 230px; max-width: 290px; padding: 2px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; border-bottom: 1px solid #eef2f0; padding-bottom: 5px;">
+                <strong style="color: #013220; font-size: 13px; display: inline-flex; align-items: center; gap: 5px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                  Titik Lokasi Laporan
+                </strong>
+                ${caseId ? `<span style="font-size: 10px; font-weight: 700; color: #013220; background: #e8f3ec; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${caseId}</span>` : ''}
+              </div>
+
+              ${caseTitle ? `
+                <div style="margin-bottom: 6px;">
+                  <div style="font-weight: 700; color: #1c2e24; font-size: 12.5px;">${caseTitle}</div>
+                  ${caseKk ? `<div style="font-size: 11px; color: #555;">Penerima Manfaat: <b>${caseKk}</b></div>` : ''}
+                </div>
+              ` : ''}
+
+              <div style="background: #f4f8f5; border: 1px solid #dbeade; border-left: 3.5px solid #013220; padding: 6px 9px; border-radius: 6px; margin: 6px 0;">
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2e6949; margin-bottom: 2px;">
+                  Alamat Lengkap:
+                </div>
+                <div style="font-size: 12px; font-weight: 600; color: #11281c; word-break: break-word; line-height: 1.35;">
+                  ${resolvedAddress}
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: #666; margin-top: 6px; padding-top: 4px; border-top: 1px dashed #e2e8f0;">
+                <span>Koordinat Titik:</span>
+                <span style="font-family: monospace; font-weight: 600; color: #2d3748;">${oLat.toFixed(6)}, ${oLng.toFixed(6)}</span>
+              </div>
             </div>
-          </div>
-        `;
+          `;
 
-        caseMarker.bindPopup(popupHtml, {
-          offset: L.point(0, -36),
-          maxWidth: 290,
-          autoPan: true,
-        });
+          caseMarker.bindPopup(popupHtml, {
+            offset: L.point(0, -36),
+            maxWidth: 290,
+            autoPan: true,
+          });
 
-        caseMarker.on('click', () => {
-          caseMarker.openPopup();
-        });
+          caseMarker.on('click', () => {
+            caseMarker.openPopup();
+          });
 
-        caseMarker.addTo(markerLayer);
-        map.setView([oLat, oLng], 15);
+          caseMarker.addTo(markerLayer);
+          map.setView([oLat, oLng], 15);
+        }
       }
     }
 
@@ -841,7 +993,7 @@ export function LeafletMap({
       }
     }, 200);
 
-  }, [poskos, activePosko, operational, showRoute, pickLocation, citizenPos, activeAddress, initialLat, initialLng, locationAddress, caseTitle, caseId, caseKk, caseUrgency, updateCitizenLocation]);
+  }, [poskos, activePosko, operational, showRoute, pickLocation, citizenPos, activeAddress, initialLat, initialLng, locationAddress, caseTitle, caseId, caseKk, caseUrgency, cases, onSelectCase, updateCitizenLocation]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
