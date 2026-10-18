@@ -160,7 +160,7 @@ export function PoskoKebutuhanBursa({
             <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Kebutuhan Sah
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(128, 134, 110, 0.12)", color: "#013220", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
               <AppIcon name="box" size={16} />
             </div>
           </div>
@@ -207,14 +207,14 @@ export function PoskoKebutuhanBursa({
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#b45309", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Kekurangan Terbuka
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#fef3c7", color: "#b45309", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
               <AppIcon name="alert" size={16} />
             </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#9a3412", lineHeight: 1.1 }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
             {verifiedCases.filter((c) => c.status === "Kebutuhan Terbuka" || c.status === "Sebagian Terpenuhi").length} Item
           </div>
           <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
@@ -232,14 +232,14 @@ export function PoskoKebutuhanBursa({
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#166534", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Penerimaan Tuntas
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#dcfce7", color: "#15803d", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
               <AppIcon name="check" size={16} />
             </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#166534", lineHeight: 1.1 }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
             {verifiedCases.filter((c) => c.status === "Selesai").length} Kasus
           </div>
           <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
