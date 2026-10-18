@@ -259,6 +259,11 @@ export function MapView({
   pickLocation = false,
   initialLat,
   initialLng,
+  locationAddress,
+  caseTitle,
+  caseId,
+  caseKk,
+  caseUrgency,
   onLocationPicked,
 }: { 
   operational?: boolean; 
@@ -267,10 +272,15 @@ export function MapView({
   pickLocation?: boolean;
   initialLat?: number;
   initialLng?: number;
+  locationAddress?: string;
+  caseTitle?: string;
+  caseId?: string;
+  caseKk?: string;
+  caseUrgency?: string;
   onLocationPicked?: (info: any) => void;
 }) {
-  const safeLat = Number.isFinite(Number(initialLat)) ? Number(initialLat) : -7.2654;
-  const safeLng = Number.isFinite(Number(initialLng)) ? Number(initialLng) : 112.7521;
+  const safeLat = Number.isFinite(Number(initialLat)) ? Number(initialLat) : -7.336272;
+  const safeLng = Number.isFinite(Number(initialLng)) ? Number(initialLng) : 112.728881;
   return (
     <ErrorBoundary>
       <LeafletMap 
@@ -280,6 +290,11 @@ export function MapView({
         pickLocation={pickLocation} 
         initialLat={safeLat} 
         initialLng={safeLng} 
+        locationAddress={locationAddress}
+        caseTitle={caseTitle}
+        caseId={caseId}
+        caseKk={caseKk}
+        caseUrgency={caseUrgency}
         onLocationPicked={onLocationPicked} 
       />
     </ErrorBoundary>
@@ -2458,7 +2473,17 @@ function CaseDetail({
               </div>
             </div>
             <div className="case-map-container">
-              <MapView operational hideCard initialLat={caseLat} initialLng={caseLng} />
+              <MapView 
+                operational 
+                hideCard 
+                initialLat={caseLat} 
+                initialLng={caseLng} 
+                locationAddress={activeCase.location}
+                caseTitle={activeCase.item}
+                caseId={activeCase.id}
+                caseKk={activeCase.kk}
+                caseUrgency={activeCase.urgency}
+              />
             </div>
           </div>
         </div>
@@ -2911,6 +2936,13 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
   const misiList = state.misiList || [];
   const penawaranList = state.penawaranList || [];
 
+  const primaryCase = allCases.find(c => c.id === state.activeCaseId) || allCases[0];
+  const primaryLat = primaryCase?.lat ? Number(primaryCase.lat) : -7.336272;
+  const primaryLng = primaryCase?.lng ? Number(primaryCase.lng) : 112.728881;
+  const primaryAddress = primaryCase 
+    ? (primaryCase.location || `${primaryCase.village || ''}, Kec. ${primaryCase.district || ''}, ${primaryCase.regency || ''}`)
+    : "Jalan Gayungan V, Gayungan, Kec. Gayungan, Surabaya";
+
   // PRD Bab 5.1 Enam Metrik Utama Posko
   const masukKK = allCases.filter(c => (c.status || '').toLowerCase().includes('verifikasi') || c.status === 'Diajukan').length;
   const prioritasKritis = allCases.filter(c => c.urgency === 'Kritis' || c.urgency === 'Tinggi').length;
@@ -3070,7 +3102,17 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           </div>
 
           <div className="ops-map-wrapper">
-            <MapView operational hideCard />
+            <MapView 
+              operational 
+              hideCard 
+              initialLat={primaryLat}
+              initialLng={primaryLng}
+              locationAddress={primaryAddress}
+              caseTitle={primaryCase?.item}
+              caseId={primaryCase?.id}
+              caseKk={primaryCase?.kk}
+              caseUrgency={primaryCase?.urgency}
+            />
           </div>
         </div>
       </section>
