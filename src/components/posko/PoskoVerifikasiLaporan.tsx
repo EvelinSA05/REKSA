@@ -233,180 +233,165 @@ export function PoskoVerifikasiLaporan({
             const isRejected = (c.status || "").toLowerCase().includes("tolak");
             const isVerified = (c.status || "").toLowerCase().includes("terbuka") || (c.status || "").toLowerCase().includes("sebagian") || (c.status || "").toLowerCase().includes("teralokasi") || (c.status || "").toLowerCase().includes("selesai");
 
+            const cardStateClass = isRejected ? "card-rejected" : isClarify ? "card-clarify" : isVerified ? "card-verified" : "card-pending";
+            const statusClass = isVerified ? "status-verified" : isRejected ? "status-rejected" : isClarify ? "status-clarify" : "status-pending";
+            const urgencyClass = (c.urgency || "sedang").toLowerCase().replace(/\s+/g, "-");
+
             return (
-              <div
-                key={c.id}
-                style={{
-                  background: "#ffffff",
-                  borderRadius: "16px",
-                  border: isRejected
-                    ? "1px solid #fecaca"
-                    : isClarify
-                    ? "1px solid #fde68a"
-                    : isVerified
-                    ? "1px solid #bbf7d0"
-                    : "1px solid rgba(1, 50, 32, 0.12)",
-                  boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
-                  padding: "20px 24px",
-                }}
-              >
-                {/* Header row */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "12px" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "6px" }}>
-                      <span
-                        style={{
-                          fontFamily: "monospace",
-                          fontWeight: 800,
-                          fontSize: "0.95rem",
-                          color: "#013220",
-                          background: "#f1f5f2",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        {c.id}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: "12px",
-                          background:
-                            c.urgency === "Kritis"
-                              ? "#fef2f2"
-                              : c.urgency === "Tinggi"
-                              ? "#fffbeb"
-                              : "#f8fafc",
-                          color:
-                            c.urgency === "Kritis"
-                              ? "#991b1b"
-                              : c.urgency === "Tinggi"
-                              ? "#b45309"
-                              : "#475569",
-                          border: `1px solid ${
-                            c.urgency === "Kritis"
-                              ? "#fecaca"
-                              : c.urgency === "Tinggi"
-                              ? "#fde68a"
-                              : "#e2e8f0"
-                          }`,
-                        }}
-                      >
-                        Prioritas {c.urgency}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: "12px",
-                          background: isVerified
-                            ? "#f0fdf4"
-                            : isRejected
-                            ? "#fef2f2"
-                            : isClarify
-                            ? "#fffbeb"
-                            : "#eff6ff",
-                          color: isVerified
-                            ? "#15803d"
-                            : isRejected
-                            ? "#991b1b"
-                            : isClarify
-                            ? "#b45309"
-                            : "#1d4ed8",
-                        }}
-                      >
-                        {c.status}
-                      </span>
-                    </div>
-
-                    <h3 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
-                      Kebutuhan {c.item} · {c.qty}
-                    </h3>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
-                        <span>{c.location || "Wilayah Posko"}</span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
-                        <span>{c.kk}</span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
-                        <span>Pelapor: <strong>{c.applicantName || "Warga Terdampak"}</strong> {c.applicantPhone ? `(${c.applicantPhone})` : ""}</span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
-                        <span>{c.date || "Baru saja"}</span>
-                      </span>
-                    </div>
+              <div key={c.id} className={`posko-case-card ${cardStateClass}`}>
+                {/* 1. Header: Code, Badges & Date */}
+                <div className="posko-case-header-row">
+                  <div className="posko-case-badges">
+                    <span className="posko-case-id-badge">{c.id}</span>
+                    <span className={`posko-case-urgency-badge urgency-${urgencyClass}`}>
+                      Prioritas {c.urgency}
+                    </span>
+                    <span className={`posko-case-status-badge ${statusClass}`}>
+                      {c.status}
+                    </span>
                   </div>
 
-                  {/* Action button cluster */}
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                    <button
-                      type="button"
-                      onClick={() => onSelectCase(c)}
+                  <span className="posko-case-date">
+                    <AppIcon name="calendar" size={13} />
+                    <span>{c.date || "Baru saja"}</span>
+                  </span>
+                </div>
+
+                {/* 2. Main Title */}
+                <h3 className="posko-case-title">
+                  Kebutuhan {c.item} · {c.qty}
+                </h3>
+
+                {/* 3. Metadata Row (Location, KK, Reporter) */}
+                <div className="posko-case-meta-row">
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="pin" size={14} style={{ color: "#80866e" }} />
+                    <span>{c.location || "Wilayah Posko"}</span>
+                  </span>
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="users" size={14} style={{ color: "#80866e" }} />
+                    <span><strong>{c.kk}</strong></span>
+                  </span>
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="user" size={14} style={{ color: "#80866e" }} />
+                    <span>Pelapor: <strong>{c.applicantName || "Warga Terdampak"}</strong> {c.applicantPhone ? `(${c.applicantPhone})` : ""}</span>
+                  </span>
+                </div>
+
+                {/* 4. Context & Validation Notes */}
+                <div className="posko-case-context-section">
+                  {c.priorityRationale && (
+                    <div className="posko-validation-box">
+                      <div style={{ marginTop: "2px" }}><AppIcon name="shield" size={15} /></div>
+                      <div>
+                        <strong>Rekomendasi Sistem Validasi:</strong> {c.priorityRationale}
+                      </div>
+                    </div>
+                  )}
+
+                  {c.notes && (
+                    <div className="posko-notes-box">
+                      <div style={{ marginTop: "2px", color: "#80866e" }}><AppIcon name="file" size={14} /></div>
+                      <div>
+                        <strong>Catatan Pelapor:</strong> {c.notes}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Clarification info & Citizen Answer Display */}
+                  {c.pertanyaanKlarifikasi && (
+                    <div
                       style={{
-                        background: "#ffffff",
-                        color: "#013220",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "8px",
-                        padding: "8px 14px",
+                        background: "#fffbeb",
+                        border: "1px solid #fde68a",
+                        borderRadius: "10px",
+                        padding: "12px 16px",
                         fontSize: "0.84rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
                       }}
                     >
-                      <AppIcon name="file" size={14} />
-                      <span>Buka Kasus</span>
-                    </button>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "#b45309" }}>
+                          Klarifikasi Posko: {c.kategoriKlarifikasi || "Kelengkapan Informasi"}
+                        </span>
+                        {c.memintaLampiran && (
+                          <span style={{ fontSize: "0.72rem", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "2px 8px", borderRadius: "8px", fontWeight: 600 }}>
+                            Wajib Lampiran Tambahan
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: "#78350f", marginBottom: c.jawabanKlarifikasi ? "8px" : 0 }}>
+                        <strong>Pertanyaan Posko:</strong> "{c.pertanyaanKlarifikasi}"
+                      </div>
 
+                      {c.jawabanKlarifikasi ? (
+                        <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #fde68a", background: "#ffffff", padding: "10px 12px", borderRadius: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#15803d", fontWeight: 700, fontSize: "0.82rem", marginBottom: "4px" }}>
+                            <AppIcon name="check" size={13} />
+                            <span>Jawaban Warga Diterima (Siap Divalidasi Ulang):</span>
+                          </div>
+                          <div style={{ color: "#013220", fontWeight: 500 }}>
+                            "{c.jawabanKlarifikasi}"
+                          </div>
+                          {c.fotoKlarifikasi && (
+                            <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ fontSize: "0.8rem", color: "#15803d", fontWeight: 600 }}>Lampiran Dokumen Baru:</span>
+                              <a href={c.fotoKlarifikasi} target="_blank" rel="noreferrer" style={{ fontSize: "0.8rem", color: "#0f766e", textDecoration: "underline", fontWeight: 600 }}>
+                                Lihat Foto/Dokumen Klarifikasi
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: "6px", fontSize: "0.82rem", color: "#b45309", fontStyle: "italic", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <AppIcon name="clock" size={13} />
+                          <span>Menunggu tanggapan &amp; kelengkapan data dari pelapor.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Rejection notice if rejected */}
+                  {isRejected && c.alasanPenolakan && (
+                    <div
+                      style={{
+                        background: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        borderRadius: "10px",
+                        padding: "10px 14px",
+                        fontSize: "0.84rem",
+                        color: "#991b1b",
+                      }}
+                    >
+                      <div style={{ fontWeight: 700, marginBottom: "4px" }}>Alasan Penolakan: {c.alasanPenolakan}</div>
+                      {c.tindakLanjutPenolakan && (
+                        <div style={{ fontSize: "0.82rem", color: "#7f1d1d", marginTop: "4px" }}>
+                          <strong>Saran Tindak Lanjut:</strong> {c.tindakLanjutPenolakan}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Dedicated Footer Action Bar */}
+                <div className="posko-case-footer-row">
+                  <button
+                    type="button"
+                    onClick={() => onSelectCase(c)}
+                    className="btn-case-view"
+                    title="Buka dokumen detail dan pemeriksaan kasus"
+                  >
+                    <AppIcon name="file" size={14} />
+                    <span>Buka Kasus</span>
+                  </button>
+
+                  <div className="posko-case-actions-cluster">
                     {isPending && (
                       <>
                         <button
                           type="button"
-                          onClick={() => openActionModal(c, "verify")}
-                          style={{
-                            background: "#013220",
-                            color: "#ffffff",
-                            border: "none",
-                            borderRadius: "8px",
-                            padding: "8px 16px",
-                            fontSize: "0.84rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
-                        >
-                          <AppIcon name="check" size={14} />
-                          <span>Verifikasi &amp; Rilis</span>
-                        </button>
-                        <button
-                          type="button"
                           onClick={() => openActionModal(c, "clarify")}
-                          style={{
-                            background: "#fffbeb",
-                            color: "#92400e",
-                            border: "1px solid #fde68a",
-                            borderRadius: "8px",
-                            padding: "8px 14px",
-                            fontSize: "0.84rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
+                          className="btn-case-clarify"
+                          title="Minta klarifikasi tambahan dari pelapor"
                         >
                           <AppIcon name="alert" size={14} />
                           <span>Minta Klarifikasi</span>
@@ -414,22 +399,20 @@ export function PoskoVerifikasiLaporan({
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "reject")}
-                          style={{
-                            background: "#fef2f2",
-                            color: "#991b1b",
-                            border: "1px solid #fecaca",
-                            borderRadius: "8px",
-                            padding: "8px 12px",
-                            fontSize: "0.84rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                          }}
+                          className="btn-case-reject"
+                          title="Tolak laporan jika tidak memenuhi syarat"
                         >
                           <AppIcon name="x" size={14} />
                           <span>Tolak</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal(c, "verify")}
+                          className="btn-case-verify"
+                          title="Verifikasi laporan dan rilis kuota ke Bursa Bantuan"
+                        >
+                          <AppIcon name="check" size={14} />
+                          <span>Verifikasi &amp; Rilis</span>
                         </button>
                       </>
                     )}
@@ -438,19 +421,7 @@ export function PoskoVerifikasiLaporan({
                       <button
                         type="button"
                         onClick={() => openActionModal(c, "verify")}
-                        style={{
-                          background: "#013220",
-                          color: "#ffffff",
-                          border: "none",
-                          borderRadius: "8px",
-                          padding: "8px 16px",
-                          fontSize: "0.84rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
+                        className="btn-case-verify"
                       >
                         <AppIcon name="check" size={14} />
                         <span>Selesai Klarifikasi &amp; Rilis</span>
@@ -458,122 +429,6 @@ export function PoskoVerifikasiLaporan({
                     )}
                   </div>
                 </div>
-
-                {/* Priority recommendation box */}
-                {c.priorityRationale && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                      background: "#f0fdf4",
-                      border: "1px solid #bbf7d0",
-                      borderRadius: "10px",
-                      padding: "10px 14px",
-                      marginBottom: "10px",
-                      fontSize: "0.84rem",
-                      color: "#166534",
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    <div style={{ marginTop: "2px" }}><AppIcon name="shield" size={14} /></div>
-                    <div>
-                      <strong>Rekomendasi Sistem Validasi:</strong> {c.priorityRationale}
-                    </div>
-                  </div>
-                )}
-
-                {/* Description or notes */}
-                {c.notes && (
-                  <div
-                    style={{
-                      background: "#fbfbf8",
-                      borderRadius: "10px",
-                      border: "1px solid rgba(1, 50, 32, 0.08)",
-                      padding: "10px 14px",
-                      marginBottom: "10px",
-                      fontSize: "0.84rem",
-                      color: "#334155",
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    <strong style={{ color: "#013220" }}>Catatan Pelapor:</strong> {c.notes}
-                  </div>
-                )}
-
-                {/* Clarification info & Citizen Answer Display */}
-                {c.pertanyaanKlarifikasi && (
-                  <div
-                    style={{
-                      background: "#fffbeb",
-                      border: "1px solid #fde68a",
-                      borderRadius: "10px",
-                      padding: "12px 16px",
-                      marginBottom: "10px",
-                      fontSize: "0.84rem",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                      <span style={{ fontWeight: 700, fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "#b45309" }}>
-                        Klarifikasi Posko: {c.kategoriKlarifikasi || "Kelengkapan Informasi"}
-                      </span>
-                      {c.memintaLampiran && (
-                        <span style={{ fontSize: "0.72rem", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "2px 8px", borderRadius: "8px", fontWeight: 600 }}>
-                          Wajib Lampiran Tambahan
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ color: "#78350f", marginBottom: c.jawabanKlarifikasi ? "8px" : 0 }}>
-                      <strong>Pertanyaan Posko:</strong> "{c.pertanyaanKlarifikasi}"
-                    </div>
-
-                    {c.jawabanKlarifikasi ? (
-                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #fde68a", background: "#ffffff", padding: "10px 12px", borderRadius: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#15803d", fontWeight: 700, fontSize: "0.82rem", marginBottom: "4px" }}>
-                          <AppIcon name="check" size={13} />
-                          <span>Jawaban Warga Diterima (Siap Divalidasi Ulang):</span>
-                        </div>
-                        <div style={{ color: "#013220", fontWeight: 500 }}>
-                          "{c.jawabanKlarifikasi}"
-                        </div>
-                        {c.fotoKlarifikasi && (
-                          <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "0.8rem", color: "#15803d", fontWeight: 600 }}>Lampiran Dokumen Baru:</span>
-                            <a href={c.fotoKlarifikasi} target="_blank" rel="noreferrer" style={{ fontSize: "0.8rem", color: "#0f766e", textDecoration: "underline", fontWeight: 600 }}>
-                              Lihat Foto/Dokumen Klarifikasi
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div style={{ marginTop: "6px", fontSize: "0.82rem", color: "#b45309", fontStyle: "italic", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <AppIcon name="clock" size={13} />
-                        <span>Menunggu tanggapan &amp; kelengkapan data dari pelapor.</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Rejection notice if rejected */}
-                {isRejected && c.alasanPenolakan && (
-                  <div
-                    style={{
-                      background: "#fef2f2",
-                      border: "1px solid #fecaca",
-                      borderRadius: "10px",
-                      padding: "10px 14px",
-                      fontSize: "0.84rem",
-                      color: "#991b1b",
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, marginBottom: "4px" }}>Alasan Penolakan: {c.alasanPenolakan}</div>
-                    {c.tindakLanjutPenolakan && (
-                      <div style={{ fontSize: "0.82rem", color: "#7f1d1d", marginTop: "4px" }}>
-                        <strong>Saran Tindak Lanjut:</strong> {c.tindakLanjutPenolakan}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })}
