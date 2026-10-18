@@ -32,16 +32,18 @@ interface LeafletMapProps {
 function resolveFallbackLocation(lat: number, lng: number): LocationInfo {
   // East Java
   if (lat < -6.8 && lat > -8.9 && lng > 111.0 && lng < 115.0) {
+    const isBuduran = Math.hypot(lat - (-7.437581), lng - 112.703873) < 0.08 || (lat < -7.38 && lat > -7.50 && lng > 112.65 && lng < 112.78);
+    const isSidoarjo = isBuduran || (lat < -7.35 && lat > -7.58 && lng > 112.55 && lng < 112.85);
     const isGayungan = Math.hypot(lat - (-7.3300), lng - 112.7250) < 0.04;
     const isWonokromo = Math.hypot(lat - (-7.3000), lng - 112.7400) < 0.05;
     const isRungkut = Math.hypot(lat - (-7.3200), lng - 112.7800) < 0.06;
     const isGubeng = Math.hypot(lat - (-7.2700), lng - 112.7550) < 0.05;
 
-    const desa = isGayungan ? "Gayungan / Siwalankerto" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut Menanggal" : isGubeng ? "Gubeng" : "Surabaya";
-    const kecamatan = isGayungan ? "Gayungan" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut" : isGubeng ? "Gubeng" : "Kec. Kota";
-    const kabupaten = "Kota Surabaya";
+    const desa = isBuduran ? "Desa Buduran" : isGayungan ? "Gayungan / Siwalankerto" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut Menanggal" : isGubeng ? "Gubeng" : "Surabaya";
+    const kecamatan = isBuduran ? "Buduran" : isGayungan ? "Gayungan" : isWonokromo ? "Wonokromo" : isRungkut ? "Rungkut" : isGubeng ? "Gubeng" : (isSidoarjo ? "Sidoarjo" : "Kec. Kota");
+    const kabupaten = isSidoarjo ? "Kabupaten Sidoarjo" : "Kota Surabaya";
     const provinsi = "Jawa Timur";
-    const poskoName = "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
+    const poskoName = isSidoarjo ? "Posko BPBD Kabupaten Sidoarjo (Posko Induk)" : "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
 
     return {
       lat: Number(lat.toFixed(6)),
@@ -663,9 +665,59 @@ export function LeafletMap({
       const oLng = Number(initialLng);
       if (Number.isFinite(oLat) && Number.isFinite(oLng)) {
         const fallback = resolveFallbackLocation(oLat, oLng);
-        const resolvedAddress = (locationAddress && locationAddress.trim())
-          ? locationAddress
-          : `${fallback.desa}, Kec. ${fallback.kecamatan}, ${fallback.kabupaten}, ${fallback.provinsi}`;
+        let rawAddr = (locationAddress && locationAddress.trim()) ? locationAddress.trim() : "";
+
+        let resolvedAddress = "";
+        if (!rawAddr) {
+          resolvedAddress = `${fallback.desa}, Kec. ${fallback.kecamatan}, ${fallback.kabupaten}, Prov. ${fallback.provinsi}`;
+        } else {
+          // Parse and build a truly complete address hierarchy: Desa, Kecamatan, Kabupaten/Kota, Provinsi
+          const parts = rawAddr.split(',').map(s => s.trim()).filter(Boolean);
+          const hasKec = parts.some(p => p.toLowerCase().includes('kec'));
+          const hasKab = parts.some(p => p.toLowerCase().includes('kab') || p.toLowerCase().includes('kota'));
+          const hasProv = parts.some(p => p.toLowerCase().includes('prov') || p.toLowerCase().includes('jawa') || p.toLowerCase().includes('dki') || p.toLowerCase().includes('banten') || p.toLowerCase().includes('bali'));
+
+          const enriched: string[] = [];
+
+          // 1. Desa / Jalan
+          const firstPart = parts[0] || fallback.desa;
+          if (firstPart) {
+            const fLower = firstPart.toLowerCase();
+            const fFormatted = (fLower.startsWith('desa') || fLower.startsWith('kel') || fLower.startsWith('jalan') || fLower.startsWith('jl'))
+              ? firstPart
+              : `Desa/Kel. ${firstPart}`;
+            enriched.push(fFormatted);
+          }
+
+          // 2. Kecamatan
+          if (hasKec) {
+            const kecPart = parts.find(p => p.toLowerCase().includes('kec'))!;
+            enriched.push(kecPart);
+          } else {
+            enriched.push(`Kec. ${fallback.kecamatan}`);
+          }
+
+          // 3. Kabupaten / Kota
+          if (hasKab) {
+            const kabPart = parts.find(p => p.toLowerCase().includes('kab') || p.toLowerCase().includes('kota'))!;
+            enriched.push(kabPart);
+          } else {
+            const kabName = fallback.kabupaten.startsWith('Kab') || fallback.kabupaten.startsWith('Kota')
+              ? fallback.kabupaten
+              : `Kab. ${fallback.kabupaten}`;
+            enriched.push(kabName);
+          }
+
+          // 4. Provinsi
+          if (hasProv) {
+            const provPart = parts.find(p => p.toLowerCase().includes('prov') || p.toLowerCase().includes('jawa') || p.toLowerCase().includes('dki') || p.toLowerCase().includes('banten') || p.toLowerCase().includes('bali'))!;
+            enriched.push(provPart.toLowerCase().startsWith('prov') ? provPart : `Prov. ${provPart}`);
+          } else {
+            enriched.push(`Prov. ${fallback.provinsi}`);
+          }
+
+          resolvedAddress = enriched.join(', ');
+        }
 
         const casePinIcon = L.divIcon({
           className: 'case-location-pin',
