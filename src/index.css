@@ -5926,7 +5926,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(1, 50, 32, 0.1);
-  height: 330px;
+  height: 360px;
 }
 
 .ops-map-wrapper .map {
