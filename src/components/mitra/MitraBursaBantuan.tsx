@@ -156,26 +156,17 @@ export function MitraBursaBantuan({
   };
 
   return (
-    <main className="workspace mitra-bursa-workspace">
+    <main className="workspace responder-workspace" style={{ maxWidth: "1280px", margin: "0 auto", padding: "28px 24px" }}>
       {/* 1. HEADER SECTION */}
-      <div className="section-header" style={{ marginBottom: "24px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
         <div>
-          <span
-            className="badge"
-            style={{
-              backgroundColor: "rgba(1, 50, 32, 0.08)",
-              color: "#013220",
-              border: "1px solid rgba(1, 50, 32, 0.2)",
-              marginBottom: "8px",
-              display: "inline-block",
-            }}
-          >
+          <span className="eyebrow" style={{ color: "#80866e", fontWeight: 700, letterSpacing: "0.05em", fontSize: "0.78rem" }}>
             KATALOG TERBUKA POSKO BPBD
           </span>
-          <h1 style={{ fontSize: "2rem", fontWeight: "700", color: "#013220", margin: "4px 0" }}>
+          <h1 style={{ margin: "4px 0 6px", color: "#013220", fontSize: "1.75rem", fontWeight: 800 }}>
             Bursa Bantuan Kemanusiaan
           </h1>
-          <p style={{ color: "#4B5563", fontSize: "0.95rem", maxWidth: "680px", margin: 0 }}>
+          <p style={{ margin: 0, color: "#64748b", fontSize: "0.92rem", maxWidth: "680px", lineHeight: 1.5 }}>
             Daftar kebutuhan logistik warga terdampak yang telah divalidasi resmi oleh Posko. Silakan ajukan komitmen pemenuhan logistik atau kesiapan armada penyalur organisasi Anda.
           </p>
         </div>
@@ -196,6 +187,7 @@ export function MitraBursaBantuan({
             borderRadius: "10px",
             boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
             cursor: "pointer",
+            transition: "all 0.15s ease",
           }}
         >
           <AppIcon name="clock" size={16} />
@@ -206,83 +198,148 @@ export function MitraBursaBantuan({
 
       {/* 2. 4-COLUMN MONOCHROME METRIC CARDS */}
       <div className="posko-metrics-grid-4" style={{ marginBottom: "24px" }}>
-        <div className="posko-metric-card-mono">
-          <div className="posko-metric-card-mono-header">
-            <span>KEBUTUHAN TERBUKA</span>
-            <div className="posko-metric-icon-box">
-              <AppIcon name="box" size={18} />
+        {/* Card 1: Kebutuhan Terbuka */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Kebutuhan Terbuka
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="box" size={16} />
             </div>
           </div>
-          <div className="posko-metric-value-mono">{totalOpen} Item</div>
-          <div className="posko-metric-sub-mono">Tersedia di Bursa</div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {totalOpen} Item
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Tersedia di Bursa Bantuan
+          </small>
         </div>
 
-        <div className="posko-metric-card-mono">
-          <div className="posko-metric-card-mono-header">
-            <span>PRIORITAS KRITIS</span>
-            <div className="posko-metric-icon-box">
-              <AppIcon name="alert-triangle" size={18} />
+        {/* Card 2: Prioritas Kritis */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Prioritas Kritis
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="alert-triangle" size={16} />
             </div>
           </div>
-          <div className="posko-metric-value-mono">{countKritis} Kritis</div>
-          <div className="posko-metric-sub-mono">Perlu Segera Ditangani</div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {countKritis} Kritis
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Perlu Segera Ditangani
+          </small>
         </div>
 
-        <div className="posko-metric-card-mono">
-          <div className="posko-metric-card-mono-header">
-            <span>PRIORITAS TINGGI</span>
-            <div className="posko-metric-icon-box">
-              <AppIcon name="clock" size={18} />
+        {/* Card 3: Prioritas Tinggi */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Prioritas Tinggi
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="clock" size={16} />
             </div>
           </div>
-          <div className="posko-metric-value-mono">{countTinggi} Tinggi</div>
-          <div className="posko-metric-sub-mono">Kebutuhan Mendesak</div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {countTinggi} Tinggi
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Kebutuhan Mendesak
+          </small>
         </div>
 
-        <div className="posko-metric-card-mono">
-          <div className="posko-metric-card-mono-header">
-            <span>PRIORITAS SEDANG</span>
-            <div className="posko-metric-icon-box">
-              <AppIcon name="check" size={18} />
+        {/* Card 4: Prioritas Sedang */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Prioritas Sedang
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="check" size={16} />
             </div>
           </div>
-          <div className="posko-metric-value-mono">{countSedang} Sedang</div>
-          <div className="posko-metric-sub-mono">Alokasi Bertahap</div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {countSedang} Sedang
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Alokasi Bertahap
+          </small>
         </div>
       </div>
 
-      {/* 3. 2-TIER TOOLBAR */}
-      <div className="posko-filter-toolbar" style={{ marginBottom: "20px" }}>
-        {/* Tier 1: Urgency Filter Tabs */}
-        <div className="posko-filter-tier-1">
-          {urgencyTabs.map((tab) => (
-            <button
-              key={tab.label}
-              type="button"
-              className={`posko-tab-pill ${filterUrgency === tab.label ? "active" : ""}`}
-              onClick={() => handleTabChange(tab.label)}
-            >
-              <span>{tab.label === "Semua" ? "Semua Kebutuhan" : `Prioritas ${tab.label}`}</span>
-              <span className="posko-tab-pill-badge">{tab.count}</span>
-            </button>
-          ))}
+      {/* 3. 2-TIER FILTER TOOLBAR FOR OPEN NEEDS */}
+      <div
+        className="posko-filter-toolbar"
+        style={{
+          background: "#ffffff",
+          borderRadius: "14px",
+          border: "1px solid rgba(1, 50, 32, 0.08)",
+          boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          marginBottom: "20px",
+          overflow: "hidden",
+        }}
+      >
+        {/* Row 1: Urgency Filter Tabs */}
+        <div className="posko-toolbar-tabs">
+          {urgencyTabs.map((tabItem) => {
+            const isActive = filterUrgency === tabItem.label;
+            return (
+              <button
+                key={tabItem.label}
+                type="button"
+                onClick={() => handleTabChange(tabItem.label)}
+                className={`posko-tab-pill ${isActive ? "active" : ""}`}
+              >
+                <span>{tabItem.label === "Semua" ? "Semua Kebutuhan" : `Prioritas ${tabItem.label}`}</span>
+                <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
+                  {tabItem.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Tier 2: Live Search Input & Counter */}
-        <div className="posko-filter-tier-2">
-          <div style={{ position: "relative", flex: 1, minWidth: "260px" }}>
-            <span
-              style={{
-                position: "absolute",
-                left: "14px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#6B7280",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <AppIcon name="search" size={16} />
+        {/* Row 2: Search Input and Results Counter */}
+        <div className="posko-toolbar-search-row">
+          <div className="posko-search-input-wrap">
+            <span className="posko-search-icon">
+              <AppIcon name="search" size={15} />
             </span>
             <input
               type="text"
@@ -290,23 +347,41 @@ export function MitraBursaBantuan({
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="posko-search-input"
-              style={{ paddingLeft: "40px" }}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange("")}
+                className="posko-search-clear-btn"
+                title="Hapus kata kunci pencarian"
+              >
+                ×
+              </button>
+            )}
           </div>
-          <span className="posko-search-counter">
-            Menampilkan <strong>{filteredItems.length === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, filteredItems.length)}</strong> dari <strong>{filteredItems.length}</strong> kebutuhan terbuka
-          </span>
+
+          <div className="posko-search-meta">
+            <span className="posko-search-count-text">
+              Menampilkan <strong>{filteredItems.length > 0 ? `${startIndex + 1}-${Math.min(startIndex + pageSize, filteredItems.length)}` : 0}</strong> dari{" "}
+              {totalOpen} kebutuhan
+              {totalPages > 1 && ` (Halaman ${validCurrentPage}/${totalPages})`}
+            </span>
+            {search && (
+              <span className="posko-search-query-tag">
+                Filter: "{search}"
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* 4. OPEN NEEDS CASES LIST */}
       {paginatedItems.length === 0 ? (
         <div
-          className="card"
           style={{
             background: "#ffffff",
-            border: "1px solid #E5E7EB",
             borderRadius: "16px",
+            border: "1px dashed #cbd5e1",
             padding: "48px 24px",
             textAlign: "center",
             margin: "24px 0",
@@ -314,22 +389,22 @@ export function MitraBursaBantuan({
         >
           <div
             style={{
-              width: "56px",
-              height: "56px",
-              borderRadius: "16px",
-              background: "rgba(1, 50, 32, 0.08)",
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(1,50,32,0.06)",
               color: "#013220",
               display: "grid",
               placeItems: "center",
-              margin: "0 auto 16px",
+              margin: "0 auto 12px",
             }}
           >
-            <AppIcon name="box" size={28} />
+            <AppIcon name="box" size={24} />
           </div>
-          <h3 style={{ margin: "0 0 8px", color: "#013220", fontSize: "1.2rem", fontWeight: 700 }}>
+          <h3 style={{ margin: "0 0 6px", color: "#013220", fontSize: "1.1rem", fontWeight: 700 }}>
             Tidak Ada Kebutuhan Terbuka Ditemukan
           </h3>
-          <p style={{ color: "#6B7280", fontSize: "0.92rem", margin: 0, maxWidth: "520px", marginLeft: "auto", marginRight: "auto" }}>
+          <p style={{ margin: 0, color: "#64748b", fontSize: "0.88rem", maxWidth: "520px", marginLeft: "auto", marginRight: "auto" }}>
             {search.trim()
               ? `Tidak ada kebutuhan terbuka yang cocok dengan kata kunci "${search}". Silakan coba kata kunci lain.`
               : "Seluruh kebutuhan logistik di bursa posko saat ini telah terpenuhi atau masih dalam proses verifikasi tim lapangan."}
@@ -338,171 +413,156 @@ export function MitraBursaBantuan({
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "20px" }}>
           {paginatedItems.map((item) => {
-            const locName = item.posko
-              ? `${item.posko.desa ? item.posko.desa + ", " : ""}${item.posko.kecamatan ? item.posko.kecamatan + ", " : ""}${item.posko.kabupaten || "Wilayah Posko"}`
-              : item.kebutuhan?.desa
-              ? `${item.kebutuhan.desa}, ${item.kebutuhan.kecamatan || ""}, ${item.kebutuhan.kabupaten || ""}`
-              : "Posko Wilayah Penampungan";
-
-            const { num: targetNum, unit } = parseVolume(item.target_volume);
-            const { num: filledNum } = parseVolume(item.volume_terpenuhi || "0");
-            const pct = targetNum > 0 ? Math.min(100, Math.round((filledNum / targetNum) * 100)) : 0;
-            const sisaNum = Math.max(0, targetNum - filledNum);
             const isClaimedByMe = item.status === "Klaim Diajukan";
+            const targetNum = parseInt(item.target_volume.replace(/[^0-9]/g, "")) || 1000;
+            const unit = item.target_volume.replace(/[0-9.,]/g, "").trim() || "Unit";
+            const fulfilledNum = parseInt((item.volume_terpenuhi || "0").replace(/[^0-9]/g, "")) || 0;
+            const shortage = Math.max(0, targetNum - fulfilledNum);
+            const pct = Math.min(100, Math.round((fulfilledNum / targetNum) * 100));
+
+            const urgencyClass = (item.urgensi || "sedang").toLowerCase().replace(/\s+/g, "-");
+            const locName = item.kebutuhan?.desa
+              ? `${item.kebutuhan.desa}, ${item.kebutuhan.kecamatan || ""}`
+              : item.posko?.desa
+              ? `${item.posko.desa}, ${item.posko.kecamatan || ""}`
+              : item.posko?.nama_posko || "Area Bencana";
 
             return (
-              <div key={item.id} className="posko-case-card">
-                {/* Top Bar: Badges + Posko Source */}
-                <div className="posko-case-top">
+              <div
+                key={item.id}
+                className="posko-case-card"
+                style={{
+                  border: isClaimedByMe
+                    ? "1px solid #fde68a"
+                    : "1px solid rgba(1, 50, 32, 0.12)",
+                }}
+              >
+                {/* 1. Header Row */}
+                <div className="posko-case-header-row">
                   <div className="posko-case-badges">
-                    <span className="posko-badge-id">BURSA-{item.id}</span>
-                    <span
-                      className="badge"
-                      style={{
-                        backgroundColor:
-                          item.urgensi === "Kritis" ? "#FEE2E2" : item.urgensi === "Tinggi" ? "#FEF3C7" : "#E0E7FF",
-                        color:
-                          item.urgensi === "Kritis" ? "#991B1B" : item.urgensi === "Tinggi" ? "#92400E" : "#3730A3",
-                        fontWeight: 700,
-                        fontSize: "0.78rem",
-                        padding: "3px 10px",
-                        borderRadius: "6px",
-                      }}
-                    >
+                    <span className="posko-case-id-badge">BURSA-{item.id}</span>
+                    <span className={`posko-case-urgency-badge urgency-${urgencyClass}`}>
                       Prioritas {item.urgensi}
                     </span>
-                    <span
-                      className="posko-badge-status"
-                      style={{
-                        backgroundColor: isClaimedByMe ? "#FEF3C7" : "#EFF6FF",
-                        color: isClaimedByMe ? "#92400E" : "#1D4ED8",
-                        fontWeight: 600,
-                        fontSize: "0.78rem",
-                        padding: "3px 10px",
-                        borderRadius: "6px",
-                      }}
-                    >
+                    <span className="posko-case-status-badge status-pending">
                       {item.status || "Terbuka"}
                     </span>
                   </div>
 
-                  <span className="posko-case-origin">
-                    <AppIcon name="map-pin" size={14} />
+                  <div className="posko-case-date">
+                    <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
                     <span>{item.posko?.nama_posko || "Posko BPBD Wilayah"}</span>
-                  </span>
+                  </div>
                 </div>
 
-                {/* Main Content: Title & Location */}
-                <h3 className="posko-case-title">
-                  {item.item_bantuan} · Target {item.target_volume}
-                </h3>
-                <div className="posko-case-meta">
-                  <span>
-                    <AppIcon name="map" size={14} />
-                    Lokasi: <strong>{locName}</strong>
-                  </span>
-                  <span>
-                    <AppIcon name="users" size={14} />
-                    Terdampak: <strong>{item.kebutuhan?.jumlah_kk || 1} KK</strong>
-                  </span>
-                  {item.kebutuhan?.deskripsi && (
-                    <span style={{ color: "#6B7280" }}>
-                      · {item.kebutuhan.deskripsi.slice(0, 60)}...
+                {/* 2. Title */}
+                <div>
+                  <h3 className="posko-case-title">
+                    Kebutuhan {item.item_bantuan} · Target {item.target_volume}
+                  </h3>
+                </div>
+
+                {/* 3. Metadata Row */}
+                <div className="posko-case-meta-row">
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
+                    <span>
+                      Lokasi: <strong>{locName}</strong>
                     </span>
-                  )}
-                </div>
-
-                {/* 4-Column Telemetry Box */}
-                <div className="posko-case-metrics">
-                  <div className="posko-case-metric-col">
-                    <span className="posko-case-metric-label">TARGET KEBUTUHAN</span>
-                    <strong className="posko-case-metric-val">{item.target_volume}</strong>
-                  </div>
-                  <div className="posko-case-metric-col">
-                    <span className="posko-case-metric-label">TERALOKASI POSKO</span>
-                    <strong className="posko-case-metric-val">{item.volume_terpenuhi || "0"}</strong>
-                  </div>
-                  <div className="posko-case-metric-col">
-                    <span className="posko-case-metric-label">SISA TERBUKA</span>
-                    <strong className="posko-case-metric-val" style={{ color: "#92400e" }}>
-                      {sisaNum} {unit}
-                    </strong>
-                  </div>
-                  <div className="posko-case-metric-col">
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <span className="posko-case-metric-label">STATUS PEMENUHAN</span>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#013220" }}>{pct}%</span>
-                    </div>
-                    <div
-                      style={{
-                        height: "6px",
-                        backgroundColor: "#E5E7EB",
-                        borderRadius: "999px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${pct}%`,
-                          backgroundColor: pct >= 100 ? "#059669" : "#013220",
-                          borderRadius: "999px",
-                          transition: "width 0.3s ease",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Footer Actions */}
-                <div className="posko-case-footer">
-                  <span style={{ fontSize: "0.82rem", color: "#6B7280" }}>
-                    {isClaimedByMe
-                      ? "Proposal Anda telah terdaftar dan menunggu persetujuan posko."
-                      : "Kebutuhan sah terverifikasi: Siap disalurkan langsung oleh mitra bantuan."}
                   </span>
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
+                    <span>
+                      Terdampak: <strong>{item.kebutuhan?.jumlah_kk || 1} KK</strong>
+                    </span>
+                  </span>
+                </div>
 
-                  {isClaimedByMe ? (
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        background: "#FEF3C7",
-                        color: "#92400E",
-                        padding: "8px 14px",
-                        borderRadius: "8px",
-                        fontWeight: 700,
-                        fontSize: "0.85rem",
-                      }}
-                    >
-                      <AppIcon name="clock" size={15} />
-                      <span>Proposal Diajukan</span>
+                {/* 4. Balance Panel */}
+                <div className="posko-bursa-balance-box">
+                  <div className="posko-bursa-balance-grid">
+                    <div>
+                      <span className="posko-bursa-metric-label">Target Kebutuhan</span>
+                      <strong className="posko-bursa-metric-val">{item.target_volume}</strong>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="reksa-btn reksa-btn-primary"
-                      onClick={() => openOfferModal(item)}
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Teralokasi Posko</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: fulfilledNum > 0 ? "#15803d" : "#64748b" }}
+                      >
+                        {fulfilledNum} {unit}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Sisa Terbuka</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: shortage > 0 ? "#b45309" : "#15803d" }}
+                      >
+                        {shortage} {unit}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Status Pemenuhan</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: pct >= 100 ? "#15803d" : "#013220" }}
+                      >
+                        {pct}% Terpenuhi
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="posko-bursa-progress-track">
+                    <div
+                      className="posko-bursa-progress-fill"
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        background: "#013220",
-                        color: "#ffffff",
-                        fontWeight: 600,
-                        fontSize: "0.88rem",
-                        padding: "9px 18px",
-                        borderRadius: "8px",
-                        border: "none",
-                        cursor: "pointer",
+                        width: `${pct}%`,
+                        background: pct >= 100 ? "#15803d" : "#013220",
                       }}
-                    >
-                      <AppIcon name="handshake" size={16} />
-                      <span>Ajukan Komitmen Bantuan</span>
-                      <AppIcon name="arrow-right" size={14} />
-                    </button>
-                  )}
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Dedicated Footer Action Bar */}
+                <div className="posko-case-footer-row">
+                  <div style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                    Kebutuhan sah terverifikasi: Siap disalurkan langsung oleh mitra bantuan.
+                  </div>
+
+                  <div className="posko-case-actions-cluster">
+                    {isClaimedByMe ? (
+                      <span
+                        className="posko-case-status-badge status-clarify"
+                        style={{
+                          padding: "8px 16px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "0.84rem",
+                        }}
+                      >
+                        <AppIcon name="clock" size={14} />
+                        <span>Proposal Diajukan · Menunggu Posko</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openOfferModal(item)}
+                        className="btn-case-verify"
+                        title="Ajukan komitmen penugasan armada organisasi Anda"
+                      >
+                        <AppIcon name="handshake" size={14} />
+                        <span>Ajukan Komitmen Bantuan</span>
+                        <AppIcon name="arrow-right" size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -514,50 +574,44 @@ export function MitraBursaBantuan({
       {filteredItems.length > 0 && (
         <div className="posko-pagination-card">
           <div className="posko-pagination-info">
-            Menampilkan <strong>{startIndex + 1}</strong> – <strong>{Math.min(startIndex + pageSize, filteredItems.length)}</strong> dari <strong>{filteredItems.length}</strong> kebutuhan terbuka
-            <span
-              style={{
-                marginLeft: "10px",
-                fontSize: "0.75rem",
-                background: "#E5E7EB",
-                color: "#374151",
-                padding: "2px 8px",
-                borderRadius: "6px",
-                fontWeight: 600,
-              }}
-            >
-              Maks. 5 data per halaman
+            <span>
+              Menampilkan <strong>{startIndex + 1}</strong> - <strong>{Math.min(startIndex + pageSize, filteredItems.length)}</strong> dari{" "}
+              <strong>{filteredItems.length}</strong> kebutuhan terbuka
             </span>
+            <span className="posko-pagination-limit-badge">Maks. {pageSize} data per halaman</span>
           </div>
 
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <div className="posko-pagination-controls">
             <button
               type="button"
-              className="posko-pagination-btn"
+              className="posko-page-nav-btn"
               disabled={validCurrentPage <= 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage(validCurrentPage - 1)}
+              title="Halaman sebelumnya"
             >
-              ← Sebelumnya
+              <span>&larr;</span> Sebelumnya
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
-                key={page}
+                key={p}
                 type="button"
-                className={`posko-pagination-page ${validCurrentPage === page ? "active" : ""}`}
-                onClick={() => setCurrentPage(page)}
+                className={`posko-page-num-btn ${p === validCurrentPage ? "active" : ""}`}
+                onClick={() => setCurrentPage(p)}
+                title={`Ke halaman ${p}`}
               >
-                {page}
+                {p}
               </button>
             ))}
 
             <button
               type="button"
-              className="posko-pagination-btn"
+              className="posko-page-nav-btn"
               disabled={validCurrentPage >= totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setCurrentPage(validCurrentPage + 1)}
+              title="Halaman selanjutnya"
             >
-              Selanjutnya →
+              Selanjutnya <span>&rarr;</span>
             </button>
           </div>
         </div>
