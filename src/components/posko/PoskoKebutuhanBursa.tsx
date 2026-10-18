@@ -20,6 +20,9 @@ export function PoskoKebutuhanBursa({
 }: PoskoKebutuhanBursaProps) {
   const [filterCategory, setFilterCategory] = useState("Semua");
   const [filterStatus, setFilterStatus] = useState("Semua");
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
   // Filter verified cases (either in bursaList or status is Kebutuhan Terbuka / Sebagian / Teralokasi / Selesai)
   const verifiedCases = cases.filter((c) => {
@@ -33,19 +36,66 @@ export function PoskoKebutuhanBursa({
     );
   });
 
-  const categories = ["Semua", ...Array.from(new Set(verifiedCases.map((c) => c.item)))];
+  const statusTabs = [
+    { label: "Semua", count: verifiedCases.length },
+    {
+      label: "Terbuka",
+      count: verifiedCases.filter((c) => (c.status || "").toLowerCase().includes("terbuka")).length,
+    },
+    {
+      label: "Sebagian Terpenuhi",
+      count: verifiedCases.filter((c) => (c.status || "").toLowerCase().includes("sebagian")).length,
+    },
+    {
+      label: "Teralokasi Penuh",
+      count: verifiedCases.filter(
+        (c) =>
+          (c.status || "").toLowerCase().includes("teralokasi") ||
+          (c.status || "").toLowerCase().includes("pengiriman")
+      ).length,
+    },
+    {
+      label: "Selesai",
+      count: verifiedCases.filter((c) => (c.status || "").toLowerCase().includes("selesai")).length,
+    },
+  ];
 
-  const displayedItems = verifiedCases.filter((c) => {
+  const categories = ["Semua", ...Array.from(new Set(verifiedCases.map((c) => c.item).filter(Boolean)))];
+
+  const filteredItems = verifiedCases.filter((c) => {
     if (filterCategory !== "Semua" && c.item !== filterCategory) return false;
     if (filterStatus !== "Semua") {
       const s = (c.status || "").toLowerCase();
       if (filterStatus === "Terbuka" && !s.includes("terbuka")) return false;
       if (filterStatus === "Sebagian Terpenuhi" && !s.includes("sebagian")) return false;
-      if (filterStatus === "Teralokasi Penuh" && !s.includes("teralokasi")) return false;
+      if (
+        filterStatus === "Teralokasi Penuh" &&
+        !s.includes("teralokasi") &&
+        !s.includes("pengiriman")
+      )
+        return false;
       if (filterStatus === "Selesai" && !s.includes("selesai")) return false;
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchId = (c.id || "").toLowerCase().includes(q);
+      const matchItem = (c.item || "").toLowerCase().includes(q);
+      const matchLocation = (c.location || "").toLowerCase().includes(q);
+      const matchReporter = ((c as any).reporter || (c as any).name || "").toLowerCase().includes(q);
+      const matchNotes = (c.notes || "").toLowerCase().includes(q);
+      if (!matchId && !matchItem && !matchLocation && !matchReporter && !matchNotes) {
+        return false;
+      }
     }
     return true;
   });
+
+  const totalItems = filteredItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const paginatedItems = filteredItems.slice(startIndex, endIndex);
 
   const pendingOffersCount = penawaranList.filter((p) => p.status === "Diajukan").length;
 
@@ -55,7 +105,7 @@ export function PoskoKebutuhanBursa({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
         <div>
           <span className="eyebrow" style={{ color: "#80866e", fontWeight: 700, letterSpacing: "0.05em", fontSize: "0.78rem" }}>
-            MANAJEMEN LOGISTIK & PEMENUHAN POSKO
+            MANAJEMEN LOGISTIK &amp; PEMENUHAN POSKO
           </span>
           <h1 style={{ margin: "4px 0 6px", color: "#013220", fontSize: "1.75rem", fontWeight: 800 }}>
             Kebutuhan &amp; Bursa Bantuan
@@ -88,7 +138,7 @@ export function PoskoKebutuhanBursa({
         </button>
       </div>
 
-      {/* REFINED STAT METRIC CARDS (Clean, Enterprise, No generic AI emoji boxes) */}
+      {/* REFINED STAT METRIC CARDS */}
       <div
         style={{
           display: "grid",
@@ -198,72 +248,112 @@ export function PoskoKebutuhanBursa({
         </div>
       </div>
 
-      {/* FILTER CONTROLS */}
+      {/* 2-TIER FILTER TOOLBAR */}
       <div
+        className="posko-filter-toolbar"
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
           background: "#ffffff",
-          padding: "12px 18px",
-          borderRadius: "12px",
+          borderRadius: "14px",
           border: "1px solid rgba(1, 50, 32, 0.08)",
+          boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          marginBottom: "20px",
+          overflow: "hidden",
         }}
       >
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: "0.82rem", color: "#80866e", fontWeight: 700, marginRight: "6px", textTransform: "uppercase" }}>Status:</span>
-          {["Semua", "Terbuka", "Sebagian Terpenuhi", "Teralokasi Penuh", "Selesai"].map((s) => {
-            const isActive = filterStatus === s;
+        {/* Row 1: Status Pills with Count Badges */}
+        <div className="posko-toolbar-tabs">
+          {statusTabs.map((tabItem) => {
+            const isActive = filterStatus === tabItem.label;
             return (
               <button
-                key={s}
+                key={tabItem.label}
                 type="button"
-                onClick={() => setFilterStatus(s)}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "20px",
-                  fontSize: "0.82rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  border: isActive ? "1px solid #013220" : "1px solid #e2e8f0",
-                  background: isActive ? "#013220" : "#ffffff",
-                  color: isActive ? "#ffffff" : "#475569",
-                  transition: "all 0.15s ease",
+                onClick={() => {
+                  setFilterStatus(tabItem.label);
+                  setCurrentPage(1);
                 }}
+                className={`posko-tab-pill ${isActive ? "active" : ""}`}
               >
-                {s}
+                <span>{tabItem.label}</span>
+                <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
+                  {tabItem.count}
+                </span>
               </button>
             );
           })}
         </div>
 
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <span style={{ fontSize: "0.82rem", color: "#80866e", fontWeight: 700, textTransform: "uppercase" }}>Kategori:</span>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            style={{
-              padding: "6px 12px",
-              borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              fontSize: "0.84rem",
-              color: "#1e293b",
-              background: "#ffffff",
-              cursor: "pointer",
-            }}
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+        {/* Row 2: Search Input, Category Select, and Results Counter */}
+        <div className="posko-toolbar-search-row">
+          <div className="posko-search-input-wrap">
+            <span className="posko-search-icon">
+              <AppIcon name="search" size={15} />
+            </span>
+            <input
+              type="text"
+              placeholder="Cari berdasarkan kode kasus, komoditas, lokasi, atau catatan..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="posko-search-input"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setCurrentPage(1);
+                }}
+                className="posko-search-clear-btn"
+                title="Hapus kata kunci pencarian"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <div className="posko-category-select-wrap">
+              <AppIcon name="tag" size={14} style={{ color: "#80866e" }} />
+              <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", textTransform: "uppercase" }}>
+                Kategori:
+              </span>
+              <select
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="posko-category-select"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="posko-search-meta">
+              <span className="posko-search-count-text">
+                Menampilkan <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> dari{" "}
+                {verifiedCases.length} kebutuhan
+                {totalPages > 1 && ` (Halaman ${validPage}/${totalPages})`}
+              </span>
+              {search && (
+                <span className="posko-search-query-tag">
+                  Filter: "{search}"
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* CARDS LIST (Clean layout without crammed stacked text) */}
-      {displayedItems.length === 0 ? (
+      {/* CARDS LIST */}
+      {filteredItems.length === 0 ? (
         <div
           style={{
             background: "#ffffff",
@@ -277,15 +367,15 @@ export function PoskoKebutuhanBursa({
             <AppIcon name="box" size={24} />
           </div>
           <h3 style={{ margin: "0 0 6px", color: "#013220", fontSize: "1.1rem", fontWeight: 700 }}>
-            Tidak Ada Kebutuhan Terbuka
+            Tidak Ada Kebutuhan yang Sesuai
           </h3>
           <p style={{ margin: 0, color: "#64748b", fontSize: "0.88rem" }}>
-            Semua kebutuhan telah selesai atau belum ada laporan yang sesuai dengan filter ini.
+            Semua kebutuhan telah selesai atau belum ada data yang sesuai dengan filter pencarian Anda.
           </p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {displayedItems.map((c) => {
+          {paginatedItems.map((c) => {
             const targetNum = parseInt(c.qty.replace(/[^0-9]/g, "")) || 1000;
             const unit = c.qty.replace(/[0-9.,]/g, "").trim() || "Unit";
 
@@ -323,140 +413,148 @@ export function PoskoKebutuhanBursa({
               adviceTone = "green";
             }
 
+            const urgencyClass = (c.urgency || "sedang").toLowerCase().replace(/\s+/g, "-");
+            const statusClass = isFinished
+              ? "status-verified"
+              : shortageAlloc > 0
+              ? "status-pending"
+              : "status-verified";
+
             return (
               <div
                 key={c.id}
+                className="posko-case-card card-verified"
                 style={{
-                  background: "#ffffff",
-                  borderRadius: "16px",
                   border: isFinished
                     ? "1px solid #bbf7d0"
                     : shortageAlloc > 0
                     ? "1px solid #fde68a"
                     : "1px solid rgba(1, 50, 32, 0.12)",
-                  boxShadow: "0 2px 10px rgba(1, 50, 32, 0.03)",
-                  padding: "20px 24px",
-                  transition: "box-shadow 0.2s ease",
                 }}
               >
-                {/* Header Row */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "6px" }}>
-                      <span
-                        style={{
-                          fontFamily: "monospace",
-                          fontWeight: 800,
-                          fontSize: "0.95rem",
-                          color: "#013220",
-                          background: "#f1f5f2",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        {c.id}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: "12px",
-                          background:
-                            c.urgency === "Kritis"
-                              ? "#fef2f2"
-                              : c.urgency === "Tinggi"
-                              ? "#fffbeb"
-                              : "#f8fafc",
-                          color:
-                            c.urgency === "Kritis"
-                              ? "#991b1b"
-                              : c.urgency === "Tinggi"
-                              ? "#b45309"
-                              : "#475569",
-                          border: `1px solid ${
-                            c.urgency === "Kritis"
-                              ? "#fecaca"
-                              : c.urgency === "Tinggi"
-                              ? "#fde68a"
-                              : "#e2e8f0"
-                          }`,
-                        }}
-                      >
-                        Prioritas {c.urgency}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: "12px",
-                          background: isFinished ? "#f0fdf4" : shortageAlloc > 0 ? "#eff6ff" : "#f0fdf4",
-                          color: isFinished ? "#15803d" : shortageAlloc > 0 ? "#1d4ed8" : "#15803d",
-                        }}
-                      >
-                        {c.status}
-                      </span>
+                {/* 1. Header Row */}
+                <div className="posko-case-header-row">
+                  <div className="posko-case-badges">
+                    <span className="posko-case-id-badge">{c.id}</span>
+                    <span className={`posko-case-urgency-badge urgency-${urgencyClass}`}>
+                      Prioritas {c.urgency}
+                    </span>
+                    <span className={`posko-case-status-badge ${statusClass}`}>
+                      {c.status}
+                    </span>
+                  </div>
+
+                  <div className="posko-case-date">
+                    <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
+                    <span>{c.date || "10 Okt 2026"}</span>
+                  </div>
+                </div>
+
+                {/* 2. Title */}
+                <div>
+                  <h3 className="posko-case-title">
+                    Kebutuhan {c.item} · {c.qty}
+                  </h3>
+                </div>
+
+                {/* 3. Metadata Row */}
+                <div className="posko-case-meta-row">
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
+                    <span>{c.location}</span>
+                  </span>
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
+                    <span><strong>{c.kk} KK</strong> Terdampak</span>
+                  </span>
+                  {(c as any).reporter && (
+                    <span className="posko-case-meta-item">
+                      <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
+                      <span>Pelapor: <strong>{(c as any).reporter}</strong></span>
+                    </span>
+                  )}
+                </div>
+
+                {/* 4. Unified Balance Panel */}
+                <div className="posko-bursa-balance-box">
+                  <div className="posko-bursa-balance-grid">
+                    <div>
+                      <span className="posko-bursa-metric-label">Target Kebutuhan</span>
+                      <strong className="posko-bursa-metric-val">{c.qty}</strong>
                     </div>
 
-                    <h3 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
-                      Kebutuhan {c.item} · {c.qty}
-                    </h3>
+                    <div>
+                      <span className="posko-bursa-metric-label">Alokasi Sah Aktif</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: allocatedNum > 0 ? "#15803d" : "#64748b" }}
+                      >
+                        {allocatedNum} {unit}
+                      </strong>
+                    </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
-                        <span>{c.location}</span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
-                        <span>{c.kk} Terdampak</span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
-                        <span>{c.date || "10 Okt 2026"}</span>
-                      </span>
+                    <div>
+                      <span className="posko-bursa-metric-label">Sisa Defisit Terbuka</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: shortageAlloc > 0 ? "#b45309" : "#15803d" }}
+                      >
+                        {shortageAlloc > 0 ? `${shortageAlloc} ${unit}` : "0 (Tuntas)"}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Status Pemenuhan</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: pctAlloc >= 100 ? "#15803d" : "#013220" }}
+                      >
+                        {pctAlloc}% Terpenuhi
+                      </strong>
                     </div>
                   </div>
 
-                  {/* Action buttons */}
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <button
-                      type="button"
-                      onClick={() => onSelectCase(c)}
+                  {/* Progress Bar */}
+                  <div className="posko-bursa-progress-track">
+                    <div
+                      className="posko-bursa-progress-fill"
                       style={{
-                        background: "#ffffff",
-                        color: "#013220",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "8px",
-                        padding: "8px 14px",
-                        fontSize: "0.84rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
+                        width: `${pctAlloc}%`,
+                        background: pctAlloc >= 100 ? "#15803d" : "#013220",
                       }}
-                    >
-                      <AppIcon name="file" size={14} />
-                      <span>Detail Kasus</span>
-                    </button>
+                    />
+                  </div>
+                </div>
+
+                {/* 5. Recommendation Advisory Callout */}
+                <div className={`posko-bursa-advice-box advice-${adviceTone}`}>
+                  <AppIcon
+                    name={adviceTone === "green" ? "check" : adviceTone === "amber" ? "alert" : "info"}
+                    size={15}
+                  />
+                  <span>
+                    <strong>Rekomendasi Tindakan:</strong> {adviceNote}
+                  </span>
+                </div>
+
+                {/* 6. Dedicated Footer Action Bar */}
+                <div className="posko-case-footer-row">
+                  <button
+                    type="button"
+                    onClick={() => onSelectCase(c)}
+                    className="btn-case-view"
+                    title="Buka dokumen detail dan pemeriksaan kasus"
+                  >
+                    <AppIcon name="file" size={14} />
+                    <span>Detail Kasus</span>
+                  </button>
+
+                  <div className="posko-case-actions-cluster">
                     <button
                       type="button"
                       onClick={onNavigateToOffers}
-                      style={{
-                        background: "#013220",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "8px 16px",
-                        fontSize: "0.84rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
+                      className="btn-case-verify"
+                      title="Kelola alokasi dan penugasan armada mitra bantuan"
                     >
                       <AppIcon name="handshake" size={14} />
                       <span>Kelola Alokasi Mitra</span>
@@ -464,103 +562,59 @@ export function PoskoKebutuhanBursa({
                     </button>
                   </div>
                 </div>
-
-                {/* UNIFIED BALANCE STRIP (Clean & spacious, not crowded) */}
-                <div
-                  style={{
-                    background: "#fbfbf8",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(1, 50, 32, 0.08)",
-                    padding: "14px 18px",
-                    marginBottom: "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-                      gap: "12px",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#80866e", textTransform: "uppercase", display: "block", marginBottom: "2px" }}>
-                        Target Kebutuhan
-                      </span>
-                      <strong style={{ fontSize: "1.05rem", color: "#013220" }}>{c.qty}</strong>
-                    </div>
-
-                    <div>
-                      <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#80866e", textTransform: "uppercase", display: "block", marginBottom: "2px" }}>
-                        Alokasi Sah Aktif
-                      </span>
-                      <strong style={{ fontSize: "1.05rem", color: allocatedNum > 0 ? "#15803d" : "#64748b" }}>
-                        {allocatedNum} {unit}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#80866e", textTransform: "uppercase", display: "block", marginBottom: "2px" }}>
-                        Sisa Defisit Terbuka
-                      </span>
-                      <strong style={{ fontSize: "1.05rem", color: shortageAlloc > 0 ? "#b45309" : "#15803d" }}>
-                        {shortageAlloc > 0 ? `${shortageAlloc} ${unit}` : "0 (Tuntas)"}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#80866e", textTransform: "uppercase", display: "block", marginBottom: "2px" }}>
-                        Status Pemenuhan
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          fontWeight: 700,
-                          color: pctAlloc >= 100 ? "#15803d" : "#013220",
-                        }}
-                      >
-                        {pctAlloc}% Terpenuhi
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div style={{ width: "100%", height: "7px", background: "rgba(1, 50, 32, 0.08)", borderRadius: "99px", overflow: "hidden" }}>
-                    <div
-                      style={{
-                        width: `${pctAlloc}%`,
-                        height: "100%",
-                        background: pctAlloc >= 100 ? "#15803d" : "#013220",
-                        transition: "width 0.3s ease",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Subtitle Advisory Callout */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "0.82rem",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    background: adviceTone === "green" ? "#f0fdf4" : adviceTone === "amber" ? "#fffbeb" : "#f1f5f2",
-                    border: `1px solid ${adviceTone === "green" ? "#bbf7d0" : adviceTone === "amber" ? "#fde68a" : "#cbd5e1"}`,
-                    color: adviceTone === "green" ? "#166534" : adviceTone === "amber" ? "#92400e" : "#013220",
-                  }}
-                >
-                  <AppIcon name={adviceTone === "green" ? "check" : adviceTone === "amber" ? "alert" : "info"} size={14} />
-                  <span>
-                    <strong>Rekomendasi Tindakan:</strong> {adviceNote}
-                  </span>
-                </div>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* PAGINATION CARD */}
+      {filteredItems.length > 0 && (
+        <div className="posko-pagination-card">
+          <div className="posko-pagination-info">
+            <span>
+              Menampilkan <strong>{startIndex + 1}</strong> - <strong>{endIndex}</strong> dari{" "}
+              <strong>{totalItems}</strong> kebutuhan
+            </span>
+            <span className="posko-pagination-limit-badge">Maks. {pageSize} data per halaman</span>
+          </div>
+
+          <div className="posko-pagination-controls">
+            <button
+              type="button"
+              className="posko-page-nav-btn"
+              disabled={validPage <= 1}
+              onClick={() => setCurrentPage(validPage - 1)}
+              title="Halaman sebelumnya"
+            >
+              <span>&larr;</span> Sebelumnya
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`posko-page-num-btn ${p === validPage ? "active" : ""}`}
+                onClick={() => setCurrentPage(p)}
+                title={`Ke halaman ${p}`}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className="posko-page-nav-btn"
+              disabled={validPage >= totalPages}
+              onClick={() => setCurrentPage(validPage + 1)}
+              title="Halaman selanjutnya"
+            >
+              Selanjutnya <span>&rarr;</span>
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
+
