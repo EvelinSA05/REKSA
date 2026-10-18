@@ -991,14 +991,16 @@ export function LeafletMap({
           try {
             map.invalidateSize();
             map.fitBounds(L.latLngBounds(bounds), {
-              padding: [28, 28],
+              paddingTopLeft: [24, 20],
+              paddingBottomRight: [24, 56],
               maxZoom: 13,
             });
             setTimeout(() => {
               if (mapInstanceRef.current) {
                 mapInstanceRef.current.invalidateSize();
                 mapInstanceRef.current.fitBounds(L.latLngBounds(bounds), {
-                  padding: [28, 28],
+                  paddingTopLeft: [24, 20],
+                  paddingBottomRight: [24, 56],
                   maxZoom: 13,
                 });
               }
@@ -1321,6 +1323,7 @@ export function LeafletMap({
       <div style={{ 
         position: 'relative', 
         width: '100%', 
+        height: operational ? '360px' : '340px',
         borderRadius: '16px', 
         overflow: 'hidden', 
         border: '1.5px solid #d4dfd6', 
@@ -1329,7 +1332,7 @@ export function LeafletMap({
         {/* MAP CANVAS */}
         <div 
           ref={mapContainerRef} 
-          style={{ width: '100%', height: operational ? '380px' : '340px', background: '#e5e3df' }} 
+          style={{ width: '100%', height: '100%', background: '#e5e3df' }} 
         />
 
         {/* GOOGLE MAPS FLOATING "MY LOCATION" GPS BUTTON (Top Right) */}
@@ -1483,41 +1486,41 @@ export function LeafletMap({
         {operational && Array.isArray(cases) && cases.length > 0 && (
           <div style={{
             position: 'absolute',
-            bottom: '12px',
-            left: '12px',
+            bottom: '10px',
+            left: '10px',
             zIndex: 1000,
-            background: 'rgba(255, 255, 255, 0.94)',
-            backdropFilter: 'blur(6px)',
-            borderRadius: '10px',
-            padding: '5px 9px',
-            boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
-            border: '1px solid rgba(1,50,32,0.15)',
+            background: 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: '8px',
+            padding: '5px 10px',
+            boxShadow: '0 3px 12px rgba(0,0,0,0.18)',
+            border: '1px solid rgba(1,50,32,0.18)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            fontSize: '10.5px',
+            fontSize: '11px',
             fontWeight: 700,
-            flexWrap: 'wrap',
-            maxWidth: 'calc(100% - 24px)',
+            lineHeight: 1,
+            pointerEvents: 'none',
           }}>
-            <span style={{ color: '#013220', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span style={{ fontSize: '11px' }}>🏛️</span> Posko
+            <span style={{ color: '#013220', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span>🏛️</span> Posko
             </span>
-            <span style={{ width: '1px', height: '11px', background: '#d1d5db' }} />
-            <span style={{ color: '#0284c7', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span style={{ fontSize: '11px' }}>💧</span> Air Bersih
+            <span style={{ width: '1px', height: '11px', background: '#cbd5e1' }} />
+            <span style={{ color: '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span>💧</span> Air Bersih
             </span>
-            <span style={{ color: '#ea580c', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span style={{ fontSize: '11px' }}>👕</span> Sandang
+            <span style={{ color: '#ea580c', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span>👕</span> Sandang
             </span>
-            <span style={{ color: '#16a34a', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span style={{ fontSize: '11px' }}>🍚</span> Pangan
+            <span style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span>🍚</span> Pangan
             </span>
-            <span style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span style={{ fontSize: '11px' }}>💊</span> Medis
+            <span style={{ color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span>💊</span> Medis
             </span>
-            <span style={{ color: '#7c3aed', display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <span style={{ fontSize: '11px' }}>⛺</span> Hunian
+            <span style={{ color: '#7c3aed', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span>⛺</span> Hunian
             </span>
           </div>
         )}
