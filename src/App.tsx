@@ -2919,6 +2919,12 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
   const disalurkan = misiList.filter(m => m.status_tahapan !== "Selesai").length || allCases.filter(c => c.status === "Dalam Pengiriman").length;
   const perluKonfirmasi = misiList.filter(m => m.status_tahapan === 'Tiba di Lokasi & Diserahkan' || m.status_tahapan === 'Menunggu Konfirmasi Penerimaan').length;
 
+  // Filter khusus kebutuhan yang telah diverifikasi menjadi Kebutuhan Terbuka
+  const openNeedsCases = allCases.filter(c => {
+    const s = (c.status || '').toLowerCase();
+    return s.includes('terbuka') || s.includes('sebagian') || s.includes('klaim');
+  });
+
   return (
     <main className="workspace posko-dashboard-workspace">
       <PageHead 
@@ -2998,18 +3004,35 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
               <h3>Daftar Kebutuhan Terbuka Posko Ini</h3>
               <p>Kebutuhan KK yang telah diverifikasi dan siap disalurkan mitra</p>
             </div>
-            <button type="button" className="btn-ops-all" onClick={() => setPage("cases")}>
-              Lihat Kasus <Icon name="next" />
+            <button type="button" className="btn-ops-all" onClick={() => setPage(openNeedsCases.length > 0 ? "resources" : "cases")}>
+              {openNeedsCases.length > 0 ? "Lihat Bursa" : "Verifikasi Kasus"} <Icon name="next" />
             </button>
           </div>
 
           <div className="ops-attention-list">
-            {allCases.length === 0 ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "var(--muted)", background: "#fbfbf8", borderRadius: "12px" }}>
-                <p>Belum ada laporan kebutuhan masuk di database posko.</p>
+            {openNeedsCases.length === 0 ? (
+              <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--muted)", background: "#fbfbf8", borderRadius: "12px", border: "1px dashed var(--border)" }}>
+                <p style={{ margin: "0 0 6px", fontWeight: 600, color: "var(--forest)", fontSize: "0.95rem" }}>
+                  Belum Ada Kebutuhan Terbuka
+                </p>
+                <p style={{ margin: "0 0 14px", fontSize: "0.85rem", color: "var(--muted)" }}>
+                  {masukKK > 0 
+                    ? `Terdapat ${masukKK} laporan warga baru yang menunggu verifikasi petugas.`
+                    : "Laporan warga yang telah diverifikasi akan otomatis tampil di sini dan siap didanai mitra."}
+                </p>
+                {masukKK > 0 && (
+                  <button 
+                    type="button" 
+                    className="btn-ops-all" 
+                    style={{ margin: "0 auto", padding: "6px 14px", fontSize: "0.85rem", cursor: "pointer" }}
+                    onClick={() => setPage("cases")}
+                  >
+                    Verifikasi Laporan Sekarang <Icon name="next" />
+                  </button>
+                )}
               </div>
             ) : (
-              allCases.map((c) => (
+              openNeedsCases.map((c) => (
                 <button 
                   type="button" 
                   className="ops-attention-item" 
