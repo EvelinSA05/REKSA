@@ -1454,10 +1454,22 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
                     const now = new Date();
                     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} WIB`;
-                    const v = payload.desa || createdDbItem?.desa || "Surabaya";
-                    const d = payload.kecamatan || createdDbItem?.kecamatan;
-                    const k = payload.kabupaten || createdDbItem?.kabupaten || "Kota Surabaya";
-                    const locStr = d ? `${v}, Kec. ${d}` : `${v}, ${k}`;
+                    const v = (payload.desa || createdDbItem?.desa || "Surabaya").trim();
+                    const d = (payload.kecamatan || createdDbItem?.kecamatan || "").trim();
+                    let k = (payload.kabupaten || createdDbItem?.kabupaten || "Kota Surabaya").trim();
+                    const p = (payload.provinsi || createdDbItem?.provinsi || "Jawa Timur").trim();
+
+                    if (k.toLowerCase() === v.toLowerCase() && d && d.toLowerCase().includes("sidoarjo")) {
+                      k = "Kabupaten Sidoarjo";
+                    }
+
+                    const locParts = [
+                      v ? (v.toLowerCase().startsWith("desa") || v.toLowerCase().startsWith("kel") || v.toLowerCase().startsWith("jalan") || v.toLowerCase().startsWith("jl") ? v : `Desa/Kel. ${v}`) : '',
+                      d ? (d.toLowerCase().startsWith("kec") ? d : `Kec. ${d}`) : '',
+                      k ? (k.toLowerCase().startsWith("kab") || k.toLowerCase().startsWith("kota") ? k : `Kab. ${k}`) : '',
+                      p ? (p.toLowerCase().startsWith("prov") ? p : `Prov. ${p}`) : ''
+                    ].filter(Boolean);
+                    const locStr = locParts.length > 0 ? locParts.join(", ") : `${v}, Kec. ${d || ''}, ${k}`;
 
                     const newReport: CaseRecord = {
                       id: finalCode,
