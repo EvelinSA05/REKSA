@@ -3544,6 +3544,36 @@ function Activity({
   const poskoShort = currentCase?.posko?.split(" ")[0] || "POSKO";
 
   const [dbCaseLogs, setDbCaseLogs] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const filteredSearchResults = searchQuery.trim()
+    ? allCases.filter((c) => {
+        const q = searchQuery.toLowerCase().trim();
+        return (
+          (c.id || "").toLowerCase().includes(q) ||
+          (c.item || "").toLowerCase().includes(q) ||
+          (c.location || "").toLowerCase().includes(q) ||
+          (c.applicantName || "").toLowerCase().includes(q) ||
+          (c.urgency || "").toLowerCase().includes(q) ||
+          (c.village || "").toLowerCase().includes(q) ||
+          (c.district || "").toLowerCase().includes(q)
+        );
+      }).slice(0, 8)
+    : [];
 
   useEffect(() => {
     let isMounted = true;
@@ -3728,6 +3758,91 @@ function Activity({
           </div>
 
           <div className="activity-header-actions">
+            {!activeCase && (
+              <div className="activity-search-container" ref={searchContainerRef}>
+                <div className="activity-search-box">
+                  <span className="activity-search-icon"><Icon name="search" /></span>
+                  <input
+                    type="text"
+                    className="activity-search-input"
+                    placeholder="Cari kode, item, lokasi..."
+                    value={searchQuery}
+                    onFocus={() => setIsSearchOpen(true)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setIsSearchOpen(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && filteredSearchResults.length > 0) {
+                        e.preventDefault();
+                        const first = filteredSearchResults[0];
+                        if (update && first) {
+                          update({ activeCaseId: first.id });
+                          setIsSearchOpen(false);
+                          setSearchQuery("");
+                        }
+                      } else if (e.key === "Escape") {
+                        setIsSearchOpen(false);
+                      }
+                    }}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="activity-search-clear"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setIsSearchOpen(false);
+                      }}
+                      title="Hapus pencarian"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {isSearchOpen && searchQuery.trim() && (
+                  <div className="activity-search-popover">
+                    <div className="activity-search-popover-header">
+                      <span>Hasil Pencarian Kasus ({filteredSearchResults.length})</span>
+                      <small>Ketik Enter untuk pilih</small>
+                    </div>
+                    {filteredSearchResults.length > 0 ? (
+                      <div className="activity-search-results-list">
+                        {filteredSearchResults.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            className={`activity-search-item ${c.id === caseId ? "active" : ""}`}
+                            onClick={() => {
+                              if (update) update({ activeCaseId: c.id });
+                              setIsSearchOpen(false);
+                              setSearchQuery("");
+                            }}
+                          >
+                            <div className="search-item-top">
+                              <span className="search-item-code">{c.id}</span>
+                              <span className={`search-item-urgency urgency-${(c.urgency || "sedang").toLowerCase().replace(/\s+/g, "-")}`}>
+                                {c.urgency || "Mendesak"}
+                              </span>
+                            </div>
+                            <strong className="search-item-title">{c.item} ({c.qty})</strong>
+                            <small className="search-item-sub">
+                              {c.applicantName || "Warga"} · {c.village ? `Desa ${c.village}, ${c.district}` : c.location}
+                            </small>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="activity-search-empty">
+                        <p>Tidak ada kasus ditemukan untuk "{searchQuery}".</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <span className={`activity-status-pill status-${(status || "").toLowerCase().replace(/\s+/g, "-")}`}>
               {status}
             </span>
