@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CaseRecord } from "../../App";
 import { MisiItem, apiService } from "../../services/api";
+import { AppIcon } from "../common/Icons";
 
 interface PoskoDistribusiPenerimaanProps {
   misiList: MisiItem[];
@@ -17,7 +18,10 @@ export function PoskoDistribusiPenerimaan({
   notify,
   onSelectCase,
 }: PoskoDistribusiPenerimaanProps) {
-  const [tab, setTab] = useState<"active" | "arrived" | "completed" | "all">("active");
+  const [tab, setTab] = useState<"all" | "active" | "arrived" | "completed">("active");
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
   // Receipt confirmation modal
   const [confirmModalMisi, setConfirmModalMisi] = useState<MisiItem | null>(null);
@@ -27,18 +31,69 @@ export function PoskoDistribusiPenerimaan({
 
   const activeMissions = misiList.filter((m) => m.status_tahapan !== "Selesai");
   const arrivedMissions = misiList.filter(
-    (m) => m.status_tahapan === "Tiba di Lokasi & Diserahkan" || m.status_tahapan === "Menunggu Konfirmasi Penerimaan"
+    (m) =>
+      m.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
+      m.status_tahapan === "Menunggu Konfirmasi Penerimaan"
   );
   const completedMissions = misiList.filter((m) => m.status_tahapan === "Selesai");
 
+  const statusTabs = [
+    { id: "all" as const, label: "Semua Misi", count: misiList.length },
+    { id: "active" as const, label: "Misi Aktif", count: activeMissions.length },
+    { id: "arrived" as const, label: "Perlu Konfirmasi", count: arrivedMissions.length },
+    { id: "completed" as const, label: "Selesai Diterima", count: completedMissions.length },
+  ];
+
   const filteredMissions = misiList.filter((m) => {
-    if (tab === "active") return m.status_tahapan !== "Selesai";
+    // Tab filter
+    if (tab === "active" && m.status_tahapan === "Selesai") return false;
     if (tab === "arrived") {
-      return m.status_tahapan === "Tiba di Lokasi & Diserahkan" || m.status_tahapan === "Menunggu Konfirmasi Penerimaan";
+      const isArr =
+        m.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
+        m.status_tahapan === "Menunggu Konfirmasi Penerimaan";
+      if (!isArr) return false;
     }
-    if (tab === "completed") return m.status_tahapan === "Selesai";
+    if (tab === "completed" && m.status_tahapan !== "Selesai") return false;
+
+    // Search query filter
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchKode = (m.kode_misi || "").toLowerCase().includes(q);
+      const matchOrg = (m.organisasi || "").toLowerCase().includes(q);
+      const matchResponder = (m.responder_name || "").toLowerCase().includes(q);
+      const matchArmada = (m.armada_info || "").toLowerCase().includes(q);
+      const matchMuatan = (m.muatan || "").toLowerCase().includes(q);
+      const matchTujuan = (
+        m.kebutuhan ? `${m.kebutuhan.desa || ""} ${m.kebutuhan.kecamatan || ""}` : ""
+      )
+        .toLowerCase()
+        .includes(q);
+      const matchKendala = (m.status_kendala || "").toLowerCase().includes(q);
+      const matchCatatan = (m.catatan_lapangan || "").toLowerCase().includes(q);
+
+      if (
+        !matchKode &&
+        !matchOrg &&
+        !matchResponder &&
+        !matchArmada &&
+        !matchMuatan &&
+        !matchTujuan &&
+        !matchKendala &&
+        !matchCatatan
+      ) {
+        return false;
+      }
+    }
+
     return true;
   });
+
+  const totalItems = filteredMissions.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const validPage = Math.min(currentPage, totalPages);
+  const startIndex = (validPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const paginatedMissions = filteredMissions.slice(startIndex, endIndex);
 
   const openConfirmModal = (misi: MisiItem) => {
     setConfirmModalMisi(misi);
@@ -72,12 +127,17 @@ export function PoskoDistribusiPenerimaan({
   };
 
   return (
-    <main className="workspace posko-distribusi-workspace">
-      <div className="workspace-title">
+    <main className="workspace posko-distribusi-workspace" style={{ maxWidth: "1280px", margin: "0 auto", padding: "28px 24px" }}>
+      {/* Title bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px", marginBottom: "24px" }}>
         <div>
-          <span className="eyebrow">Pengawasan Logistik &amp; Serah Terima (PRD Bab 5.1 &amp; 5.2 Tahap 8-9)</span>
-          <h1>Distribusi &amp; Penerimaan Lapangan</h1>
-          <p>
+          <span className="eyebrow" style={{ color: "#80866e", fontWeight: 700, letterSpacing: "0.05em", fontSize: "0.78rem" }}>
+            MONITORING LOGISTIK &amp; SERAH TERIMA FISIK
+          </span>
+          <h1 style={{ margin: "4px 0 6px", color: "#013220", fontSize: "1.75rem", fontWeight: 800 }}>
+            Distribusi &amp; Penerimaan Lapangan
+          </h1>
+          <p style={{ margin: 0, color: "#64748b", fontSize: "0.92rem", maxWidth: "680px", lineHeight: 1.5 }}>
             Pantau misi pergerakan armada mitra di lapangan, tangani laporan kendala akses, dan lakukan konfirmasi penerimaan fisik terukur (BAST).
           </p>
         </div>
@@ -86,175 +146,402 @@ export function PoskoDistribusiPenerimaan({
         </div>
       </div>
 
-      {/* SUMMARY STATS ROW */}
-      <div className="assignments-summary-row" style={{ marginBottom: "26px" }}>
-        <div className="asg-sum-box">
-          <strong>{misiList.length}</strong>
-          <span>Total Seluruh Misi</span>
+      {/* REFINED 4-COLUMN STAT METRIC CARDS (Monochrome & Balanced) */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "14px",
+          marginBottom: "24px",
+        }}
+      >
+        {/* Card 1: Total Misi */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Total Seluruh Misi
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="layers" size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {misiList.length} Misi
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Surat Misi Penyaluran Terbit
+          </small>
         </div>
-        <div className="asg-sum-box info">
-          <strong>{activeMissions.length}</strong>
-          <span>Sedang Bergerak</span>
+
+        {/* Card 2: Sedang Bergerak */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Sedang Bergerak
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="truck" size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {activeMissions.length} Armada
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Dalam Perjalanan ke Lokasi
+          </small>
         </div>
-        <div className="asg-sum-box warning">
-          <strong>{arrivedMissions.length}</strong>
-          <span>Perlu Konfirmasi Fisik</span>
+
+        {/* Card 3: Perlu Konfirmasi */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Perlu Konfirmasi Fisik
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="clock" size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {arrivedMissions.length} Misi
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Tiba &amp; Siap Serah Terima
+          </small>
         </div>
-        <div className="asg-sum-box success">
-          <strong>{completedMissions.length}</strong>
-          <span>Selesai &amp; Rekonsiliasi</span>
+
+        {/* Card 4: Selesai */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Selesai &amp; Rekonsiliasi
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <AppIcon name="check" size={16} />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {completedMissions.length} Misi
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Berita Acara (BAST) Sah
+          </small>
         </div>
       </div>
 
-      {/* FILTER TABS */}
-      <div className="cases-pill-filters" style={{ marginBottom: "22px" }}>
-        <button
-          type="button"
-          className={`case-filter-btn ${tab === "active" ? "active" : ""}`}
-          onClick={() => setTab("active")}
-        >
-          Misi Aktif ({activeMissions.length})
-        </button>
-        <button
-          type="button"
-          className={`case-filter-btn ${tab === "arrived" ? "active" : ""}`}
-          onClick={() => setTab("arrived")}
-        >
-          Tiba di Lokasi / Perlu Konfirmasi ({arrivedMissions.length})
-        </button>
-        <button
-          type="button"
-          className={`case-filter-btn ${tab === "completed" ? "active" : ""}`}
-          onClick={() => setTab("completed")}
-        >
-          Selesai Diterima ({completedMissions.length})
-        </button>
-        <button
-          type="button"
-          className={`case-filter-btn ${tab === "all" ? "active" : ""}`}
-          onClick={() => setTab("all")}
-        >
-          Semua Misi ({misiList.length})
-        </button>
+      {/* 2-TIER FILTER TOOLBAR */}
+      <div
+        className="posko-filter-toolbar"
+        style={{
+          background: "#ffffff",
+          borderRadius: "14px",
+          border: "1px solid rgba(1, 50, 32, 0.08)",
+          boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          marginBottom: "20px",
+          overflow: "hidden",
+        }}
+      >
+        {/* Row 1: Status Pills with Count Badges */}
+        <div className="posko-toolbar-tabs">
+          {statusTabs.map((tabItem) => {
+            const isActive = tab === tabItem.id;
+            return (
+              <button
+                key={tabItem.id}
+                type="button"
+                onClick={() => {
+                  setTab(tabItem.id);
+                  setCurrentPage(1);
+                }}
+                className={`posko-tab-pill ${isActive ? "active" : ""}`}
+              >
+                <span>{tabItem.label}</span>
+                <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
+                  {tabItem.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Row 2: Search Input and Results Counter */}
+        <div className="posko-toolbar-search-row">
+          <div className="posko-search-input-wrap">
+            <span className="posko-search-icon">
+              <AppIcon name="search" size={15} />
+            </span>
+            <input
+              type="text"
+              placeholder="Cari berdasarkan kode misi, nama armada, organisasi, narahubung, muatan, atau tujuan..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="posko-search-input"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setCurrentPage(1);
+                }}
+                className="posko-search-clear-btn"
+                title="Hapus kata kunci pencarian"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          <div className="posko-search-meta">
+            <span className="posko-search-count-text">
+              Menampilkan <strong>{totalItems > 0 ? `${startIndex + 1}-${endIndex}` : 0}</strong> dari{" "}
+              {misiList.length} misi
+              {totalPages > 1 && ` (Halaman ${validPage}/${totalPages})`}
+            </span>
+            {search && (
+              <span className="posko-search-query-tag">
+                Filter: "{search}"
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* LIST OF MISSIONS */}
       {filteredMissions.length === 0 ? (
-        <div className="reksa-empty-state">
-          <div className="reksa-empty-icon">🚚</div>
-          <h3 className="reksa-empty-title">Tidak Ada Misi Penyaluran</h3>
-          <p className="reksa-empty-desc">
-            Belum ada armada mitra yang diberangkatkan atau seluruh pengiriman pada kategori ini telah selesai.
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "16px",
+            border: "1px dashed #cbd5e1",
+            padding: "48px 24px",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(1,50,32,0.06)",
+              color: "#013220",
+              display: "grid",
+              placeItems: "center",
+              margin: "0 auto 12px",
+            }}
+          >
+            <AppIcon name="truck" size={24} />
+          </div>
+          <h3 style={{ margin: "0 0 6px", color: "#013220", fontSize: "1.1rem", fontWeight: 700 }}>
+            Tidak Ada Misi Penyaluran
+          </h3>
+          <p style={{ margin: 0, color: "#64748b", fontSize: "0.88rem" }}>
+            Belum ada armada mitra yang diberangkatkan atau tidak ada data yang sesuai dengan filter pencarian Anda.
           </p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {filteredMissions.map((m) => {
+          {paginatedMissions.map((m) => {
             const isCompleted = m.status_tahapan === "Selesai";
-            const isArrived = m.status_tahapan === "Tiba di Lokasi & Diserahkan" || m.status_tahapan === "Menunggu Konfirmasi Penerimaan";
+            const isArrived =
+              m.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
+              m.status_tahapan === "Menunggu Konfirmasi Penerimaan";
             const hasObstacle = Boolean(m.status_kendala);
 
-            const matchedCase = cases.find((c) => c.id === m.kebutuhan?.kode_kasus || c.id === `RK-${m.kebutuhan_id}` || c.id === `RK-2026-000${m.kebutuhan_id}`);
+            const matchedCase = cases.find(
+              (c) =>
+                c.id === m.kebutuhan?.kode_kasus ||
+                c.id === `RK-${m.kebutuhan_id}` ||
+                c.id === `RK-2026-000${m.kebutuhan_id}`
+            );
+
+            const statusClass = isCompleted
+              ? "status-verified"
+              : isArrived
+              ? "status-clarify"
+              : "status-pending";
 
             return (
               <div
                 key={m.id}
-                className={`reksa-card ${hasObstacle ? "obstacle-alert" : isCompleted ? "verified" : isArrived ? "pending" : ""}`}
+                className="posko-case-card"
+                style={{
+                  border: hasObstacle
+                    ? "1px solid #fecaca"
+                    : isCompleted
+                    ? "1px solid #bbf7d0"
+                    : isArrived
+                    ? "1px solid #fde68a"
+                    : "1px solid rgba(1, 50, 32, 0.12)",
+                }}
               >
-                {/* Header */}
-                <div className="reksa-card-header">
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
-                      <span style={{ fontWeight: 800, fontSize: "1.08rem", color: "var(--forest)", fontFamily: "monospace" }}>
-                        {m.kode_misi}
+                {/* 1. Header Row */}
+                <div className="posko-case-header-row">
+                  <div className="posko-case-badges">
+                    <span className="posko-case-id-badge">{m.kode_misi}</span>
+                    <span className={`posko-case-status-badge ${statusClass}`}>
+                      Tahapan: {m.status_tahapan}
+                    </span>
+                    {hasObstacle && (
+                      <span className="posko-case-urgency-badge urgency-kritis">
+                        ⚠️ Kendala Lapangan
                       </span>
-                      <span className={`reksa-badge ${isCompleted ? "success" : isArrived ? "warning" : "info"}`}>
-                        Tahapan: {m.status_tahapan}
-                      </span>
-                      {hasObstacle && (
-                        <span className="reksa-badge critical">
-                          ⚠️ Ada Kendala Lapangan
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="reksa-card-title">
-                      Muatan: {m.muatan} · {m.organisasi}
-                    </h3>
-                    <div className="reksa-meta-list">
-                      <span className="reksa-meta-item">
-                        Narahubung Armada: <strong>{m.responder_name}</strong>
-                      </span>
-                      <span className="reksa-meta-divider">·</span>
-                      <span className="reksa-meta-item">
-                        Armada: <strong>{m.armada_info}</strong>
-                      </span>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="reksa-btn-group">
-                    {matchedCase && (
-                      <button
-                        type="button"
-                        className="reksa-btn reksa-btn-secondary"
-                        onClick={() => onSelectCase(matchedCase)}
-                      >
-                        Buka Kasus →
-                      </button>
-                    )}
-
-                    {!isCompleted && (
-                      <button
-                        type="button"
-                        className="reksa-btn reksa-btn-success"
-                        onClick={() => openConfirmModal(m)}
-                      >
-                        ✓ Konfirmasi Penerimaan
-                      </button>
-                    )}
-
-                    {isCompleted && (
-                      <span className="reksa-badge success" style={{ padding: "6px 14px", fontSize: "0.85rem" }}>
-                        ✓ Diterima Tuntas
-                      </span>
-                    )}
+                  <div className="posko-case-date">
+                    <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
+                    <span>{m.estimasi_waktu || "14 Okt 2026"}</span>
                   </div>
                 </div>
 
-                {/* Obstacle Alert Banner */}
+                {/* 2. Title */}
+                <div>
+                  <h3 className="posko-case-title">
+                    Muatan: {m.muatan} · {m.organisasi}
+                  </h3>
+                </div>
+
+                {/* 3. Metadata Row */}
+                <div className="posko-case-meta-row">
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
+                    <span>Narahubung Armada: <strong>{m.responder_name}</strong></span>
+                  </span>
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="truck" size={13} style={{ color: "#80866e" }} />
+                    <span>Armada: <strong>{m.armada_info}</strong></span>
+                  </span>
+                  <span className="posko-case-meta-item">
+                    <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
+                    <span>Tujuan: <strong>{m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Wilayah'}</strong></span>
+                  </span>
+                </div>
+
+                {/* 4. Obstacle Alert Callout */}
                 {hasObstacle && (
-                  <div className="reksa-info-box alert-red">
-                    <strong>🚨 LAPORAN KENDALA DARI ARMADA MITRA: [{m.status_kendala}]</strong>
-                    <p style={{ margin: "4px 0 0" }}>{m.catatan_lapangan}</p>
+                  <div className="reksa-info-box alert-red" style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <AppIcon name="alert" size={16} style={{ color: "#dc2626", marginTop: "2px" }} />
+                    <div>
+                      <strong style={{ display: "block", marginBottom: "2px" }}>
+                        LAPORAN KENDALA DARI ARMADA MITRA: [{m.status_kendala}]
+                      </strong>
+                      <p style={{ margin: 0, fontSize: "0.84rem" }}>{m.catatan_lapangan}</p>
+                    </div>
                   </div>
                 )}
 
-                {/* Logistics telemetry strip */}
-                <div className="reksa-telemetry-strip">
-                  <div className="reksa-telemetry-item">
-                    <span className="reksa-telemetry-label">Tujuan Distribusi</span>
-                    <span className="reksa-telemetry-val">
-                      {m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Lapangan'}
-                    </span>
-                  </div>
-                  <div className="reksa-telemetry-item">
-                    <span className="reksa-telemetry-label">Muatan Terkirim</span>
-                    <span className="reksa-telemetry-val">{m.muatan}</span>
-                  </div>
-                  <div className="reksa-telemetry-item">
-                    <span className="reksa-telemetry-label">Status Serah Terima</span>
-                    <span className={`reksa-telemetry-val ${isCompleted ? "success" : "warning"}`}>
-                      {m.jumlah_diterima ? `${m.jumlah_diterima} (Sah)` : "Menunggu Serah Terima"}
-                    </span>
-                  </div>
-                  {m.selisih && (
-                    <div className="reksa-telemetry-item">
-                      <span className="reksa-telemetry-label">Selisih Fisik</span>
-                      <span className={`reksa-telemetry-val ${m.selisih !== "0" ? "critical" : "success"}`}>
-                        {m.selisih}
-                      </span>
+                {/* 5. Telemetry Box */}
+                <div className="posko-bursa-balance-box">
+                  <div className="posko-bursa-balance-grid">
+                    <div>
+                      <span className="posko-bursa-metric-label">Tujuan Distribusi</span>
+                      <strong className="posko-bursa-metric-val">
+                        {m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Lapangan'}
+                      </strong>
                     </div>
-                  )}
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Muatan Terkirim</span>
+                      <strong className="posko-bursa-metric-val">{m.muatan}</strong>
+                    </div>
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Status Serah Terima</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{ color: isCompleted ? "#15803d" : "#b45309" }}
+                      >
+                        {m.jumlah_diterima ? `${m.jumlah_diterima} (Sah)` : "Menunggu Serah Terima"}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span className="posko-bursa-metric-label">Selisih Fisik</span>
+                      <strong
+                        className="posko-bursa-metric-val"
+                        style={{
+                          color: m.selisih && m.selisih !== "0" ? "#dc2626" : "#15803d",
+                        }}
+                      >
+                        {m.selisih ? m.selisih : "0 (Akurat Sesuai)"}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Dedicated Footer Action Bar */}
+                <div className="posko-case-footer-row">
+                  <div>
+                    {matchedCase && (
+                      <button
+                        type="button"
+                        className="btn-case-view"
+                        onClick={() => onSelectCase(matchedCase)}
+                        title="Buka dokumen detail dan pemeriksaan kasus warga"
+                      >
+                        <AppIcon name="file" size={14} />
+                        <span>Detail Kasus Terkait</span>
+                        <AppIcon name="arrow-right" size={13} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="posko-case-actions-cluster">
+                    {!isCompleted ? (
+                      <button
+                        type="button"
+                        className="btn-case-verify"
+                        onClick={() => openConfirmModal(m)}
+                        title="Konfirmasi serah terima fisik barang dan terbitkan BAST"
+                      >
+                        <AppIcon name="check" size={14} />
+                        <span>Konfirmasi Penerimaan (BAST)</span>
+                      </button>
+                    ) : (
+                      <span
+                        className="posko-case-status-badge status-verified"
+                        style={{ padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                      >
+                        <AppIcon name="check" size={13} />
+                        <span>✓ Diterima Tuntas &amp; BAST Sah</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -262,14 +549,71 @@ export function PoskoDistribusiPenerimaan({
         </div>
       )}
 
+      {/* 7. Pagination Card */}
+      {filteredMissions.length > 0 && (
+        <div className="posko-pagination-card">
+          <div className="posko-pagination-info">
+            <span>
+              Menampilkan <strong>{startIndex + 1}</strong> - <strong>{endIndex}</strong> dari{" "}
+              <strong>{totalItems}</strong> misi penyaluran
+            </span>
+            <span className="posko-pagination-limit-badge">Maks. {pageSize} data per halaman</span>
+          </div>
+
+          <div className="posko-pagination-controls">
+            <button
+              type="button"
+              className="posko-page-nav-btn"
+              disabled={validPage <= 1}
+              onClick={() => setCurrentPage(validPage - 1)}
+              title="Halaman sebelumnya"
+            >
+              <span>&larr;</span> Sebelumnya
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`posko-page-num-btn ${p === validPage ? "active" : ""}`}
+                onClick={() => setCurrentPage(p)}
+                title={`Ke halaman ${p}`}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              className="posko-page-nav-btn"
+              disabled={validPage >= totalPages}
+              onClick={() => setCurrentPage(validPage + 1)}
+              title="Halaman selanjutnya"
+            >
+              Selanjutnya <span>&rarr;</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CONFIRM RECEIPT MODAL */}
       {confirmModalMisi && (
         <div className="modal-backdrop">
-          <div className="modal" style={{ width: "min(480px, 95%)", textAlign: "left" }}>
-            <h2 style={{ fontSize: "1.25rem", color: "var(--forest)", marginBottom: "8px" }}>
-              Konfirmasi Penerimaan Resmi: {confirmModalMisi.kode_misi}
-            </h2>
-            <p style={{ color: "var(--muted)", fontSize: "0.88rem", marginBottom: "16px" }}>
+          <div className="modal" style={{ width: "min(500px, 95%)", textAlign: "left", borderRadius: "16px", padding: "26px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <h2 style={{ fontSize: "1.25rem", color: "#013220", margin: 0, fontWeight: 800 }}>
+                Konfirmasi Penerimaan: {confirmModalMisi.kode_misi}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setConfirmModalMisi(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: "4px" }}
+              >
+                <AppIcon name="x" size={18} />
+              </button>
+            </div>
+
+            <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: "16px" }}>
               Armada: <strong>{confirmModalMisi.organisasi}</strong> · Muatan Dikirim: <strong>{confirmModalMisi.muatan}</strong>
             </p>
 
@@ -297,10 +641,10 @@ export function PoskoDistribusiPenerimaan({
               style={{ marginBottom: "18px" }}
             />
 
-            <div className="modal-actions" style={{ marginTop: "12px" }}>
+            <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>
               <button
                 type="button"
-                className="reksa-btn reksa-btn-secondary"
+                className="btn-case-view"
                 disabled={isSubmitting}
                 onClick={() => setConfirmModalMisi(null)}
               >
@@ -308,7 +652,7 @@ export function PoskoDistribusiPenerimaan({
               </button>
               <button
                 type="button"
-                className="reksa-btn reksa-btn-primary"
+                className="btn-case-verify"
                 disabled={isSubmitting}
                 onClick={handleConfirmReceipt}
               >
@@ -321,3 +665,4 @@ export function PoskoDistribusiPenerimaan({
     </main>
   );
 }
+
