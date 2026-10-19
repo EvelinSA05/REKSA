@@ -61,12 +61,24 @@ export function MissionLiveTrackingMap({
     remainingPolyline?: L.Polyline;
   }>({});
 
+  // Tracking Modes:
+  // 'stage' = Real-time Workflow Tracking (posisi mobil mengikuti tahapan operasional lapangan resmi)
+  // 'device_gps' = Live Smartphone / Laptop GPS Geolocation
+  // 'sim' = Interactive Simulated Driving Demo
+  const [trackingSource, setTrackingSource] = useState<'stage' | 'device_gps' | 'sim'>('stage');
+  const [devicePos, setDevicePos] = useState<LatLngPoint | null>(null);
+  const [isLocatingDevice, setIsLocatingDevice] = useState<boolean>(false);
+  const [deviceGpsError, setDeviceGpsError] = useState<string | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
-  const [transitProgress, setTransitProgress] = useState<number>(0.55);
-  const [gpsAccuracy] = useState<number>(3); // ±3 meters
+  const [transitProgress, setTransitProgress] = useState<number>(0.50);
+  const [isSimRunning, setIsSimRunning] = useState<boolean>(false);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number>(3); // ±3 meters
   const [satelliteCount, setSatelliteCount] = useState<number>(14);
   const [lastPingTime, setLastPingTime] = useState<string>('Baru saja');
   const [tileMode, setTileMode] = useState<'streets' | 'light'>('streets');
+  const [showExplainer, setShowExplainer] = useState<boolean>(false);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   // 1. Resolve Origin (Posko) and Destination (Citizen / Case) Coordinates
@@ -192,72 +204,164 @@ export function MissionLiveTrackingMap({
   const isConfirming = statusStage === 'Menunggu Konfirmasi' || statusStage === 'Menunggu Konfirmasi Penerimaan';
   const isFinished = statusStage === 'Selesai';
 
-  // Base progress based on stage
+  // Base progress based on stage vs simulation
   const effectiveProgress = useMemo(() => {
+    // If user is running active simulated drive demo
+    if (trackingSource === 'sim') {
+      return transitProgress;
+    }
+    // Workflow stage mapping:
+    // If not departed yet (Tahap 1 & 2): STRICTLY 0.0 (Stay at origin Posko)
     if (isStandby) return 0.0;
-    if (isReady) return 0.08;
-    if (isInTransit) return transitProgress;
+    if (isReady) return 0.05; // At Posko departure gate
+    if (isInTransit) return 0.50; // Active transit midpoint
     if (isArrived || isConfirming || isFinished) return 1.0;
-    return 0.55;
-  }, [isStandby, isReady, isInTransit, isArrived, isConfirming, isFinished, transitProgress]);
+    return 0.0;
+  }, [trackingSource, transitProgress, isStandby, isReady, isInTransit, isArrived, isConfirming, isFinished]);
 
-  // Real-time animated simulation when in transit
+  // Update speed according to stage & mode
   useEffect(() => {
-    if (!isInTransit) {
-      if (isStandby || isReady) {
-        setCurrentSpeed(0);
-      } else if (isArrived || isConfirming || isFinished) {
-        setCurrentSpeed(0);
-      }
+    if (trackingSource === 'device_gps') {
+      // Speed handled by device geolocation
+      return;
+    }
+    if (trackingSource === 'sim' && isSimRunning) {
+      setCurrentSpeed(42);
       return;
     }
 
-    // Set initial transit speed
-    setCurrentSpeed(Math.floor(38 + Math.random() * 8));
+    if (isStandby || isReady) {
+      setCurrentSpeed(0); // Parked at Posko
+    } else if (isInTransit) {
+      setCurrentSpeed(38);
+    } else if (isArrived || isConfirming || isFinished) {
+      setCurrentSpeed(0); // Parked at destination
+    }
+  }, [trackingSource, isSimRunning, isStandby, isReady, isInTransit, isArrived, isConfirming, isFinished]);
 
-    // Dynamic GPS pings every 2.8 seconds
+  // Dynamic simulation tick (ONLY when user explicitly runs 'sim' mode)
+  useEffect(() => {
+    if (trackingSource !== 'sim' || !isSimRunning) return;
+
     const interval = window.setInterval(() => {
       setTransitProgress((prev) => {
-        const next = prev + 0.012;
-        // Keep moving smoothly along route, looping between 30% and 85% to demonstrate continuous real-time telemetry
-        if (next >= 0.88) {
-          return 0.35;
+        const next = prev + 0.015;
+        if (next >= 0.95) {
+          setIsSimRunning(false);
+          return 0.95;
         }
         return next;
       });
 
-      // Realistic speed variance (35 - 46 km/h in urban/disaster access terrain)
-      setCurrentSpeed(Math.floor(36 + Math.random() * 10));
-
-      // Occasional satellite fluctuation
-      setSatelliteCount(Math.floor(13 + Math.random() * 3));
-
-      // Timestamp ping
+      setCurrentSpeed(Math.floor(36 + Math.random() * 8));
       const now = new Date();
       setLastPingTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} WIB`);
-    }, 2800);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [isInTransit, isStandby, isReady, isArrived, isConfirming, isFinished]);
+  }, [trackingSource, isSimRunning]);
+
+  // Toggle Live Smartphone / Device GPS Tracking
+  const handleToggleDeviceGps = useCallback(() => {
+    if (trackingSource === 'device_gps') {
+      // Disconnect device GPS
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setTrackingSource('stage');
+      setDeviceGpsError(null);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setDeviceGpsError('Browser/perangkat Anda tidak mendukung fitur HTML5 Geolocation.');
+      return;
+    }
+
+    setIsLocatingDevice(true);
+    setDeviceGpsError(null);
+
+    // Initial instant position query
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocatingDevice(false);
+        const p: LatLngPoint = {
+          lat: Number(pos.coords.latitude.toFixed(6)),
+          lng: Number(pos.coords.longitude.toFixed(6)),
+        };
+        setDevicePos(p);
+        setGpsAccuracy(Math.round(pos.coords.accuracy || 3));
+        setTrackingSource('device_gps');
+        if (pos.coords.speed !== null && pos.coords.speed > 0) {
+          setCurrentSpeed(Math.round(pos.coords.speed * 3.6));
+        } else {
+          setCurrentSpeed(0);
+        }
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([p.lat, p.lng], 16, { animate: true });
+        }
+      },
+      (err) => {
+        setIsLocatingDevice(false);
+        setDeviceGpsError(`Izin GPS tidak diberikan atau gagal mendeteksi sinyal satelit: ${err.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    // Watch position continuously as vehicle moves
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const p: LatLngPoint = {
+          lat: Number(pos.coords.latitude.toFixed(6)),
+          lng: Number(pos.coords.longitude.toFixed(6)),
+        };
+        setDevicePos(p);
+        setGpsAccuracy(Math.round(pos.coords.accuracy || 3));
+        if (pos.coords.speed !== null && pos.coords.speed > 0) {
+          setCurrentSpeed(Math.round(pos.coords.speed * 3.6));
+        }
+        const now = new Date();
+        setLastPingTime(`${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} WIB`);
+      },
+      (err) => {
+        console.warn('GPS continuous watch notice', err);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 }
+    );
+
+    watchIdRef.current = watchId;
+  }, [trackingSource]);
+
+  // Clean up device GPS watcher on component unmount
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
 
   // Current interpolated fleet position & bearing
-  const { point: fleetPos, bearing: fleetBearing } = useMemo(
-    () => getInterpolatedPosition(effectiveProgress),
-    [getInterpolatedPosition, effectiveProgress]
-  );
+  const { point: fleetPos, bearing: fleetBearing } = useMemo(() => {
+    if (trackingSource === 'device_gps' && devicePos) {
+      return { point: devicePos, bearing: 0, segmentIndex: 0 };
+    }
+    return getInterpolatedPosition(effectiveProgress);
+  }, [trackingSource, devicePos, getInterpolatedPosition, effectiveProgress]);
 
   // Distance metrics
   const remainingDistanceKm = useMemo(() => {
     if (isArrived || isConfirming || isFinished) return 0;
+    if (isStandby) return Number(totalDistanceKm.toFixed(1));
     return Math.max(0, Number((totalDistanceKm * (1 - effectiveProgress)).toFixed(1)));
-  }, [totalDistanceKm, effectiveProgress, isArrived, isConfirming, isFinished]);
+  }, [totalDistanceKm, effectiveProgress, isArrived, isConfirming, isFinished, isStandby]);
 
   // ETA calculation
   const etaMinutes = useMemo(() => {
     if (isArrived || isConfirming || isFinished) return 'Tiba di Lokasi';
-    if (isStandby) return '~18 Menit (Siaga)';
-    if (isReady) return '~15 Menit';
-    // When moving: distance / speed
+    if (isStandby) return 'Belum Berangkat (Siaga di Posko)';
+    if (isReady) return '~15 Menit (Siaga Gerbang)';
     const spd = currentSpeed > 0 ? currentSpeed : 40;
     const mins = Math.max(1, Math.round((remainingDistanceKm / spd) * 60));
     return `${mins} Menit`;
@@ -267,7 +371,6 @@ export function MissionLiveTrackingMap({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Clean container leaflet reference if re-rendering
     if ((mapContainerRef.current as any)._leaflet_id && !mapInstanceRef.current) {
       delete (mapContainerRef.current as any)._leaflet_id;
     }
@@ -291,10 +394,7 @@ export function MissionLiveTrackingMap({
       }).addTo(map);
 
       tileLayerRef.current = tileLayer;
-
-      // Custom Zoom Control top-right
       L.control.zoom({ position: 'topright' }).addTo(map);
-
       mapInstanceRef.current = map;
     }
 
@@ -348,7 +448,7 @@ export function MissionLiveTrackingMap({
           <div style="font-family: inherit; font-size: 12px; min-width: 200px; padding: 4px;">
             <div style="font-weight: 800; color: #013220; font-size: 13px; margin-bottom: 4px;">${poskoLabel}</div>
             <div style="color: #64748b; font-size: 11px;">Titik Awal Keberangkatan Logistik Bencana</div>
-            <div style="margin-top: 6px; font-weight: 700; color: #15803d; font-size: 11px;">Pemuatan: ${mission.muatan}</div>
+            <div style="margin-top: 6px; font-weight: 700; color: #15803d; font-size: 11px;">Muatan: ${mission.muatan}</div>
           </div>
         `)
         .addTo(map);
@@ -416,7 +516,6 @@ export function MissionLiveTrackingMap({
     }
 
     // 3. Polylines: Traveled (solid green) vs Remaining (dashed)
-    // Build path points up to fleet
     const traveledPoints: [number, number][] = [];
     const remainingPoints: [number, number][] = [];
 
@@ -458,18 +557,23 @@ export function MissionLiveTrackingMap({
     }
 
     // 4. Moving Fleet Marker with Radar Pulsing Ring & Heading Orientation
+    const isMoving = currentSpeed > 0 || isSimRunning;
     const truckIconHtml = `
       <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-        <!-- Pulsing Radar Halo Ring -->
-        <div style="
-          position: absolute;
-          width: 52px;
-          height: 52px;
-          border-radius: 50%;
-          background: rgba(22, 163, 74, 0.28);
-          border: 1.5px solid #16a34a;
-          animation: fleet-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-        "></div>
+        <!-- Pulsing Radar Halo Ring (Aktif saat armada bergerak) -->
+        ${
+          isMoving
+            ? `<div style="
+                position: absolute;
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: rgba(22, 163, 74, 0.28);
+                border: 1.5px solid #16a34a;
+                animation: fleet-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+              "></div>`
+            : ''
+        }
 
         <!-- Fleet Vehicle Core Badge -->
         <div style="
@@ -484,7 +588,7 @@ export function MissionLiveTrackingMap({
           align-items: center;
           justify-content: center;
           box-shadow: 0 4px 16px rgba(1, 50, 32, 0.5);
-          transform: rotate(${isInTransit ? Math.round(fleetBearing - 90) : 0}deg);
+          transform: rotate(${isMoving ? Math.round(fleetBearing - 90) : 0}deg);
           transition: transform 0.4s ease;
         ">
           <span style="font-size: 20px;">🚚</span>
@@ -509,7 +613,7 @@ export function MissionLiveTrackingMap({
           gap: 4px;
           z-index: 3;
         ">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: ${isMoving ? '#22c55e' : '#94a3b8'}; display: inline-block;"></span>
           <span>${mission.kode_misi}</span>
         </div>
       </div>
@@ -528,8 +632,8 @@ export function MissionLiveTrackingMap({
           <span style="font-weight: 800; font-family: monospace; font-size: 11px; background: #013220; color: #fff; padding: 2px 8px; border-radius: 4px;">
             ${mission.kode_misi}
           </span>
-          <span style="font-size: 10.5px; font-weight: 700; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 2px 6px; border-radius: 4px;">
-            ● GPS LIVE
+          <span style="font-size: 10.5px; font-weight: 700; color: ${isMoving ? '#15803d' : '#475569'}; background: ${isMoving ? '#f0fdf4' : '#f1f5f9'}; border: 1px solid ${isMoving ? '#bbf7d0' : '#cbd5e1'}; padding: 2px 6px; border-radius: 4px;">
+            ● ${trackingSource === 'device_gps' ? 'GPS HP AKTIF' : isMoving ? 'BERGERAK' : 'STANDBY'}
           </span>
         </div>
         <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 2px;">
@@ -540,8 +644,8 @@ export function MissionLiveTrackingMap({
         </div>
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;">
           <div>
-            <span style="color: #64748b; display: block; font-size: 10px;">Kecepatan</span>
-            <strong style="color: #013220; font-size: 12px;">${currentSpeed} km/jam</strong>
+            <span style="color: #64748b; display: block; font-size: 10px;">Status Posisi</span>
+            <strong style="color: #013220; font-size: 12px;">${isStandby ? 'Parkir Posko' : isReady ? 'Siaga Gerbang' : isMoving ? `${currentSpeed} km/jam` : 'Tiba'}</strong>
           </div>
           <div>
             <span style="color: #64748b; display: block; font-size: 10px;">Estimasi Tiba (ETA)</span>
@@ -552,12 +656,12 @@ export function MissionLiveTrackingMap({
             <strong style="color: #0f172a; font-size: 12px;">${remainingDistanceKm} km</strong>
           </div>
           <div>
-            <span style="color: #64748b; display: block; font-size: 10px;">Sinyal GPS</span>
-            <strong style="color: #0f172a; font-size: 12px;">${satelliteCount} Satelit</strong>
+            <span style="color: #64748b; display: block; font-size: 10px;">Sumber Posisi</span>
+            <strong style="color: #0f172a; font-size: 11px;">${trackingSource === 'device_gps' ? 'GPS Ponsel' : 'Workflow Tahapan'}</strong>
           </div>
         </div>
         <div style="font-size: 10px; color: #94a3b8; text-align: right;">
-          Update telemetry: ${lastPingTime}
+          Update terakhir: ${lastPingTime}
         </div>
       </div>
     `;
@@ -636,7 +740,10 @@ export function MissionLiveTrackingMap({
     lastPingTime,
     tileMode,
     mission,
-    isInTransit,
+    isStandby,
+    isReady,
+    trackingSource,
+    isSimRunning,
     getInterpolatedPosition,
   ]);
 
@@ -704,20 +811,21 @@ export function MissionLiveTrackingMap({
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Live Status Badge */}
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(34, 197, 94, 0.18)',
-              border: '1px solid rgba(34, 197, 94, 0.4)',
+              background: trackingSource === 'device_gps' ? 'rgba(59, 130, 246, 0.25)' : isStandby ? 'rgba(148, 163, 184, 0.25)' : 'rgba(34, 197, 94, 0.22)',
+              border: `1px solid ${trackingSource === 'device_gps' ? '#60a5fa' : isStandby ? '#94a3b8' : '#4ade80'}`,
               padding: '3px 10px',
               borderRadius: '9999px',
               fontSize: '0.74rem',
               fontWeight: 800,
               letterSpacing: '0.04em',
-              color: '#4ade80',
+              color: trackingSource === 'device_gps' ? '#93c5fd' : isStandby ? '#e2e8f0' : '#4ade80',
             }}
           >
             <span
@@ -725,25 +833,109 @@ export function MissionLiveTrackingMap({
                 width: '7px',
                 height: '7px',
                 borderRadius: '50%',
-                background: '#22c55e',
-                boxShadow: '0 0 8px #22c55e',
-                animation: 'blink-dot 1.4s ease-in-out infinite',
+                background: trackingSource === 'device_gps' ? '#3b82f6' : isStandby ? '#94a3b8' : '#22c55e',
+                boxShadow: isStandby ? 'none' : `0 0 8px ${trackingSource === 'device_gps' ? '#3b82f6' : '#22c55e'}`,
+                animation: isStandby ? 'none' : 'blink-dot 1.4s ease-in-out infinite',
               }}
             />
-            <span>LIVE GPS TRACKING</span>
+            <span>
+              {trackingSource === 'device_gps'
+                ? 'GPS PERANGKAT SAYA (LIVE)'
+                : isStandby
+                ? 'STANDBY DI POSKO (0 km/jam)'
+                : isReady
+                ? 'SIAP BERANGKAT'
+                : 'DALAM PERJALANAN'}
+            </span>
           </div>
 
           <span style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
             Armada: <strong style={{ color: '#ffffff' }}>{mission.armada_info || 'Armada Logistik'}</strong>
           </span>
 
-          <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
-            (Sinyal: {satelliteCount} Satelit · Akurasi ±{gpsAccuracy}m)
-          </span>
+          {/* How tracking works button */}
+          <button
+            type="button"
+            onClick={() => setShowExplainer((prev) => !prev)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#93c5fd',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              textDecoration: 'underline',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 4px',
+            }}
+          >
+            <span>Ditracking dari apa?</span>
+          </button>
         </div>
 
         {/* Map Quick Action Buttons */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Button: Use My Phone GPS */}
+          <button
+            type="button"
+            onClick={handleToggleDeviceGps}
+            title="Lacak posisi menggunakan sensor GPS perangkat/ponsel saya"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: trackingSource === 'device_gps' ? '#2563eb' : 'rgba(255, 255, 255, 0.12)',
+              border: `1px solid ${trackingSource === 'device_gps' ? '#93c5fd' : 'rgba(255, 255, 255, 0.25)'}`,
+              color: '#ffffff',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              padding: '5px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <AppIcon name="pin" size={13} />
+            <span>
+              {isLocatingDevice
+                ? 'Mendeteksi GPS...'
+                : trackingSource === 'device_gps'
+                ? '✓ GPS HP Aktif'
+                : 'Gunakan GPS HP'}
+            </span>
+          </button>
+
+          {/* Button: Run Demo Simulation (if in transit or for demo testing) */}
+          <button
+            type="button"
+            onClick={() => {
+              if (trackingSource === 'sim') {
+                setIsSimRunning((r) => !r);
+              } else {
+                setTrackingSource('sim');
+                setIsSimRunning(true);
+              }
+            }}
+            title="Nyalakan simulasi pergerakan armada sepanjang jalur rute"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: trackingSource === 'sim' && isSimRunning ? '#15803d' : 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              color: '#ffffff',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              padding: '5px 12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+            }}
+          >
+            <AppIcon name="truck" size={13} />
+            <span>{trackingSource === 'sim' && isSimRunning ? '⏸ Jeda Simulasi' : '▶ Simulasi Gerak'}</span>
+          </button>
+
           <button
             type="button"
             onClick={handleCenterFleet}
@@ -760,10 +952,8 @@ export function MissionLiveTrackingMap({
               padding: '5px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
-              transition: 'background 0.15s ease',
             }}
           >
-            <AppIcon name="truck" size={13} />
             <span>Fokus Armada</span>
           </button>
 
@@ -783,11 +973,10 @@ export function MissionLiveTrackingMap({
               padding: '5px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
-              transition: 'background 0.15s ease',
             }}
           >
             <AppIcon name="map" size={13} />
-            <span>Lihat Rute Penuh</span>
+            <span>Rute Penuh</span>
           </button>
 
           <button
@@ -813,6 +1002,66 @@ export function MissionLiveTrackingMap({
           </button>
         </div>
       </div>
+
+      {/* EXPLAINER BANNER (JIKA DIKLIK / DIAKTIFKAN) */}
+      {showExplainer && (
+        <div
+          style={{
+            background: '#f0fdf4',
+            borderBottom: '1px solid #bbf7d0',
+            padding: '12px 18px',
+            fontSize: '0.82rem',
+            color: '#166534',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+          }}
+        >
+          <div style={{ marginTop: '2px', flexShrink: 0 }}>
+            <AppIcon name="info" size={18} style={{ color: '#15803d' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <strong style={{ display: 'block', color: '#013220', marginBottom: '4px', fontSize: '0.86rem' }}>
+              Bagaimana Posisi Armada Ditracking di Sistem REKSA?
+            </strong>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', marginTop: '6px' }}>
+              <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                <strong style={{ color: '#013220' }}>1. Status Operasional (Default):</strong>
+                <p style={{ margin: '2px 0 0', color: '#475569', fontSize: '0.78rem' }}>
+                  Mobil <strong>berhenti diam di Posko Asal</strong> saat persiapan muatan, dan baru berpindah saat tombol <em>Mulai Perjalanan</em> atau <em>Tiba</em> ditekan responder.
+                </p>
+              </div>
+              <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                <strong style={{ color: '#013220' }}>2. GPS Ponsel Responder:</strong>
+                <p style={{ margin: '2px 0 0', color: '#475569', fontSize: '0.78rem' }}>
+                  Klik tombol <strong>"Gunakan GPS HP"</strong> untuk menghubungkan sensor GPS ponsel pengemudi secara langsung saat armada bergerak di jalan raya.
+                </p>
+              </div>
+              <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                <strong style={{ color: '#013220' }}>3. IoT Tracker Kendaraan:</strong>
+                <p style={{ margin: '2px 0 0', color: '#475569', fontSize: '0.78rem' }}>
+                  Pada armada resmi BPBD/BNPB, alat transponder GPS yang terpasang di kendaraan mengirimkan koordinat lat/long otomatis ke server API.
+                </p>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowExplainer(false)}
+            style={{ background: 'none', border: 'none', color: '#166534', cursor: 'pointer', padding: '4px' }}
+          >
+            <AppIcon name="x" size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* GPS Error Alert if any */}
+      {deviceGpsError && (
+        <div style={{ background: '#fef2f2', borderBottom: '1px solid #fecaca', padding: '8px 18px', color: '#b91c1c', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>⚠️ {deviceGpsError}</span>
+          <button type="button" onClick={() => setDeviceGpsError(null)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer' }}>×</button>
+        </div>
+      )}
 
       {/* 2. LEAFLET MAP CANVAS */}
       <div
@@ -913,7 +1162,7 @@ export function MissionLiveTrackingMap({
           </div>
         </div>
 
-        {/* Metric 4: Kondisi Rute Jalur */}
+        {/* Metric 4: Status Posisi / Sumber */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
@@ -931,11 +1180,11 @@ export function MissionLiveTrackingMap({
           </div>
           <div>
             <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-              Kondisi Operasional Rute
+              Sumber &amp; Kondisi Rute
             </span>
             <strong
               style={{
-                fontSize: '0.92rem',
+                fontSize: '0.88rem',
                 color: mission.status_kendala ? '#b91c1c' : '#15803d',
                 fontWeight: 800,
                 whiteSpace: 'nowrap',
@@ -943,7 +1192,13 @@ export function MissionLiveTrackingMap({
                 textOverflow: 'ellipsis',
               }}
             >
-              {mission.status_kendala ? `Kendala: ${mission.status_kendala}` : 'Jalur Terbuka & Lancar'}
+              {mission.status_kendala
+                ? `Kendala: ${mission.status_kendala}`
+                : trackingSource === 'device_gps'
+                ? 'GPS Ponsel Aktif'
+                : isStandby
+                ? 'Parkir di Posko BPBD'
+                : 'Jalur Terbuka & Lancar'}
             </strong>
           </div>
         </div>
