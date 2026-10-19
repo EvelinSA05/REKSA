@@ -163,19 +163,19 @@ export function MitraPenawaranSaya({
             background: "#ffffff",
             borderRadius: "14px",
             padding: "18px 20px",
-            border: countPending > 0 ? "1px solid #fde68a" : "1px solid rgba(1, 50, 32, 0.1)",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#b45309", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Menunggu Keputusan
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#fef3c7", color: "#b45309", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
               <AppIcon name="clock" size={16} />
             </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#b45309", lineHeight: 1.1 }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
             {countPending} Proposal
           </div>
           <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
@@ -189,19 +189,19 @@ export function MitraPenawaranSaya({
             background: "#ffffff",
             borderRadius: "14px",
             padding: "18px 20px",
-            border: countApproved > 0 ? "1px solid #bbf7d0" : "1px solid rgba(1, 50, 32, 0.1)",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#15803d", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Disetujui Posko
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#dcfce7", color: "#15803d", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
               <AppIcon name="check" size={16} />
             </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#15803d", lineHeight: 1.1 }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
             {countApproved} Alokasi
           </div>
           <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
@@ -215,19 +215,19 @@ export function MitraPenawaranSaya({
             background: "#ffffff",
             borderRadius: "14px",
             padding: "18px 20px",
-            border: countRejected > 0 ? "1px solid #fecaca" : "1px solid rgba(1, 50, 32, 0.1)",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: countRejected > 0 ? "#dc2626" : "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Ditolak Posko
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: countRejected > 0 ? "#fee2e2" : "rgba(1, 50, 32, 0.08)", color: countRejected > 0 ? "#dc2626" : "#013220", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
               <AppIcon name="x" size={16} />
             </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: countRejected > 0 ? "#dc2626" : "#64748b", lineHeight: 1.1 }}>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
             {countRejected} Proposal
           </div>
           <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
