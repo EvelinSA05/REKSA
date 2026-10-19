@@ -27,6 +27,8 @@ interface LeafletMapProps {
   caseKk?: string;
   caseUrgency?: string;
   cases?: any[];
+  focusedCaseId?: string;
+  focusTrigger?: number;
   onSelectCase?: (c: any) => void;
   onLocationPicked?: (info: LocationInfo) => void;
   height?: string;
@@ -206,6 +208,8 @@ export function LeafletMap({
   caseKk,
   caseUrgency,
   cases,
+  focusedCaseId,
+  focusTrigger,
   onSelectCase,
   onLocationPicked,
   height,
@@ -214,6 +218,8 @@ export function LeafletMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const citizenMarkerRef = useRef<L.Marker | null>(null);
+  const caseMarkersRef = useRef<Map<string, L.Marker>>(new Map());
+  const lastFittedCasesKeyRef = useRef<string>('');
 
   const [citizenPos, setCitizenPos] = useState<[number, number]>([initialLat, initialLng]);
   const [activeAddress, setActiveAddress] = useState<string>(() => {
@@ -619,6 +625,7 @@ export function LeafletMap({
     if (!map || !markerLayer) return;
 
     markerLayer.clearLayers();
+    caseMarkersRef.current.clear();
 
     // Posko Marker Icon (Clean elevated badge with pointer stem)
     const createPoskoIcon = (label: string, isSelected: boolean, isNearCase: boolean) => {
@@ -868,22 +875,44 @@ export function LeafletMap({
 
             bounds.push([lat, lng]);
 
+            const isFocused = Boolean(focusedCaseId && String(c.id) === String(focusedCaseId));
             const cfg = getCategoryMarkerConfig(c.item, c.urgency);
             const pillLabel = isCluster ? `${cfg.shortLabel} #${idx + 1}` : cfg.shortLabel;
 
             const casePinIcon = L.divIcon({
-              className: 'case-location-pin',
+              className: `case-location-pin ${isFocused ? 'pin-focused' : ''}`,
               html: `
-                <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: translate(-50%, -100%);">
+                <div style="
+                  position: relative; 
+                  display: flex; 
+                  flex-direction: column; 
+                  align-items: center; 
+                  cursor: pointer; 
+                  transform: translate(-50%, -100%) ${isFocused ? 'scale(1.12)' : 'scale(1)'};
+                  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+                  z-index: ${isFocused ? 2500 : (cfg.isUrgent ? 1200 : 1000)};
+                ">
+                  ${isFocused ? `
+                    <div style="
+                      position: absolute;
+                      top: -6px;
+                      width: calc(100% + 14px);
+                      height: 32px;
+                      border-radius: 20px;
+                      background: rgba(1, 50, 32, 0.18);
+                      animation: reksa-pin-pulse 1.8s infinite ease-out;
+                      pointer-events: none;
+                    "></div>
+                  ` : ''}
                   <div style="
                     background: ${cfg.gradient};
                     color: #ffffff;
-                    padding: 3px 8px 3px 6px;
+                    padding: ${isFocused ? '4px 10px 4px 8px' : '3px 8px 3px 6px'};
                     border-radius: 20px;
                     font-size: 11px;
                     font-weight: 700;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.18);
-                    border: 1.5px solid #ffffff;
+                    box-shadow: ${isFocused ? '0 0 0 2.5px #013220, 0 6px 18px rgba(0,0,0,0.38)' : '0 4px 12px rgba(0,0,0,0.28), 0 1px 3px rgba(0,0,0,0.18)'};
+                    border: ${isFocused ? '2px solid #ffffff' : '1.5px solid #ffffff'};
                     white-space: nowrap;
                     display: inline-flex;
                     align-items: center;
@@ -894,6 +923,7 @@ export function LeafletMap({
                     <span style="font-size: 12px; line-height: 1;">${cfg.icon}</span>
                     <span>${pillLabel}</span>
                     ${cfg.isUrgent ? `<span style="width: 6px; height: 6px; border-radius: 50%; background: #fef08a; border: 1px solid #ffffff; display: inline-block;"></span>` : ''}
+                    ${isFocused ? `<span style="font-size: 9px; background: #ffffff; color: #013220; padding: 1px 5px; border-radius: 10px; font-weight: 800; margin-left: 2px;">AKTIF</span>` : ''}
                   </div>
                   <div style="
                     width: 0;
@@ -920,7 +950,7 @@ export function LeafletMap({
 
             const caseMarker = L.marker([lat, lng], {
               icon: casePinIcon,
-              zIndexOffset: cfg.isUrgent ? 1200 : 1000,
+              zIndexOffset: isFocused ? 2500 : (cfg.isUrgent ? 1200 : 1000),
             });
 
             // Complete Address Hierarchy
@@ -977,19 +1007,27 @@ export function LeafletMap({
             caseMarker.bindPopup(popupHtml, {
               offset: L.point(0, -32),
               maxWidth: 290,
-              autoPan: true,
+              autoPan: false,
             });
 
             caseMarker.on('click', () => {
               caseMarker.openPopup();
               onSelectCase?.(c);
+              if (mapInstanceRef.current) {
+                mapInstanceRef.current.panTo([lat, lng], { animate: true, duration: 0.4 });
+              }
             });
 
             caseMarker.addTo(markerLayer);
+            if (c.id) {
+              caseMarkersRef.current.set(String(c.id).trim(), caseMarker);
+            }
           });
         });
 
-        if (bounds.length > 0) {
+        const casesKey = validCases.map((c) => `${c.id}:${c.lat}:${c.lng}`).join('|');
+        if (bounds.length > 0 && lastFittedCasesKeyRef.current !== casesKey) {
+          lastFittedCasesKeyRef.current = casesKey;
           try {
             map.invalidateSize();
             map.fitBounds(L.latLngBounds(bounds), {
@@ -1153,7 +1191,7 @@ export function LeafletMap({
           caseMarker.bindPopup(popupHtml, {
             offset: L.point(0, -36),
             maxWidth: 290,
-            autoPan: true,
+            autoPan: false,
           });
 
           caseMarker.on('click', () => {
@@ -1161,6 +1199,9 @@ export function LeafletMap({
           });
 
           caseMarker.addTo(markerLayer);
+          if (caseId) {
+            caseMarkersRef.current.set(String(caseId).trim(), caseMarker);
+          }
           map.setView([oLat, oLng], 15);
         }
       }
@@ -1199,7 +1240,47 @@ export function LeafletMap({
       }
     }, 200);
 
-  }, [poskos, activePosko, operational, showRoute, pickLocation, citizenPos, activeAddress, initialLat, initialLng, locationAddress, caseTitle, caseId, caseKk, caseUrgency, cases, onSelectCase, updateCitizenLocation]);
+  }, [poskos, activePosko, operational, showRoute, pickLocation, citizenPos, activeAddress, initialLat, initialLng, locationAddress, caseTitle, caseId, caseKk, caseUrgency, cases, focusedCaseId, onSelectCase, updateCitizenLocation]);
+
+  // Focus on selected case when triggered by user selection or interaction
+  const prevTriggerRef = useRef<number>(0);
+  useEffect(() => {
+    if (!focusedCaseId || !mapInstanceRef.current) return;
+
+    const isTriggered = focusTrigger !== undefined && focusTrigger > 0 && focusTrigger !== prevTriggerRef.current;
+    if (focusTrigger !== undefined && focusTrigger > 0) {
+      prevTriggerRef.current = focusTrigger;
+    }
+
+    if (isTriggered) {
+      const cleanId = String(focusedCaseId).trim();
+      const targetMarker = caseMarkersRef.current.get(cleanId);
+      const map = mapInstanceRef.current;
+
+      if (targetMarker && map) {
+        const latLng = targetMarker.getLatLng();
+        map.flyTo(latLng, 15.5, { animate: true, duration: 0.6 });
+        setTimeout(() => {
+          try {
+            targetMarker.openPopup();
+            if (!targetMarker.isPopupOpen()) {
+              const popup = targetMarker.getPopup();
+              if (popup) {
+                map.openPopup(popup, latLng);
+              }
+            }
+          } catch (e) {
+            console.log("popup open error", e);
+          }
+        }, 650);
+      } else if (Array.isArray(cases) && map) {
+        const foundCase = cases.find((c) => String(c?.id).trim() === cleanId);
+        if (foundCase && Number.isFinite(Number(foundCase.lat)) && Number.isFinite(Number(foundCase.lng))) {
+          map.flyTo([Number(foundCase.lat), Number(foundCase.lng)], 15.5, { animate: true, duration: 0.6 });
+        }
+      }
+    }
+  }, [focusedCaseId, focusTrigger, cases]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>

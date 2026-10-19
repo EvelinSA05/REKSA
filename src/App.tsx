@@ -268,6 +268,8 @@ export function MapView({
   caseKk,
   caseUrgency,
   cases,
+  focusedCaseId,
+  focusTrigger,
   onSelectCase,
   onLocationPicked,
   height,
@@ -284,6 +286,8 @@ export function MapView({
   caseKk?: string;
   caseUrgency?: string;
   cases?: any[];
+  focusedCaseId?: string;
+  focusTrigger?: number;
   onSelectCase?: (c: any) => void;
   onLocationPicked?: (info: any) => void;
   height?: string;
@@ -305,6 +309,8 @@ export function MapView({
         caseKk={caseKk}
         caseUrgency={caseUrgency}
         cases={cases}
+        focusedCaseId={focusedCaseId}
+        focusTrigger={focusTrigger}
         onSelectCase={onSelectCase}
         onLocationPicked={onLocationPicked}
         height={height}
@@ -3319,8 +3325,21 @@ function MapPage({
   const [priority, setPriority] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
+  const [focusTrigger, setFocusTrigger] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+
+  const handleSelectAndFocusCase = (c: CaseRecord, scrollToMap: boolean = false) => {
+    setSelectedCase(c);
+    onSelectCase?.(c);
+    setFocusTrigger(Date.now());
+    if (scrollToMap) {
+      const mapSection = document.getElementById("reksa-gis-map-container");
+      if (mapSection) {
+        mapSection.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  };
 
   // Auto-select first urgent or first case
   useEffect(() => {
@@ -3548,11 +3567,13 @@ function MapPage({
       </div>
 
       {/* 3. INTERACTIVE GIS MAP */}
-      <div style={{ marginBottom: "24px" }}>
+      <div id="reksa-gis-map-container" style={{ marginBottom: "24px" }}>
         <div style={{ position: "relative", borderRadius: "18px", overflow: "hidden", border: "1.5px solid rgba(1, 50, 32, 0.14)", boxShadow: "0 8px 30px rgba(1, 50, 32, 0.06)" }}>
           <MapView 
             operational 
             cases={filteredCases} 
+            focusedCaseId={selectedCase?.id}
+            focusTrigger={focusTrigger}
             height="440px"
             onSelectCase={(c) => {
               setSelectedCase(c);
@@ -3576,12 +3597,21 @@ function MapPage({
             gap: "16px",
             flexWrap: "wrap",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div 
+              style={{ display: "flex", alignItems: "center", gap: "14px", cursor: "pointer" }}
+              onClick={() => handleSelectAndFocusCase(selectedCase, true)}
+              title="Klik untuk memfokuskan peta ke titik kebutuhan ini"
+            >
               <div className="floating-pin-icon" style={{ flexShrink: 0 }}><Icon name="pin" /></div>
               <div>
-                <small style={{ color: "#80866e", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                  TITIK KEBUTUHAN TERPILIH · URGENSI {selectedCase.urgency || "Sedang"}
-                </small>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <small style={{ color: "#80866e", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    TITIK KEBUTUHAN TERPILIH · URGENSI {selectedCase.urgency || "Sedang"}
+                  </small>
+                  <span style={{ fontSize: "10px", color: "#013220", background: "rgba(1, 50, 32, 0.08)", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                    📍 Terfokus di Peta
+                  </span>
+                </div>
                 <strong style={{ display: "block", fontSize: "15px", color: "#013220", margin: "2px 0" }}>
                   {selectedCase.item} · {selectedCase.id} ({selectedCase.qty || selectedCase.kk || "1 KK"})
                 </strong>
@@ -3590,18 +3620,40 @@ function MapPage({
                 </span>
               </div>
             </div>
-            <Button 
-              onClick={() => {
-                if (selectedCase?.id) {
-                  onSelectCase?.(selectedCase);
-                }
-                open();
-              }} 
-              className="btn-map-inspect"
-              style={{ whiteSpace: "nowrap" }}
-            >
-              {role === "responder" ? "Buka di Bursa / Misi" : "Buka Kasus Ini"} <Icon name="next" />
-            </Button>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => handleSelectAndFocusCase(selectedCase, true)}
+                style={{
+                  background: "rgba(1, 50, 32, 0.06)",
+                  color: "#013220",
+                  border: "1px solid rgba(1, 50, 32, 0.18)",
+                  borderRadius: "10px",
+                  padding: "8px 14px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+                title="Fokuskan peta ke titik koordinat kebutuhan ini"
+              >
+                <Icon name="pin" /> Pusatkan Peta
+              </button>
+              <Button 
+                onClick={() => {
+                  if (selectedCase?.id) {
+                    onSelectCase?.(selectedCase);
+                  }
+                  open();
+                }} 
+                className="btn-map-inspect"
+                style={{ whiteSpace: "nowrap" }}
+              >
+                {role === "responder" ? "Buka di Bursa / Misi" : "Buka Kasus Ini"} <Icon name="next" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -3648,12 +3700,11 @@ function MapPage({
                     <tr 
                       key={c.id} 
                       onClick={() => {
-                        setSelectedCase(c);
-                        onSelectCase?.(c);
+                        handleSelectAndFocusCase(c, true);
                       }}
                       style={{ 
                         borderBottom: "1px solid rgba(1, 50, 32, 0.06)", 
-                        background: isSelected ? "rgba(1, 50, 32, 0.04)" : "transparent",
+                        background: isSelected ? "rgba(1, 50, 32, 0.05)" : "transparent",
                         cursor: "pointer",
                         transition: "background 0.15s ease"
                       }}
@@ -3707,8 +3758,7 @@ function MapPage({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedCase(c);
-                              onSelectCase?.(c);
+                              handleSelectAndFocusCase(c, true);
                             }}
                             style={{
                               background: isSelected ? "#013220" : "#ffffff",
@@ -3723,6 +3773,7 @@ function MapPage({
                               alignItems: "center",
                               gap: "4px"
                             }}
+                            title="Fokuskan peta ke lokasi titik ini"
                           >
                             <Icon name="pin" /> {isSelected ? "Terpilih" : "Fokus"}
                           </button>
