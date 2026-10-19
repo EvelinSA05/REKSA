@@ -82,6 +82,12 @@ export function MissionLiveTrackingMap({
   const [tileMode, setTileMode] = useState<'streets' | 'satellite'>('streets');
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
+  // OSRM Real Road Geometry States (Jalur navigasi jalanan nyata seperti Gojek/Google Maps)
+  const [osrmRoutePoints, setOsrmRoutePoints] = useState<LatLngPoint[]>([]);
+  const [osrmDistanceKm, setOsrmDistanceKm] = useState<number | null>(null);
+  const [osrmDurationMins, setOsrmDurationMins] = useState<number | null>(null);
+  const hasAutoFitBoundsRef = useRef<boolean>(false);
+
   // 1. Resolve Origin (Posko) and Destination (Citizen / Case) Coordinates
   const { origin, destination, poskoLabel, destLabel } = useMemo(() => {
     // Default Posko Sidoarjo / Surabaya if not set
@@ -126,8 +132,46 @@ export function MissionLiveTrackingMap({
     };
   }, [mission]);
 
+  // Fetch real road turn-by-turn routing from OSRM (mengikuti kontur dan kelokan jalan OpenStreetMap asli)
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchOsrmRoute = async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isCancelled && data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 1) {
+          const coords: LatLngPoint[] = data.routes[0].geometry.coordinates.map((c: [number, number]) => ({
+            lat: c[1],
+            lng: c[0],
+          }));
+          setOsrmRoutePoints(coords);
+          if (data.routes[0].distance) {
+            setOsrmDistanceKm(Number((data.routes[0].distance / 1000).toFixed(1)));
+          }
+          if (data.routes[0].duration) {
+            setOsrmDurationMins(Math.max(1, Math.round(data.routes[0].duration / 60)));
+          }
+        }
+      } catch (err) {
+        console.warn('Gagal memuat rute jalanan OSRM:', err);
+      }
+    };
+
+    fetchOsrmRoute();
+    return () => {
+      isCancelled = true;
+    };
+  }, [origin.lat, origin.lng, destination.lat, destination.lng]);
+
   // 2. Generate Realistic Road Waypoints between Origin and Destination
+  // Menggunakan rute navigasi jalanan nyata yang meliuk-liuk mengikuti jalan raya, gang, dan simpang
   const routeWaypoints: LatLngPoint[] = useMemo(() => {
+    if (osrmRoutePoints && osrmRoutePoints.length >= 2) {
+      return osrmRoutePoints;
+    }
+
     const oLat = origin.lat;
     const oLng = origin.lng;
     const dLat = destination.lat;
@@ -136,19 +180,19 @@ export function MissionLiveTrackingMap({
     const latDiff = dLat - oLat;
     const lngDiff = dLng - oLng;
 
-    // Build 9 realistic road turns & corridors
+    // Fallback interpolasi sementara saat jaringan OSRM sedang dimuat
     return [
-      { lat: oLat, lng: oLng }, // Point 0: Posko Loading Dock
-      { lat: oLat + latDiff * 0.08, lng: oLng + lngDiff * 0.03 }, // Point 1: Posko Exit Gate
-      { lat: oLat + latDiff * 0.22, lng: oLng + lngDiff * 0.12 }, // Point 2: Simpang Jalan Raya Utama
-      { lat: oLat + latDiff * 0.38, lng: oLng + lngDiff * 0.28 }, // Point 3: Jalur Koridor Provinsi
-      { lat: oLat + latDiff * 0.54, lng: oLng + lngDiff * 0.52 }, // Point 4: Jembatan / Flyover Penghubung
-      { lat: oLat + latDiff * 0.68, lng: oLng + lngDiff * 0.70 }, // Point 5: Simpang Akses Lingkungan
-      { lat: oLat + latDiff * 0.82, lng: oLng + lngDiff * 0.86 }, // Point 6: Jalan Masuk Pemukiman
-      { lat: oLat + latDiff * 0.94, lng: oLng + lngDiff * 0.96 }, // Point 7: Gerbang RT / RW Lokasi Warga
-      { lat: dLat, lng: dLng }, // Point 8: Titik Rumah Penerima Manfaat
+      { lat: oLat, lng: oLng },
+      { lat: oLat + latDiff * 0.08, lng: oLng + lngDiff * 0.03 },
+      { lat: oLat + latDiff * 0.22, lng: oLng + lngDiff * 0.12 },
+      { lat: oLat + latDiff * 0.38, lng: oLng + lngDiff * 0.28 },
+      { lat: oLat + latDiff * 0.54, lng: oLng + lngDiff * 0.52 },
+      { lat: oLat + latDiff * 0.68, lng: oLng + lngDiff * 0.70 },
+      { lat: oLat + latDiff * 0.82, lng: oLng + lngDiff * 0.86 },
+      { lat: oLat + latDiff * 0.94, lng: oLng + lngDiff * 0.96 },
+      { lat: dLat, lng: dLng },
     ];
-  }, [origin, destination]);
+  }, [origin, destination, osrmRoutePoints]);
 
   // Calculate cumulative distances along route
   const { totalDistanceKm, cumulativeDistances } = useMemo(() => {
@@ -159,8 +203,9 @@ export function MissionLiveTrackingMap({
       total += d;
       cum.push(total);
     }
-    return { totalDistanceKm: Math.max(total, 0.5), cumulativeDistances: cum };
-  }, [routeWaypoints]);
+    const finalDist = osrmDistanceKm || Math.max(total, 0.5);
+    return { totalDistanceKm: finalDist, cumulativeDistances: cum };
+  }, [routeWaypoints, osrmDistanceKm]);
 
   // Interpolate lat/lng & bearing along route given a 0.0 - 1.0 progress ratio
   const getInterpolatedPosition = useCallback(
@@ -381,12 +426,15 @@ export function MissionLiveTrackingMap({
   // ETA calculation
   const etaMinutes = useMemo(() => {
     if (isArrived || isConfirming || isFinished) return 'Tiba di Lokasi';
-    if (isStandby) return 'Belum Berangkat (Siaga di Posko)';
+    if (isStandby) {
+      if (osrmDurationMins) return `~${osrmDurationMins} Menit (Siaga di Posko)`;
+      return 'Belum Berangkat (Siaga di Posko)';
+    }
     if (isReady) return '~15 Menit (Siaga Gerbang)';
     const spd = currentSpeed > 0 ? currentSpeed : 40;
     const mins = Math.max(1, Math.round((remainingDistanceKm / spd) * 60));
     return `${mins} Menit`;
-  }, [isArrived, isConfirming, isFinished, isStandby, isReady, currentSpeed, remainingDistanceKm]);
+  }, [isArrived, isConfirming, isFinished, isStandby, isReady, currentSpeed, remainingDistanceKm, osrmDurationMins]);
 
   // Initialize and update Leaflet Map
   useEffect(() => {
@@ -588,36 +636,47 @@ export function MissionLiveTrackingMap({
       }
     }
 
-    // Traveled line: hanya digambar jika minimal 2 titik telah dilalui
+    // Traveled line: hanya digambar jika minimal 2 titik telah dilalui (garis hijau tua solid)
     if (traveledPoints.length >= 2) {
       if (!layersRef.current.traveledPolyline) {
         layersRef.current.traveledPolyline = L.polyline(traveledPoints, {
           color: '#013220',
+          weight: 6,
+          opacity: 0.95,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map);
+      } else {
+        layersRef.current.traveledPolyline.setLatLngs(traveledPoints);
+        layersRef.current.traveledPolyline.setStyle({
+          color: '#013220',
+          weight: 6,
+          opacity: 0.95,
+          dashArray: '',
+        });
+      }
+    } else if (layersRef.current.traveledPolyline) {
+      layersRef.current.traveledPolyline.setLatLngs([]);
+    }
+
+    // Remaining / planned line: garis hijau solid tegas (tanpa putus-putus, meliuk-liuk sesuai jalanan asli)
+    if (remainingPoints.length >= 2) {
+      if (!layersRef.current.remainingPolyline) {
+        layersRef.current.remainingPolyline = L.polyline(remainingPoints, {
+          color: '#16a34a',
           weight: 6,
           opacity: 0.92,
           lineCap: 'round',
           lineJoin: 'round',
         }).addTo(map);
       } else {
-        layersRef.current.traveledPolyline.setLatLngs(traveledPoints);
-      }
-    } else if (layersRef.current.traveledPolyline) {
-      layersRef.current.traveledPolyline.setLatLngs([]);
-    }
-
-    // Remaining / planned line: digambar jika ada minimal 2 titik
-    if (remainingPoints.length >= 2) {
-      if (!layersRef.current.remainingPolyline) {
-        layersRef.current.remainingPolyline = L.polyline(remainingPoints, {
-          color: '#16a34a',
-          weight: 4,
-          dashArray: '8, 8',
-          opacity: 0.8,
-          lineCap: 'round',
-          lineJoin: 'round',
-        }).addTo(map);
-      } else {
         layersRef.current.remainingPolyline.setLatLngs(remainingPoints);
+        layersRef.current.remainingPolyline.setStyle({
+          color: '#16a34a',
+          weight: 6,
+          opacity: 0.92,
+          dashArray: '',
+        });
       }
     } else if (layersRef.current.remainingPolyline) {
       layersRef.current.remainingPolyline.setLatLngs([]);
@@ -814,6 +873,15 @@ export function MissionLiveTrackingMap({
     getInterpolatedPosition,
   ]);
 
+  // Auto-fit camera ke seluruh jalur rute saat rute jalanan OSRM berhasil didapat
+  useEffect(() => {
+    if (mapInstanceRef.current && osrmRoutePoints.length >= 2 && !hasAutoFitBoundsRef.current) {
+      hasAutoFitBoundsRef.current = true;
+      const bounds = L.latLngBounds(osrmRoutePoints.map((p) => [p.lat, p.lng]));
+      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.6 });
+    }
+  }, [osrmRoutePoints]);
+
   // Center on Fleet button
   const handleCenterFleet = useCallback(() => {
     if (mapInstanceRef.current) {
@@ -830,14 +898,19 @@ export function MissionLiveTrackingMap({
   // Fit bounds to entire mission route
   const handleFitRoute = useCallback(() => {
     if (mapInstanceRef.current) {
-      const bounds = L.latLngBounds([
-        [origin.lat, origin.lng],
-        [destination.lat, destination.lng],
-        [fleetPos.lat, fleetPos.lng],
-      ]);
-      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.8 });
+      if (routeWaypoints && routeWaypoints.length >= 2) {
+        const bounds = L.latLngBounds(routeWaypoints.map((p) => [p.lat, p.lng]));
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.8 });
+      } else {
+        const bounds = L.latLngBounds([
+          [origin.lat, origin.lng],
+          [destination.lat, destination.lng],
+          [fleetPos.lat, fleetPos.lng],
+        ]);
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.8 });
+      }
     }
-  }, [origin, destination, fleetPos]);
+  }, [origin, destination, fleetPos, routeWaypoints]);
 
   return (
     <div
