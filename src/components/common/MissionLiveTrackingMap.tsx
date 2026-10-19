@@ -542,53 +542,77 @@ export function MissionLiveTrackingMap({
     const remainingPoints: [number, number][] = [];
 
     if (trackingSource === 'device_gps') {
-      // Jalur yang telah dilalui: Posko Asal -> Jejak GPS perangkat riil -> Titik kendaraan saat ini
-      traveledPoints.push([origin.lat, origin.lng]);
-      for (const pt of deviceBreadcrumbs) {
-        traveledPoints.push([pt.lat, pt.lng]);
+      // Hanya gambar jejak hijau solid jika perangkat benar-benar sudah bergerak (ada riwayat > 1 titik)
+      if (deviceBreadcrumbs.length >= 2) {
+        for (const pt of deviceBreadcrumbs) {
+          traveledPoints.push([pt.lat, pt.lng]);
+        }
       }
-      traveledPoints.push([fleetPos.lat, fleetPos.lng]);
-
-      // Jalur tersisa: Posisi kendaraan saat ini -> Titik Rumah Penerima Manfaat
-      remainingPoints.push([fleetPos.lat, fleetPos.lng]);
-      remainingPoints.push([destination.lat, destination.lng]);
+      // Jalur rencana resmi misi tetap mengikuti lintasan jalan dari Posko ke Titik Penerima
+      for (const wp of routeWaypoints) {
+        remainingPoints.push([wp.lat, wp.lng]);
+      }
     } else {
-      const { segmentIndex } = getInterpolatedPosition(effectiveProgress);
+      if (isStandby) {
+        // Belum berangkat: Belum ada jalur yang telah dilalui (traveled = [])
+        // Seluruh rute adalah rencana perjalanan dari Posko ke Tujuan mengikuti jalan raya
+        for (const wp of routeWaypoints) {
+          remainingPoints.push([wp.lat, wp.lng]);
+        }
+      } else if (isArrived || isConfirming || isFinished) {
+        // Tiba / Selesai: Seluruh rute telah dilalui tuntas
+        for (const wp of routeWaypoints) {
+          traveledPoints.push([wp.lat, wp.lng]);
+        }
+      } else {
+        // Sedang dalam perjalanan (In transit):
+        const { segmentIndex } = getInterpolatedPosition(effectiveProgress);
 
-      for (let i = 0; i <= segmentIndex; i++) {
-        traveledPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
-      }
-      traveledPoints.push([fleetPos.lat, fleetPos.lng]);
+        for (let i = 0; i <= segmentIndex; i++) {
+          traveledPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
+        }
+        traveledPoints.push([fleetPos.lat, fleetPos.lng]);
 
-      remainingPoints.push([fleetPos.lat, fleetPos.lng]);
-      for (let i = segmentIndex + 1; i < routeWaypoints.length; i++) {
-        remainingPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
+        remainingPoints.push([fleetPos.lat, fleetPos.lng]);
+        for (let i = segmentIndex + 1; i < routeWaypoints.length; i++) {
+          remainingPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
+        }
       }
     }
 
-    if (!layersRef.current.traveledPolyline) {
-      layersRef.current.traveledPolyline = L.polyline(traveledPoints, {
-        color: '#013220',
-        weight: 6,
-        opacity: 0.92,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }).addTo(map);
-    } else {
-      layersRef.current.traveledPolyline.setLatLngs(traveledPoints);
+    // Traveled line: hanya digambar jika minimal 2 titik telah dilalui
+    if (traveledPoints.length >= 2) {
+      if (!layersRef.current.traveledPolyline) {
+        layersRef.current.traveledPolyline = L.polyline(traveledPoints, {
+          color: '#013220',
+          weight: 6,
+          opacity: 0.92,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map);
+      } else {
+        layersRef.current.traveledPolyline.setLatLngs(traveledPoints);
+      }
+    } else if (layersRef.current.traveledPolyline) {
+      layersRef.current.traveledPolyline.setLatLngs([]);
     }
 
-    if (!layersRef.current.remainingPolyline) {
-      layersRef.current.remainingPolyline = L.polyline(remainingPoints, {
-        color: '#16a34a',
-        weight: 4,
-        dashArray: '8, 8',
-        opacity: 0.8,
-        lineCap: 'round',
-        lineJoin: 'round',
-      }).addTo(map);
-    } else {
-      layersRef.current.remainingPolyline.setLatLngs(remainingPoints);
+    // Remaining / planned line: digambar jika ada minimal 2 titik
+    if (remainingPoints.length >= 2) {
+      if (!layersRef.current.remainingPolyline) {
+        layersRef.current.remainingPolyline = L.polyline(remainingPoints, {
+          color: '#16a34a',
+          weight: 4,
+          dashArray: '8, 8',
+          opacity: 0.8,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map);
+      } else {
+        layersRef.current.remainingPolyline.setLatLngs(remainingPoints);
+      }
+    } else if (layersRef.current.remainingPolyline) {
+      layersRef.current.remainingPolyline.setLatLngs([]);
     }
 
     // 4. Moving Fleet Marker with Radar Pulsing Ring & Heading Orientation
