@@ -142,10 +142,27 @@ export function MissionLiveTrackingMap({
         if (!res.ok) return;
         const data = await res.json();
         if (!isCancelled && data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates?.length > 1) {
-          const coords: LatLngPoint[] = data.routes[0].geometry.coordinates.map((c: [number, number]) => ({
+          let coords: LatLngPoint[] = data.routes[0].geometry.coordinates.map((c: [number, number]) => ({
             lat: c[1],
             lng: c[0],
           }));
+
+          // 1. Pastikan titik awal menyambung tepat di titik POSKO ASAL
+          const firstPoint = coords[0];
+          if (!firstPoint || calculateHaversineDistance(origin, firstPoint) > 0.001) {
+            coords = [{ lat: origin.lat, lng: origin.lng }, ...coords];
+          } else {
+            coords[0] = { lat: origin.lat, lng: origin.lng };
+          }
+
+          // 2. Pastikan titik akhir menyambung tepat ke PIN TITIK PENERIMA (menghubungkan jalan ke rumah warga)
+          const lastPoint = coords[coords.length - 1];
+          if (!lastPoint || calculateHaversineDistance(lastPoint, destination) > 0.001) {
+            coords = [...coords, { lat: destination.lat, lng: destination.lng }];
+          } else {
+            coords[coords.length - 1] = { lat: destination.lat, lng: destination.lng };
+          }
+
           setOsrmRoutePoints(coords);
           if (data.routes[0].distance) {
             setOsrmDistanceKm(Number((data.routes[0].distance / 1000).toFixed(1)));
