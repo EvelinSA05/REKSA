@@ -67,6 +67,8 @@ export function MissionLiveTrackingMap({
   // 'sim' = Interactive Simulated Driving Demo
   const [trackingSource, setTrackingSource] = useState<'stage' | 'device_gps' | 'sim'>('stage');
   const [devicePos, setDevicePos] = useState<LatLngPoint | null>(null);
+  const [deviceBreadcrumbs, setDeviceBreadcrumbs] = useState<LatLngPoint[]>([]);
+  const [deviceBearing, setDeviceBearing] = useState<number>(0);
   const [isLocatingDevice, setIsLocatingDevice] = useState<boolean>(false);
   const [deviceGpsError, setDeviceGpsError] = useState<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -291,6 +293,7 @@ export function MissionLiveTrackingMap({
           lng: Number(pos.coords.longitude.toFixed(6)),
         };
         setDevicePos(p);
+        setDeviceBreadcrumbs([p]);
         setGpsAccuracy(Math.round(pos.coords.accuracy || 3));
         setTrackingSource('device_gps');
         if (pos.coords.speed !== null && pos.coords.speed > 0) {
@@ -316,7 +319,23 @@ export function MissionLiveTrackingMap({
           lat: Number(pos.coords.latitude.toFixed(6)),
           lng: Number(pos.coords.longitude.toFixed(6)),
         };
-        setDevicePos(p);
+        setDevicePos((prevPos) => {
+          if (prevPos) {
+            const brng = calculateBearing(prevPos, p);
+            if (brng > 0) setDeviceBearing(brng);
+          }
+          return p;
+        });
+        setDeviceBreadcrumbs((prev) => {
+          if (prev.length === 0) return [p];
+          const last = prev[prev.length - 1];
+          const dist = calculateHaversineDistance(last, p);
+          // Only append if moved > 5 meters
+          if (dist > 0.005) {
+            return [...prev, p];
+          }
+          return prev;
+        });
         setGpsAccuracy(Math.round(pos.coords.accuracy || 3));
         if (pos.coords.speed !== null && pos.coords.speed > 0) {
           setCurrentSpeed(Math.round(pos.coords.speed * 3.6));
@@ -345,17 +364,20 @@ export function MissionLiveTrackingMap({
   // Current interpolated fleet position & bearing
   const { point: fleetPos, bearing: fleetBearing } = useMemo(() => {
     if (trackingSource === 'device_gps' && devicePos) {
-      return { point: devicePos, bearing: 0, segmentIndex: 0 };
+      return { point: devicePos, bearing: deviceBearing, segmentIndex: 0 };
     }
     return getInterpolatedPosition(effectiveProgress);
-  }, [trackingSource, devicePos, getInterpolatedPosition, effectiveProgress]);
+  }, [trackingSource, devicePos, deviceBearing, getInterpolatedPosition, effectiveProgress]);
 
   // Distance metrics
   const remainingDistanceKm = useMemo(() => {
     if (isArrived || isConfirming || isFinished) return 0;
+    if (trackingSource === 'device_gps' && devicePos) {
+      return Number(calculateHaversineDistance(devicePos, destination).toFixed(1));
+    }
     if (isStandby) return Number(totalDistanceKm.toFixed(1));
     return Math.max(0, Number((totalDistanceKm * (1 - effectiveProgress)).toFixed(1)));
-  }, [totalDistanceKm, effectiveProgress, isArrived, isConfirming, isFinished, isStandby]);
+  }, [totalDistanceKm, effectiveProgress, isArrived, isConfirming, isFinished, isStandby, trackingSource, devicePos, destination]);
 
   // ETA calculation
   const etaMinutes = useMemo(() => {
@@ -519,16 +541,29 @@ export function MissionLiveTrackingMap({
     const traveledPoints: [number, number][] = [];
     const remainingPoints: [number, number][] = [];
 
-    const { segmentIndex } = getInterpolatedPosition(effectiveProgress);
+    if (trackingSource === 'device_gps') {
+      // Jalur yang telah dilalui: Posko Asal -> Jejak GPS perangkat riil -> Titik kendaraan saat ini
+      traveledPoints.push([origin.lat, origin.lng]);
+      for (const pt of deviceBreadcrumbs) {
+        traveledPoints.push([pt.lat, pt.lng]);
+      }
+      traveledPoints.push([fleetPos.lat, fleetPos.lng]);
 
-    for (let i = 0; i <= segmentIndex; i++) {
-      traveledPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
-    }
-    traveledPoints.push([fleetPos.lat, fleetPos.lng]);
+      // Jalur tersisa: Posisi kendaraan saat ini -> Titik Rumah Penerima Manfaat
+      remainingPoints.push([fleetPos.lat, fleetPos.lng]);
+      remainingPoints.push([destination.lat, destination.lng]);
+    } else {
+      const { segmentIndex } = getInterpolatedPosition(effectiveProgress);
 
-    remainingPoints.push([fleetPos.lat, fleetPos.lng]);
-    for (let i = segmentIndex + 1; i < routeWaypoints.length; i++) {
-      remainingPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
+      for (let i = 0; i <= segmentIndex; i++) {
+        traveledPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
+      }
+      traveledPoints.push([fleetPos.lat, fleetPos.lng]);
+
+      remainingPoints.push([fleetPos.lat, fleetPos.lng]);
+      for (let i = segmentIndex + 1; i < routeWaypoints.length; i++) {
+        remainingPoints.push([routeWaypoints[i].lat, routeWaypoints[i].lng]);
+      }
     }
 
     if (!layersRef.current.traveledPolyline) {
