@@ -894,8 +894,15 @@ export function MissionLiveTrackingMap({
   useEffect(() => {
     if (mapInstanceRef.current && osrmRoutePoints.length >= 2 && !hasAutoFitBoundsRef.current) {
       hasAutoFitBoundsRef.current = true;
+      mapInstanceRef.current.invalidateSize();
       const bounds = L.latLngBounds(osrmRoutePoints.map((p) => [p.lat, p.lng]));
-      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.6 });
+      mapInstanceRef.current.fitBounds(bounds, {
+        paddingTopLeft: [75, 75],
+        paddingBottomRight: [75, 75],
+        maxZoom: 17,
+        animate: true,
+        duration: 0.6,
+      });
     }
   }, [osrmRoutePoints]);
 
@@ -912,22 +919,36 @@ export function MissionLiveTrackingMap({
     }
   }, [fleetPos]);
 
-  // Fit bounds to entire mission route
+  // Fit bounds to entire mission route from Origin Posko to Destination
   const handleFitRoute = useCallback(() => {
-    if (mapInstanceRef.current) {
-      if (routeWaypoints && routeWaypoints.length >= 2) {
-        const bounds = L.latLngBounds(routeWaypoints.map((p) => [p.lat, p.lng]));
-        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.8 });
-      } else {
-        const bounds = L.latLngBounds([
-          [origin.lat, origin.lng],
-          [destination.lat, destination.lng],
-          [fleetPos.lat, fleetPos.lng],
-        ]);
-        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: true, duration: 0.8 });
+    if (!mapInstanceRef.current) return;
+
+    // Pastikan ukuran viewport akurat
+    mapInstanceRef.current.invalidateSize();
+
+    // Kumpulkan seluruh titik rute: Posko Asal, Titik Penerima, dan semua kelokan jalan
+    const allRoutePoints: [number, number][] = [
+      [origin.lat, origin.lng],
+      [destination.lat, destination.lng],
+    ];
+
+    if (routeWaypoints && routeWaypoints.length >= 2) {
+      for (const pt of routeWaypoints) {
+        allRoutePoints.push([pt.lat, pt.lng]);
       }
     }
-  }, [origin, destination, fleetPos, routeWaypoints]);
+
+    const bounds = L.latLngBounds(allRoutePoints);
+
+    // Zoom dan pusatkan kamera sehingga seluruh rute Posko ke Penerima terlihat penuh
+    mapInstanceRef.current.fitBounds(bounds, {
+      paddingTopLeft: [75, 75],
+      paddingBottomRight: [75, 75],
+      maxZoom: 17,
+      animate: true,
+      duration: 0.8,
+    });
+  }, [origin, destination, routeWaypoints]);
 
   return (
     <div
