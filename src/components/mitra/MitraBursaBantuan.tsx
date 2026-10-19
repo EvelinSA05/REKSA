@@ -618,258 +618,486 @@ export function MitraBursaBantuan({
       )}
 
       {/* 6. OFFER SUBMISSION MODAL */}
-      {modalBursa && (
-        <div className="modal-backdrop">
-          <div
-            className="modal"
-            style={{
-              width: "min(560px, 95%)",
-              textAlign: "left",
-              borderRadius: "18px",
-              padding: "26px",
-              background: "#ffffff",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-            }}
-          >
+      {modalBursa && (() => {
+        const parsedTarget = parseVolume(modalBursa.target_volume);
+        const parsedFulfilled = parseVolume(modalBursa.volume_terpenuhi || "0");
+        const remainingNum = Math.max(0, parsedTarget.num - parsedFulfilled.num) || parsedTarget.num || 100;
+        const halfNum = Math.ceil(remainingNum / 2);
+        const unit = modalBursa.satuan || parsedTarget.unit || "Unit";
+        const isKritis = modalBursa.urgensi?.toLowerCase().includes("kritis");
+        const isTinggi = modalBursa.urgensi?.toLowerCase().includes("tinggi") || !modalBursa.urgensi;
+
+        return (
+          <div className="modal-backdrop" onClick={() => setModalBursa(null)}>
             <div
+              className="modal"
+              onClick={(e) => e.stopPropagation()}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                marginBottom: "16px",
-                borderBottom: "1px solid #F3F4F6",
-                paddingBottom: "14px",
+                width: "min(580px, 95%)",
+                textAlign: "left",
+                borderRadius: "20px",
+                padding: "28px 32px",
+                background: "#ffffff",
+                boxShadow: "0 24px 60px rgba(0, 0, 0, 0.28)",
+                maxHeight: "92vh",
+                overflowY: "auto",
+                border: "1px solid rgba(1, 50, 32, 0.12)",
+                position: "relative",
               }}
             >
-              <div>
+              {/* TOMBOL TUTUP POJOK KANAN ATAS */}
+              <button
+                type="button"
+                onClick={() => setModalBursa(null)}
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  color: "#64748b",
+                  width: "36px",
+                  height: "36px",
+                  display: "grid",
+                  placeItems: "center",
+                  transition: "all 0.15s ease",
+                  zIndex: 10,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#e2e8f0";
+                  e.currentTarget.style.color = "#0f172a";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#64748b";
+                }}
+                title="Tutup dialog"
+              >
+                <AppIcon name="x" size={18} />
+              </button>
+
+              {/* MODAL HEADER */}
+              <div
+                style={{
+                  marginBottom: "16px",
+                  borderBottom: "1px solid #f1f5f9",
+                  paddingBottom: "14px",
+                  paddingRight: "46px",
+                }}
+              >
                 <span
                   style={{
-                    fontSize: "0.75rem",
+                    fontSize: "0.74rem",
                     fontWeight: 700,
-                    color: "#013220",
-                    letterSpacing: "0.5px",
-                    display: "inline-block",
+                    color: "#80866e",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    display: "block",
                     marginBottom: "4px",
                   }}
                 >
                   FORMULIR KOMITMEN MITRA BANTUAN
                 </span>
-                <h2 style={{ fontSize: "1.25rem", color: "#013220", margin: 0, fontWeight: 800 }}>
-                  {modalBursa.item_bantuan}
+                <h2 style={{ fontSize: "1.35rem", color: "#013220", margin: 0, fontWeight: 800 }}>
+                  Ajukan Komitmen Penyaluran
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setModalBursa(null)}
+
+              {/* CONTEXT TARGET CARD */}
+              <div
                 style={{
-                  background: "#F3F4F6",
-                  border: "none",
-                  borderRadius: "50%",
-                  cursor: "pointer",
-                  color: "#4B5563",
-                  width: "32px",
-                  height: "32px",
-                  display: "grid",
-                  placeItems: "center",
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "14px",
+                  padding: "16px 20px",
+                  marginBottom: "20px",
                 }}
               >
-                <AppIcon name="x" size={16} />
-              </button>
-            </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong
+                      style={{
+                        fontSize: "1.06rem",
+                        color: "#013220",
+                        fontWeight: 800,
+                        lineHeight: 1.35,
+                        display: "block",
+                      }}
+                    >
+                      {modalBursa.item_bantuan}
+                    </strong>
+                  </div>
 
-            <div
-              style={{
-                background: "#F0FDF4",
-                padding: "12px 14px",
-                borderRadius: "10px",
-                border: "1px solid #BBF7D0",
-                marginBottom: "18px",
-                fontSize: "0.86rem",
-                color: "#166534",
-              }}
-            >
-              <strong>Posko Tujuan:</strong> {modalBursa.posko?.nama_posko || "Posko BPBD Wilayah"}<br />
-              <strong>Target Kebutuhan:</strong> {modalBursa.target_volume} (Tersisa: {parseVolume(modalBursa.target_volume).num - parseVolume(modalBursa.volume_terpenuhi || "0").num} {parseVolume(modalBursa.target_volume).unit}).
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#1F2937", marginBottom: "4px" }}>
-                    Volume yang Ditawarkan:
-                  </label>
-                  <input
-                    type="number"
-                    value={offeredAmount}
-                    onChange={(e) => setOfferedAmount(e.target.value)}
-                    placeholder="Contoh: 300"
-                    className="posko-search-input"
-                    style={{ width: "100%", borderRadius: "8px" }}
-                  />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      padding: "4px 12px",
+                      borderRadius: "9999px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      background: isKritis ? "#fef2f2" : isTinggi ? "#fff7ed" : "#f0fdf4",
+                      color: isKritis ? "#dc2626" : isTinggi ? "#c2410c" : "#15803d",
+                      border: `1px solid ${isKritis ? "#fecaca" : isTinggi ? "#fed7aa" : "#bbf7d0"}`,
+                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "7px",
+                        height: "7px",
+                        borderRadius: "50%",
+                        background: isKritis ? "#dc2626" : isTinggi ? "#ea580c" : "#16a34a",
+                        display: "inline-block",
+                      }}
+                    />
+                    Prioritas {modalBursa.urgensi || "Tinggi"}
+                  </span>
                 </div>
 
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "10px",
+                    fontSize: "0.82rem",
+                    color: "#166534",
+                    marginTop: "8px",
+                    paddingTop: "10px",
+                    borderTop: "1px dashed #bbf7d0",
+                  }}
+                >
+                  <div>
+                    <span style={{ color: "#15803d", display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                      Target Kebutuhan Posko:
+                    </span>
+                    <strong style={{ fontSize: "0.95rem", color: "#013220" }}>
+                      {modalBursa.target_volume}
+                    </strong>
+                    <span style={{ display: "block", fontSize: "0.74rem", color: "#166534", marginTop: "2px" }}>
+                      (Tersisa: {remainingNum} {unit})
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#15803d", display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                      Posko Penanggung Jawab:
+                    </span>
+                    <strong style={{ fontSize: "0.86rem", color: "#013220", lineHeight: 1.3, display: "block" }}>
+                      {modalBursa.posko?.nama_posko || "Posko BPBD Wilayah"}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* FORM FIELDS */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Volume & Satuan + Pilihan Cepat */}
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#1F2937", marginBottom: "4px" }}>
-                    Satuan:
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
+                    <div>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                        <AppIcon name="box" size={14} style={{ color: "#15803d" }} />
+                        <span>Volume yang Ditawarkan</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={offeredAmount}
+                        onChange={(e) => setOfferedAmount(e.target.value)}
+                        placeholder="Contoh: 100"
+                        className="reksa-input-field"
+                        style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.92rem", fontWeight: 600 }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                        Satuan
+                      </label>
+                      <input
+                        type="text"
+                        value={offeredUnit}
+                        onChange={(e) => setOfferedUnit(e.target.value)}
+                        className="reksa-input-field"
+                        style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem" }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pilihan Cepat Presets */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 600 }}>Pilihan Cepat:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfferedAmount(String(remainingNum));
+                        setOfferedUnit(unit);
+                      }}
+                      style={{
+                        padding: "3px 10px",
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        border: offeredAmount === String(remainingNum) ? "1.5px solid #15803d" : "1px solid #d1d5db",
+                        background: offeredAmount === String(remainingNum) ? "#f0fdf4" : "#ffffff",
+                        color: offeredAmount === String(remainingNum) ? "#15803d" : "#374151",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Penuh 100% ({remainingNum} {unit})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOfferedAmount(String(halfNum));
+                        setOfferedUnit(unit);
+                      }}
+                      style={{
+                        padding: "3px 10px",
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        border: offeredAmount === String(halfNum) ? "1.5px solid #15803d" : "1px solid #d1d5db",
+                        background: offeredAmount === String(halfNum) ? "#f0fdf4" : "#ffffff",
+                        color: offeredAmount === String(halfNum) ? "#15803d" : "#374151",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Sebagian 50% ({halfNum} {unit})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Metode Penyaluran */}
+                <div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="handshake" size={14} style={{ color: "#15803d" }} />
+                    <span>Metode Penyaluran Bantuan</span>
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('serah_posko')}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        border: deliveryMethod === 'serah_posko' ? "2px solid #013220" : "1px solid #d1d5db",
+                        background: deliveryMethod === 'serah_posko' ? "#f0fdf4" : "#ffffff",
+                        color: deliveryMethod === 'serah_posko' ? "#013220" : "#374151",
+                        fontSize: "0.82rem",
+                        fontWeight: deliveryMethod === 'serah_posko' ? 700 : 500,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: "1.2rem" }}>📦</span>
+                      <div>
+                        <strong style={{ display: "block", lineHeight: 1.2 }}>Serah ke Gudang Posko</strong>
+                        <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Disortir &amp; disalurkan posko</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('mandiri')}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        border: deliveryMethod === 'mandiri' ? "2px solid #013220" : "1px solid #d1d5db",
+                        background: deliveryMethod === 'mandiri' ? "#f0fdf4" : "#ffffff",
+                        color: deliveryMethod === 'mandiri' ? "#013220" : "#374151",
+                        fontSize: "0.82rem",
+                        fontWeight: deliveryMethod === 'mandiri' ? 700 : 500,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: "1.2rem" }}>🚚</span>
+                      <div>
+                        <strong style={{ display: "block", lineHeight: 1.2 }}>Penyaluran Mandiri</strong>
+                        <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Mitra langsung ke warga</small>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Informasi Armada (Mandiri atau Umum) */}
+                {deliveryMethod === 'mandiri' && (
+                  <div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                      <AppIcon name="truck" size={14} style={{ color: "#15803d" }} />
+                      <span>Informasi Armada &amp; Pengemudi Mitra</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: Truk Box B 1234 CD · Kapasitas 2 Ton"
+                      value={fleetInfo}
+                      onChange={(e) => setFleetInfo(e.target.value)}
+                      className="reksa-input-field"
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem" }}
+                    />
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>Rekomendasi:</span>
+                      {[
+                        "Mobil Box Logistik No. 01",
+                        "Truk Pickup No. 03 (500 kg)",
+                        "Armada Motor Roda 3",
+                      ].map((name) => (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => setFleetInfo(name)}
+                          style={{
+                            padding: "3px 8px",
+                            fontSize: "0.72rem",
+                            borderRadius: "6px",
+                            border: "1px solid #d1d5db",
+                            background: "#f8fafc",
+                            color: "#334155",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Waktu Kesiapan Logistik */}
+                <div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="clock" size={14} style={{ color: "#15803d" }} />
+                    <span>Waktu Kesiapan Logistik</span>
                   </label>
                   <input
                     type="text"
-                    value={offeredUnit}
-                    onChange={(e) => setOfferedUnit(e.target.value)}
-                    className="posko-search-input"
-                    style={{ width: "100%", borderRadius: "8px" }}
+                    value={readinessTime}
+                    onChange={(e) => setReadinessTime(e.target.value)}
+                    placeholder="Contoh: Hari ini, Siap Diserahkan ke Posko"
+                    className="reksa-input-field"
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem" }}
                   />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                    {[
+                      "Hari ini, Siap Diserahkan ke Posko",
+                      "Besok Pagi (Pkl 08:00 WIB)",
+                      "Jadwal Penyaluran Segera",
+                    ].map((timeOpt) => (
+                      <button
+                        key={timeOpt}
+                        type="button"
+                        onClick={() => setReadinessTime(timeOpt)}
+                        style={{
+                          padding: "3px 8px",
+                          fontSize: "0.72rem",
+                          borderRadius: "6px",
+                          border: readinessTime === timeOpt ? "1px solid #15803d" : "1px solid #d1d5db",
+                          background: readinessTime === timeOpt ? "#f0fdf4" : "#f8fafc",
+                          color: readinessTime === timeOpt ? "#15803d" : "#334155",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {timeOpt}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#1F2937", marginBottom: "6px" }}>
-                  Metode Penyaluran Bantuan:
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryMethod('serah_posko')}
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      border: deliveryMethod === 'serah_posko' ? "2px solid #013220" : "1px solid #D1D5DB",
-                      background: deliveryMethod === 'serah_posko' ? "#F0FDF4" : "#ffffff",
-                      fontSize: "0.85rem",
-                      fontWeight: deliveryMethod === 'serah_posko' ? 700 : 500,
-                      color: deliveryMethod === 'serah_posko' ? "#013220" : "#374151",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "7px",
-                    }}
-                  >
-                    <AppIcon name="box" size={16} />
-                    <span>Serah ke Gudang Posko</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryMethod('mandiri')}
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      border: deliveryMethod === 'mandiri' ? "2px solid #013220" : "1px solid #D1D5DB",
-                      background: deliveryMethod === 'mandiri' ? "#F0FDF4" : "#ffffff",
-                      fontSize: "0.85rem",
-                      fontWeight: deliveryMethod === 'mandiri' ? 700 : 500,
-                      color: deliveryMethod === 'mandiri' ? "#013220" : "#374151",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "7px",
-                    }}
-                  >
-                    <AppIcon name="truck" size={16} />
-                    <span>Penyaluran Mandiri</span>
-                  </button>
-                </div>
-              </div>
-
-              {deliveryMethod === 'mandiri' && (
+                {/* Catatan Operasional */}
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#1F2937", marginBottom: "4px" }}>
-                    Informasi Armada &amp; Pengemudi Mitra:
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="file" size={14} style={{ color: "#15803d" }} />
+                    <span>Catatan Operasional Mitra</span>
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Truk Box B 1234 CD · Kapasitas 2 Ton"
-                    value={fleetInfo}
-                    onChange={(e) => setFleetInfo(e.target.value)}
-                    className="posko-search-input"
-                    style={{ width: "100%", borderRadius: "8px" }}
+                  <textarea
+                    rows={3}
+                    value={notesInput}
+                    onChange={(e) => setNotesInput(e.target.value)}
+                    placeholder="Tuliskan catatan khusus atau estimasi rencana penyaluran..."
+                    className="reksa-textarea-field"
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem", resize: "vertical" }}
                   />
                 </div>
-              )}
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#1F2937", marginBottom: "4px" }}>
-                  Waktu Kesiapan Logistik:
-                </label>
-                <input
-                  type="text"
-                  value={readinessTime}
-                  onChange={(e) => setReadinessTime(e.target.value)}
-                  className="posko-search-input"
-                  style={{ width: "100%", borderRadius: "8px" }}
-                />
               </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#1F2937", marginBottom: "4px" }}>
-                  Catatan Operasional Mitra:
-                </label>
-                <textarea
-                  rows={3}
-                  value={notesInput}
-                  onChange={(e) => setNotesInput(e.target.value)}
-                  className="posko-search-input"
-                  style={{ width: "100%", borderRadius: "8px", height: "auto" }}
-                />
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-                marginTop: "20px",
-                borderTop: "1px solid #F3F4F6",
-                paddingTop: "16px",
-              }}
-            >
-              <button
-                type="button"
-                className="reksa-btn reksa-btn-secondary"
-                disabled={isSubmitting}
-                onClick={() => setModalBursa(null)}
+              {/* MODAL FOOTER */}
+              <div
                 style={{
-                  padding: "9px 16px",
-                  borderRadius: "8px",
-                  background: "#F3F4F6",
-                  color: "#374151",
-                  border: "none",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Batal
-              </button>
-
-              <button
-                type="button"
-                className="reksa-btn reksa-btn-primary"
-                disabled={isSubmitting || !offeredAmount}
-                onClick={handleSubmitOffer}
-                style={{
-                  display: "inline-flex",
+                  display: "flex",
+                  justifyContent: "flex-end",
                   alignItems: "center",
-                  gap: "7px",
-                  padding: "9px 18px",
-                  borderRadius: "8px",
-                  background: "#013220",
-                  color: "#ffffff",
-                  border: "none",
-                  fontWeight: 600,
-                  cursor: isSubmitting || !offeredAmount ? "not-allowed" : "pointer",
-                  opacity: isSubmitting || !offeredAmount ? 0.6 : 1,
+                  gap: "10px",
+                  marginTop: "24px",
+                  borderTop: "1px solid #f1f5f9",
+                  paddingTop: "18px",
                 }}
               >
-                <AppIcon name="check" size={15} />
-                <span>{isSubmitting ? "Mengirim..." : "Kirim Penawaran ke Posko"}</span>
-              </button>
+                <button
+                  type="button"
+                  className="reksa-btn reksa-btn-secondary"
+                  disabled={isSubmitting}
+                  onClick={() => setModalBursa(null)}
+                  style={{ padding: "8px 18px", borderRadius: "8px", fontWeight: 600 }}
+                >
+                  Batal
+                </button>
+
+                <button
+                  type="button"
+                  className="reksa-btn reksa-btn-primary"
+                  disabled={isSubmitting || !offeredAmount}
+                  onClick={handleSubmitOffer}
+                  style={{
+                    background: "#013220",
+                    color: "#ffffff",
+                    padding: "8px 22px",
+                    borderRadius: "8px",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: isSubmitting || !offeredAmount ? "not-allowed" : "pointer",
+                    opacity: isSubmitting || !offeredAmount ? 0.6 : 1,
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <AppIcon name="clock" size={14} />
+                      <span>Mengirim Penawaran...</span>
+                    </>
+                  ) : (
+                    <>
+                      <AppIcon name="check" size={14} />
+                      <span>Kirim Penawaran ke Posko</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </main>
   );
 }
