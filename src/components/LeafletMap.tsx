@@ -29,6 +29,7 @@ interface LeafletMapProps {
   cases?: any[];
   onSelectCase?: (c: any) => void;
   onLocationPicked?: (info: LocationInfo) => void;
+  height?: string;
 }
 
 function resolveFallbackLocation(lat: number, lng: number): LocationInfo {
@@ -207,6 +208,7 @@ export function LeafletMap({
   cases,
   onSelectCase,
   onLocationPicked,
+  height,
 }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -278,7 +280,7 @@ export function LeafletMap({
     },
   ]);
 
-  const [activePosko, setActivePosko] = useState<PoskoItem>(poskos[0]);
+  const [activePosko, setActivePosko] = useState<PoskoItem | null>(() => operational ? null : poskos[0]);
 
   const onLocationPickedRef = useRef(onLocationPicked);
   onLocationPickedRef.current = onLocationPicked;
@@ -518,7 +520,7 @@ export function LeafletMap({
           if (selectedPoskoId) {
             const found = res.data.find(p => p.id === selectedPoskoId);
             if (found) setActivePosko(found);
-          } else {
+          } else if (!operational) {
             setActivePosko(res.data[0]);
           }
         }
@@ -528,7 +530,7 @@ export function LeafletMap({
     return () => {
       isMounted = false;
     };
-  }, [selectedPoskoId]);
+  }, [selectedPoskoId, operational]);
 
   // Initial setup on render (runs strictly once to prevent flickering)
   const hasInitializedGeoRef = useRef(false);
@@ -1323,7 +1325,7 @@ export function LeafletMap({
       <div style={{ 
         position: 'relative', 
         width: '100%', 
-        height: operational ? '360px' : '340px',
+        height: height || (operational ? '400px' : '340px'),
         borderRadius: '16px', 
         overflow: 'hidden', 
         border: '1.5px solid #d4dfd6', 
@@ -1486,15 +1488,15 @@ export function LeafletMap({
         {operational && Array.isArray(cases) && cases.length > 0 && (
           <div style={{
             position: 'absolute',
-            bottom: '10px',
-            left: '10px',
+            bottom: '14px',
+            left: '14px',
             zIndex: 1000,
             background: 'rgba(255, 255, 255, 0.96)',
             backdropFilter: 'blur(8px)',
             borderRadius: '8px',
-            padding: '5px 10px',
-            boxShadow: '0 3px 12px rgba(0,0,0,0.18)',
-            border: '1px solid rgba(1,50,32,0.18)',
+            padding: '6px 14px',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+            border: '1.5px solid rgba(1,50,32,0.18)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -1502,6 +1504,8 @@ export function LeafletMap({
             fontWeight: 700,
             lineHeight: 1,
             pointerEvents: 'none',
+            maxWidth: 'calc(100% - 28px)',
+            boxSizing: 'border-box',
           }}>
             <span style={{ color: '#013220', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
               <span>🏛️</span> Posko
@@ -1527,12 +1531,43 @@ export function LeafletMap({
 
         {/* OVERLAY CARD FOR POSKO */}
         {!hideCard && activePosko && (
-          <div className="leaflet-overlay-card">
+          <div 
+            className="leaflet-overlay-card"
+            style={{
+              position: 'absolute',
+              bottom: operational && Array.isArray(cases) && cases.length > 0 ? '54px' : '16px',
+              left: '14px',
+              zIndex: 1001,
+            }}
+          >
             <div className="overlay-card-header">
               <span className="overlay-posko-badge">
                 <i className="status-live-dot" /> {activePosko.kode_posko}
               </span>
-              <span className="overlay-status-tag">{activePosko.status_operasional}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="overlay-status-tag">{activePosko.status_operasional}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActivePosko(null);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    fontSize: '14px',
+                    lineHeight: 1,
+                    padding: '2px 4px',
+                    fontWeight: 700,
+                  }}
+                  title="Tutup kartu posko"
+                  aria-label="Tutup"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <h3>{activePosko.nama_posko}</h3>
             <div className="overlay-meta">

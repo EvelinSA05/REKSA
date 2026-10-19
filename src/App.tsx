@@ -270,6 +270,7 @@ export function MapView({
   cases,
   onSelectCase,
   onLocationPicked,
+  height,
 }: { 
   operational?: boolean; 
   hideCard?: boolean; 
@@ -285,6 +286,7 @@ export function MapView({
   cases?: any[];
   onSelectCase?: (c: any) => void;
   onLocationPicked?: (info: any) => void;
+  height?: string;
 }) {
   const safeLat = Number.isFinite(Number(initialLat)) ? Number(initialLat) : -7.336272;
   const safeLng = Number.isFinite(Number(initialLng)) ? Number(initialLng) : 112.728881;
@@ -304,7 +306,8 @@ export function MapView({
         caseUrgency={caseUrgency}
         cases={cases}
         onSelectCase={onSelectCase}
-        onLocationPicked={onLocationPicked} 
+        onLocationPicked={onLocationPicked}
+        height={height}
       />
     </ErrorBoundary>
   );
@@ -3544,28 +3547,45 @@ function MapPage({
         </div>
       </div>
 
-      {/* 3. INTERACTIVE GIS MAP WRAPPER */}
-      <div className="map-page-wrapper" style={{ minHeight: "440px", marginBottom: "28px" }}>
-        <MapView 
-          operational 
-          cases={filteredCases} 
-          onSelectCase={(c) => {
-            setSelectedCase(c);
-            onSelectCase?.(c);
-          }} 
-        />
+      {/* 3. INTERACTIVE GIS MAP */}
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ position: "relative", borderRadius: "18px", overflow: "hidden", border: "1.5px solid rgba(1, 50, 32, 0.14)", boxShadow: "0 8px 30px rgba(1, 50, 32, 0.06)" }}>
+          <MapView 
+            operational 
+            cases={filteredCases} 
+            height="440px"
+            onSelectCase={(c) => {
+              setSelectedCase(c);
+              onSelectCase?.(c);
+            }} 
+          />
+        </div>
+
+        {/* SELECTED CASE INSPECTOR CARD (CLEANLY BELOW MAP - NEVER OVERLAPS LEGEND) */}
         {selectedCase && (
-          <div className="map-page-floating-action">
-            <div className="map-floating-info">
-              <div className="floating-pin-icon"><Icon name="pin" /></div>
+          <div style={{
+            marginTop: "14px",
+            background: "#ffffff",
+            border: "1.5px solid rgba(1, 50, 32, 0.12)",
+            borderRadius: "16px",
+            padding: "16px 22px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            boxShadow: "0 4px 18px rgba(0, 0, 0, 0.04)",
+            gap: "16px",
+            flexWrap: "wrap",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <div className="floating-pin-icon" style={{ flexShrink: 0 }}><Icon name="pin" /></div>
               <div>
-                <small style={{ color: "#80866e", fontWeight: 700 }}>
+                <small style={{ color: "#80866e", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.04em" }}>
                   TITIK KEBUTUHAN TERPILIH · URGENSI {selectedCase.urgency || "Sedang"}
                 </small>
-                <strong>
+                <strong style={{ display: "block", fontSize: "15px", color: "#013220", margin: "2px 0" }}>
                   {selectedCase.item} · {selectedCase.id} ({selectedCase.qty || selectedCase.kk || "1 KK"})
                 </strong>
-                <span style={{ fontSize: "0.78rem", color: "#64748b", display: "block", marginTop: "2px" }}>
+                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
                   {selectedCase.location || [selectedCase.village, selectedCase.district, selectedCase.regency].filter(Boolean).join(", ") || "Lokasi Warga Terdampak"}
                 </span>
               </div>
@@ -3578,6 +3598,7 @@ function MapPage({
                 open();
               }} 
               className="btn-map-inspect"
+              style={{ whiteSpace: "nowrap" }}
             >
               {role === "responder" ? "Buka di Bursa / Misi" : "Buka Kasus Ini"} <Icon name="next" />
             </Button>
