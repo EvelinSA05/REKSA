@@ -4061,7 +4061,7 @@ function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nu
   if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} />;
-  if (page === "history") return <MitraRiwayatPenyaluran misiList={state.misiList || []} onNavigateToTasks={() => setPage("tasks")} />;
+  if (page === "history") return <MitraRiwayatPenyaluran misiList={state.misiList || []} cases={state.casesList || []} onNavigateToTasks={() => setPage("tasks")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("tasks"); }} notify={notify} onRefresh={onRefresh} />;
   if (page === "map") return <MapPage open={() => setPage("tasks")} />;
   if (page === "notifications") return <Notifications role="responder" open={() => setPage("tasks")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Mitra Bantuan" notify={notify} state={state} update={update} setName={setName} />;
