@@ -1539,7 +1539,7 @@ export function LeafletMap({
               <span><b>{activePosko.kk_terdata}</b> KK Terdata</span>
               <span>Kapasitas: <b>{activePosko.kapasitas_kk}</b> KK</span>
             </div>
-            <small className="overlay-location">{activePosko.desa}, Kec. ${activePosko.kecamatan}</small>
+            <small className="overlay-location">{activePosko.desa}, Kec. {activePosko.kecamatan}</small>
           </div>
         )}
       </div>

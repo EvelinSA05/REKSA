@@ -119,6 +119,7 @@ const icons: Record<string, React.ReactNode> = {
   search: <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" strokeWidth="2" /><path d="m21 21-4.35-4.35" strokeWidth="2.2" /></svg>,
   logout: <svg viewBox="0 0 24 24"><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10" /></svg>,
   menu: <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
+  alert: <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
 };
 
 export function Icon({ name }: { name: string }) {
@@ -3066,7 +3067,7 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
   if (page === "resources") return <PoskoKebutuhanBursa cases={state.casesList || []} bursaList={state.bursaList || []} penawaranList={state.penawaranList || []} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
   if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} />;
   if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={state.misiList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
-  if (page === "map") return <MapPage open={() => setPage("case")} cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
+  if (page === "map") return <MapPage open={() => setPage("case")} cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} role="posko" />;
   if (page === "notifications") return <Notifications role="posko" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Petugas Posko" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
@@ -3297,51 +3298,492 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
   );
 }
 
-function MapPage({ open, cases = [], onSelectCase }: { open: () => void; cases?: CaseRecord[]; onSelectCase?: (c: any) => void }) {
+function MapPage({ 
+  open, 
+  cases = [], 
+  onSelectCase, 
+  role = "responder",
+  onNavigateToBursa,
+  onNavigateToTasks
+}: { 
+  open: () => void; 
+  cases?: CaseRecord[]; 
+  onSelectCase?: (c: any) => void;
+  role?: "posko" | "responder" | "citizen";
+  onNavigateToBursa?: () => void;
+  onNavigateToTasks?: () => void;
+}) {
   const [priority, setPriority] = useState("Semua");
-  const filteredCases = cases.filter((c) => {
-    if (priority === "Semua") return true;
-    if (priority === "Selesai") return c.status === "Selesai";
-    return c.urgency === priority;
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  // Auto-select first urgent or first case
+  useEffect(() => {
+    if (!selectedCase && cases.length > 0) {
+      const firstUrgent = cases.find(c => c.urgency === "Kritis") || cases[0];
+      setSelectedCase(firstUrgent);
+    }
+  }, [cases, selectedCase]);
+
+  // Metric counts
+  const totalCases = cases.length;
+  const countKritis = cases.filter(c => c.urgency === "Kritis").length;
+  const countTinggi = cases.filter(c => c.urgency === "Tinggi").length;
+  const countSedang = cases.filter(c => c.urgency === "Sedang" || (!c.urgency && c.status !== "Selesai")).length;
+  const countSelesai = cases.filter(c => c.status === "Selesai" || c.status === "Terpenuhi").length;
+
+  // Filtering
+  const filteredCases = useMemo(() => {
+    return cases.filter((c) => {
+      if (priority === "Kritis" && c.urgency !== "Kritis") return false;
+      if (priority === "Tinggi" && c.urgency !== "Tinggi") return false;
+      if (priority === "Sedang" && c.urgency !== "Sedang" && c.urgency) return false;
+      if (priority === "Selesai" && c.status !== "Selesai" && c.status !== "Terpenuhi") return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const idMatch = (c.id || "").toLowerCase().includes(q);
+        const itemMatch = (c.item || "").toLowerCase().includes(q);
+        const locMatch = (c.location || "").toLowerCase().includes(q);
+        const desaMatch = (c.village || "").toLowerCase().includes(q);
+        const kecMatch = (c.district || "").toLowerCase().includes(q);
+        return idMatch || itemMatch || locMatch || desaMatch || kecMatch;
+      }
+      return true;
+    });
+  }, [cases, priority, searchQuery]);
+
+  // Reset pagination on filter change
+  const handlePriorityChange = (val: string) => {
+    setPriority(val);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
+  // Pagination for cases list below map
+  const totalPages = Math.max(1, Math.ceil(filteredCases.length / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const paginatedCases = filteredCases.slice(startIndex, startIndex + pageSize);
+
+  const getUrgencyBadgeClass = (urgency?: string) => {
+    switch (urgency) {
+      case "Kritis": return "posko-case-urgency-badge urgency-kritis";
+      case "Tinggi": return "posko-case-urgency-badge urgency-tinggi";
+      default: return "posko-case-urgency-badge urgency-sedang";
+    }
+  };
 
   return (
-    <main className="workspace map-page-workspace">
+    <main className="workspace map-page-workspace" style={{ maxWidth: "1280px", margin: "0 auto", padding: "28px 24px" }}>
       <PageHead 
-        eyebrow="Pusat Pemetaan GIS" 
+        eyebrow="Pusat Pemetaan GIS Operasional" 
         title="Peta Kebutuhan Bencana" 
-        copy="Pantau sebaran titik kebutuhan, rute distribusi bantuan, dan posko penanganan di seluruh wilayah." 
+        copy="Pantau sebaran titik kebutuhan warga, status urgensi penanganan logistik, dan posko penanggulangan bencana di seluruh wilayah." 
       />
 
-      <div className="map-page-top-bar">
-        <div className="cases-pill-filters">
-          {["Semua", "Kritis", "Tinggi", "Sedang", "Selesai"].map((x) => (
-            <button 
-              type="button" 
-              className={`case-filter-btn ${priority === x ? "active" : ""}`} 
-              onClick={() => setPriority(x)} 
-              key={x}
-            >
-              {x}
-            </button>
-          ))}
+      {/* 1. STATISTIC METRIC CARDS (MONOCHROME) */}
+      <div className="posko-metrics-grid-4" style={{ marginBottom: "22px" }}>
+        {/* Card 1: Total Titik */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Total Titik Kebutuhan
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <Icon name="map" />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {totalCases} Titik
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Sebaran terdata di wilayah
+          </small>
+        </div>
+
+        {/* Card 2: Prioritas Kritis */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Prioritas Kritis
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <Icon name="alert" />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {countKritis} Titik
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Mendesak ditangani &lt; 24 jam
+          </small>
+        </div>
+
+        {/* Card 3: Prioritas Tinggi */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Prioritas Tinggi
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <Icon name="clock" />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {countTinggi} Titik
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Dukungan logistik mendesak
+          </small>
+        </div>
+
+        {/* Card 4: Selesai / Terpenuhi */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            border: "1px solid rgba(1, 50, 32, 0.1)",
+            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              Kasus Selesai
+            </span>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+              <Icon name="check" />
+            </div>
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
+            {countSelesai} Titik
+          </div>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+            Bantuan tuntas diserahkan
+          </small>
         </div>
       </div>
 
-      <div className="map-page-wrapper">
-        <MapView operational cases={filteredCases} onSelectCase={onSelectCase} />
-        <div className="map-page-floating-action">
-          <div className="map-floating-info">
-            <div className="floating-pin-icon"><Icon name="pin" /></div>
-            <div>
-              <small>Posko Terpilih</small>
-              <strong>Posko Induk 01 Sukamaju · Air Bersih (RK-2026-00124)</strong>
-            </div>
-          </div>
-          <Button onClick={open} className="btn-map-inspect">
-            Buka Kasus Ini <Icon name="next" />
-          </Button>
+      {/* 2. FILTER & SEARCH BAR */}
+      <div className="map-page-top-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px", flexWrap: "wrap", marginBottom: "18px" }}>
+        <div className="cases-pill-filters" style={{ display: "flex", gap: "8px", overflowX: "auto" }}>
+          {[
+            { label: "Semua", count: totalCases },
+            { label: "Kritis", count: countKritis },
+            { label: "Tinggi", count: countTinggi },
+            { label: "Sedang", count: countSedang },
+            { label: "Selesai", count: countSelesai },
+          ].map((x) => (
+            <button 
+              type="button" 
+              className={`case-filter-btn ${priority === x.label ? "active" : ""}`} 
+              onClick={() => handlePriorityChange(x.label)} 
+              key={x.label}
+              style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <span>{x.label}</span>
+              <span style={{ 
+                fontSize: "0.75rem", 
+                padding: "1px 7px", 
+                borderRadius: "999px", 
+                background: priority === x.label ? "rgba(255, 255, 255, 0.25)" : "rgba(1, 50, 32, 0.08)",
+                color: priority === x.label ? "#ffffff" : "#013220",
+                fontWeight: 700
+              }}>
+                {x.count}
+              </span>
+            </button>
+          ))}
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#ffffff", border: "1px solid rgba(1, 50, 32, 0.15)", borderRadius: "999px", padding: "6px 14px", minWidth: "260px" }}>
+          <Icon name="search" />
+          <input 
+            type="text" 
+            placeholder="Cari titik (komoditas, lokasi, ID)..." 
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            style={{ border: "none", outline: "none", fontSize: "0.85rem", width: "100%", background: "transparent" }}
+          />
+          {searchQuery && (
+            <button type="button" onClick={() => handleSearchChange("")} style={{ border: "none", background: "transparent", cursor: "pointer", color: "#94a3b8", fontSize: "14px" }}>
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 3. INTERACTIVE GIS MAP WRAPPER */}
+      <div className="map-page-wrapper" style={{ minHeight: "440px", marginBottom: "28px" }}>
+        <MapView 
+          operational 
+          cases={filteredCases} 
+          onSelectCase={(c) => {
+            setSelectedCase(c);
+            onSelectCase?.(c);
+          }} 
+        />
+        {selectedCase && (
+          <div className="map-page-floating-action">
+            <div className="map-floating-info">
+              <div className="floating-pin-icon"><Icon name="pin" /></div>
+              <div>
+                <small style={{ color: "#80866e", fontWeight: 700 }}>
+                  TITIK KEBUTUHAN TERPILIH · URGENSI {selectedCase.urgency || "Sedang"}
+                </small>
+                <strong>
+                  {selectedCase.item} · {selectedCase.id} ({selectedCase.qty || selectedCase.kk || "1 KK"})
+                </strong>
+                <span style={{ fontSize: "0.78rem", color: "#64748b", display: "block", marginTop: "2px" }}>
+                  {selectedCase.location || [selectedCase.village, selectedCase.district, selectedCase.regency].filter(Boolean).join(", ") || "Lokasi Warga Terdampak"}
+                </span>
+              </div>
+            </div>
+            <Button 
+              onClick={() => {
+                if (selectedCase?.id) {
+                  onSelectCase?.(selectedCase);
+                }
+                open();
+              }} 
+              className="btn-map-inspect"
+            >
+              {role === "responder" ? "Buka di Bursa / Misi" : "Buka Kasus Ini"} <Icon name="next" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* 4. DAFTAR TITIK KEBUTUHAN TERPETAKAN (BELOW MAP) */}
+      <div style={{ background: "#ffffff", borderRadius: "18px", border: "1px solid rgba(1, 50, 32, 0.1)", padding: "24px", boxShadow: "0 4px 16px rgba(1, 50, 32, 0.04)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px", flexWrap: "wrap", gap: "10px" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#013220" }}>
+              Daftar Titik Kebutuhan Terpetakan
+            </h3>
+            <p style={{ margin: "4px 0 0", fontSize: "0.84rem", color: "#64748b" }}>
+              Menampilkan {filteredCases.length} titik sebaran kebutuhan warga di lapangan berdasarkan filter aktif.
+            </p>
+          </div>
+          <span style={{ fontSize: "0.82rem", color: "#80866e", fontWeight: 600 }}>
+            Halaman {validCurrentPage} dari {totalPages}
+          </span>
+        </div>
+
+        {paginatedCases.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: "#64748b" }}>
+            <p style={{ fontSize: "0.92rem", margin: 0 }}>Tidak ada titik kebutuhan yang cocok dengan pencarian atau filter yang dipilih.</p>
+            <Button variant="secondary" onClick={() => { setPriority("Semua"); setSearchQuery(""); }} style={{ marginTop: "12px" }}>
+              Reset Filter
+            </Button>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem", textAlign: "left" }}>
+              <thead>
+                <tr style={{ borderBottom: "1.5px solid rgba(1, 50, 32, 0.1)", color: "#80866e", fontSize: "0.76rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  <th style={{ padding: "10px 14px", fontWeight: 700 }}>Kode &amp; Urgensi</th>
+                  <th style={{ padding: "10px 14px", fontWeight: 700 }}>Kebutuhan &amp; Target</th>
+                  <th style={{ padding: "10px 14px", fontWeight: 700 }}>Wilayah Administrasi</th>
+                  <th style={{ padding: "10px 14px", fontWeight: 700 }}>Status Lapangan</th>
+                  <th style={{ padding: "10px 14px", fontWeight: 700, textAlign: "right" }}>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedCases.map((c) => {
+                  const isSelected = selectedCase?.id === c.id;
+                  return (
+                    <tr 
+                      key={c.id} 
+                      onClick={() => {
+                        setSelectedCase(c);
+                        onSelectCase?.(c);
+                      }}
+                      style={{ 
+                        borderBottom: "1px solid rgba(1, 50, 32, 0.06)", 
+                        background: isSelected ? "rgba(1, 50, 32, 0.04)" : "transparent",
+                        cursor: "pointer",
+                        transition: "background 0.15s ease"
+                      }}
+                    >
+                      <td style={{ padding: "14px", verticalAlign: "middle" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#013220", fontSize: "0.82rem" }}>
+                            {c.id}
+                          </span>
+                          <span className={getUrgencyBadgeClass(c.urgency)} style={{ fontSize: "0.72rem", padding: "2px 8px" }}>
+                            {c.urgency || "Sedang"}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "14px", verticalAlign: "middle" }}>
+                        <strong style={{ color: "#013220", display: "block", fontSize: "0.9rem" }}>
+                          {c.item}
+                        </strong>
+                        <small style={{ color: "#64748b" }}>
+                          Target: {c.qty || c.kk || "1 KK"} ({c.kk || "1 KK"})
+                        </small>
+                      </td>
+                      <td style={{ padding: "14px", verticalAlign: "middle", color: "#334155" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                          <Icon name="pin" />
+                          <span>{c.village || c.location || "Lokasi Warga"}</span>
+                        </div>
+                        <small style={{ color: "#80866e", display: "block" }}>
+                          {[c.district, c.regency].filter(Boolean).join(", ") || c.location}
+                        </small>
+                      </td>
+                      <td style={{ padding: "14px", verticalAlign: "middle" }}>
+                        <span style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          padding: "3px 10px",
+                          borderRadius: "12px",
+                          background: c.status === "Selesai" ? "#f0fdf4" : c.status === "Dalam Pengiriman" ? "#fffbeb" : "#eff6ff",
+                          color: c.status === "Selesai" ? "#15803d" : c.status === "Dalam Pengiriman" ? "#b45309" : "#1d4ed8",
+                          border: `1px solid ${c.status === "Selesai" ? "#bbf7d0" : c.status === "Dalam Pengiriman" ? "#fde68a" : "#bfdbfe"}`
+                        }}>
+                          {c.status || "Kebutuhan Terbuka"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "14px", verticalAlign: "middle", textAlign: "right" }}>
+                        <div style={{ display: "inline-flex", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCase(c);
+                              onSelectCase?.(c);
+                            }}
+                            style={{
+                              background: isSelected ? "#013220" : "#ffffff",
+                              color: isSelected ? "#ffffff" : "#013220",
+                              border: "1px solid rgba(1, 50, 32, 0.2)",
+                              borderRadius: "8px",
+                              padding: "6px 12px",
+                              fontSize: "0.78rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            <Icon name="pin" /> {isSelected ? "Terpilih" : "Fokus"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (c?.id) {
+                                onSelectCase?.(c);
+                              }
+                              open();
+                            }}
+                            style={{
+                              background: "#013220",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "8px",
+                              padding: "6px 12px",
+                              fontSize: "0.78rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            Buka <Icon name="next" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "14px", borderTop: "1px solid rgba(1, 50, 32, 0.08)" }}>
+                <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                  Menampilkan {startIndex + 1} - {Math.min(startIndex + pageSize, filteredCases.length)} dari {filteredCases.length} titik
+                </span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    disabled={validCurrentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid rgba(1, 50, 32, 0.2)",
+                      borderRadius: "8px",
+                      padding: "6px 14px",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      color: validCurrentPage <= 1 ? "#94a3b8" : "#013220",
+                      cursor: validCurrentPage <= 1 ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    Sebelumnya
+                  </button>
+                  <button
+                    type="button"
+                    disabled={validCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid rgba(1, 50, 32, 0.2)",
+                      borderRadius: "8px",
+                      padding: "6px 14px",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      color: validCurrentPage >= totalPages ? "#94a3b8" : "#013220",
+                      cursor: validCurrentPage >= totalPages ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    Selanjutnya
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
@@ -4062,7 +4504,18 @@ function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nu
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "history") return <MitraRiwayatPenyaluran misiList={state.misiList || []} cases={state.casesList || []} onNavigateToTasks={() => setPage("tasks")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("tasks"); }} notify={notify} onRefresh={onRefresh} />;
-  if (page === "map") return <MapPage open={() => setPage("tasks")} />;
+  if (page === "map") return (
+    <MapPage 
+      open={() => setPage("bursa")} 
+      cases={state.casesList || []} 
+      onSelectCase={(c) => { 
+        if (c?.id) update({ activeCaseId: c.id }); 
+      }} 
+      role="responder"
+      onNavigateToBursa={() => setPage("bursa")}
+      onNavigateToTasks={() => setPage("tasks")}
+    />
+  );
   if (page === "notifications") return <Notifications role="responder" open={() => setPage("tasks")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Mitra Bantuan" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
