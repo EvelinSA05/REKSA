@@ -722,6 +722,9 @@ export function MitraDashboard({
         const halfNum = Math.ceil(parsed.num / 2);
         const halfVol = `${halfNum} ${parsed.unit}`;
 
+        const isKritis = claimModalBursa.urgensi?.toLowerCase().includes("kritis");
+        const isTinggi = claimModalBursa.urgensi?.toLowerCase().includes("tinggi") || !claimModalBursa.urgensi;
+
         return (
           <div className="modal-backdrop" onClick={() => setClaimModalBursa(null)}>
             <div
@@ -737,57 +740,67 @@ export function MitraDashboard({
                 maxHeight: "92vh",
                 overflowY: "auto",
                 border: "1px solid rgba(1, 50, 32, 0.12)",
+                position: "relative",
               }}
             >
+              {/* TOMBOL TUTUP POJOK KANAN ATAS */}
+              <button
+                type="button"
+                onClick={() => setClaimModalBursa(null)}
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  color: "#64748b",
+                  width: "36px",
+                  height: "36px",
+                  display: "grid",
+                  placeItems: "center",
+                  transition: "all 0.15s ease",
+                  zIndex: 10,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#e2e8f0";
+                  e.currentTarget.style.color = "#0f172a";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#64748b";
+                }}
+                title="Tutup dialog"
+              >
+                <AppIcon name="x" size={18} />
+              </button>
+
               {/* MODAL HEADER */}
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
                   marginBottom: "16px",
                   borderBottom: "1px solid #f1f5f9",
                   paddingBottom: "14px",
+                  paddingRight: "46px",
                 }}
               >
-                <div>
-                  <span
-                    style={{
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      color: "#80866e",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                      display: "block",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    KOMITMEN ALOKASI RESMI MITRA
-                  </span>
-                  <h2 style={{ fontSize: "1.35rem", color: "#013220", margin: 0, fontWeight: 800 }}>
-                    Ajukan Komitmen Penyaluran
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setClaimModalBursa(null)}
+                <span
                   style={{
-                    background: "#f1f5f9",
-                    border: "none",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    color: "#64748b",
-                    width: "32px",
-                    height: "32px",
-                    display: "grid",
-                    placeItems: "center",
-                    transition: "all 0.15s ease",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    color: "#80866e",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    display: "block",
+                    marginBottom: "4px",
                   }}
-                  title="Tutup dialog"
                 >
-                  <AppIcon name="x" size={16} />
-                </button>
+                  KOMITMEN ALOKASI RESMI MITRA
+                </span>
+                <h2 style={{ fontSize: "1.35rem", color: "#013220", margin: 0, fontWeight: 800 }}>
+                  Ajukan Komitmen Penyaluran
+                </h2>
               </div>
 
               {/* CONTEXT TARGET CARD */}
@@ -795,27 +808,61 @@ export function MitraDashboard({
                 style={{
                   background: "#f0fdf4",
                   border: "1px solid #bbf7d0",
-                  borderRadius: "12px",
-                  padding: "14px 18px",
-                  marginBottom: "18px",
+                  borderRadius: "14px",
+                  padding: "16px 20px",
+                  marginBottom: "20px",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <strong style={{ fontSize: "1.05rem", color: "#013220", fontWeight: 800 }}>
-                    {claimModalBursa.item_bantuan}
-                  </strong>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong
+                      style={{
+                        fontSize: "1.06rem",
+                        color: "#013220",
+                        fontWeight: 800,
+                        lineHeight: 1.35,
+                        display: "block",
+                      }}
+                    >
+                      {claimModalBursa.item_bantuan}
+                    </strong>
+                  </div>
+
                   <span
                     style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
                       fontSize: "0.75rem",
                       fontWeight: 700,
-                      padding: "2px 8px",
-                      borderRadius: "6px",
-                      background: claimModalBursa.urgensi === "Kritis" ? "#fef2f2" : "#fefce8",
-                      color: claimModalBursa.urgensi === "Kritis" ? "#dc2626" : "#b45309",
-                      border: `1px solid ${claimModalBursa.urgensi === "Kritis" ? "#fecaca" : "#fef08a"}`,
+                      padding: "4px 12px",
+                      borderRadius: "9999px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      background: isKritis ? "#fef2f2" : isTinggi ? "#fff7ed" : "#f0fdf4",
+                      color: isKritis ? "#dc2626" : isTinggi ? "#c2410c" : "#15803d",
+                      border: `1px solid ${isKritis ? "#fecaca" : isTinggi ? "#fed7aa" : "#bbf7d0"}`,
+                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
                     }}
                   >
-                    Prioritas {claimModalBursa.urgensi}
+                    <span
+                      style={{
+                        width: "7px",
+                        height: "7px",
+                        borderRadius: "50%",
+                        background: isKritis ? "#dc2626" : isTinggi ? "#ea580c" : "#16a34a",
+                        display: "inline-block",
+                      }}
+                    />
+                    Prioritas {claimModalBursa.urgensi || "Tinggi"}
                   </span>
                 </div>
 
