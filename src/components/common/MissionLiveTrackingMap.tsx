@@ -80,7 +80,6 @@ export function MissionLiveTrackingMap({
   const [satelliteCount, setSatelliteCount] = useState<number>(14);
   const [lastPingTime, setLastPingTime] = useState<string>('Baru saja');
   const [tileMode, setTileMode] = useState<'streets' | 'satellite'>('streets');
-  const [showExplainer, setShowExplainer] = useState<boolean>(false);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   // 1. Resolve Origin (Posko) and Destination (Citizen / Case) Coordinates
@@ -920,26 +919,6 @@ export function MissionLiveTrackingMap({
           <span style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
             Armada: <strong style={{ color: '#ffffff' }}>{mission.armada_info || 'Armada Logistik'}</strong>
           </span>
-
-          {/* How tracking works button */}
-          <button
-            type="button"
-            onClick={() => setShowExplainer((prev) => !prev)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#93c5fd',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-              textDecoration: 'underline',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '2px 4px',
-            }}
-          >
-            <span>Ditracking dari apa?</span>
-          </button>
         </div>
 
         {/* Map Quick Action Buttons */}
@@ -972,36 +951,6 @@ export function MissionLiveTrackingMap({
                 ? '✓ GPS HP Aktif'
                 : 'Gunakan GPS HP'}
             </span>
-          </button>
-
-          {/* Button: Run Demo Simulation (if in transit or for demo testing) */}
-          <button
-            type="button"
-            onClick={() => {
-              if (trackingSource === 'sim') {
-                setIsSimRunning((r) => !r);
-              } else {
-                setTrackingSource('sim');
-                setIsSimRunning(true);
-              }
-            }}
-            title="Nyalakan simulasi pergerakan armada sepanjang jalur rute"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: trackingSource === 'sim' && isSimRunning ? '#15803d' : 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              color: '#ffffff',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              padding: '5px 12px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-            }}
-          >
-            <AppIcon name="truck" size={13} />
-            <span>{trackingSource === 'sim' && isSimRunning ? '⏸ Jeda Simulasi' : '▶ Simulasi Gerak'}</span>
           </button>
 
           <button
@@ -1071,58 +1020,6 @@ export function MissionLiveTrackingMap({
           </button>
         </div>
       </div>
-
-      {/* EXPLAINER BANNER (JIKA DIKLIK / DIAKTIFKAN) */}
-      {showExplainer && (
-        <div
-          style={{
-            background: '#f0fdf4',
-            borderBottom: '1px solid #bbf7d0',
-            padding: '12px 18px',
-            fontSize: '0.82rem',
-            color: '#166534',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '12px',
-          }}
-        >
-          <div style={{ marginTop: '2px', flexShrink: 0 }}>
-            <AppIcon name="info" size={18} style={{ color: '#15803d' }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <strong style={{ display: 'block', color: '#013220', marginBottom: '4px', fontSize: '0.86rem' }}>
-              Bagaimana Posisi Armada Ditracking di Sistem REKSA?
-            </strong>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', marginTop: '6px' }}>
-              <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
-                <strong style={{ color: '#013220' }}>1. Status Operasional (Default):</strong>
-                <p style={{ margin: '2px 0 0', color: '#475569', fontSize: '0.78rem' }}>
-                  Mobil <strong>berhenti diam di Posko Asal</strong> saat persiapan muatan, dan baru berpindah saat tombol <em>Mulai Perjalanan</em> atau <em>Tiba</em> ditekan responder.
-                </p>
-              </div>
-              <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
-                <strong style={{ color: '#013220' }}>2. GPS Ponsel Responder:</strong>
-                <p style={{ margin: '2px 0 0', color: '#475569', fontSize: '0.78rem' }}>
-                  Klik tombol <strong>"Gunakan GPS HP"</strong> untuk menghubungkan sensor GPS ponsel pengemudi secara langsung saat armada bergerak di jalan raya.
-                </p>
-              </div>
-              <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #dcfce7' }}>
-                <strong style={{ color: '#013220' }}>3. IoT Tracker Kendaraan:</strong>
-                <p style={{ margin: '2px 0 0', color: '#475569', fontSize: '0.78rem' }}>
-                  Pada armada resmi BPBD/BNPB, alat transponder GPS yang terpasang di kendaraan mengirimkan koordinat lat/long otomatis ke server API.
-                </p>
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowExplainer(false)}
-            style={{ background: 'none', border: 'none', color: '#166534', cursor: 'pointer', padding: '4px' }}
-          >
-            <AppIcon name="x" size={16} />
-          </button>
-        </div>
-      )}
 
       {/* GPS Error Alert if any */}
       {deviceGpsError && (
