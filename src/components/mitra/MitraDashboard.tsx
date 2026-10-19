@@ -42,10 +42,20 @@ export function MitraDashboard({
   const [claimedArmada, setClaimedArmada] = useState("Truk Tangki No. 02 · Kapasitas 500 L Air Minum");
   const [claimedVolume, setClaimedVolume] = useState("");
   const [claimedOrg, setClaimedOrg] = useState(state.userProfile?.org || "Satgas Reaksi Cepat BPBD");
+  const [deliveryMethod, setDeliveryMethod] = useState<'serah_posko' | 'mandiri'>('serah_posko');
   const [claimNotes, setClaimNotes] = useState(
     "Armada logistik siaga dan siap diberangkatkan ke posko begitu alokasi disetujui."
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const parseVolume = (volStr: string) => {
+    if (!volStr) return { num: 1, unit: "Unit" };
+    const match = volStr.match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/);
+    if (match) {
+      return { num: parseFloat(match[1].replace(',', '.')), unit: match[2].trim() };
+    }
+    return { num: 1, unit: volStr };
+  };
 
   const urgencyTabs = [
     { label: "Semua" as const, count: openNeeds.length },
@@ -96,6 +106,8 @@ export function MitraDashboard({
     } else {
       setClaimedArmada("Armada Distribusi Cepat BPBD / Relawan");
     }
+    setClaimNotes("Armada logistik siaga dan siap diberangkatkan ke posko begitu alokasi disetujui.");
+    setDeliveryMethod('serah_posko');
   };
 
   const handleClaimSubmit = async () => {
@@ -106,7 +118,7 @@ export function MitraDashboard({
         claimed_volume: claimedVolume || claimModalBursa.target_volume,
         armada_info: claimedArmada,
         organisasi: claimedOrg,
-        catatan: claimNotes,
+        catatan: `[Metode: ${deliveryMethod === 'serah_posko' ? 'Serah ke Gudang Posko' : 'Penyaluran Mandiri'}] ${claimNotes}`.trim(),
       });
       if (res.success) {
         notify?.(`Komitmen bantuan berhasil diajukan! Menunggu persetujuan Koordinator Posko.`);
@@ -705,92 +717,385 @@ export function MitraDashboard({
       </section>
 
       {/* CLAIM COMMITMENT MODAL */}
-      {claimModalBursa && (
-        <div className="modal-backdrop">
-          <div className="modal" style={{ width: "min(500px, 95%)", textAlign: "left", borderRadius: "16px", padding: "26px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <h2 style={{ fontSize: "1.25rem", color: "#013220", margin: 0, fontWeight: 800 }}>
-                Ajukan Komitmen Penyaluran
-              </h2>
-              <button
-                type="button"
-                onClick={() => setClaimModalBursa(null)}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b", padding: "4px" }}
+      {claimModalBursa && (() => {
+        const parsed = parseVolume(claimModalBursa.target_volume);
+        const halfNum = Math.ceil(parsed.num / 2);
+        const halfVol = `${halfNum} ${parsed.unit}`;
+
+        return (
+          <div className="modal-backdrop" onClick={() => setClaimModalBursa(null)}>
+            <div
+              className="modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "min(580px, 95%)",
+                textAlign: "left",
+                borderRadius: "20px",
+                padding: "28px 32px",
+                background: "#ffffff",
+                boxShadow: "0 24px 60px rgba(0, 0, 0, 0.28)",
+                maxHeight: "92vh",
+                overflowY: "auto",
+                border: "1px solid rgba(1, 50, 32, 0.12)",
+              }}
+            >
+              {/* MODAL HEADER */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: "16px",
+                  borderBottom: "1px solid #f1f5f9",
+                  paddingBottom: "14px",
+                }}
               >
-                <AppIcon name="x" size={18} />
-              </button>
-            </div>
+                <div>
+                  <span
+                    style={{
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      color: "#80866e",
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    KOMITMEN ALOKASI RESMI MITRA
+                  </span>
+                  <h2 style={{ fontSize: "1.35rem", color: "#013220", margin: 0, fontWeight: 800 }}>
+                    Ajukan Komitmen Penyaluran
+                  </h2>
+                </div>
 
-            <p style={{ margin: "0 0 16px", color: "#64748b", fontSize: "0.88rem", lineHeight: 1.5 }}>
-              Anda akan mengajukan alokasi resmi untuk <strong>{claimModalBursa.item_bantuan}</strong> kepada{" "}
-              {claimModalBursa.posko?.nama_posko || "Posko BPBD Wilayah"}.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div>
-                <label className="reksa-form-label">Nama Organisasi / Satgas Penyalur</label>
-                <input
-                  type="text"
-                  value={claimedOrg}
-                  onChange={(e) => setClaimedOrg(e.target.value)}
-                  className="reksa-input-field"
-                />
+                <button
+                  type="button"
+                  onClick={() => setClaimModalBursa(null)}
+                  style={{
+                    background: "#f1f5f9",
+                    border: "none",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    color: "#64748b",
+                    width: "32px",
+                    height: "32px",
+                    display: "grid",
+                    placeItems: "center",
+                    transition: "all 0.15s ease",
+                  }}
+                  title="Tutup dialog"
+                >
+                  <AppIcon name="x" size={16} />
+                </button>
               </div>
 
-              <div>
-                <label className="reksa-form-label">Informasi Armada Siaga &amp; Kapasitas</label>
-                <input
-                  type="text"
-                  value={claimedArmada}
-                  onChange={(e) => setClaimedArmada(e.target.value)}
-                  placeholder="Contoh: Truk Tangki No. 02 · Kapasitas 500 L"
-                  className="reksa-input-field"
-                />
-              </div>
-
-              <div>
-                <label className="reksa-form-label">Volume Bantuan yang Disanggupi</label>
-                <input
-                  type="text"
-                  value={claimedVolume}
-                  onChange={(e) => setClaimedVolume(e.target.value)}
-                  placeholder={`Target: ${claimModalBursa.target_volume}`}
-                  className="reksa-input-field"
-                />
-              </div>
-
-              <div>
-                <label className="reksa-form-label">Catatan / Rencana Operasional Penyaluran</label>
-                <textarea
-                  value={claimNotes}
-                  onChange={(e) => setClaimNotes(e.target.value)}
-                  rows={3}
-                  className="reksa-textarea-field"
-                />
-              </div>
-            </div>
-
-            <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "18px" }}>
-              <button
-                type="button"
-                className="btn-case-view"
-                disabled={isSubmitting}
-                onClick={() => setClaimModalBursa(null)}
+              {/* CONTEXT TARGET CARD */}
+              <div
+                style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "12px",
+                  padding: "14px 18px",
+                  marginBottom: "18px",
+                }}
               >
-                Batal
-              </button>
-              <button
-                type="button"
-                className="btn-case-verify"
-                disabled={isSubmitting}
-                onClick={handleClaimSubmit}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <strong style={{ fontSize: "1.05rem", color: "#013220", fontWeight: 800 }}>
+                    {claimModalBursa.item_bantuan}
+                  </strong>
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      background: claimModalBursa.urgensi === "Kritis" ? "#fef2f2" : "#fefce8",
+                      color: claimModalBursa.urgensi === "Kritis" ? "#dc2626" : "#b45309",
+                      border: `1px solid ${claimModalBursa.urgensi === "Kritis" ? "#fecaca" : "#fef08a"}`,
+                    }}
+                  >
+                    Prioritas {claimModalBursa.urgensi}
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.82rem", color: "#166534", marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #bbf7d0" }}>
+                  <div>
+                    <span style={{ color: "#15803d", display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                      Target Kebutuhan Posko:
+                    </span>
+                    <strong style={{ fontSize: "0.95rem", color: "#013220" }}>{claimModalBursa.target_volume}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: "#15803d", display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                      Posko Penanggung Jawab:
+                    </span>
+                    <strong style={{ fontSize: "0.85rem", color: "#013220", lineHeight: 1.3, display: "block" }}>
+                      {claimModalBursa.posko?.nama_posko || "Posko BPBD Wilayah"}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* FORM FIELDS */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Organisasi */}
+                <div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="users" size={14} style={{ color: "#15803d" }} />
+                    <span>Nama Organisasi / Satgas Penyalur</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={claimedOrg}
+                    onChange={(e) => setClaimedOrg(e.target.value)}
+                    className="reksa-input-field"
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem" }}
+                  />
+                </div>
+
+                {/* Volume Bantuan + Presets */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", margin: 0 }}>
+                      <AppIcon name="box" size={14} style={{ color: "#15803d" }} />
+                      <span>Volume Bantuan yang Disanggupi</span>
+                    </label>
+                    <span style={{ fontSize: "0.76rem", color: "#64748b" }}>
+                      Target: <strong>{claimModalBursa.target_volume}</strong>
+                    </span>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={claimedVolume}
+                    onChange={(e) => setClaimedVolume(e.target.value)}
+                    placeholder={`Contoh: ${claimModalBursa.target_volume}`}
+                    className="reksa-input-field"
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.92rem", fontWeight: 700, color: "#013220" }}
+                  />
+
+                  {/* Volume Presets */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>Pilihan Cepat:</span>
+                    <button
+                      type="button"
+                      onClick={() => setClaimedVolume(claimModalBursa.target_volume)}
+                      style={{
+                        padding: "3px 10px",
+                        fontSize: "0.74rem",
+                        borderRadius: "6px",
+                        border: claimedVolume === claimModalBursa.target_volume ? "1.5px solid #15803d" : "1px solid #d1d5db",
+                        background: claimedVolume === claimModalBursa.target_volume ? "#dcfce7" : "#f8fafc",
+                        color: claimedVolume === claimModalBursa.target_volume ? "#15803d" : "#334155",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Penuh 100% ({claimModalBursa.target_volume})
+                    </button>
+
+                    {parsed.num > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setClaimedVolume(halfVol)}
+                        style={{
+                          padding: "3px 10px",
+                          fontSize: "0.74rem",
+                          borderRadius: "6px",
+                          border: claimedVolume === halfVol ? "1.5px solid #15803d" : "1px solid #d1d5db",
+                          background: claimedVolume === halfVol ? "#dcfce7" : "#f8fafc",
+                          color: claimedVolume === halfVol ? "#15803d" : "#334155",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Sebagian 50% ({halfVol})
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Metode Penyaluran */}
+                <div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="handshake" size={14} style={{ color: "#15803d" }} />
+                    <span>Metode Penyaluran Bantuan</span>
+                  </label>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('serah_posko')}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        border: deliveryMethod === 'serah_posko' ? "2px solid #013220" : "1px solid #d1d5db",
+                        background: deliveryMethod === 'serah_posko' ? "#f0fdf4" : "#ffffff",
+                        color: deliveryMethod === 'serah_posko' ? "#013220" : "#374151",
+                        fontSize: "0.82rem",
+                        fontWeight: deliveryMethod === 'serah_posko' ? 700 : 500,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: "1.2rem" }}>📦</span>
+                      <div>
+                        <strong style={{ display: "block", lineHeight: 1.2 }}>Serah ke Posko BPBD</strong>
+                        <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Disortir &amp; disalurkan posko</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryMethod('mandiri')}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        border: deliveryMethod === 'mandiri' ? "2px solid #013220" : "1px solid #d1d5db",
+                        background: deliveryMethod === 'mandiri' ? "#f0fdf4" : "#ffffff",
+                        color: deliveryMethod === 'mandiri' ? "#013220" : "#374151",
+                        fontSize: "0.82rem",
+                        fontWeight: deliveryMethod === 'mandiri' ? 700 : 500,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: "1.2rem" }}>🚚</span>
+                      <div>
+                        <strong style={{ display: "block", lineHeight: 1.2 }}>Penyaluran Mandiri</strong>
+                        <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Mitra langsung ke warga</small>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Informasi Armada Siaga */}
+                <div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="truck" size={14} style={{ color: "#15803d" }} />
+                    <span>Informasi Armada Siaga &amp; Kapasitas</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={claimedArmada}
+                    onChange={(e) => setClaimedArmada(e.target.value)}
+                    placeholder="Contoh: Truk Box No. 01 · Kapasitas 500 kg"
+                    className="reksa-input-field"
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem" }}
+                  />
+
+                  {/* Armada Presets */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>Rekomendasi:</span>
+                    {[
+                      "Mobil Box Logistik No. 01",
+                      "Truk Pickup No. 03 (500 kg)",
+                      "Truk Tangki No. 02 (Air Minum)",
+                      "Armada Motor Roda 3",
+                    ].map((armadaName) => (
+                      <button
+                        key={armadaName}
+                        type="button"
+                        onClick={() => setClaimedArmada(armadaName)}
+                        style={{
+                          padding: "3px 8px",
+                          fontSize: "0.72rem",
+                          borderRadius: "6px",
+                          border: "1px solid #d1d5db",
+                          background: "#f8fafc",
+                          color: "#334155",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {armadaName}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Catatan Operasional */}
+                <div>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem", fontWeight: 700, color: "#1e293b", marginBottom: "6px" }}>
+                    <AppIcon name="file" size={14} style={{ color: "#15803d" }} />
+                    <span>Catatan / Rencana Operasional Penyaluran</span>
+                  </label>
+                  <textarea
+                    value={claimNotes}
+                    onChange={(e) => setClaimNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Tuliskan estimasi jam keberangkatan atau detail pengawalan logistik..."
+                    className="reksa-textarea-field"
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", fontSize: "0.88rem", resize: "vertical" }}
+                  />
+                </div>
+              </div>
+
+              {/* MODAL FOOTER */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginTop: "24px",
+                  borderTop: "1px solid #f1f5f9",
+                  paddingTop: "18px",
+                }}
               >
-                {isSubmitting ? "Mengirim Komitmen..." : "Kirim Komitmen Bantuan"}
-              </button>
+                <button
+                  type="button"
+                  className="reksa-btn reksa-btn-secondary"
+                  disabled={isSubmitting}
+                  onClick={() => setClaimModalBursa(null)}
+                  style={{ padding: "8px 18px", borderRadius: "8px", fontWeight: 600 }}
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  className="reksa-btn reksa-btn-primary"
+                  disabled={isSubmitting || !claimedVolume.trim()}
+                  onClick={handleClaimSubmit}
+                  style={{
+                    background: "#013220",
+                    color: "#ffffff",
+                    padding: "8px 22px",
+                    borderRadius: "8px",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: isSubmitting || !claimedVolume.trim() ? "not-allowed" : "pointer",
+                    opacity: isSubmitting || !claimedVolume.trim() ? 0.6 : 1,
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <AppIcon name="clock" size={14} />
+                      <span>Mengirim Komitmen...</span>
+                    </>
+                  ) : (
+                    <>
+                      <AppIcon name="check" size={14} />
+                      <span>Kirim Komitmen Bantuan</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </main>
   );
 }
