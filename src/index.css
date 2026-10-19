@@ -8836,3 +8836,120 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   font-size: 0.9rem;
   line-height: 1.5;
 }
+
+/* NOTIFICATION BADGE STYLING (Max 99, then 99+) */
+.nav-notif-badge {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.45);
+  letter-spacing: -0.02em;
+  transition: all 0.15s ease;
+  pointer-events: none;
+  font-family: inherit;
+}
+
+.sidebar nav button.active .nav-notif-badge {
+  background: #ffffff;
+  color: #013220 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.nav-notif-badge-collapsed {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff !important;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  letter-spacing: -0.02em;
+  z-index: 5;
+  pointer-events: none;
+  font-family: inherit;
+}
+
+.sidebar.collapsed nav button.active .nav-notif-badge-collapsed {
+  background: #ffffff;
+  color: #013220 !important;
+}
+
+.mobile-header-notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.4);
+}
+
+.mobile-bottom-notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.btn-mark-all-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-mark-all-read:hover {
+  background: #f3f4f6;
+  color: #111827;
+  border-color: #9ca3af;
+}

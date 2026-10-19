@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import React, { Component, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 
 export type Role = "citizen" | "posko" | "responder";
 type Screen = "home" | "login" | "portal";
@@ -1098,7 +1098,7 @@ function Modal({ title, children, close, icon }: { title: string; children: Reac
   );
 }
 
-function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify }: { 
+function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0 }: { 
   role: Role; 
   page: PortalPage; 
   collapsed: boolean; 
@@ -1109,11 +1109,35 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
   setRole?: (r: Role) => void;
   setName?: (n: string) => void;
   notify?: (msg: string) => void;
+  notifCount?: number;
 }) {
   const group = roleNavigation[role];
   const roleLabel = role === "citizen" ? "Masyarakat" : role === "posko" ? "Petugas Posko" : "Responder";
   const roleCopy = role === "citizen" ? "Akun pribadi" : role === "posko" ? "Akun institusi" : "Mitra terverifikasi";
-  const items = (rows: NavItem[]) => rows.map((item) => <button title={collapsed ? item.label : undefined} className={page === item.page ? "active" : ""} key={item.label} onClick={() => { select(item.page); close(); }}><Icon name={item.icon} /><span>{item.label}</span>{item.label === "Notifikasi" && <i className="nav-dot" />}</button>);
+  const badgeText = notifCount > 99 ? "99+" : notifCount > 0 ? String(notifCount) : null;
+  const items = (rows: NavItem[]) => rows.map((item) => {
+    const isNotif = item.label === "Notifikasi" || item.page === "notifications";
+    return (
+      <button 
+        title={collapsed ? item.label : undefined} 
+        className={page === item.page ? "active" : ""} 
+        key={item.label} 
+        onClick={() => { select(item.page); close(); }}
+        style={{ position: "relative" }}
+      >
+        <span style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name={item.icon} />
+          {isNotif && collapsed && badgeText && (
+            <span className="nav-notif-badge-collapsed">{badgeText}</span>
+          )}
+        </span>
+        <span>{item.label}</span>
+        {isNotif && !collapsed && badgeText && (
+          <span className="nav-notif-badge">{badgeText}</span>
+        )}
+      </button>
+    );
+  });
   return (
     <>
       <div className={`sidebar-scrim ${mobile ? "show" : ""}`} onClick={close} />
@@ -1253,6 +1277,92 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+  const [dbLogs, setDbLogs] = useState<any[]>([]);
+  const [readNotifIds, setReadNotifIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("reksa_read_notifications");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Fetch db activity logs for live unread counting
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLogs = () => {
+      apiService.getActivityLogs()
+        .then((res) => {
+          if (isMounted && res.success && Array.isArray(res.data)) {
+            setDbLogs(res.data);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [state?.logs]);
+
+  // Sync read notification IDs across components
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem("reksa_read_notifications");
+        setReadNotifIds(saved ? JSON.parse(saved) : []);
+      } catch {}
+    };
+    window.addEventListener("reksa_notifications_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("reksa_notifications_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
+
+  // Compute live unread notifications count
+  const unreadCount = useMemo(() => {
+    const readSet = new Set(readNotifIds);
+    const list: { id: string; code: string; title: string; desc: string }[] = [];
+    dbLogs.forEach((dbLog, idx) => {
+      const code = dbLog.kebutuhan?.kode_kasus || `RK-2026-00${dbLog.kebutuhan_id || 124}`;
+      list.push({
+        id: `db-log-${dbLog.id || idx}`,
+        code,
+        title: dbLog.aksi || "Pembaruan Kasus",
+        desc: dbLog.deskripsi || "",
+      });
+    });
+
+    if (state?.logs && state.logs.length > 0) {
+      state.logs.forEach((logText, idx) => {
+        let code = state.activeCaseId || "RK-2026-00272";
+        const matchCode = logText.match(/RK-\d{4}-\d{5}/);
+        if (matchCode) code = matchCode[0];
+        list.push({
+          id: `live-log-${idx}-${logText.slice(0, 20)}`,
+          code,
+          title: "Pembaruan Kasus",
+          desc: logText,
+        });
+      });
+    }
+
+    const seen = new Set<string>();
+    const uniqueItems = list.filter((item) => {
+      const key = `${item.code}-${item.title}-${item.desc.slice(0, 30)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return uniqueItems.filter((n) => !readSet.has(n.id)).length;
+  }, [dbLogs, readNotifIds, state?.logs, state?.activeCaseId]);
+
   const go = (p: PortalPage | "logout") => {
     if (p === "logout") return setLogoutOpen(true);
     setPage(p); 
@@ -1261,22 +1371,49 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   };
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(""), 2800); };
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
-    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} />
-    <header className="mobile-header"><button onClick={() => setMobile(true)} aria-label="Buka menu"><Icon name="menu" /></button><Logo /><button onClick={() => go("notifications")} aria-label="Notifikasi"><Icon name="bell" /></button></header>
+    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} />
+    <header className="mobile-header">
+      <button onClick={() => setMobile(true)} aria-label="Buka menu"><Icon name="menu" /></button>
+      <Logo />
+      <button onClick={() => go("notifications")} aria-label="Notifikasi" style={{ position: "relative" }}>
+        <Icon name="bell" />
+        {unreadCount > 0 && (
+          <span className="mobile-header-notif-badge">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+      </button>
+    </header>
     <div className="portal-content">
       {role === "citizen" && <CitizenRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "posko" && <PoskoRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "responder" && <ResponderRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
-      <MobileNav role={role} page={page} go={go} />
+      <MobileNav role={role} page={page} go={go} notifCount={unreadCount} />
     </div>
     {logoutOpen && <Modal icon="logout" title="Keluar dari akun?" close={() => setLogoutOpen(false)}><p>Sesi Anda akan diakhiri. Anda dapat masuk kembali kapan saja.</p><div className="modal-actions"><Button variant="secondary" onClick={() => setLogoutOpen(false)}>Batal</Button><Button onClick={logout}>Keluar</Button></div></Modal>}
     {toast && <div className="toast"><Icon name="check" /> {toast}</div>}
   </div>;
 }
 
-function MobileNav({ role, page, go }: { role: Role; page: PortalPage; go: (p: PortalPage) => void }) {
+function MobileNav({ role, page, go, notifCount = 0 }: { role: Role; page: PortalPage; go: (p: PortalPage) => void; notifCount?: number }) {
   const items = roleNavigation[role].main.slice(0, 4);
-  return <nav className="mobile-bottom">{items.map((x) => <button className={page === x.page ? "active" : ""} onClick={() => go(x.page as PortalPage)} key={x.label}><Icon name={x.icon} /><span>{x.label}</span></button>)}</nav>;
+  const badgeText = notifCount > 99 ? "99+" : notifCount > 0 ? String(notifCount) : null;
+  return (
+    <nav className="mobile-bottom">
+      {items.map((x) => {
+        const isNotif = x.label === "Notifikasi" || x.page === "notifications";
+        return (
+          <button className={page === x.page ? "active" : ""} onClick={() => go(x.page as PortalPage)} key={x.label} style={{ position: "relative" }}>
+            <span style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name={x.icon} />
+              {isNotif && badgeText && <span className="mobile-bottom-notif-badge">{badgeText}</span>}
+            </span>
+            <span>{x.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
 }
 
 export function PageHead({ eyebrow, title, copy, action }: { eyebrow: string; title: string; copy: string; action?: React.ReactNode }) {
@@ -4185,7 +4322,30 @@ function Notifications({
 }) {
   const [filter, setFilter] = useState("Semua");
   const [dbLogs, setDbLogs] = useState<any[]>([]);
-  const casesList = state?.casesList ?? [];
+  const [readNotifIds, setReadNotifIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("reksa_read_notifications");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Sync read notification IDs across components
+  useEffect(() => {
+    const handleSync = () => {
+      try {
+        const saved = localStorage.getItem("reksa_read_notifications");
+        setReadNotifIds(saved ? JSON.parse(saved) : []);
+      } catch {}
+    };
+    window.addEventListener("reksa_notifications_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("reksa_notifications_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
 
   // Fetch real-time logs from backend database
   useEffect(() => {
@@ -4248,14 +4408,15 @@ function Notifications({
         title = "Alokasi Logistik Disiapkan";
       }
 
+      const notifId = `db-log-${dbLog.id || idx}`;
       list.push({
-        id: `db-log-${dbLog.id || idx}`,
+        id: notifId,
         title,
         desc: dbLog.deskripsi,
         time: new Date(dbLog.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB",
         code,
         cat,
-        unread: idx === 0,
+        unread: !readNotifIds.includes(notifId),
         caseId: code,
       });
     });
@@ -4305,14 +4466,15 @@ function Notifications({
           title = "Laporan Kebutuhan Masuk";
         }
 
+        const notifId = `live-log-${idx}-${logText.slice(0, 20)}`;
         list.push({
-          id: `live-log-${idx}-${logText.slice(0, 20)}`,
+          id: notifId,
           title,
           desc: logText,
           time: timeAgo,
           code,
           cat,
-          unread: true,
+          unread: !readNotifIds.includes(notifId),
           caseId: code,
         });
       });
@@ -4329,9 +4491,37 @@ function Notifications({
   };
 
   const allNotifications = computeLiveNotifications();
+  const unreadCount = allNotifications.filter((x) => x.unread).length;
   const items = allNotifications.filter((x) => filter === "Semua" || x.cat === filter);
 
-  const handleOpenCase = (caseId?: string) => {
+  const markAsRead = (id: string) => {
+    if (!readNotifIds.includes(id)) {
+      const next = [...readNotifIds, id];
+      setReadNotifIds(next);
+      localStorage.setItem("reksa_read_notifications", JSON.stringify(next));
+      window.dispatchEvent(new Event("reksa_notifications_updated"));
+    }
+  };
+
+  const handleMarkAllAsRead = () => {
+    const allIds: string[] = [];
+    dbLogs.forEach((dbLog, idx) => {
+      allIds.push(`db-log-${dbLog.id || idx}`);
+    });
+    if (state?.logs) {
+      state.logs.forEach((logText, idx) => {
+        allIds.push(`live-log-${idx}-${logText.slice(0, 20)}`);
+      });
+    }
+    allNotifications.forEach((n) => allIds.push(n.id));
+    const combined = Array.from(new Set([...readNotifIds, ...allIds]));
+    setReadNotifIds(combined);
+    localStorage.setItem("reksa_read_notifications", JSON.stringify(combined));
+    window.dispatchEvent(new Event("reksa_notifications_updated"));
+  };
+
+  const handleOpenCase = (notifId: string, caseId?: string) => {
+    markAsRead(notifId);
     if (caseId && update) {
       update({ activeCaseId: caseId });
     }
@@ -4349,8 +4539,20 @@ function Notifications({
         title="Notifikasi &amp; Pembaruan" 
         copy="Daftar aktivitas penanganan bantuan dan verifikasi posko terkini." 
         action={
-          <div className="trust-badge" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            <span className="live-indicator-dot" /> {allNotifications.length} Notifikasi Terbaru
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            {unreadCount > 0 && (
+              <button 
+                type="button" 
+                className="btn-mark-all-read" 
+                onClick={handleMarkAllAsRead}
+                title="Tandai semua notifikasi telah dibaca"
+              >
+                <Icon name="check" /> Tandai Semua Dibaca
+              </button>
+            )}
+            <div className="trust-badge" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <span className="live-indicator-dot" /> {unreadCount > 0 ? `${unreadCount > 99 ? "99+" : unreadCount} Belum Dibaca` : "Semua Terbaca"}
+            </div>
           </div>
         }
       />
@@ -4378,7 +4580,11 @@ function Notifications({
           </div>
         ) : (
           items.map((x) => (
-            <div className={`notif-inbox-card ${x.unread ? "unread" : ""}`} key={x.id}>
+            <div 
+              className={`notif-inbox-card ${x.unread ? "unread" : ""}`} 
+              key={x.id}
+              onClick={() => markAsRead(x.id)}
+            >
               <div className={`notif-inbox-avatar ${x.unread ? "new" : ""}`}>
                 <Icon name="bell" />
                 {x.unread && <span className="notif-dot-pulse" />}
@@ -4394,7 +4600,10 @@ function Notifications({
               <button 
                 type="button" 
                 className="btn-notif-action" 
-                onClick={() => handleOpenCase(x.caseId)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenCase(x.id, x.caseId);
+                }}
               >
                 Lihat Kasus <Icon name="next" />
               </button>
