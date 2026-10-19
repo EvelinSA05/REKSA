@@ -79,7 +79,7 @@ export function MissionLiveTrackingMap({
   const [gpsAccuracy, setGpsAccuracy] = useState<number>(3); // ±3 meters
   const [satelliteCount, setSatelliteCount] = useState<number>(14);
   const [lastPingTime, setLastPingTime] = useState<string>('Baru saja');
-  const [tileMode, setTileMode] = useState<'streets' | 'light'>('streets');
+  const [tileMode, setTileMode] = useState<'streets' | 'satellite'>('streets');
   const [showExplainer, setShowExplainer] = useState<boolean>(false);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
@@ -408,16 +408,25 @@ export function MissionLiveTrackingMap({
       const tileUrl =
         tileMode === 'streets'
           ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-          : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+          : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
       const tileLayer = L.tileLayer(tileUrl, {
-        attribution: '&copy; OpenStreetMap contributors',
+        attribution: '&copy; OpenStreetMap contributors / Esri Satellite',
         maxZoom: 19,
       }).addTo(map);
 
       tileLayerRef.current = tileLayer;
       L.control.zoom({ position: 'topright' }).addTo(map);
       mapInstanceRef.current = map;
+    }
+
+    // Reaktif ganti layer tiles seketika saat tombol ditekan
+    if (tileLayerRef.current) {
+      const activeUrl =
+        tileMode === 'satellite'
+          ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+          : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      tileLayerRef.current.setUrl(activeUrl);
     }
 
     const map = mapInstanceRef.current;
@@ -1040,24 +1049,25 @@ export function MissionLiveTrackingMap({
 
           <button
             type="button"
-            onClick={() => setTileMode((m) => (m === 'streets' ? 'light' : 'streets'))}
-            title="Ganti tampilan lapisan peta"
+            onClick={() => setTileMode((m) => (m === 'streets' ? 'satellite' : 'streets'))}
+            title="Ganti tampilan antara Peta Jalan dan Citra Satelit Foto Udara"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
+              background: tileMode === 'satellite' ? '#15803d' : 'rgba(255, 255, 255, 0.12)',
+              border: `1px solid ${tileMode === 'satellite' ? '#86efac' : 'rgba(255, 255, 255, 0.25)'}`,
               color: '#ffffff',
               fontSize: '0.78rem',
               fontWeight: 700,
-              padding: '5px 10px',
+              padding: '5px 12px',
               borderRadius: '8px',
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             <AppIcon name="layers" size={13} />
-            <span>{tileMode === 'streets' ? 'Peta Terang' : 'Peta Jalan'}</span>
+            <span>{tileMode === 'streets' ? 'Citra Satelit' : 'Peta Jalan'}</span>
           </button>
         </div>
       </div>
