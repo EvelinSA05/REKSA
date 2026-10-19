@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
+import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 
 interface MitraMisiPenyaluranProps {
   misiList: MisiItem[];
@@ -476,6 +477,14 @@ export function MitraMisiPenyaluran({
             <span style={{ color: "#64748b" }}>Satgas / Mitra:</span>
             <strong style={{ color: "#0f172a" }}>{currentMission.organisasi || userOrg}</strong>
           </div>
+
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+            <AppIcon name="pin" size={15} style={{ color: "#15803d" }} />
+            <span style={{ color: "#64748b" }}>Tujuan Distribusi:</span>
+            <strong style={{ color: "#0f172a" }}>
+              {currentMission.kebutuhan ? `${currentMission.kebutuhan.citizen_name || 'Keluarga Penerima'} (${currentMission.kebutuhan.desa || 'Desa Terdampak'}, Kec. ${currentMission.kebutuhan.kecamatan || 'Sidoarjo'})` : 'Titik Lokasi Warga Bencana'}
+            </strong>
+          </div>
         </div>
 
         {/* Obstacle Alert Banner if active */}
@@ -507,6 +516,31 @@ export function MitraMisiPenyaluran({
             </div>
           </div>
         )}
+
+        {/* REAL-TIME GIS FLEET TRACKING MAP & TELEMETRY */}
+        <div style={{ marginBottom: "26px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <AppIcon name="map" size={16} style={{ color: "#013220" }} />
+              <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#013220", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Peta Pelacakan Real-Time Armada Logistik
+              </label>
+            </div>
+            <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
+              Memantau pergerakan armada secara langsung dari Posko BPBD ke lokasi warga
+            </span>
+          </div>
+
+          <MissionLiveTrackingMap
+            mission={currentMission}
+            height="420px"
+            onReportObstacle={() => {
+              setObstacleModalMisi(currentMission);
+              setObstacleType("Akses Jalan Terputus (Longsor)");
+              setObstacleNotes("");
+            }}
+          />
+        </div>
 
         {/* 5-STAGE PROGRESSION TRACKER */}
         <div style={{ marginBottom: "26px" }}>

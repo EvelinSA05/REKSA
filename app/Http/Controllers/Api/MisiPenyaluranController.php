@@ -15,7 +15,7 @@ class MisiPenyaluranController extends Controller
         $query = MisiPenyaluran::with([
             'posko',
             'kebutuhan' => function ($q) {
-                $q->select('id', 'kode_kasus', 'posko_id', 'kategori_kebutuhan', 'volume_permintaan', 'total_alokasi_resmi', 'total_diterima_resmi', 'jumlah_kk', 'status_hunian', 'tingkat_urgensi', 'status', 'desa', 'kecamatan', 'kabupaten');
+                $q->select('id', 'kode_kasus', 'citizen_name', 'posko_id', 'kategori_kebutuhan', 'volume_permintaan', 'total_alokasi_resmi', 'total_diterima_resmi', 'jumlah_kk', 'status_hunian', 'tingkat_urgensi', 'status', 'desa', 'kecamatan', 'kabupaten', 'provinsi', 'latitude', 'longitude');
             },
             'penawaran',
             'responder',
@@ -46,7 +46,7 @@ class MisiPenyaluranController extends Controller
         $mission = MisiPenyaluran::with([
             'posko',
             'kebutuhan' => function ($q) {
-                $q->select('id', 'kode_kasus', 'posko_id', 'kategori_kebutuhan', 'volume_permintaan', 'total_alokasi_resmi', 'total_diterima_resmi', 'jumlah_kk', 'status_hunian', 'tingkat_urgensi', 'status');
+                $q->select('id', 'kode_kasus', 'citizen_name', 'posko_id', 'kategori_kebutuhan', 'volume_permintaan', 'total_alokasi_resmi', 'total_diterima_resmi', 'jumlah_kk', 'status_hunian', 'tingkat_urgensi', 'status', 'desa', 'kecamatan', 'kabupaten', 'provinsi', 'latitude', 'longitude');
             },
             'bursa',
             'penawaran',

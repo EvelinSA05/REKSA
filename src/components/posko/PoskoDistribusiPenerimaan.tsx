@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CaseRecord } from "../../App";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
+import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 
 interface PoskoDistribusiPenerimaanProps {
   misiList: MisiItem[];
@@ -28,6 +29,9 @@ export function PoskoDistribusiPenerimaan({
   const [receivedVolumeInput, setReceivedVolumeInput] = useState("");
   const [confirmNotesInput, setConfirmNotesInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Live Fleet Tracking Modal
+  const [trackingModalMisi, setTrackingModalMisi] = useState<MisiItem | null>(null);
 
   const activeMissions = misiList.filter((m) => m.status_tahapan !== "Selesai");
   const arrivedMissions = misiList.filter(
@@ -499,7 +503,7 @@ export function PoskoDistribusiPenerimaan({
 
                 {/* 6. Dedicated Footer Action Bar */}
                 <div className="posko-case-footer-row">
-                  <div>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                     {matchedCase && (
                       <button
                         type="button"
@@ -512,6 +516,35 @@ export function PoskoDistribusiPenerimaan({
                         <AppIcon name="arrow-right" size={13} />
                       </button>
                     )}
+
+                    <button
+                      type="button"
+                      className="btn-case-view"
+                      onClick={() => setTrackingModalMisi(m)}
+                      title="Pantau posisi GPS armada logistik secara langsung di peta"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        background: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        color: "#15803d",
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: "7px",
+                          height: "7px",
+                          borderRadius: "50%",
+                          background: isCompleted ? "#94a3b8" : "#16a34a",
+                          boxShadow: isCompleted ? "none" : "0 0 6px #16a34a",
+                          display: "inline-block",
+                        }}
+                      />
+                      <AppIcon name="map" size={13} />
+                      <span>Lacak GPS Armada</span>
+                    </button>
                   </div>
 
                   <div className="posko-case-actions-cluster">
@@ -652,6 +685,97 @@ export function PoskoDistribusiPenerimaan({
                 {isSubmitting ? "Menyimpan..." : "Konfirmasi & Rekonsiliasi"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* LIVE FLEET TRACKING MODAL */}
+      {trackingModalMisi && (
+        <div className="modal-backdrop" onClick={() => setTrackingModalMisi(null)}>
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(960px, 96%)",
+              maxWidth: "960px",
+              textAlign: "left",
+              borderRadius: "20px",
+              padding: "24px",
+              background: "#ffffff",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.28)",
+              position: "relative",
+              border: "1px solid rgba(1, 50, 32, 0.15)",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setTrackingModalMisi(null)}
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "#f1f5f9",
+                border: "none",
+                borderRadius: "50%",
+                cursor: "pointer",
+                color: "#64748b",
+                width: "36px",
+                height: "36px",
+                display: "grid",
+                placeItems: "center",
+                transition: "all 0.15s ease",
+                zIndex: 10,
+              }}
+            >
+              <AppIcon name="x" size={18} />
+            </button>
+
+            <div style={{ marginBottom: "16px", paddingRight: "44px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "4px" }}>
+                <span
+                  style={{
+                    fontFamily: "monospace",
+                    fontWeight: 800,
+                    fontSize: "0.95rem",
+                    color: "#013220",
+                    background: "#f1f5f9",
+                    padding: "3px 10px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  {trackingModalMisi.kode_misi}
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    padding: "3px 10px",
+                    borderRadius: "9999px",
+                    background: "#f0fdf4",
+                    color: "#15803d",
+                    border: "1px solid #bbf7d0",
+                  }}
+                >
+                  Tahapan: {trackingModalMisi.status_tahapan}
+                </span>
+              </div>
+              <h2 style={{ fontSize: "1.35rem", fontWeight: 800, color: "#013220", margin: "4px 0" }}>
+                Pelacakan Real-Time Armada: {trackingModalMisi.armada_info}
+              </h2>
+              <p style={{ color: "#64748b", fontSize: "0.86rem", margin: 0 }}>
+                Muatan: <strong style={{ color: "#0f172a" }}>{trackingModalMisi.muatan}</strong> · Mitra:{" "}
+                <strong style={{ color: "#0f172a" }}>{trackingModalMisi.organisasi}</strong> · PIC:{" "}
+                <strong style={{ color: "#0f172a" }}>{trackingModalMisi.responder_name}</strong>
+              </p>
+            </div>
+
+            <MissionLiveTrackingMap
+              mission={trackingModalMisi}
+              height="440px"
+            />
           </div>
         </div>
       )}
