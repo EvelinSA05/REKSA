@@ -729,7 +729,7 @@ export function ChatKoordinasi({
             <div className="compose-input-row mono-input-row">
               <textarea
                 className="chat-textarea-input mono-textarea"
-                placeholder={`Tulis pesan koordinasi sebagai ${senderName}... (Enter untuk kirim, Shift+Enter untuk baris baru)`}
+                placeholder={`Tulis pesan sebagai ${senderName}...`}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => {
@@ -738,7 +738,7 @@ export function ChatKoordinasi({
                     handleSendMessage();
                   }
                 }}
-                rows={2}
+                rows={1}
               />
 
               <button
@@ -750,7 +750,7 @@ export function ChatKoordinasi({
                   <span>Mengirim...</span>
                 ) : (
                   <>
-                    <span>Kirim Pesan</span>
+                    <span className="send-btn-text">Kirim</span>
                     <span className="send-arrow-icon">➤</span>
                   </>
                 )}
