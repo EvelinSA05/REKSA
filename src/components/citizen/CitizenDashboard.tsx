@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CaseRecord,
   SharedState,
@@ -13,6 +13,8 @@ import {
   getFieldEvidencePhoto,
 } from "../../App";
 import { CitizenClarificationModal } from "./CitizenClarificationModal";
+import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
+import { MisiItem, apiService } from "../../services/api";
 
 interface CitizenDashboardProps {
   state: SharedState;
@@ -30,6 +32,60 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
   );
   const hasCases = currentCases.length > 0;
   const clarificationCases = currentCases.filter((c) => c.status === "Perlu Klarifikasi");
+
+  // Real-time logistic tracking missions for citizen
+  const [localMisiList, setLocalMisiList] = useState<MisiItem[]>(state.misiList || []);
+  const [selectedMisiId, setSelectedMisiId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (state.misiList && state.misiList.length > 0) {
+      setLocalMisiList(state.misiList);
+    } else {
+      apiService
+        .getMisi()
+        .then((res) => {
+          if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+            setLocalMisiList(res.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [state.misiList]);
+
+  // Determine which missions belong to this citizen or should be tracked
+  const displayMissions = useMemo(() => {
+    const allMissions = localMisiList.length > 0 ? localMisiList : (state.misiList || []);
+    if (allMissions.length === 0) return [];
+
+    const citizenCaseIds = currentCases.map((c) => c.id);
+    const citizenMatched = allMissions.filter((m) => {
+      const matchName =
+        m.kebutuhan?.citizen_name &&
+        name &&
+        (m.kebutuhan.citizen_name.toLowerCase().includes(name.toLowerCase()) ||
+          name.toLowerCase().includes(m.kebutuhan.citizen_name.toLowerCase()));
+      const matchCase = m.kebutuhan?.kode_kasus && citizenCaseIds.includes(m.kebutuhan.kode_kasus);
+      return matchName || matchCase;
+    });
+
+    if (citizenMatched.length > 0) {
+      const active = citizenMatched.filter((m) => m.status_tahapan !== "Selesai");
+      const done = citizenMatched.filter((m) => m.status_tahapan === "Selesai");
+      return active.length > 0 ? [...active, ...done] : citizenMatched;
+    }
+
+    const activeAll = allMissions.filter((m) => m.status_tahapan !== "Selesai");
+    return activeAll.length > 0 ? activeAll : allMissions;
+  }, [localMisiList, state.misiList, currentCases, name]);
+
+  const currentMission = useMemo(() => {
+    if (displayMissions.length === 0) return null;
+    if (selectedMisiId) {
+      const found = displayMissions.find((m) => m.id === selectedMisiId);
+      if (found) return found;
+    }
+    return displayMissions[0];
+  }, [displayMissions, selectedMisiId]);
 
   const quickItems = [
     { 
@@ -205,7 +261,174 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         </div>
       </section>
 
-      {/* 2. REKAPITULASI KEBUTUHAN - SEMUA LAPORAN ANDA */}
+      {/* 2. REAL-TIME LOGISTICS FLEET TRACKING MAP FOR CITIZEN */}
+      {currentMission && (
+        <section className="citizen-tracking-section" style={{ marginBottom: "32px" }}>
+          <div
+            className="section-title"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              flexWrap: "wrap",
+              gap: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            <div>
+              <span className="eyebrow" style={{ color: "var(--forest, #013220)", fontWeight: 700, letterSpacing: "0.06em" }}>
+                PELACAKAN LOGISTIK REAL-TIME
+              </span>
+              <h2
+                style={{
+                  fontSize: "1.45rem",
+                  fontWeight: 800,
+                  color: "var(--forest, #013220)",
+                  margin: "4px 0 0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>Peta Pelacakan Real-Time Armada Logistik</span>
+                {currentMission.status_tahapan && (
+                  <span
+                    style={{
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      background:
+                        currentMission.status_tahapan === "Dalam Pengiriman"
+                          ? "#dcfce7"
+                          : currentMission.status_tahapan === "Tiba di Lokasi & Diserahkan"
+                          ? "#e0e7ff"
+                          : currentMission.status_tahapan === "Selesai"
+                          ? "#f0fdf4"
+                          : "#f1f5f9",
+                      color:
+                        currentMission.status_tahapan === "Dalam Pengiriman"
+                          ? "#15803d"
+                          : currentMission.status_tahapan === "Tiba di Lokasi & Diserahkan"
+                          ? "#3730a3"
+                          : currentMission.status_tahapan === "Selesai"
+                          ? "#166534"
+                          : "#475569",
+                      border: "1px solid currentColor",
+                    }}
+                  >
+                    {currentMission.status_tahapan}
+                  </span>
+                )}
+              </h2>
+              <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.88rem" }}>
+                Memantau pergerakan armada secara langsung dari Posko BPBD ke lokasi warga
+              </p>
+            </div>
+
+            {/* Mission Selector Tabs (if more than 1 mission) */}
+            {displayMissions.length > 1 && (
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+                  Misi:
+                </span>
+                {displayMissions.map((m) => {
+                  const isSel = m.id === currentMission.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMisiId(m.id)}
+                      style={{
+                        padding: "5px 12px",
+                        borderRadius: "8px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        border: isSel ? "1.5px solid #013220" : "1px solid #cbd5e1",
+                        background: isSel ? "#013220" : "#ffffff",
+                        color: isSel ? "#ffffff" : "#334155",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {m.kode_misi} ({m.kebutuhan?.kategori_kebutuhan || m.muatan || "Bantuan"})
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Mission Route & Driver Meta Info Card */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1.5px solid rgba(1, 50, 32, 0.12)",
+              borderRadius: "14px",
+              padding: "14px 18px",
+              marginBottom: "14px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "14px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+              <div>
+                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                  Posko Asal Logistik
+                </small>
+                <strong style={{ fontSize: "0.88rem", color: "#013220", display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span>🏢</span> {currentMission.posko?.nama_posko || "Posko Induk BPBD Sidoarjo"}
+                </strong>
+              </div>
+
+              <span style={{ color: "#94a3b8", fontSize: "1.1rem" }}>➔</span>
+
+              <div>
+                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                  Titik Lokasi Warga
+                </small>
+                <strong style={{ fontSize: "0.88rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span>📍</span> {currentMission.kebutuhan?.desa ? `${currentMission.kebutuhan.desa}, ${currentMission.kebutuhan.kecamatan || ""}` : "Lokasi Pemohon"}
+                </strong>
+              </div>
+
+              <span style={{ color: "#e2e8f0" }}>|</span>
+
+              <div>
+                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                  Muatan Paket
+                </small>
+                <strong style={{ fontSize: "0.88rem", color: "#013220", display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span>📦</span> {currentMission.muatan || currentMission.kebutuhan?.kategori_kebutuhan || "Paket Bantuan"}
+                </strong>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ textAlign: "right" }}>
+                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
+                  Pengemudi / Satgas
+                </small>
+                <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>
+                  {currentMission.responder_name || currentMission.organisasi || "Relawan Satgas Penyalur"}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <MissionLiveTrackingMap
+            mission={currentMission}
+            height="440px"
+          />
+        </section>
+      )}
+
+      {/* 3. REKAPITULASI KEBUTUHAN - SEMUA LAPORAN ANDA */}
       <section className="all-cases-overview-section">
         <div className="section-title">
           <div>
