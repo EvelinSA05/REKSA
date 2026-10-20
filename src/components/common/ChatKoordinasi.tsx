@@ -11,61 +11,63 @@ export interface ChatKoordinasiProps {
   setPage?: (p: PortalPage) => void;
 }
 
+// Clean Monochrome Tag Configuration
 const TAG_CONFIG: Record<
   string,
-  { label: string; icon: string; bg: string; text: string; border: string }
+  { label: string; symbol: string; bg: string; text: string; border: string; isDark?: boolean }
 > = {
   INFO: {
     label: "Info",
-    icon: "📢",
-    bg: "rgba(14, 165, 233, 0.12)",
-    text: "#0284c7",
-    border: "rgba(14, 165, 233, 0.3)",
+    symbol: "ℹ",
+    bg: "#f1f5f9",
+    text: "#1e293b",
+    border: "#cbd5e1",
   },
   URGENT: {
     label: "Darurat",
-    icon: "🚨",
-    bg: "rgba(239, 68, 68, 0.15)",
-    text: "#dc2626",
-    border: "rgba(239, 68, 68, 0.4)",
+    symbol: "●",
+    bg: "#0f172a",
+    text: "#ffffff",
+    border: "#0f172a",
+    isDark: true,
   },
   LOGISTIK: {
     label: "Logistik",
-    icon: "📦",
-    bg: "rgba(245, 158, 11, 0.14)",
-    text: "#d97706",
-    border: "rgba(245, 158, 11, 0.35)",
+    symbol: "▤",
+    bg: "#f8fafc",
+    text: "#334155",
+    border: "#cbd5e1",
   },
   AKSES: {
     label: "Akses Jalan",
-    icon: "🚧",
-    bg: "rgba(139, 92, 246, 0.14)",
-    text: "#7c3aed",
-    border: "rgba(139, 92, 246, 0.35)",
+    symbol: "▲",
+    bg: "#f8fafc",
+    text: "#334155",
+    border: "#cbd5e1",
   },
   KONFIRMASI: {
     label: "Konfirmasi",
-    icon: "✅",
-    bg: "rgba(16, 185, 129, 0.14)",
-    text: "#059669",
-    border: "rgba(16, 185, 129, 0.35)",
+    symbol: "✓",
+    bg: "#e2e8f0",
+    text: "#0f172a",
+    border: "#94a3b8",
   },
 };
 
 const DEFAULT_CHANNELS: ChatChannelItem[] = [
   {
     id: "umum",
-    name: "Kanal Siaga & Tanggap Darurat",
-    description: "Ruang koordinasi umum terbuka bagi Warga, Posko BPBD, dan Mitra Relawan.",
+    name: "Kanal Umum (Siaga Bencana)",
+    description: "Koordinasi terbuka trilateral antara Warga, Posko BPBD, dan Mitra Kemanusiaan.",
     icon: "globe",
-    badge: "Lintas Role",
+    badge: "Semua Role",
     allowed_roles: ["citizen", "posko", "responder"],
     message_count: 0,
   },
   {
     id: "posko_mitra",
     name: "Posko BPBD ⇄ Mitra Satgas",
-    description: "Koordinasi logistik bantuan, ketersediaan stok posko, dan armada pengiriman.",
+    description: "Sinkronisasi stok gudang, armada lapangan, bursa kebutuhan, dan penjemputan.",
     icon: "shield",
     badge: "BPBD & Mitra",
     allowed_roles: ["posko", "responder"],
@@ -74,7 +76,7 @@ const DEFAULT_CHANNELS: ChatChannelItem[] = [
   {
     id: "bantuan_warga",
     name: "Layanan Warga & Posko BPBD",
-    description: "Komunikasi langsung antara warga terdampak dan petugas posko wilayah.",
+    description: "Klarifikasi kebutuhan darurat warga, update evakuasi, dan konfirmasi penerimaan.",
     icon: "users",
     badge: "Warga & Posko",
     allowed_roles: ["citizen", "posko", "responder"],
@@ -106,7 +108,7 @@ export function ChatKoordinasi({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Determine current sender identity
+  // Sender info resolution
   const senderRole: "citizen" | "posko" | "responder" =
     role === "citizen" || role === "posko" || role === "responder"
       ? role
@@ -125,11 +127,11 @@ export function ChatKoordinasi({
     }
     if (senderRole === "citizen") {
       return state.userProfile?.address
-        ? `Warga (${state.userProfile.address.slice(0, 20)}...)`
-        : "Warga Terdampak (RT 04)";
+        ? `Warga (${state.userProfile.address.slice(0, 22)})`
+        : "Warga Wilayah Terdampak";
     }
     if (senderRole === "posko") {
-      return state.poskoName || "Posko BPBD Provinsi Jawa Timur";
+      return state.poskoName || "Posko BPBD Wilayah Jatim";
     }
     return "Satgas Tagana & Mitra Penyalur";
   }, [senderRole, state.userProfile, state.poskoName]);
@@ -142,7 +144,7 @@ export function ChatKoordinasi({
         setChannels(res.data);
       }
     } catch {
-      // Fallback remains DEFAULT_CHANNELS
+      // Keep DEFAULT_CHANNELS
     }
   };
 
@@ -156,7 +158,7 @@ export function ChatKoordinasi({
         setLastUpdated(new Date());
       }
     } catch (err) {
-      console.error("Gagal memuat pesan chat:", err);
+      console.error("Gagal memuat pesan:", err);
     } finally {
       if (isInitial) setLoading(false);
     }
@@ -170,24 +172,22 @@ export function ChatKoordinasi({
     loadMessages(true);
   }, [selectedChannel]);
 
-  // Polling every 3.5 seconds for live updates
+  // 3.5s silent background polling
   useEffect(() => {
     const timer = setInterval(() => {
       loadMessages(false);
       loadChannels();
     }, 3500);
-
     return () => clearInterval(timer);
   }, [selectedChannel]);
 
-  // Auto-scroll on new messages
+  // Auto-scroll on new message inside chat box only (does not scroll window)
   useEffect(() => {
-    if (autoScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll && chatScrollContainerRef.current) {
+      chatScrollContainerRef.current.scrollTop = chatScrollContainerRef.current.scrollHeight;
     }
   }, [messages, autoScroll]);
 
-  // Detect manual user scroll to pause autoScroll
   const handleScroll = () => {
     if (!chatScrollContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatScrollContainerRef.current;
@@ -195,7 +195,7 @@ export function ChatKoordinasi({
     setAutoScroll(isAtBottom);
   };
 
-  // Send message handler
+  // Send message
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanText = inputText.trim();
@@ -221,7 +221,7 @@ export function ChatKoordinasi({
         if (notify) {
           notify(
             selectedTag === "URGENT"
-              ? "🚨 Pesan Darurat terkirim & tercatat di log aktivitas!"
+              ? "Pesan Darurat terkirim & tercatat di log aktivitas."
               : "Pesan koordinasi terkirim."
           );
         }
@@ -229,14 +229,14 @@ export function ChatKoordinasi({
         loadChannels();
       }
     } catch (err) {
-      console.error("Gagal mengirim pesan:", err);
+      console.error("Gagal mengirim pesan chat:", err);
       alert("Gagal mengirim pesan chat. Periksa koneksi internet Anda.");
     } finally {
       setSending(false);
     }
   };
 
-  // Filter messages by tag and search query
+  // Filter messages
   const filteredMessages = useMemo(() => {
     return messages.filter((m) => {
       if (filterTag !== "ALL" && m.tag !== filterTag) return false;
@@ -254,56 +254,62 @@ export function ChatKoordinasi({
   const currentChannelInfo =
     channels.find((c) => c.id === selectedChannel) || DEFAULT_CHANNELS[0];
 
-  // Helper template inserts
   const quickTemplates = [
     {
-      text: "🚨 Ada kebutuhan mendesak air bersih & obat di lokasi warga.",
+      text: "Ada kebutuhan mendesak air bersih & medis di titik warga.",
       tag: "URGENT",
     },
     {
-      text: "📦 Armada penjemputan logistik sedang meluncur ke Posko Wilayah.",
+      text: "Armada pengiriman logistik sedang meluncur ke Posko Wilayah.",
       tag: "LOGISTIK",
     },
     {
-      text: "🚧 Jalur alternatif via jalan barat bisa dilalui kendaraan roda 4.",
+      text: "Jalur alternatif via jalan barat aman dilalui kendaraan roda 4.",
       tag: "AKSES",
     },
     {
-      text: "✅ Bantuan paket sembako sudah diterima warga dengan selamat.",
+      text: "Bantuan paket logistik sudah diterima warga dengan selamat.",
       tag: "KONFIRMASI",
     },
   ];
 
   return (
-    <div className="chat-koordinasi-container">
-      {/* Top Banner / Breadcrumb */}
-      <div className="chat-top-header">
+    <div className="chat-koordinasi-container mono-theme">
+      {/* Top Banner */}
+      <div className="chat-top-header mono-header">
         <div className="chat-top-title-area">
-          <div className="chat-role-indicator-badge">
-            <span className="live-dot-pulse"></span>
-            <span>Jalur Koordinasi Multi-Role Real-Time</span>
+          <div className="chat-role-indicator-badge mono-badge">
+            <span className="mono-dot-pulse"></span>
+            <span>Jalur Koordinasi Sinkron 3 Role</span>
           </div>
           <h2>Ruang Komunikasi Tanggap Bencana</h2>
           <p>
-            Platform komunikasi sinkron terpadu antara <strong>Warga Terdampak</strong>,{" "}
-            <strong>Koordinator Posko BPBD</strong>, dan{" "}
-            <strong>Mitra Satgas Penyalur</strong>.
+            Koordinasi trilateral real-time antara <strong>Masyarakat Terdampak</strong>,{" "}
+            <strong>Koordinator Posko BPBD</strong>, dan <strong>Mitra Satgas Penyalur</strong>.
           </p>
         </div>
 
-        {/* Sender Profile Quick Bar */}
-        <div className="chat-sender-profile-card">
+        {/* Sender Profile Box */}
+        <div className="chat-sender-profile-card mono-profile-card">
           <div className="sender-avatar-pill">
-            <div
-              className={`role-avatar-circle ${
-                senderRole === "citizen"
-                  ? "role-citizen"
-                  : senderRole === "posko"
-                  ? "role-posko"
-                  : "role-responder"
-              }`}
-            >
-              {senderRole === "citizen" ? "👤" : senderRole === "posko" ? "🏢" : "🚚"}
+            <div className={`mono-avatar-circle role-${senderRole}`}>
+              {senderRole === "citizen" ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              ) : senderRole === "posko" ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+                  <circle cx="7" cy="18" r="2" />
+                  <circle cx="17" cy="18" r="2" />
+                  <path d="M14 9h4l3 4v4h-2M9 18h6" />
+                </svg>
+              )}
             </div>
             <div className="sender-meta-info">
               <span className="sender-name-text">{senderName}</span>
@@ -317,98 +323,110 @@ export function ChatKoordinasi({
             </div>
           </div>
           <div className="sender-org-badge">
-            <span className="org-label">Instansi/Wilayah:</span>
+            <span className="org-label">Wilayah/Afiliasi:</span>
             <span className="org-value">{senderOrg}</span>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Left Channels, Right Active Room */}
-      <div className="chat-main-grid">
+      {/* Main Grid */}
+      <div className="chat-main-grid mono-grid">
         {/* Left Sidebar: Channels */}
-        <aside className="chat-channels-sidebar">
+        <aside className="chat-channels-sidebar mono-channels-sidebar">
           <div className="channels-sidebar-head">
             <span className="section-mini-title">KANAL KOMUNIKASI</span>
-            <span className="channels-count-badge">{channels.length} Kanal</span>
+            <span className="channels-count-badge">{channels.length} Saluran</span>
           </div>
 
           <div className="channels-list">
             {channels.map((chan) => {
               const isSelected = chan.id === selectedChannel;
-              const hasAccess =
-                chan.allowed_roles.includes("all") ||
-                chan.allowed_roles.includes(senderRole);
 
               return (
                 <button
                   key={chan.id}
                   onClick={() => setSelectedChannel(chan.id)}
-                  className={`channel-item-btn ${isSelected ? "selected" : ""} ${
-                    !hasAccess ? "dimmed-access" : ""
-                  }`}
+                  className={`channel-item-btn mono-channel-btn ${isSelected ? "selected" : ""}`}
                   type="button"
                 >
-                  <div className="channel-icon-box">
-                    {chan.id === "umum" ? "🌐" : chan.id === "posko_mitra" ? "🏢" : "🤝"}
-                  </div>
-                  <div className="channel-text-info">
-                    <div className="channel-name-row">
+                  <div className="mono-channel-card-top">
+                    <div className="mono-channel-left-head">
+                      <span className="mono-channel-icon">
+                        {chan.id === "umum" ? (
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                          </svg>
+                        ) : chan.id === "posko_mitra" ? (
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                        )}
+                      </span>
                       <span className="channel-name">{chan.name}</span>
-                      <span className="channel-badge-tag">{chan.badge}</span>
                     </div>
-                    <p className="channel-desc">{chan.description}</p>
-                    {chan.latest_message && (
-                      <div className="channel-latest-preview">
-                        <strong>{chan.latest_message.sender_name}:</strong>{" "}
-                        {chan.latest_message.message.slice(0, 32)}...
-                      </div>
+                    {chan.message_count > 0 && (
+                      <span className="mono-channel-counter">{chan.message_count}</span>
                     )}
                   </div>
-                  {chan.message_count > 0 && (
-                    <span className="channel-msg-count">{chan.message_count}</span>
+
+                  <div className="mono-channel-badge-row">
+                    <span className="mono-badge-pill">{chan.badge}</span>
+                  </div>
+
+                  <p className="channel-desc">{chan.description}</p>
+
+                  {chan.latest_message && (
+                    <div className="mono-channel-latest">
+                      <span className="latest-sender">{chan.latest_message.sender_name}:</span>{" "}
+                      <span className="latest-snippet">{chan.latest_message.message}</span>
+                    </div>
                   )}
                 </button>
               );
             })}
           </div>
 
-          {/* Quick Guidance Box */}
-          <div className="chat-guidance-card">
+          {/* Quick Guide */}
+          <div className="chat-guidance-card mono-guidance">
             <div className="guidance-title">
-              <span>💡 Panduan Komunikasi</span>
+              <span>Panduan Koordinasi</span>
             </div>
             <ul className="guidance-list">
               <li>
-                <strong>Warga:</strong> Sampaikan kebutuhan genting, lokasi akurat, atau
-                konfirmasi paket diterima.
+                <strong>Warga:</strong> Beri laporan detail posisi dan kebutuhan utama.
               </li>
               <li>
-                <strong>Posko BPBD:</strong> Verifikasi data lapangan, alokasikan posko &
-                beri update status darurat.
+                <strong>Posko BPBD:</strong> Verifikasi data, tetapkan prioritas dan status.
               </li>
               <li>
-                <strong>Mitra:</strong> Laporkan pergerakan armada, estimasi tiba, &
-                hambatan akses jalur.
+                <strong>Mitra:</strong> Beri kepastian armada, muatan, dan estimasi tiba.
               </li>
             </ul>
           </div>
         </aside>
 
-        {/* Right Area: Messages + Input Bar */}
-        <main className="chat-stream-panel">
+        {/* Right Area: Messages */}
+        <main className="chat-stream-panel mono-stream-panel">
           {/* Channel Header Bar */}
-          <div className="chat-stream-header">
+          <div className="chat-stream-header mono-stream-header">
             <div className="stream-header-info">
               <div className="stream-title-row">
                 <h3>{currentChannelInfo.name}</h3>
-                <span className="stream-badge-pill">{currentChannelInfo.badge}</span>
+                <span className="mono-badge-pill">{currentChannelInfo.badge}</span>
               </div>
               <p className="stream-description">{currentChannelInfo.description}</p>
             </div>
 
             <div className="stream-header-actions">
-              <div className="sync-status-indicator">
-                <span className="sync-pulse-dot"></span>
+              <div className="sync-status-indicator mono-sync">
+                <span className="mono-sync-dot"></span>
                 <span className="sync-text">
                   Sinkron Otomatis (
                   {lastUpdated.toLocaleTimeString("id-ID", {
@@ -420,23 +438,28 @@ export function ChatKoordinasi({
                 </span>
               </div>
               <button
-                className="manual-refresh-btn"
+                className="manual-refresh-btn mono-btn-subtle"
                 onClick={() => loadMessages(false)}
                 title="Muat ulang pesan sekarang"
                 type="button"
               >
-                🔄 Segarkan
+                Segarkan
               </button>
             </div>
           </div>
 
           {/* Filter & Search Bar */}
-          <div className="chat-filter-bar">
-            <div className="chat-search-box">
-              <span className="search-icon">🔍</span>
+          <div className="chat-filter-bar mono-filter-bar">
+            <div className="chat-search-box mono-search-box">
+              <span className="search-icon">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
               <input
                 type="text"
-                placeholder="Cari pesan, nama pengirim, atau instansi..."
+                placeholder="Cari pesan, nama, atau instansi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -451,11 +474,11 @@ export function ChatKoordinasi({
               )}
             </div>
 
-            <div className="tag-filter-group">
-              <span className="tag-filter-label">Filter Tag:</span>
+            <div className="tag-filter-group mono-filter-group">
+              <span className="tag-filter-label">Filter:</span>
               <button
                 type="button"
-                className={`tag-filter-chip ${filterTag === "ALL" ? "active" : ""}`}
+                className={`tag-filter-chip mono-chip ${filterTag === "ALL" ? "active" : ""}`}
                 onClick={() => setFilterTag("ALL")}
               >
                 Semua ({messages.length})
@@ -467,10 +490,10 @@ export function ChatKoordinasi({
                   <button
                     key={k}
                     type="button"
-                    className={`tag-filter-chip ${filterTag === k ? "active" : ""}`}
+                    className={`tag-filter-chip mono-chip ${filterTag === k ? "active" : ""}`}
                     onClick={() => setFilterTag(k)}
                   >
-                    <span>{cfg.icon}</span> {cfg.label} ({count})
+                    <span>{cfg.symbol}</span> {cfg.label} ({count})
                   </button>
                 );
               })}
@@ -479,22 +502,21 @@ export function ChatKoordinasi({
 
           {/* Messages Scroll Area */}
           <div
-            className="chat-messages-container"
+            className="chat-messages-container mono-messages-container"
             ref={chatScrollContainerRef}
             onScroll={handleScroll}
           >
             {loading ? (
-              <div className="chat-loading-state">
-                <div className="loading-spinner-circle"></div>
-                <p>Memuat riwayat komunikasi koordinasi...</p>
+              <div className="chat-loading-state mono-loading">
+                <div className="mono-spinner-circle"></div>
+                <p>Memuat riwayat komunikasi...</p>
               </div>
             ) : filteredMessages.length === 0 ? (
-              <div className="chat-empty-state">
+              <div className="chat-empty-state mono-empty">
                 <div className="empty-icon-bubble">💬</div>
                 <h4>Belum ada pesan di kanal ini</h4>
                 <p>
-                  Jadilah yang pertama memulai komunikasi koordinasi tanggap darurat
-                  antara Warga, Posko, dan Mitra Bantuan.
+                  Mulai percakapan koordinasi antara Warga, Posko BPBD, dan Mitra Penyalur.
                 </p>
               </div>
             ) : (
@@ -531,24 +553,36 @@ export function ChatKoordinasi({
                   return (
                     <div
                       key={msg.id || idx}
-                      className={`chat-bubble-row ${isMine ? "my-message-row" : "other-message-row"}`}
+                      className={`chat-bubble-row mono-bubble-row ${isMine ? "my-message-row" : "other-message-row"}`}
                     >
-                      <div className={`chat-avatar-wrapper ${roleStyleClass}`}>
-                        {msg.sender_role === "citizen"
-                          ? "👤"
-                          : msg.sender_role === "posko"
-                          ? "🏢"
-                          : "🚚"}
+                      <div className={`mono-chat-avatar ${roleStyleClass}`}>
+                        {msg.sender_role === "citizen" ? (
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                        ) : msg.sender_role === "posko" ? (
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+                            <circle cx="7" cy="18" r="2" />
+                            <circle cx="17" cy="18" r="2" />
+                            <path d="M14 9h4l3 4v4h-2M9 18h6" />
+                          </svg>
+                        )}
                       </div>
 
-                      <div className={`chat-bubble-content ${roleStyleClass} ${isMine ? "mine" : ""}`}>
-                        {/* Bubble Header */}
-                        <div className="bubble-header">
+                      <div className={`chat-bubble-content mono-bubble-card ${isMine ? "is-mine" : ""}`}>
+                        {/* Header */}
+                        <div className="bubble-header mono-bubble-header">
                           <div className="bubble-sender-meta">
                             <span className="bubble-sender-name">
-                              {msg.sender_name} {isMine && <span className="you-pill">(Anda)</span>}
+                              {msg.sender_name} {isMine && <span className="mono-you-pill">(Anda)</span>}
                             </span>
-                            <span className={`bubble-role-badge ${roleStyleClass}`}>
+                            <span className={`mono-role-badge ${roleStyleClass}`}>
                               {roleTitle}
                             </span>
                             {msg.sender_org && (
@@ -561,37 +595,37 @@ export function ChatKoordinasi({
                           <div className="bubble-right-meta">
                             {msg.tag && (
                               <span
-                                className="bubble-tag-pill"
-                                style={{
-                                  backgroundColor: tagCfg.bg,
-                                  color: tagCfg.text,
-                                  borderColor: tagCfg.border,
-                                }}
+                                className={`mono-tag-pill ${tagCfg.isDark ? "tag-dark" : "tag-light"}`}
                               >
-                                <span>{tagCfg.icon}</span> {tagCfg.label}
+                                <span>{tagCfg.symbol}</span> {tagCfg.label}
                               </span>
                             )}
                             <span className="bubble-timestamp">{timeStr}</span>
                           </div>
                         </div>
 
-                        {/* Bubble Message Body */}
+                        {/* Body */}
                         <div className="bubble-body-text">{msg.message}</div>
 
-                        {/* Optional Reference to Case or Need */}
+                        {/* Reference to Case */}
                         {msg.kebutuhan_id && (
-                          <div className="bubble-reference-card">
-                            <span className="ref-icon">📌</span>
+                          <div className="bubble-reference-card mono-ref-card">
+                            <span className="ref-icon">
+                              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="12" y1="17" x2="12" y2="22" />
+                                <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9a2 2 0 0 1-1.11-1.79V7a4 4 0 0 0-8 0v3.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                              </svg>
+                            </span>
                             <span className="ref-label">
-                              Terkait Laporan Kasus: #{msg.kebutuhan_id}
+                              Terkait Laporan: #{msg.kebutuhan_id}
                             </span>
                             {setPage && (
                               <button
                                 type="button"
-                                className="ref-jump-link"
+                                className="ref-jump-link mono-ref-link"
                                 onClick={() => setPage("cases")}
                               >
-                                Lihat Laporan →
+                                Lihat Detail →
                               </button>
                             )}
                           </div>
@@ -605,15 +639,15 @@ export function ChatKoordinasi({
             )}
           </div>
 
-          {/* Quick Response Suggestion Bar */}
-          <div className="chat-quick-templates">
-            <span className="quick-label">⚡ Template Cepat:</span>
+          {/* Quick Response Templates */}
+          <div className="chat-quick-templates mono-quick-templates">
+            <span className="quick-label">Template Cepat:</span>
             <div className="template-pills-row">
               {quickTemplates.map((item, i) => (
                 <button
                   key={i}
                   type="button"
-                  className="template-pill-btn"
+                  className="template-pill-btn mono-template-btn"
                   onClick={() => {
                     setInputText(item.text);
                     setSelectedTag(item.tag);
@@ -626,10 +660,10 @@ export function ChatKoordinasi({
           </div>
 
           {/* Compose Form */}
-          <form className="chat-compose-box" onSubmit={handleSendMessage}>
+          <form className="chat-compose-box mono-compose-box" onSubmit={handleSendMessage}>
             <div className="compose-top-tools">
-              <div className="tag-selector-group">
-                <span className="compose-tool-label">Label Tag:</span>
+              <div className="tag-selector-group mono-tag-select">
+                <span className="compose-tool-label">Label:</span>
                 {Object.keys(TAG_CONFIG).map((k) => {
                   const cfg = TAG_CONFIG[k];
                   const isSelected = selectedTag === k;
@@ -637,21 +671,16 @@ export function ChatKoordinasi({
                     <button
                       key={k}
                       type="button"
-                      className={`compose-tag-btn ${isSelected ? "selected" : ""}`}
-                      style={{
-                        backgroundColor: isSelected ? cfg.bg : "transparent",
-                        borderColor: isSelected ? cfg.border : "#e2e8f0",
-                        color: isSelected ? cfg.text : "#64748b",
-                      }}
+                      className={`compose-tag-btn mono-compose-tag ${isSelected ? "selected" : ""}`}
                       onClick={() => setSelectedTag(k)}
                     >
-                      <span>{cfg.icon}</span> {cfg.label}
+                      <span>{cfg.symbol}</span> {cfg.label}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Optional Case attachment selector */}
+              {/* Optional Case attachment */}
               {state.casesList && state.casesList.length > 0 && (
                 <div className="compose-case-select-wrapper">
                   <label htmlFor="case-select-input" className="compose-tool-label">
@@ -659,7 +688,7 @@ export function ChatKoordinasi({
                   </label>
                   <select
                     id="case-select-input"
-                    className="compose-case-select"
+                    className="compose-case-select mono-select"
                     value={selectedCaseId || ""}
                     onChange={(e) =>
                       setSelectedCaseId(
@@ -678,10 +707,10 @@ export function ChatKoordinasi({
               )}
             </div>
 
-            <div className="compose-input-row">
+            <div className="compose-input-row mono-input-row">
               <textarea
-                className="chat-textarea-input"
-                placeholder={`Kirim pesan koordinasi sebagai ${senderName} (${senderOrg})... (Tekan Enter untuk kirim, Shift+Enter untuk baris baru)`}
+                className="chat-textarea-input mono-textarea"
+                placeholder={`Tulis pesan koordinasi sebagai ${senderName}... (Enter untuk kirim, Shift+Enter untuk baris baru)`}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => {
@@ -695,11 +724,11 @@ export function ChatKoordinasi({
 
               <button
                 type="submit"
-                className="chat-send-submit-btn"
+                className="chat-send-submit-btn mono-send-btn"
                 disabled={sending || !inputText.trim()}
               >
                 {sending ? (
-                  <span className="sending-spinner">Mengirim...</span>
+                  <span>Mengirim...</span>
                 ) : (
                   <>
                     <span>Kirim Pesan</span>
