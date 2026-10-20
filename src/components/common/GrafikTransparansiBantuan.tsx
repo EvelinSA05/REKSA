@@ -1,23 +1,69 @@
 import React, { useMemo } from "react";
 import { CaseRecord } from "../../App";
 import { MisiItem, PenawaranItem } from "../../services/api";
-import { AppIcon } from "./Icons";
 
 interface GrafikTransparansiBantuanProps {
   cases?: CaseRecord[];
   misiList?: MisiItem[];
   penawaranList?: PenawaranItem[];
   className?: string;
+  style?: React.CSSProperties;
 }
 
 interface KomoditasStat {
   key: string;
   label: string;
-  icon: string;
   volume: string;
   persentase: number;
   color: string;
   penyalurUtama: string;
+}
+
+function CommodityIcon({ type }: { type: string }) {
+  switch (type) {
+    case "pangan":
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+          <line x1="12" y1="22.08" x2="12" y2="12" />
+        </svg>
+      );
+    case "air":
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+        </svg>
+      );
+    case "sandang":
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+        </svg>
+      );
+    case "shelter":
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m19 20-7-14-7 14h14Z" />
+          <path d="M12 6v14" />
+          <path d="M12 14h4" />
+        </svg>
+      );
+    case "medis":
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2" />
+          <path d="M8 12h8" />
+          <path d="M12 8v8" />
+        </svg>
+      );
+    default:
+      return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+        </svg>
+      );
+  }
 }
 
 export function GrafikTransparansiBantuan({
@@ -25,68 +71,58 @@ export function GrafikTransparansiBantuan({
   misiList = [],
   penawaranList = [],
   className = "",
+  style = {},
 }: GrafikTransparansiBantuanProps) {
-  // Aggregate real-world + database distribution statistics
-  const { komoditasList, totalVolume, bpbdPct, mitraPct, topKomoditas } = useMemo(() => {
-    // Baseline realistic distributions verified by BPBD & Mitra in Surabaya-Sidoarjo
+  // Aggregate real-world + database distribution statistics with clean monochrome ranking
+  const { komoditasList, totalVolume, bpbdPct, mitraPct } = useMemo(() => {
     const data: KomoditasStat[] = [
       {
         key: "pangan",
         label: "Pangan & Sembako (Beras, Makanan Siap Saji)",
-        icon: "🍚",
         volume: "1.650 Paket",
         persentase: 42,
-        color: "#013220",
+        color: "#18181b", // Solid Charcoal Black (Top 1)
         penyalurUtama: "BPBD Jatim & Dapur Umum Tagana",
       },
       {
         key: "air",
         label: "Air Bersih & Sanitasi (Tangki & Jerigen)",
-        icon: "💧",
         volume: "1.180 Galon/Jerigen",
         persentase: 30,
-        color: "#0284c7",
+        color: "#3f3f46", // Dark Slate Zinc
         penyalurUtama: "Satgas BPBD & Sedekah Air Mitra",
       },
       {
         key: "sandang",
         label: "Sandang, Selimut & Perlengkapan Bayi",
-        icon: "👕",
         volume: "560 Paket",
         persentase: 14,
-        color: "#9333ea",
+        color: "#71717a", // Medium Zinc
         penyalurUtama: "Mitra Relawan & Donatur Masyarakat",
       },
       {
         key: "shelter",
         label: "Tenda Pengungsian, Matras & Terpal",
-        icon: "🏕️",
         volume: "340 Unit",
         persentase: 9,
-        color: "#16a34a",
+        color: "#a1a1aa", // Light-Medium Zinc
         penyalurUtama: "Gudang Logistik Posko BPBD",
       },
       {
         key: "medis",
         label: "Obat-obatan Darurat, P3K & Masker",
-        icon: "💊",
         volume: "240 Paket Medis",
         persentase: 5,
-        color: "#dc2626",
+        color: "#cbd5e1", // Soft Silver Zinc
         penyalurUtama: "Tim Medis PMI & Relawan Kesehatan",
       },
     ];
 
-    // Calculate real-time contribution ratio
-    const bpbdPct = 62;
-    const mitraPct = 38;
-
     return {
       komoditasList: data,
       totalVolume: "3.970+ Paket Logistik",
-      bpbdPct,
-      mitraPct,
-      topKomoditas: data[0].label.split("(")[0].trim(),
+      bpbdPct: 62,
+      mitraPct: 38,
     };
   }, [cases, misiList, penawaranList]);
 
@@ -102,33 +138,36 @@ export function GrafikTransparansiBantuan({
       style={{
         background: "#ffffff",
         borderRadius: "18px",
-        border: "1.5px solid rgba(1, 50, 32, 0.12)",
-        padding: "24px 26px",
-        marginBottom: "32px",
-        boxShadow: "0 4px 20px rgba(1, 50, 32, 0.04)",
+        border: "1.5px solid #e4e4e7",
+        padding: "26px 28px",
+        marginTop: "54px",
+        marginBottom: "48px",
+        boxShadow: "0 4px 24px rgba(0, 0, 0, 0.04)",
+        ...style,
       }}
     >
-      {/* 1. HEADER */}
+      {/* 1. HEADER (MONOCHROME) */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-end",
           flexWrap: "wrap",
-          gap: "12px",
-          marginBottom: "20px",
-          borderBottom: "1px solid rgba(1, 50, 32, 0.08)",
-          paddingBottom: "14px",
+          gap: "14px",
+          marginBottom: "22px",
+          borderBottom: "1px solid #f4f4f5",
+          paddingBottom: "16px",
         }}
       >
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
             <span
               style={{
                 fontSize: "0.72rem",
                 fontWeight: 800,
-                color: "#013220",
-                background: "rgba(1, 50, 32, 0.08)",
+                color: "#18181b",
+                background: "#f4f4f5",
+                border: "1px solid #e4e4e7",
                 padding: "3px 10px",
                 borderRadius: "999px",
                 letterSpacing: "0.06em",
@@ -141,10 +180,11 @@ export function GrafikTransparansiBantuan({
               style={{
                 fontSize: "0.72rem",
                 fontWeight: 700,
-                color: "#15803d",
-                background: "#dcfce7",
-                padding: "2px 8px",
-                borderRadius: "6px",
+                color: "#ffffff",
+                background: "#18181b",
+                padding: "3px 10px",
+                borderRadius: "999px",
+                letterSpacing: "0.02em",
               }}
             >
               ✓ Terverifikasi Riil
@@ -155,7 +195,7 @@ export function GrafikTransparansiBantuan({
             style={{
               fontSize: "1.35rem",
               fontWeight: 800,
-              color: "#013220",
+              color: "#09090b",
               margin: 0,
               lineHeight: 1.25,
             }}
@@ -163,25 +203,25 @@ export function GrafikTransparansiBantuan({
             Grafik Bantuan Terbanyak dari BPBD &amp; Mitra Kemanusiaan
           </h2>
 
-          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.85rem", lineHeight: 1.4 }}>
+          <p style={{ margin: "5px 0 0", color: "#71717a", fontSize: "0.85rem", lineHeight: 1.4 }}>
             Visualisasi ringkas jenis logistik yang paling banyak disalurkan dan proporsi kolaborasi penyalur.
           </p>
         </div>
 
-        {/* Total Summary Badge */}
+        {/* Total Summary Badge (Monochrome) */}
         <div
           style={{
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
+            background: "#f4f4f5",
+            border: "1px solid #e4e4e7",
             borderRadius: "10px",
-            padding: "8px 14px",
+            padding: "8px 16px",
             textAlign: "right",
           }}
         >
-          <small style={{ display: "block", fontSize: "0.68rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <small style={{ display: "block", fontSize: "0.68rem", color: "#71717a", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>
             Total Bantuan Tersalurkan
           </small>
-          <strong style={{ fontSize: "1.1rem", color: "#013220", fontWeight: 800 }}>
+          <strong style={{ fontSize: "1.1rem", color: "#09090b", fontWeight: 800 }}>
             {totalVolume}
           </strong>
         </div>
@@ -192,17 +232,17 @@ export function GrafikTransparansiBantuan({
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "24px",
+          gap: "26px",
           alignItems: "center",
         }}
       >
-        {/* LEFT COLUMN: KOMODITAS TERBANYAK (HORIZONTAL BARS) */}
+        {/* LEFT COLUMN: KOMODITAS TERBANYAK (HORIZONTAL BARS - MONOCHROME) */}
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#013220", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <strong style={{ fontSize: "0.82rem", color: "#09090b", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>
               Komoditas Paling Banyak Diberikan:
             </strong>
-            <span style={{ fontSize: "0.74rem", color: "#64748b", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.74rem", color: "#71717a", fontWeight: 600 }}>
               Urutan Berdasarkan Volume
             </span>
           </div>
@@ -212,29 +252,44 @@ export function GrafikTransparansiBantuan({
               <div
                 key={item.key}
                 style={{
-                  background: "#fbfbf8",
-                  border: idx === 0 ? "1.5px solid rgba(1, 50, 32, 0.2)" : "1px solid #e2e8f0",
+                  background: idx === 0 ? "#fafafa" : "#ffffff",
+                  border: idx === 0 ? "1.5px solid #18181b" : "1px solid #e4e4e7",
                   borderRadius: "10px",
                   padding: "9px 12px",
                   transition: "all 0.15s ease",
                 }}
               >
                 {/* Title & Stats Row */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "1rem" }}>{item.icon}</span>
-                    <strong style={{ fontSize: "0.82rem", color: "#0f172a" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "26px",
+                        height: "26px",
+                        borderRadius: "6px",
+                        background: idx === 0 ? "#18181b" : "#f4f4f5",
+                        color: idx === 0 ? "#ffffff" : "#27272a",
+                        border: "1px solid #e4e4e7",
+                      }}
+                    >
+                      <CommodityIcon type={item.key} />
+                    </span>
+                    <strong style={{ fontSize: "0.82rem", color: "#18181b" }}>
                       {item.label}
                     </strong>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "0.76rem", color: "#64748b" }}>{item.volume}</span>
+                    <span style={{ fontSize: "0.76rem", color: "#71717a", fontWeight: 500 }}>{item.volume}</span>
                     <span
                       style={{
                         fontSize: "0.72rem",
                         fontWeight: 800,
-                        color: idx === 0 ? "#ffffff" : "#013220",
-                        background: idx === 0 ? "#013220" : "rgba(1, 50, 32, 0.1)",
+                        color: idx === 0 ? "#ffffff" : "#18181b",
+                        background: idx === 0 ? "#18181b" : "#f4f4f5",
+                        border: "1px solid #e4e4e7",
                         padding: "2px 7px",
                         borderRadius: "6px",
                       }}
@@ -244,8 +299,8 @@ export function GrafikTransparansiBantuan({
                   </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+                {/* Progress Bar (Monochrome) */}
+                <div style={{ height: "6px", background: "#f4f4f5", border: "1px solid #e4e4e7", borderRadius: "999px", overflow: "hidden" }}>
                   <div
                     style={{
                       width: `${item.persentase}%`,
@@ -258,22 +313,36 @@ export function GrafikTransparansiBantuan({
                 </div>
 
                 {/* Main Provider Footnote */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px", fontSize: "0.68rem", color: "#64748b" }}>
-                  <span>Penyalur Utama: <b style={{ color: "#334155" }}>{item.penyalurUtama}</b></span>
-                  {idx === 0 && <span style={{ color: "#d97706", fontWeight: 700 }}>★ Terbanyak</span>}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "5px", fontSize: "0.68rem", color: "#71717a" }}>
+                  <span>Penyalur Utama: <b style={{ color: "#27272a" }}>{item.penyalurUtama}</b></span>
+                  {idx === 0 && (
+                    <span
+                      style={{
+                        background: "#18181b",
+                        color: "#ffffff",
+                        padding: "1px 7px",
+                        borderRadius: "4px",
+                        fontSize: "0.66rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      ★ Terbanyak
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* RIGHT COLUMN: PROPORSI KONTRIBUSI BPBD VS MITRA (DONUT CHART) */}
+        {/* RIGHT COLUMN: PROPORSI KONTRIBUSI BPBD VS MITRA (DONUT CHART - MONOCHROME) */}
         <div
           style={{
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
+            background: "#fafafa",
+            border: "1px solid #e4e4e7",
             borderRadius: "14px",
-            padding: "20px",
+            padding: "22px 20px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -281,44 +350,44 @@ export function GrafikTransparansiBantuan({
             textAlign: "center",
           }}
         >
-          <strong style={{ fontSize: "0.84rem", color: "#013220", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "4px" }}>
+          <strong style={{ fontSize: "0.82rem", color: "#09090b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px", fontWeight: 700 }}>
             Proporsi Kontribusi Penyalur
           </strong>
-          <span style={{ fontSize: "0.74rem", color: "#64748b", marginBottom: "14px" }}>
+          <span style={{ fontSize: "0.74rem", color: "#71717a", marginBottom: "16px" }}>
             Kolaborasi Sinergis Pemerintah &amp; Masyarakat
           </span>
 
-          {/* SVG Donut */}
-          <div style={{ position: "relative", width: "140px", height: "140px", marginBottom: "16px" }}>
+          {/* SVG Donut (Monochrome: BPBD Charcoal Black vs Mitra Medium Slate Zinc) */}
+          <div style={{ position: "relative", width: "140px", height: "140px", marginBottom: "18px" }}>
             <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)" }}>
-              {/* Background circle */}
+              {/* Background circle track */}
               <circle
                 cx="70"
                 cy="70"
                 r={radius}
                 fill="transparent"
-                stroke="#e2e8f0"
+                stroke="#f4f4f5"
                 strokeWidth="16"
               />
-              {/* BPBD Segment (Forest Green) */}
+              {/* BPBD Segment (Deep Charcoal Black #18181b) */}
               <circle
                 cx="70"
                 cy="70"
                 r={radius}
                 fill="transparent"
-                stroke="#013220"
+                stroke="#18181b"
                 strokeWidth="16"
                 strokeDasharray={`${bpbdDash} ${circumference - bpbdDash}`}
                 strokeDashoffset="0"
                 strokeLinecap="round"
               />
-              {/* Mitra Segment (Amber/Bronze) */}
+              {/* Mitra Segment (Slate Zinc #71717a) */}
               <circle
                 cx="70"
                 cy="70"
                 r={radius}
                 fill="transparent"
-                stroke="#d97706"
+                stroke="#71717a"
                 strokeWidth="16"
                 strokeDasharray={`${mitraDash} ${circumference - mitraDash}`}
                 strokeDashoffset={-bpbdDash}
@@ -336,16 +405,16 @@ export function GrafikTransparansiBantuan({
                 textAlign: "center",
               }}
             >
-              <strong style={{ fontSize: "1.25rem", color: "#013220", display: "block", lineHeight: 1 }}>
+              <strong style={{ fontSize: "1.25rem", color: "#09090b", display: "block", lineHeight: 1, fontWeight: 800 }}>
                 100%
               </strong>
-              <small style={{ fontSize: "0.65rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>
+              <small style={{ fontSize: "0.65rem", color: "#71717a", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>
                 Akurat
               </small>
             </div>
           </div>
 
-          {/* Donut Legend */}
+          {/* Donut Legend (Monochrome) */}
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px", maxWidth: "260px" }}>
             <div
               style={{
@@ -353,17 +422,17 @@ export function GrafikTransparansiBantuan({
                 justifyContent: "space-between",
                 alignItems: "center",
                 background: "#ffffff",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #e4e4e7",
                 borderRadius: "8px",
-                padding: "6px 12px",
+                padding: "7px 12px",
                 fontSize: "0.78rem",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: "10px", height: "10px", borderRadius: "3px", background: "#013220" }} />
-                <span style={{ fontWeight: 600, color: "#334155" }}>Posko BPBD Wilayah</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ width: "10px", height: "10px", borderRadius: "3px", background: "#18181b" }} />
+                <span style={{ fontWeight: 600, color: "#18181b" }}>Posko BPBD Wilayah</span>
               </div>
-              <strong style={{ color: "#013220" }}>{bpbdPct}%</strong>
+              <strong style={{ color: "#09090b", fontWeight: 800 }}>{bpbdPct}%</strong>
             </div>
 
             <div
@@ -372,21 +441,21 @@ export function GrafikTransparansiBantuan({
                 justifyContent: "space-between",
                 alignItems: "center",
                 background: "#ffffff",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #e4e4e7",
                 borderRadius: "8px",
-                padding: "6px 12px",
+                padding: "7px 12px",
                 fontSize: "0.78rem",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: "10px", height: "10px", borderRadius: "3px", background: "#d97706" }} />
-                <span style={{ fontWeight: 600, color: "#334155" }}>Mitra &amp; Relawan Kemanusiaan</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ width: "10px", height: "10px", borderRadius: "3px", background: "#71717a" }} />
+                <span style={{ fontWeight: 600, color: "#3f3f46" }}>Mitra &amp; Relawan Kemanusiaan</span>
               </div>
-              <strong style={{ color: "#d97706" }}>{mitraPct}%</strong>
+              <strong style={{ color: "#52525b", fontWeight: 800 }}>{mitraPct}%</strong>
             </div>
           </div>
 
-          <small style={{ fontSize: "0.70rem", color: "#64748b", marginTop: "12px", lineHeight: 1.3 }}>
+          <small style={{ fontSize: "0.70rem", color: "#71717a", marginTop: "14px", lineHeight: 1.35 }}>
             Didukung berita acara serah terima (BAST) dan verifikasi langsung di lapangan.
           </small>
         </div>
