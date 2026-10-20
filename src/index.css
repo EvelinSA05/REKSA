@@ -10256,6 +10256,14 @@ img, svg, video, canvas {
     margin: 0 auto !important;
   }
 
+  .portal-content > .chat-koordinasi-container.mono-theme,
+  .chat-koordinasi-container.mono-theme {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px 16px 125px 16px !important;
+    margin: 0 auto !important;
+  }
+
   /* Floating Chat Trigger: hide on mobile & tablet (<= 1024px) because mobile-bottom nav bar already provides direct Ruang Komunikasi access */
   .floating-chat-trigger-btn {
     display: none !important;
@@ -10267,6 +10275,14 @@ img, svg, video, canvas {
   .portal-content > .workspace,
   .workspace {
     padding: 16px 12px 110px 12px !important;
+  }
+
+  .portal-content > .chat-koordinasi-container.mono-theme,
+  .chat-koordinasi-container.mono-theme {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px 10px 150px 10px !important;
+    margin: 0 auto !important;
   }
 
   .workspace-title {
@@ -10588,15 +10604,29 @@ img, svg, video, canvas {
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
     gap: 8px !important;
-    padding-bottom: 4px !important;
+    padding-bottom: 6px !important;
   }
   .channels-list::-webkit-scrollbar {
     display: none !important;
   }
   .channel-item-btn.mono-channel-btn {
-    flex: 0 0 180px !important;
-    min-width: 180px !important;
-    padding: 8px 10px !important;
+    flex: 0 0 auto !important;
+    min-width: 130px !important;
+    max-width: none !important;
+    padding: 8px 12px !important;
+  }
+  .channel-item-btn.mono-channel-btn .mono-badge-pill {
+    display: none !important;
+  }
+  .channel-item-btn.mono-channel-btn .mono-channel-left-head {
+    flex: 0 0 auto !important;
+    gap: 6px !important;
+  }
+  .channel-item-btn.mono-channel-btn .channel-name {
+    font-size: 0.8rem !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
   .mono-channel-btn .channel-desc,
   .mono-channel-latest {
@@ -10609,7 +10639,7 @@ img, svg, video, canvas {
   .chat-stream-panel.mono-stream-panel {
     min-height: auto !important;
     border-radius: 14px !important;
-    margin-bottom: 24px !important;
+    margin-bottom: 20px !important;
   }
   .chat-stream-header.mono-stream-header {
     padding: 10px 12px !important;
@@ -10627,9 +10657,9 @@ img, svg, video, canvas {
   }
 
   .chat-messages-container.mono-messages-container {
-    max-height: 48vh !important;
-    min-height: 240px !important;
-    padding: 12px 10px !important;
+    max-height: 40vh !important;
+    min-height: 190px !important;
+    padding: 10px 8px !important;
   }
   .chat-bubble-row.mono-bubble-row {
     gap: 8px !important;
@@ -10712,10 +10742,10 @@ img, svg, video, canvas {
   }
   .compose-bottom-toolbar {
     display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
   }
   .compose-toolbar-left {
     display: flex !important;
@@ -10725,41 +10755,48 @@ img, svg, video, canvas {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: none !important;
-    gap: 6px !important;
-    flex: 1 !important;
-    min-width: 0 !important;
-    padding-bottom: 2px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding-bottom: 3px !important;
   }
   .compose-toolbar-left::-webkit-scrollbar {
     display: none !important;
   }
   .toolbar-label {
-    font-size: 0.65rem !important;
+    font-size: 0.68rem !important;
     flex-shrink: 0 !important;
   }
   .mono-tag-select {
     display: flex !important;
     flex-wrap: nowrap !important;
-    gap: 4px !important;
+    gap: 5px !important;
     flex-shrink: 0 !important;
   }
   .compose-tag-btn.mono-compose-tag {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
-    padding: 3px 6px !important;
-    font-size: 0.68rem !important;
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
     border-radius: 6px !important;
+  }
+  .compose-case-attach-wrap {
+    flex-shrink: 0 !important;
   }
   .compose-case-select.mono-select {
     flex-shrink: 0 !important;
-    max-width: 140px !important;
-    height: 26px !important;
-    font-size: 0.68rem !important;
+    max-width: 160px !important;
+    height: 28px !important;
+    font-size: 0.72rem !important;
   }
   .chat-send-submit-btn.mono-send-btn {
-    height: 32px !important;
-    padding: 0 12px !important;
-    font-size: 0.78rem !important;
+    width: 100% !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
     border-radius: 8px !important;
     flex-shrink: 0 !important;
   }
@@ -10792,6 +10829,31 @@ img, svg, video, canvas {
   }
   .chat-main-grid.mono-grid {
     grid-template-columns: 1fr !important;
+  }
+  .channels-list {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    gap: 8px !important;
+    padding-bottom: 6px !important;
+  }
+  .channels-list::-webkit-scrollbar {
+    display: none !important;
+  }
+  .channel-item-btn.mono-channel-btn {
+    flex: 0 0 auto !important;
+    min-width: 140px !important;
+    padding: 8px 14px !important;
+  }
+  .channel-item-btn.mono-channel-btn .mono-badge-pill {
+    display: none !important;
+  }
+  .channel-item-btn.mono-channel-btn .channel-name {
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
   }
   .mission-route-meta-card {
     padding: 14px 16px !important;
