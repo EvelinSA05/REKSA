@@ -160,6 +160,36 @@ export interface ActivityLogItem {
   kebutuhan?: KebutuhanItem;
 }
 
+export interface ChatMessageItem {
+  id: number;
+  channel: string;
+  sender_name: string;
+  sender_role: 'citizen' | 'posko' | 'responder';
+  sender_org?: string;
+  message: string;
+  tag?: string; // 'INFO' | 'URGENT' | 'LOGISTIK' | 'AKSES' | 'KONFIRMASI'
+  kebutuhan_id?: number;
+  posko_id?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ChatChannelItem {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  badge: string;
+  allowed_roles: string[];
+  message_count: number;
+  latest_message?: {
+    sender_name: string;
+    sender_role: string;
+    message: string;
+    created_at: string;
+  } | null;
+}
+
 // HTTP Helper with fallback to mock data if offline
 async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('reksa_token');
@@ -367,4 +397,31 @@ export const apiService = {
 
   // Activity Logs
   getActivityLogs: () => fetchApi<{ success: boolean; data: ActivityLogItem[] }>('/activity-logs'),
+
+  // Ruang Komunikasi Terpadu 3 Role
+  getChatMessages: (channel?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (channel && channel !== 'all') params.append('channel', channel);
+    if (search) params.append('search', search);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return fetchApi<{ success: boolean; data: ChatMessageItem[]; total: number }>(`/chat${qs}`);
+  },
+
+  sendChatMessage: (payload: {
+    channel: string;
+    sender_name: string;
+    sender_role: 'citizen' | 'posko' | 'responder';
+    sender_org?: string;
+    message: string;
+    tag?: string;
+    kebutuhan_id?: number;
+    posko_id?: number;
+  }) =>
+    fetchApi<{ success: boolean; message: string; data: ChatMessageItem }>('/chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getChatChannels: () =>
+    fetchApi<{ success: boolean; data: ChatChannelItem[] }>('/chat/channels'),
 };

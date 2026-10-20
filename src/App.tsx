@@ -1,4 +1,5 @@
 import React, { Component, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
+import { ChatKoordinasi } from "./components/common/ChatKoordinasi";
 
 export type Role = "citizen" | "posko" | "responder";
 type Screen = "home" | "login" | "portal";
@@ -120,6 +121,7 @@ const icons: Record<string, React.ReactNode> = {
   logout: <svg viewBox="0 0 24 24"><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10" /></svg>,
   menu: <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
   alert: <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
+  chat: <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
 };
 
 export function Icon({ name }: { name: string }) {
@@ -1031,7 +1033,7 @@ export type SharedState = {
   activeMisiId?: number;
 };
 
-export type PortalPage = "dashboard" | "cases" | "case" | "report" | "notifications" | "history" | "profile" | "help" | "settings" | "map" | "resources" | "assignments" | "activity" | "tasks" | "active" | "offers" | "bursa" | "my-offers";
+export type PortalPage = "dashboard" | "cases" | "case" | "report" | "notifications" | "history" | "profile" | "help" | "settings" | "map" | "resources" | "assignments" | "activity" | "tasks" | "active" | "offers" | "bursa" | "my-offers" | "chat";
 
 export type RouterProps = {
   page: PortalPage;
@@ -1050,6 +1052,7 @@ const roleNavigation: Record<Role, { main: NavItem[]; bottom: NavItem[] }> = {
   citizen: {
     main: [
       { label: "Beranda", page: "dashboard", icon: "grid" },
+      { label: "Ruang Komunikasi", page: "chat", icon: "chat" },
       { label: "Laporan Saya", page: "cases", icon: "file" },
       { label: "Laporkan Kebutuhan", page: "report", icon: "plus" },
       { label: "Riwayat", page: "history", icon: "clock" },
@@ -1065,6 +1068,7 @@ const roleNavigation: Record<Role, { main: NavItem[]; bottom: NavItem[] }> = {
   posko: {
     main: [
       { label: "Dashboard Posko", page: "dashboard", icon: "grid" },
+      { label: "Ruang Komunikasi", page: "chat", icon: "chat" },
       { label: "Verifikasi Laporan", page: "cases", icon: "file" },
       { label: "Kebutuhan & Bursa", page: "resources", icon: "box" },
       { label: "Penawaran & Alokasi", page: "offers", icon: "task" },
@@ -1081,6 +1085,7 @@ const roleNavigation: Record<Role, { main: NavItem[]; bottom: NavItem[] }> = {
   responder: {
     main: [
       { label: "Dashboard Mitra", page: "dashboard", icon: "grid" },
+      { label: "Ruang Komunikasi", page: "chat", icon: "chat" },
       { label: "Bursa Bantuan", page: "bursa", icon: "box" },
       { label: "Penawaran Saya", page: "my-offers", icon: "file" },
       { label: "Misi Penyaluran", page: "tasks", icon: "task" },
@@ -1398,6 +1403,18 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       {role === "citizen" && <CitizenRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "posko" && <PoskoRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "responder" && <ResponderRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
+      {page !== "chat" && (
+        <button
+          className="floating-chat-trigger-btn"
+          onClick={() => go("chat")}
+          title="Buka Ruang Komunikasi Terpadu 3 Role (Live)"
+          type="button"
+        >
+          <span className="floating-chat-icon">💬</span>
+          <span className="floating-chat-text">Ruang Komunikasi</span>
+          <span className="floating-chat-badge">Live</span>
+        </button>
+      )}
       <MobileNav role={role} page={page} go={go} notifCount={unreadCount} />
     </div>
     {logoutOpen && <Modal icon="logout" title="Keluar dari akun?" close={() => setLogoutOpen(false)}><p>Sesi Anda akan diakhiri. Anda dapat masuk kembali kapan saja.</p><div className="modal-actions"><Button variant="secondary" onClick={() => setLogoutOpen(false)}>Batal</Button><Button onClick={logout}>Keluar</Button></div></Modal>}
@@ -1441,6 +1458,7 @@ export function PageHead({ eyebrow, title, copy, action }: { eyebrow: string; ti
 
 function CitizenRouter({ page, setPage, state, update, notify, name = "Andi Pratama", setName, onRefresh, setRole }: RouterProps) {
   if (page === "dashboard") return <CitizenDashboard state={state} update={update} setPage={setPage} name={name} />;
+  if (page === "chat") return <ChatKoordinasi role="citizen" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "report") return <CitizenReport complete={() => setPage("cases")} update={update} state={state} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
   if (page === "cases") return <CitizenCaseList title="Laporan Saya" copy="Semua kebutuhan yang pernah Anda laporkan." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} own state={state} update={update} onNavigateToReport={() => setPage("report")} />;
@@ -3071,6 +3089,7 @@ function CaseDetail({
 
 function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma", setName, onRefresh, setRole }: RouterProps) {
   if (page === "dashboard") return <PoskoDashboard state={state} update={update} setPage={setPage} onRefresh={onRefresh} />;
+  if (page === "chat") return <ChatKoordinasi role="posko" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} posko onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
   if (page === "cases") return <PoskoVerifikasiLaporan cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} />;
   if (page === "resources") return <PoskoKebutuhanBursa cases={state.casesList || []} bursaList={state.bursaList || []} penawaranList={state.penawaranList || []} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
@@ -4572,6 +4591,7 @@ function Activity({
 
 function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nugroho", setName, onRefresh, setRole }: RouterProps) {
   if (page === "dashboard") return <MitraDashboard state={state} update={update} setPage={setPage} notify={notify} onRefresh={onRefresh} />;
+  if (page === "chat") return <ChatKoordinasi role="responder" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} />;

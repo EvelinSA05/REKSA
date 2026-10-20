@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\BursaBantuanController;
 use App\Http\Controllers\Api\PenawaranMitraController;
 use App\Http\Controllers\Api\MisiPenyaluranController;
 use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Api\ChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,11 @@ Route::post('/misi/{id}/report-obstacle', [MisiPenyaluranController::class, 'rep
 
 // Log Aktivitas Kronologis
 Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+
+// Ruang Komunikasi Terpadu 3 Role (Warga, Posko BPBD, Mitra)
+Route::get('/chat', [ChatController::class, 'index']);
+Route::post('/chat', [ChatController::class, 'store']);
+Route::get('/chat/channels', [ChatController::class, 'channels']);
 
 // Authenticated Sanctum Routes
 Route::middleware('auth:sanctum')->group(function () {
