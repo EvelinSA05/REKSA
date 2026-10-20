@@ -271,39 +271,15 @@ export function ChatKoordinasi({
   const currentChannelInfo =
     channels.find((c) => c.id === selectedChannel) || DEFAULT_CHANNELS[0];
 
-  const quickTemplates = [
-    {
-      text: "Ada kebutuhan mendesak air bersih & medis di titik warga.",
-      tag: "URGENT",
-    },
-    {
-      text: "Armada pengiriman logistik sedang meluncur ke Posko Wilayah.",
-      tag: "LOGISTIK",
-    },
-    {
-      text: "Jalur alternatif via jalan barat aman dilalui kendaraan roda 4.",
-      tag: "AKSES",
-    },
-    {
-      text: "Bantuan paket logistik sudah diterima warga dengan selamat.",
-      tag: "KONFIRMASI",
-    },
-  ];
-
   return (
     <div className="chat-koordinasi-container mono-theme">
-      {/* Top Banner */}
+      {/* Top Compact Bar */}
       <div className="chat-top-header mono-header">
         <div className="chat-top-title-area">
-          <div className="chat-role-indicator-badge mono-badge">
-            <span className="mono-dot-pulse"></span>
-            <span>Jalur Koordinasi Sinkron 3 Role</span>
+          <div className="chat-title-row">
+            <h2>Ruang Komunikasi</h2>
+            <span className="mono-badge-pill">Sinkron 3 Role</span>
           </div>
-          <h2>Ruang Komunikasi Tanggap Bencana</h2>
-          <p>
-            Koordinasi trilateral real-time antara <strong>Masyarakat Terdampak</strong>,{" "}
-            <strong>Koordinator Posko BPBD</strong>, dan <strong>Mitra Satgas Penyalur</strong>.
-          </p>
         </div>
 
         {/* Sender Profile Box */}
@@ -311,16 +287,16 @@ export function ChatKoordinasi({
           <div className="sender-avatar-pill">
             <div className={`mono-avatar-circle role-${senderRole}`}>
               {senderRole === "citizen" ? (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               ) : senderRole === "posko" ? (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1" />
                 </svg>
               ) : (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
                   <circle cx="7" cy="18" r="2" />
                   <circle cx="17" cy="18" r="2" />
@@ -334,14 +310,10 @@ export function ChatKoordinasi({
                 {senderRole === "citizen"
                   ? "Masyarakat Terdampak"
                   : senderRole === "posko"
-                  ? "Posko BPBD Wilayah"
-                  : "Mitra Satgas Penyalur"}
+                  ? "Posko BPBD"
+                  : "Mitra Satgas"}
               </span>
             </div>
-          </div>
-          <div className="sender-org-badge">
-            <span className="org-label">Wilayah/Afiliasi:</span>
-            <span className="org-value">{senderOrg}</span>
           </div>
         </div>
       </div>
@@ -352,7 +324,7 @@ export function ChatKoordinasi({
         <aside className="chat-channels-sidebar mono-channels-sidebar">
           <div className="channels-sidebar-head">
             <span className="section-mini-title">KANAL KOMUNIKASI</span>
-            <span className="channels-count-badge">{visibleChannels.length} Saluran</span>
+            <span className="channels-count-badge">{visibleChannels.length}</span>
           </div>
 
           <div className="channels-list">
@@ -388,44 +360,16 @@ export function ChatKoordinasi({
                       </span>
                       <span className="channel-name">{chan.name}</span>
                     </div>
-                    {chan.message_count > 0 && (
-                      <span className="mono-channel-counter">{chan.message_count}</span>
-                    )}
-                  </div>
-
-                  <div className="mono-channel-badge-row">
-                    <span className="mono-badge-pill">{chan.badge}</span>
-                  </div>
-
-                  <p className="channel-desc">{chan.description}</p>
-
-                  {chan.latest_message && (
-                    <div className="mono-channel-latest">
-                      <span className="latest-sender">{chan.latest_message.sender_name}:</span>{" "}
-                      <span className="latest-snippet">{chan.latest_message.message}</span>
+                    <div className="mono-channel-right-meta">
+                      <span className="mono-badge-pill">{chan.badge}</span>
+                      {chan.message_count > 0 && (
+                        <span className="mono-channel-counter">{chan.message_count}</span>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </button>
               );
             })}
-          </div>
-
-          {/* Quick Guide */}
-          <div className="chat-guidance-card mono-guidance">
-            <div className="guidance-title">
-              <span>Panduan Koordinasi</span>
-            </div>
-            <ul className="guidance-list">
-              <li>
-                <strong>Warga:</strong> Beri laporan detail posisi dan kebutuhan utama.
-              </li>
-              <li>
-                <strong>Posko BPBD:</strong> Verifikasi data, tetapkan prioritas dan status.
-              </li>
-              <li>
-                <strong>Mitra:</strong> Beri kepastian armada, muatan, dan estimasi tiba.
-              </li>
-            </ul>
           </div>
         </aside>
 
@@ -438,21 +382,12 @@ export function ChatKoordinasi({
                 <h3>{currentChannelInfo.name}</h3>
                 <span className="mono-badge-pill">{currentChannelInfo.badge}</span>
               </div>
-              <p className="stream-description">{currentChannelInfo.description}</p>
             </div>
 
             <div className="stream-header-actions">
               <div className="sync-status-indicator mono-sync">
                 <span className="mono-sync-dot"></span>
-                <span className="sync-text">
-                  Sinkron Otomatis (
-                  {lastUpdated.toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}
-                  )
-                </span>
+                <span className="sync-text">Live</span>
               </div>
               <button
                 className="manual-refresh-btn mono-btn-subtle"
@@ -656,32 +591,29 @@ export function ChatKoordinasi({
             )}
           </div>
 
-          {/* Quick Response Templates */}
-          <div className="chat-quick-templates mono-quick-templates">
-            <span className="quick-label">Template Cepat:</span>
-            <div className="template-pills-row">
-              {quickTemplates.map((item, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className="template-pill-btn mono-template-btn"
-                  onClick={() => {
-                    setInputText(item.text);
-                    setSelectedTag(item.tag);
-                  }}
-                >
-                  <span>{item.text}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Compose Form */}
+          {/* Streamlined Unified Compose Form */}
           <form className="chat-compose-box mono-compose-box" onSubmit={handleSendMessage}>
-            <div className="compose-top-tools mono-compose-tools">
-              <div className="compose-tool-cluster left">
-                <span className="compose-tool-label">Label:</span>
+            <div className="compose-input-wrapper">
+              <textarea
+                className="chat-textarea-input mono-textarea"
+                placeholder={`Tulis pesan sebagai ${senderName}... (Enter untuk kirim, Shift+Enter untuk baris baru)`}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                rows={2}
+              />
+            </div>
+
+            <div className="compose-bottom-toolbar">
+              <div className="compose-toolbar-left">
+                {/* Tag Selection Chips */}
                 <div className="tag-selector-group mono-tag-select">
+                  <span className="toolbar-label">Label:</span>
                   {Object.keys(TAG_CONFIG).map((k) => {
                     const cfg = TAG_CONFIG[k];
                     const isSelected = selectedTag === k;
@@ -691,55 +623,38 @@ export function ChatKoordinasi({
                         type="button"
                         className={`compose-tag-btn mono-compose-tag ${isSelected ? "selected" : ""}`}
                         onClick={() => setSelectedTag(k)}
+                        title={`Label: ${cfg.label}`}
                       >
                         <span>{cfg.symbol}</span> {cfg.label}
                       </button>
                     );
                   })}
                 </div>
+
+                {/* Optional Case attachment */}
+                {state.casesList && state.casesList.length > 0 && (
+                  <div className="compose-case-attach-wrap">
+                    <select
+                      id="case-select-input"
+                      className="compose-case-select mono-select"
+                      value={selectedCaseId || ""}
+                      onChange={(e) =>
+                        setSelectedCaseId(
+                          e.target.value ? Number(e.target.value) : undefined
+                        )
+                      }
+                      title="Tautkan dengan laporan kasus"
+                    >
+                      <option value="">📎 Tautkan Kasus (Opsional)</option>
+                      {state.casesList.slice(0, 10).map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.kode_kasus || `#${c.id}`} - {c.item_bantuan || "Kebutuhan"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
-
-              {/* Optional Case attachment */}
-              {state.casesList && state.casesList.length > 0 && (
-                <div className="compose-tool-cluster right">
-                  <label htmlFor="case-select-input" className="compose-tool-label">
-                    Tautkan Kasus:
-                  </label>
-                  <select
-                    id="case-select-input"
-                    className="compose-case-select mono-select"
-                    value={selectedCaseId || ""}
-                    onChange={(e) =>
-                      setSelectedCaseId(
-                        e.target.value ? Number(e.target.value) : undefined
-                      )
-                    }
-                  >
-                    <option value="">(Tanpa Tautan Kasus)</option>
-                    {state.casesList.slice(0, 10).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.kode_kasus || `Kasus #${c.id}`} - {c.item_bantuan || "Kebutuhan"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            <div className="compose-input-row mono-input-row">
-              <textarea
-                className="chat-textarea-input mono-textarea"
-                placeholder={`Tulis pesan sebagai ${senderName}...`}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                rows={1}
-              />
 
               <button
                 type="submit"
