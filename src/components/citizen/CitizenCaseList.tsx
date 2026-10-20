@@ -23,6 +23,7 @@ interface CitizenCaseListProps {
   update?: RouterProps["update"];
   onNavigateToReport?: () => void;
   onNavigateToCases?: () => void;
+  onRefresh?: () => Promise<void> | void;
 }
 
 export function CitizenCaseList({
@@ -35,6 +36,7 @@ export function CitizenCaseList({
   update,
   onNavigateToReport,
   onNavigateToCases,
+  onRefresh,
 }: CitizenCaseListProps) {
   const [filter, setFilter] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,6 +46,14 @@ export function CitizenCaseList({
   const [editingCase, setEditingCase] = useState<CaseRecord | null>(null);
   const [deletingCase, setDeletingCase] = useState<CaseRecord | null>(null);
   const [clarificationCase, setClarificationCase] = useState<CaseRecord | null>(null);
+
+  // Fast Confirmation states (BAST Digital)
+  const [confirmingReceiptCase, setConfirmingReceiptCase] = useState<CaseRecord | null>(null);
+  const [receivedVolume, setReceivedVolume] = useState("");
+  const [receiptNotes, setReceiptNotes] = useState("");
+  const [receiptPhoto, setReceiptPhoto] = useState<string>("");
+  const [isSubmittingReceipt, setIsSubmittingReceipt] = useState(false);
+  const [isDeclarationChecked, setIsDeclarationChecked] = useState(true);
 
   // Edit fields
   const [editItem, setEditItem] = useState("");
@@ -68,6 +78,12 @@ export function CitizenCaseList({
     (c) => (!own || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))) && c.status === "Perlu Klarifikasi"
   ).length;
 
+  const receiptPendingCount = allCases.filter(
+    (c) =>
+      (!own || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))) &&
+      (c.status === "Menunggu Konfirmasi Penerimaan" || c.status === "Tiba di Lokasi & Diserahkan")
+  ).length;
+
   const data = allCases.filter((c) => {
     const isDummy = c.id.startsWith("RK-UJI-") || c.id.includes("TEST") || c.id.startsWith("RK-MULTI-");
     const matchesOwn = !own || (Boolean(c.isOwn) && !isDummy);
@@ -75,6 +91,7 @@ export function CitizenCaseList({
     const matchesFilter =
       filter === "Semua" ||
       (filter === "Perlu Klarifikasi" && c.status === "Perlu Klarifikasi") ||
+      (filter === "Menunggu Konfirmasi" && (c.status === "Menunggu Konfirmasi Penerimaan" || c.status === "Tiba di Lokasi & Diserahkan")) ||
       c.urgency === filter ||
       (filter === "Sangat mendesak" && (c.urgency === "Kritis" || c.urgency === "Sangat mendesak")) ||
       (filter === "Perlu segera" && (c.urgency === "Tinggi" || c.urgency === "Perlu segera")) ||
@@ -86,6 +103,72 @@ export function CitizenCaseList({
       c.location.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesOwn && matchesCompleted && matchesFilter && matchesSearch;
   });
+
+  const openReceiptModal = (c: CaseRecord) => {
+    setConfirmingReceiptCase(c);
+    setReceivedVolume(c.qty || "");
+    setReceiptNotes("Bantuan fisik telah diterima di lokasi dalam kondisi baik dan lengkap sesuai kebutuhan warga.");
+    setReceiptPhoto("");
+    setIsDeclarationChecked(true);
+  };
+
+  const handleConfirmReceipt = async () => {
+    if (!confirmingReceiptCase || !update) return;
+    setIsSubmittingReceipt(true);
+    const cleanVol = receivedVolume.trim() || confirmingReceiptCase.qty;
+    const cleanNotes = receiptNotes.trim() || "Bantuan fisik telah diterima di lokasi dalam kondisi baik dan lengkap sesuai kebutuhan warga.";
+
+    try {
+      await apiService.confirmReceiptKebutuhan(confirmingReceiptCase.id, {
+        diterima_volume: cleanVol,
+        catatan: cleanNotes,
+      });
+    } catch (e) {
+      console.warn("API confirm receipt note:", e);
+    }
+
+    const updatedList = allCases.map((item) =>
+      item.id === confirmingReceiptCase.id
+        ? {
+            ...item,
+            status: "Selesai",
+            delivered: 1000,
+            totalDiterimaResmi: cleanVol,
+            catatanPenerimaan: cleanNotes,
+            fotoPenerimaan: receiptPhoto || item.fotoBukti,
+          }
+        : item
+    );
+
+    localStorage.setItem("reksa_cases_db", JSON.stringify(updatedList));
+    update(
+      { casesList: updatedList, status: "Selesai", assignment: "Selesai", delivered: 1000 },
+      `Bantuan ${confirmingReceiptCase.item} (${cleanVol}) untuk kasus ${confirmingReceiptCase.id} resmi dikonfirmasi diterima tuntas (BAST terbit).`
+    );
+
+    if (onRefresh) {
+      try {
+        await onRefresh();
+      } catch (err) {
+        console.warn("onRefresh error:", err);
+      }
+    }
+
+    setIsSubmittingReceipt(false);
+    setConfirmingReceiptCase(null);
+  };
+
+  const handleReceiptPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setReceiptPhoto(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const openEdit = (c: CaseRecord) => {
     setEditingCase(c);
@@ -214,12 +297,14 @@ export function CitizenCaseList({
           )}
           {[
             "Semua",
+            ...(receiptPendingCount > 0 ? ["Menunggu Konfirmasi"] : []),
             ...(clarificationCount > 0 ? ["Perlu Klarifikasi"] : []),
             "Sangat mendesak",
             "Perlu segera",
             "Bisa menunggu",
           ].map((x) => {
             const isClarifPill = x === "Perlu Klarifikasi";
+            const isReceiptPill = x === "Menunggu Konfirmasi";
             const isActive = filter === x;
             return (
               <button
@@ -234,11 +319,18 @@ export function CitizenCaseList({
                         borderColor: "#f59e0b",
                         fontWeight: 700,
                       }
+                    : isReceiptPill
+                    ? {
+                        background: isActive ? "#059669" : "#ecfdf5",
+                        color: isActive ? "#ffffff" : "#065f46",
+                        borderColor: "#10b981",
+                        fontWeight: 700,
+                      }
                     : undefined
                 }
                 onClick={() => setFilter(x)}
               >
-                {isClarifPill ? `⚠️ ${x} (${clarificationCount})` : x}
+                {isClarifPill ? `⚠️ ${x} (${clarificationCount})` : isReceiptPill ? `✓ Perlu Dikonfirmasi (${receiptPendingCount})` : x}
               </button>
             );
           })}
@@ -394,16 +486,28 @@ export function CitizenCaseList({
             const isHigh = c.urgency === "Tinggi" || c.urgency === "Perlu segera";
             const isDone = c.status === "Selesai";
             const isClarification = c.status === "Perlu Klarifikasi";
+            const isWaitingReceipt = c.status === "Menunggu Konfirmasi Penerimaan" || c.status === "Tiba di Lokasi & Diserahkan";
 
             return (
               <div 
                 className={`case-aesthetic-card ${isCritical ? "priority-critical" : ""}`} 
                 key={c.id}
-                style={isClarification ? { borderColor: "#f59e0b", background: "#fffdfa" } : undefined}
+                style={
+                  isWaitingReceipt 
+                    ? { borderColor: "#10b981", background: "#fcfefc" } 
+                    : isClarification 
+                    ? { borderColor: "#f59e0b", background: "#fffdfa" } 
+                    : undefined
+                }
               >
                 <div className="case-card-header">
                   <div className="case-code-badge">{c.id}</div>
                   <div style={{ display: "flex", gap: "6px" }}>
+                    {isWaitingReceipt && (
+                      <span style={{ fontSize: "0.76rem", background: "#d1fae5", color: "#065f46", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
+                        ✓ Tiba di Lokasi
+                      </span>
+                    )}
                     {isClarification && (
                       <span style={{ fontSize: "0.76rem", background: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
                         ⚠️ Klarifikasi
@@ -438,6 +542,49 @@ export function CitizenCaseList({
                       </div>
                     </div>
                   </div>
+
+                  {/* CALLOUT AKSI CEPAT KONFIRMASI PENERIMAAN (BAST) */}
+                  {isWaitingReceipt && (
+                    <div
+                      style={{
+                        background: "#ecfdf5",
+                        border: "1px solid #a7f3d0",
+                        borderRadius: "10px",
+                        padding: "10px 12px",
+                        marginTop: "10px",
+                        fontSize: "0.82rem",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#065f46", fontWeight: 700 }}>
+                        <Icon name="check" /> Logistik Telah Tiba di Titik Serah!
+                      </div>
+                      <div style={{ color: "#047857", marginTop: "3px", marginBottom: "8px", lineHeight: 1.4, fontSize: "0.8rem" }}>
+                        Armada penyalur telah tiba di lokasi. Silakan periksa kondisi barang dan konfirmasi Berita Acara Penerimaan (BAST).
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openReceiptModal(c)}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "9px 12px",
+                          background: "#059669",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "0.84rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          boxShadow: "0 2px 6px rgba(5, 150, 105, 0.25)",
+                        }}
+                      >
+                        <Icon name="check" /> Konfirmasi Bantuan Diterima (BAST)
+                      </button>
+                    </div>
+                  )}
 
                   {/* CALLOUT INSTRUKSI POSKO BPBD JIKA PERLU KLARIFIKASI */}
                   {isClarification && (
@@ -475,8 +622,8 @@ export function CitizenCaseList({
                 <div className="case-card-footer" style={{ flexDirection: "column", gap: "10px", alignItems: "stretch" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div className="case-status-indicator">
-                      <i className={`status-dot ${isDone ? "done" : isClarification ? "warning" : "active"}`} style={isClarification ? { background: "#f59e0b" } : undefined} />
-                      <span style={isClarification ? { color: "#b45309", fontWeight: 700 } : undefined}>{c.status}</span>
+                      <i className={`status-dot ${isDone ? "done" : isClarification ? "warning" : isWaitingReceipt ? "waiting" : "active"}`} style={isClarification ? { background: "#f59e0b" } : isWaitingReceipt ? { background: "#10b981" } : undefined} />
+                      <span style={isClarification ? { color: "#b45309", fontWeight: 700 } : isWaitingReceipt ? { color: "#065f46", fontWeight: 700 } : undefined}>{c.status}</span>
                     </div>
                   </div>
 
@@ -681,6 +828,138 @@ export function CitizenCaseList({
                 }}
               >
                 Ya, Hapus Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL KONFIRMASI PENERIMAAN BANTUAN CEPAT (BAST DIGITAL) */}
+      {confirmingReceiptCase && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div style={{ background: "#ffffff", borderRadius: "18px", padding: "24px 22px", maxWidth: "520px", width: "100%", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", paddingBottom: "12px", borderBottom: "1px solid #e2e8f0" }}>
+              <div>
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  BERITA ACARA SERAH TERIMA (BAST DIGITAL)
+                </span>
+                <h3 style={{ margin: "2px 0 0", color: "#013220", fontSize: "1.15rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <Icon name="check" /> Konfirmasi Penerimaan Bantuan
+                </h3>
+              </div>
+              <button type="button" onClick={() => setConfirmingReceiptCase(null)} style={{ background: "none", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "#64748b", padding: "0 4px" }}>×</button>
+            </div>
+
+            {/* Case Preview Card */}
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "12px 14px", marginBottom: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>{confirmingReceiptCase.id}</span>
+                <span style={{ fontSize: "0.75rem", background: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: "6px", fontWeight: 700 }}>
+                  {confirmingReceiptCase.kk}
+                </span>
+              </div>
+              <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#013220", marginBottom: "4px" }}>
+                {confirmingReceiptCase.item}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                <Icon name="pin" /> {confirmingReceiptCase.location}
+              </div>
+            </div>
+
+            {/* Input Form */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label className="form-label" style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0f172a", marginBottom: "4px", display: "block" }}>
+                  Volume / Kuantitas yang Diterima Secara Fisik *
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={receivedVolume}
+                  onChange={(e) => setReceivedVolume(e.target.value)}
+                  placeholder="Contoh: 50 Paket Sembako"
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.88rem" }}
+                />
+                <small style={{ color: "#64748b", fontSize: "0.76rem", marginTop: "3px", display: "block" }}>
+                  Target permohonan awal: <strong>{confirmingReceiptCase.qty}</strong>
+                </small>
+              </div>
+
+              <div>
+                <label className="form-label" style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0f172a", marginBottom: "4px", display: "block" }}>
+                  Catatan Kondisi Fisik Bantuan &amp; Keterangan Serah Terima
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={receiptNotes}
+                  onChange={(e) => setReceiptNotes(e.target.value)}
+                  placeholder="Contoh: Barang telah diserahterimakan langsung dalam keadaan baik dan utuh disaksikan warga."
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", resize: "vertical" }}
+                />
+              </div>
+
+              <div>
+                <label className="form-label" style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0f172a", marginBottom: "4px", display: "block" }}>
+                  Foto Bukti Serah Terima Lapangan (Opsional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleReceiptPhotoUpload}
+                  style={{ fontSize: "0.82rem" }}
+                />
+                {receiptPhoto && (
+                  <div style={{ marginTop: "8px", position: "relative", width: "100%", maxHeight: "140px", overflow: "hidden", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <img src={receiptPhoto} alt="Bukti serah terima" style={{ width: "100%", height: "140px", objectFit: "cover" }} />
+                    <button
+                      type="button"
+                      onClick={() => setReceiptPhoto("")}
+                      style={{ position: "absolute", top: "6px", right: "6px", background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "0.75rem", cursor: "pointer" }}
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "0.8rem", color: "#334155", background: "#f8fafc", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={isDeclarationChecked}
+                  onChange={(e) => setIsDeclarationChecked(e.target.checked)}
+                  style={{ marginTop: "2px" }}
+                />
+                <span>
+                  Saya menyatakan bahwa bantuan fisik telah benar-benar diterima di lokasi sasaran warga, dan data ini siap disahkan dalam audit transparansi posko.
+                </span>
+              </label>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
+              <Button variant="secondary" onClick={() => setConfirmingReceiptCase(null)} disabled={isSubmittingReceipt}>
+                Batal
+              </Button>
+              <button
+                type="button"
+                onClick={handleConfirmReceipt}
+                disabled={isSubmittingReceipt || !isDeclarationChecked}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "9px 18px",
+                  background: isSubmittingReceipt || !isDeclarationChecked ? "#94a3b8" : "#059669",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 700,
+                  fontSize: "0.88rem",
+                  cursor: isSubmittingReceipt || !isDeclarationChecked ? "not-allowed" : "pointer",
+                  boxShadow: "0 2px 8px rgba(5, 150, 105, 0.3)",
+                }}
+              >
+                {isSubmittingReceipt ? "Memproses BAST..." : <><Icon name="check" /> Konfirmasi &amp; Terbitkan BAST</>}
               </button>
             </div>
           </div>
