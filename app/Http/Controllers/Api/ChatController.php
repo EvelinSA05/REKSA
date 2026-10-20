@@ -17,6 +17,19 @@ class ChatController extends Controller
     {
         $query = ChatMessage::query();
 
+        // Enforce channel privacy: Citizen cannot view internal posko_mitra discussions
+        if ($request->query('role') === 'citizen') {
+            if ($request->channel === 'posko_mitra') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak. Kanal ini khusus koordinasi internal Posko BPBD dan Mitra Penyalur.',
+                    'data' => [],
+                    'total' => 0,
+                ], 403);
+            }
+            $query->where('channel', '!=', 'posko_mitra');
+        }
+
         if ($request->filled('channel') && $request->channel !== 'all') {
             $query->where('channel', $request->channel);
         }
@@ -66,6 +79,14 @@ class ChatController extends Controller
 
         $channel = $request->input('channel', 'umum');
 
+        // Block citizen from sending to posko_mitra internal channel
+        if ($request->sender_role === 'citizen' && $channel === 'posko_mitra') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Warga tidak diizinkan mengirim pesan ke kanal internal Posko & Mitra.',
+            ], 403);
+        }
+
         $message = ChatMessage::create([
             'channel' => $channel,
             'sender_name' => $request->sender_name,
@@ -103,8 +124,10 @@ class ChatController extends Controller
     /**
      * Get available channels with statistics and latest preview.
      */
-    public function channels()
+    public function channels(Request $request)
     {
+        $role = $request->query('role');
+
         $channelDefinitions = [
             [
                 'id' => 'umum',
@@ -120,7 +143,7 @@ class ChatController extends Controller
                 'description' => 'Sinkronisasi stok gudang, armada lapangan, bursa bantuan, dan alokasi misi.',
                 'icon' => 'truck',
                 'badge' => 'BPBD & Mitra',
-                'allowed_roles' => ['posko', 'responder', 'citizen'],
+                'allowed_roles' => ['posko', 'responder'],
             ],
             [
                 'id' => 'bantuan_warga',
@@ -131,6 +154,13 @@ class ChatController extends Controller
                 'allowed_roles' => ['citizen', 'posko', 'responder'],
             ],
         ];
+
+        // Filter out channels not accessible by this role
+        if ($role) {
+            $channelDefinitions = array_values(array_filter($channelDefinitions, function ($ch) use ($role) {
+                return in_array($role, $ch['allowed_roles']) || in_array('all', $ch['allowed_roles']);
+            }));
+        }
 
         foreach ($channelDefinitions as &$ch) {
             $latest = ChatMessage::where('channel', $ch['id'])

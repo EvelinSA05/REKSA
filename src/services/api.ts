@@ -399,10 +399,11 @@ export const apiService = {
   getActivityLogs: () => fetchApi<{ success: boolean; data: ActivityLogItem[] }>('/activity-logs'),
 
   // Ruang Komunikasi Terpadu 3 Role
-  getChatMessages: (channel?: string, search?: string) => {
+  getChatMessages: (channel?: string, search?: string, role?: string) => {
     const params = new URLSearchParams();
     if (channel && channel !== 'all') params.append('channel', channel);
     if (search) params.append('search', search);
+    if (role) params.append('role', role);
     const qs = params.toString() ? `?${params.toString()}` : '';
     return fetchApi<{ success: boolean; data: ChatMessageItem[]; total: number }>(`/chat${qs}`);
   },
@@ -422,6 +423,8 @@ export const apiService = {
       body: JSON.stringify(payload),
     }),
 
-  getChatChannels: () =>
-    fetchApi<{ success: boolean; data: ChatChannelItem[] }>('/chat/channels'),
+  getChatChannels: (role?: string) => {
+    const qs = role ? `?role=${encodeURIComponent(role)}` : '';
+    return fetchApi<{ success: boolean; data: ChatChannelItem[] }>(`/chat/channels${qs}`);
+  },
 };

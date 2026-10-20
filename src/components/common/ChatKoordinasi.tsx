@@ -136,10 +136,27 @@ export function ChatKoordinasi({
     return "Satgas Tagana & Mitra Penyalur";
   }, [senderRole, state.userProfile, state.poskoName]);
 
+  // Filter channels based on role access: citizen can NEVER access posko_mitra
+  const visibleChannels = useMemo(() => {
+    return channels.filter((c) => {
+      if (senderRole === "citizen") {
+        return c.id !== "posko_mitra" && (c.allowed_roles.includes("citizen") || c.allowed_roles.includes("all"));
+      }
+      return true;
+    });
+  }, [channels, senderRole]);
+
+  // If citizen somehow has posko_mitra active, redirect to umum immediately
+  useEffect(() => {
+    if (senderRole === "citizen" && selectedChannel === "posko_mitra") {
+      setSelectedChannel("umum");
+    }
+  }, [senderRole, selectedChannel]);
+
   // Load Channels
   const loadChannels = async () => {
     try {
-      const res = await apiService.getChatChannels();
+      const res = await apiService.getChatChannels(senderRole);
       if (res && res.success && res.data) {
         setChannels(res.data);
       }
@@ -152,7 +169,7 @@ export function ChatKoordinasi({
   const loadMessages = async (isInitial = false) => {
     if (isInitial) setLoading(true);
     try {
-      const res = await apiService.getChatMessages(selectedChannel);
+      const res = await apiService.getChatMessages(selectedChannel, undefined, senderRole);
       if (res && res.success && Array.isArray(res.data)) {
         setMessages(res.data);
         setLastUpdated(new Date());
@@ -166,11 +183,11 @@ export function ChatKoordinasi({
 
   useEffect(() => {
     loadChannels();
-  }, []);
+  }, [senderRole]);
 
   useEffect(() => {
     loadMessages(true);
-  }, [selectedChannel]);
+  }, [selectedChannel, senderRole]);
 
   // 3.5s silent background polling
   useEffect(() => {
@@ -179,7 +196,7 @@ export function ChatKoordinasi({
       loadChannels();
     }, 3500);
     return () => clearInterval(timer);
-  }, [selectedChannel]);
+  }, [selectedChannel, senderRole]);
 
   // Auto-scroll on new message inside chat box only (does not scroll window)
   useEffect(() => {
@@ -335,11 +352,11 @@ export function ChatKoordinasi({
         <aside className="chat-channels-sidebar mono-channels-sidebar">
           <div className="channels-sidebar-head">
             <span className="section-mini-title">KANAL KOMUNIKASI</span>
-            <span className="channels-count-badge">{channels.length} Saluran</span>
+            <span className="channels-count-badge">{visibleChannels.length} Saluran</span>
           </div>
 
           <div className="channels-list">
-            {channels.map((chan) => {
+            {visibleChannels.map((chan) => {
               const isSelected = chan.id === selectedChannel;
 
               return (
@@ -661,28 +678,30 @@ export function ChatKoordinasi({
 
           {/* Compose Form */}
           <form className="chat-compose-box mono-compose-box" onSubmit={handleSendMessage}>
-            <div className="compose-top-tools">
-              <div className="tag-selector-group mono-tag-select">
+            <div className="compose-top-tools mono-compose-tools">
+              <div className="compose-tool-cluster left">
                 <span className="compose-tool-label">Label:</span>
-                {Object.keys(TAG_CONFIG).map((k) => {
-                  const cfg = TAG_CONFIG[k];
-                  const isSelected = selectedTag === k;
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      className={`compose-tag-btn mono-compose-tag ${isSelected ? "selected" : ""}`}
-                      onClick={() => setSelectedTag(k)}
-                    >
-                      <span>{cfg.symbol}</span> {cfg.label}
-                    </button>
-                  );
-                })}
+                <div className="tag-selector-group mono-tag-select">
+                  {Object.keys(TAG_CONFIG).map((k) => {
+                    const cfg = TAG_CONFIG[k];
+                    const isSelected = selectedTag === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        className={`compose-tag-btn mono-compose-tag ${isSelected ? "selected" : ""}`}
+                        onClick={() => setSelectedTag(k)}
+                      >
+                        <span>{cfg.symbol}</span> {cfg.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Optional Case attachment */}
               {state.casesList && state.casesList.length > 0 && (
-                <div className="compose-case-select-wrapper">
+                <div className="compose-tool-cluster right">
                   <label htmlFor="case-select-input" className="compose-tool-label">
                     Tautkan Kasus:
                   </label>
