@@ -553,7 +553,7 @@ export function MitraMisiPenyaluran({
             </span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: "10px" }}>
+          <div className="stage-tracker-grid">
             {states.map((s, i) => {
               const isDone = i <= currentIdx;
               const isCurrent = i === currentIdx;
@@ -561,6 +561,7 @@ export function MitraMisiPenyaluran({
               return (
                 <div
                   key={s.title}
+                  className={`stage-tracker-card ${isCurrent ? "current" : isDone ? "done" : ""}`}
                   style={{
                     background: isCurrent ? "#f0fdf4" : isDone ? "#f8fafc" : "#ffffff",
                     border: isCurrent

@@ -2360,7 +2360,7 @@ function CaseDetail({
         </div>
 
         {/* 5-STEP TIMELINE TRACKER (ALUR GENERAL: LAPORAN MASUK -> VERIFIKASI BPBD -> MENUNGGU BANTUAN -> PENYALURAN BANTUAN -> BANTUAN DITERIMA) */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", margin: "14px 0 10px" }}>
+        <div className="case-timeline-steps" style={{ margin: "14px 0 10px" }}>
           {[
             { 
               step: 1, 
@@ -2398,7 +2398,7 @@ function CaseDetail({
               active: activeCase.status === "Menunggu Konfirmasi Penerimaan" 
             }
           ].map((s) => (
-            <div key={s.step} style={{ textAlign: "center", padding: "10px 4px", background: s.passed ? "#eef6f0" : s.active ? "#fffbe6" : "#f5f4ef", borderRadius: "10px", border: `1px solid ${s.passed ? "#b2d7bb" : s.active ? "#ffe58f" : "#e2ded4"}` }}>
+            <div key={s.step} className="case-timeline-step-card" style={{ textAlign: "center", padding: "10px 4px", background: s.passed ? "#eef6f0" : s.active ? "#fffbe6" : "#f5f4ef", borderRadius: "10px", border: `1px solid ${s.passed ? "#b2d7bb" : s.active ? "#ffe58f" : "#e2ded4"}` }}>
               <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: s.passed ? "#15803d" : s.active ? "#d46b08" : "#80866e", color: "#ffffff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, marginBottom: "4px" }}>
                 {s.passed ? "✓" : s.step}
               </div>
