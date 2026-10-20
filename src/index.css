@@ -10168,3 +10168,452 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 999px;
   padding: 1px 6px;
 }
+
+/* =========================================================
+   COMPREHENSIVE RESPONSIVE DESIGN SUITE (ALL DEVICES)
+   Mobile (< 640px), Phablet (640-768px), Tablet (768-1024px), Laptop (1024-1440px), Desktop (> 1440px)
+   ========================================================= */
+
+/* 1. Global Viewport & Container Resiliency */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mission Route Meta Card */
+.mission-route-meta-card {
+  background: #ffffff;
+  border: 1.5px solid rgba(1, 50, 32, 0.12);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.mission-meta-route-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.mission-meta-item small {
+  display: block;
+  font-size: 0.70rem;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mission-meta-item strong {
+  font-size: 0.88rem;
+  color: #013220;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mission-meta-arrow {
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.mission-meta-pipe {
+  color: #e2e8f0;
+}
+
+.mission-meta-driver {
+  text-align: right;
+}
+
+.mission-meta-driver small {
+  display: block;
+  font-size: 0.70rem;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mission-meta-driver strong {
+  font-size: 0.85rem;
+  color: #0f172a;
+}
+
+/* 2. Responsive Shell & Navigation for Tablets & Phones (<= 1024px) */
+@media (max-width: 1024px) {
+  .portal-shell,
+  .portal-shell.side-collapsed {
+    padding-left: 0 !important;
+    padding-top: 64px !important;
+  }
+
+  .sidebar,
+  .sidebar.collapsed {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    max-width: 86vw !important;
+    transform: translateX(-100%) !important;
+    z-index: 1001 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .sidebar.mobile-open,
+  .sidebar.collapsed.mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  .sidebar.collapsed .side-logo {
+    justify-content: space-between !important;
+    padding: 0 10px !important;
+  }
+  .sidebar.collapsed .logo {
+    display: flex !important;
+  }
+  .sidebar.collapsed .logo span {
+    display: inline !important;
+  }
+  .sidebar.collapsed nav button {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    padding: 0 14px !important;
+  }
+  .sidebar.collapsed nav button span:not(.icon) {
+    display: inline !important;
+  }
+  .sidebar.collapsed .side-context {
+    display: block !important;
+  }
+
+  .sidebar-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(10, 20, 15, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .sidebar-scrim.show {
+    display: block !important;
+  }
+
+  .mobile-header {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    z-index: 900 !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--line, #e2e8f0) !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 16px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  }
+
+  .mobile-bottom {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 64px !important;
+    z-index: 890 !important;
+    background: #ffffff !important;
+    border-top: 1px solid var(--line, #e2e8f0) !important;
+    justify-content: space-around !important;
+    padding-bottom: env(safe-area-inset-bottom, 0) !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .portal-content > .workspace,
+  .workspace {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px 20px 115px 20px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Floating Chat Trigger position on tablet/mobile: above bottom navigation */
+  .floating-chat-trigger-btn {
+    bottom: 78px !important;
+    right: 16px !important;
+    padding: 8px 14px !important;
+    font-size: 0.8rem !important;
+    z-index: 895 !important;
+  }
+}
+
+/* 3. Small Mobile Viewport (< 640px) */
+@media (max-width: 640px) {
+  .portal-content > .workspace,
+  .workspace {
+    padding: 16px 12px 110px 12px !important;
+  }
+
+  .floating-chat-trigger-btn {
+    bottom: 74px !important;
+    right: 12px !important;
+    padding: 7px 11px !important;
+    gap: 6px !important;
+  }
+  .floating-chat-text {
+    font-size: 0.74rem !important;
+  }
+
+  .workspace-title {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    margin-bottom: 20px !important;
+  }
+  .workspace-title h1 {
+    font-size: 1.45rem !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Citizen Disaster Banner */
+  .citizen-disaster-banner {
+    min-height: auto !important;
+    border-radius: 16px !important;
+    margin-bottom: 20px !important;
+  }
+  .citizen-disaster-banner-content {
+    padding: 22px 16px !important;
+  }
+  .citizen-disaster-banner-main h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+  }
+  .citizen-disaster-banner-main p {
+    font-size: 0.82rem !important;
+    line-height: 1.45 !important;
+    margin: 8px 0 16px !important;
+  }
+
+  /* Mission Route Card on Mobile */
+  .mission-route-meta-card {
+    padding: 12px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .mission-meta-route-group {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .mission-meta-arrow,
+  .mission-meta-pipe {
+    display: none !important;
+  }
+  .mission-meta-driver {
+    width: 100% !important;
+    text-align: left !important;
+    border-top: 1px solid #f1f5f9 !important;
+    padding-top: 8px !important;
+    margin-top: 2px !important;
+  }
+
+  /* Mission Live Tracking Map HUD */
+  .mission-hud-bar {
+    padding: 10px 12px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .mission-hud-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+  .mission-hud-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 6px 4px !important;
+    font-size: 0.72rem !important;
+  }
+  .mission-map-canvas {
+    height: 320px !important;
+  }
+  .mission-telemetry-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 12px !important;
+  }
+
+  /* Grafik Transparansi Bantuan */
+  .grafik-transparansi-bantuan-section {
+    padding: 18px 14px !important;
+    margin-top: 32px !important;
+    margin-bottom: 28px !important;
+    border-radius: 14px !important;
+  }
+  .grafik-transparansi-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .grafik-summary-badge {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: left !important;
+    padding: 8px 12px !important;
+  }
+  .grafik-transparansi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .grafik-bar-item {
+    padding: 8px 10px !important;
+  }
+
+  /* All Cases Grid & Cards */
+  .all-cases-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .all-case-card {
+    padding: 16px 14px !important;
+    border-radius: 16px !important;
+  }
+  .quick-access-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Report Form & Stepper */
+  .report-content-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .report-form-card {
+    padding: 20px 14px !important;
+    border-radius: 16px !important;
+  }
+  .report-form-header h2 {
+    font-size: 1.25rem !important;
+  }
+  .step-trapezoid {
+    min-width: 125px !important;
+    height: 44px !important;
+    padding: 0 8px 0 14px !important;
+    font-size: 11px !important;
+  }
+  .step-trapezoid-num {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 10px !important;
+  }
+
+  /* Chat Koordinasi Mobile */
+  .chat-main-grid.mono-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .chat-messages-container.mono-messages-container {
+    max-height: 380px !important;
+    padding: 12px 10px !important;
+  }
+  .chat-filter-bar.mono-filter-bar {
+    padding: 8px 12px !important;
+  }
+  .chat-search-box.mono-search-box {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  .chat-compose-box.mono-compose-box {
+    padding: 10px 12px !important;
+  }
+  .compose-tool-row.mono-compose-tool-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+  .compose-case-select.mono-select {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .compose-input-row.mono-input-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .chat-send-submit-btn.mono-send-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 38px !important;
+  }
+
+  /* Modals */
+  .modal {
+    width: min(94vw, 420px) !important;
+    padding: 20px 16px !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* 4. Medium Tablet Breakpoint (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .all-cases-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+  .quick-access-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+  .report-content-grid {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .grafik-transparansi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+  .chat-main-grid.mono-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .mission-route-meta-card {
+    padding: 14px 16px !important;
+  }
+  .mission-meta-route-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+}
+

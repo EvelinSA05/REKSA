@@ -148,6 +148,7 @@ export function GrafikTransparansiBantuan({
     >
       {/* 1. HEADER (MONOCHROME) */}
       <div
+        className="grafik-transparansi-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -210,6 +211,7 @@ export function GrafikTransparansiBantuan({
 
         {/* Total Summary Badge (Monochrome) */}
         <div
+          className="grafik-summary-badge"
           style={{
             background: "#f4f4f5",
             border: "1px solid #e4e4e7",
@@ -229,6 +231,7 @@ export function GrafikTransparansiBantuan({
 
       {/* 2. MAIN 2-COLUMN GRID (KOMODITAS BARS + DONUT CHART) */}
       <div
+        className="grafik-transparansi-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",

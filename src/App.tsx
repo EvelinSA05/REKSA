@@ -1267,7 +1267,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   });
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 900);
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 1024);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -1285,7 +1285,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
 
   useEffect(() => {
     const check = () => {
-      const isNowMobile = window.innerWidth <= 900;
+      const isNowMobile = window.innerWidth <= 1024;
       setIsMobileView(isNowMobile);
       if (!isNowMobile) setMobile(false);
     };

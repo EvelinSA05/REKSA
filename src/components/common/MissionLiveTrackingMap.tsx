@@ -977,6 +977,7 @@ export function MissionLiveTrackingMap({
 
       {/* 1. TOP TELEMETRY HUD BAR (LIVE STATUS & QUICK CONTROLS) */}
       <div
+        className="mission-hud-bar"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -1033,7 +1034,7 @@ export function MissionLiveTrackingMap({
         </div>
 
         {/* Map Quick Action Buttons */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="mission-hud-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Button: Use My Phone GPS */}
           <button
             type="button"
@@ -1143,6 +1144,7 @@ export function MissionLiveTrackingMap({
       {/* 2. LEAFLET MAP CANVAS */}
       <div
         ref={mapContainerRef}
+        className="mission-map-canvas"
         style={{
           width: '100%',
           height,
@@ -1152,6 +1154,7 @@ export function MissionLiveTrackingMap({
 
       {/* 3. BOTTOM TELEMETRY STATUS CARDS */}
       <div
+        className="mission-telemetry-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',

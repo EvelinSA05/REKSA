@@ -330,8 +330,18 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
 
             {/* Mission Selector Tabs (if more than 1 mission) */}
             {displayMissions.length > 1 && (
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              <div 
+                className="mission-selector-tabs"
+                style={{ 
+                  display: "flex", 
+                  gap: "6px", 
+                  overflowX: "auto", 
+                  maxWidth: "100%", 
+                  paddingBottom: "4px",
+                  WebkitOverflowScrolling: "touch"
+                }}
+              >
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", alignSelf: "center", whiteSpace: "nowrap" }}>
                   Misi:
                 </span>
                 {displayMissions.map((m) => {
@@ -350,6 +360,8 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                         border: isSel ? "1.5px solid #013220" : "1px solid #cbd5e1",
                         background: isSel ? "#013220" : "#ffffff",
                         color: isSel ? "#ffffff" : "#334155",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
                         transition: "all 0.15s ease",
                       }}
                     >
@@ -361,64 +373,40 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
             )}
           </div>
 
-          {/* Mission Route & Driver Meta Info Card */}
-          <div
-            style={{
-              background: "#ffffff",
-              border: "1.5px solid rgba(1, 50, 32, 0.12)",
-              borderRadius: "14px",
-              padding: "14px 18px",
-              marginBottom: "14px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "14px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-              <div>
-                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
-                  Posko Asal Logistik
-                </small>
-                <strong style={{ fontSize: "0.88rem", color: "#013220", display: "flex", alignItems: "center", gap: "5px" }}>
+          {/* Mission Route & Driver Meta Info Card (Responsive) */}
+          <div className="mission-route-meta-card">
+            <div className="mission-meta-route-group">
+              <div className="mission-meta-item">
+                <small>Posko Asal Logistik</small>
+                <strong>
                   <span>🏢</span> {currentMission.posko?.nama_posko || "Posko Induk BPBD Sidoarjo"}
                 </strong>
               </div>
 
-              <span style={{ color: "#94a3b8", fontSize: "1.1rem" }}>➔</span>
+              <span className="mission-meta-arrow">➔</span>
 
-              <div>
-                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
-                  Titik Lokasi Warga
-                </small>
-                <strong style={{ fontSize: "0.88rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "5px" }}>
+              <div className="mission-meta-item">
+                <small>Titik Lokasi Warga</small>
+                <strong>
                   <span>📍</span> {currentMission.kebutuhan?.desa ? `${currentMission.kebutuhan.desa}, ${currentMission.kebutuhan.kecamatan || ""}` : "Lokasi Pemohon"}
                 </strong>
               </div>
 
-              <span style={{ color: "#e2e8f0" }}>|</span>
+              <span className="mission-meta-pipe">|</span>
 
-              <div>
-                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
-                  Muatan Paket
-                </small>
-                <strong style={{ fontSize: "0.88rem", color: "#013220", display: "flex", alignItems: "center", gap: "5px" }}>
+              <div className="mission-meta-item">
+                <small>Muatan Paket</small>
+                <strong>
                   <span>📦</span> {currentMission.muatan || currentMission.kebutuhan?.kategori_kebutuhan || "Paket Bantuan"}
                 </strong>
               </div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{ textAlign: "right" }}>
-                <small style={{ display: "block", fontSize: "0.70rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em" }}>
-                  Pengemudi / Satgas
-                </small>
-                <strong style={{ fontSize: "0.85rem", color: "#0f172a" }}>
-                  {currentMission.responder_name || currentMission.organisasi || "Relawan Satgas Penyalur"}
-                </strong>
-              </div>
+            <div className="mission-meta-driver">
+              <small>Pengemudi / Satgas</small>
+              <strong>
+                {currentMission.responder_name || currentMission.organisasi || "Relawan Satgas Penyalur"}
+              </strong>
             </div>
           </div>
 
