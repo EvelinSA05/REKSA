@@ -353,6 +353,24 @@ export function PoskoVerifikasiLaporan({
                         {c.faseDarurat}
                       </span>
                     )}
+                    {c.province && (
+                      <span
+                        style={{
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          padding: "3px 9px",
+                          borderRadius: "999px",
+                          background: "#e0f2fe",
+                          color: "#0369a1",
+                          border: "1px solid #bae6fd",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                        }}
+                      >
+                        📍 {c.province}
+                      </span>
+                    )}
                     {c.kategoriKerusakanRumah && (
                       <span
                         style={{
