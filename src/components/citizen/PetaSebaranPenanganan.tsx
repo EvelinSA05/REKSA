@@ -21,8 +21,106 @@ export interface WilayahPenanganan {
   polygon: [number, number][];
 }
 
-// 12 Wilayah Koridor Penanganan Bencana Pascabencana (Surabaya & Sidoarjo)
-// Hanya menggunakan 2 warna: Hijau (Banyak Ditangani) & Kuning (Sedang Ditangani)
+// =========================================================================
+// JARINGAN SIMPUL BATAS WILAYAH BERSAMA (INTERLOCKING SEAMLESS VERTICES)
+// Setiap titik batas digunakan bersama oleh kecamatan yang berdampingan
+// sehingga batas poligon menyatu 100% (seamless), persis seperti peta tematik GIS/Excel.
+// =========================================================================
+
+const V = {
+  // Batas Terluar Utara (Surabaya)
+  N_WEST: [-7.236, 112.670] as [number, number],
+  N_NW: [-7.228, 112.710] as [number, number],
+  N_MID: [-7.234, 112.748] as [number, number],
+  N_NE: [-7.240, 112.790] as [number, number],
+  N_EAST: [-7.250, 112.835] as [number, number],
+
+  // Batas Terluar Timur (Garis Pantai Selat Madura & Muara)
+  COAST_GUBENG: [-7.280, 112.832] as [number, number],
+  COAST_RUNGKUT_1: [-7.308, 112.852] as [number, number],
+  COAST_RUNGKUT_2: [-7.340, 112.870] as [number, number],
+  COAST_SEDATI_1: [-7.375, 112.890] as [number, number],
+  COAST_SEDATI_2: [-7.412, 112.898] as [number, number],
+  COAST_BUDURAN: [-7.448, 112.875] as [number, number],
+  COAST_SDA: [-7.485, 112.855] as [number, number],
+  COAST_CANDI: [-7.522, 112.835] as [number, number],
+  COAST_PORONG: [-7.562, 112.810] as [number, number],
+
+  // Batas Terluar Selatan (Porong - Batas Pasuruan)
+  S_MID: [-7.578, 112.735] as [number, number],
+  S_WEST: [-7.564, 112.670] as [number, number],
+
+  // Batas Terluar Barat (Sidoarjo Barat & Surabaya Barat)
+  W_CANDI: [-7.514, 112.672] as [number, number],
+  W_SDA: [-7.476, 112.678] as [number, number],
+  W_BUDURAN: [-7.438, 112.682] as [number, number],
+  W_GEDANGAN: [-7.404, 112.685] as [number, number],
+  W_WARU: [-7.374, 112.688] as [number, number],
+  W_GAYUNGAN: [-7.346, 112.695] as [number, number],
+  W_WONOKROMO: [-7.312, 112.685] as [number, number],
+  W_SUKO: [-7.274, 112.675] as [number, number],
+
+  // Simpul Pertemuan & Batas Antar-Wilayah (Shared Topology)
+  // Suko - Gubeng
+  B_SUKO_GUB_1: [-7.256, 112.726] as [number, number],
+  B_SUKO_GUB_WONO: [-7.276, 112.730] as [number, number], // Triple junction Suko-Gubeng-Wonokromo
+
+  // Suko - Wono
+  B_SUKO_WONO_1: [-7.292, 112.710] as [number, number],
+
+  // Gubeng - Wono - Rungkut
+  B_GUB_WONO_RUNG: [-7.290, 112.752] as [number, number], // Triple junction Gubeng-Wonokromo-Rungkut
+  B_GUB_RUNG_1: [-7.294, 112.780] as [number, number],
+  B_GUB_RUNG_2: [-7.296, 112.812] as [number, number],
+
+  // Wono - Gayungan - Rungkut
+  B_WONO_GAY_RUNG: [-7.326, 112.754] as [number, number], // Triple junction Wonokromo-Gayungan-Rungkut
+  B_WONO_GAY_1: [-7.322, 112.712] as [number, number],
+  B_WONO_GAY_2: [-7.325, 112.734] as [number, number],
+
+  // Gayungan - Waru - Rungkut
+  B_GAY_WARU_RUNG: [-7.346, 112.756] as [number, number], // Triple junction Gayungan-Waru-Rungkut
+  B_GAY_WARU_1: [-7.353, 112.715] as [number, number],
+  B_GAY_WARU_2: [-7.355, 112.738] as [number, number],
+
+  // Waru - Rungkut - Sedati
+  B_WARU_RUNG_SED: [-7.350, 112.775] as [number, number], // Triple junction Waru-Rungkut-Sedati
+  B_RUNG_SED_1: [-7.348, 112.805] as [number, number],
+  B_RUNG_SED_2: [-7.344, 112.840] as [number, number],
+
+  // Waru - Gedangan - Sedati
+  B_WARU_GED_SED: [-7.382, 112.775] as [number, number], // Triple junction Waru-Gedangan-Sedati
+  B_WARU_SED_1: [-7.366, 112.775] as [number, number],
+  B_WARU_GED_1: [-7.383, 112.715] as [number, number],
+  B_WARU_GED_2: [-7.384, 112.748] as [number, number],
+
+  // Gedangan - Buduran - Sedati
+  B_GED_BUD_SED: [-7.420, 112.775] as [number, number], // Triple junction Gedangan-Buduran-Sedati
+  B_GED_SED_1: [-7.400, 112.775] as [number, number],
+  B_GED_BUD_1: [-7.416, 112.715] as [number, number],
+  B_GED_BUD_2: [-7.418, 112.746] as [number, number],
+
+  // Buduran - Sedati
+  B_BUD_SED_1: [-7.428, 112.825] as [number, number],
+
+  // Buduran - Sidoarjo Kota
+  B_BUD_SDA_1: [-7.453, 112.710] as [number, number],
+  B_BUD_SDA_2: [-7.456, 112.750] as [number, number],
+  B_BUD_SDA_3: [-7.458, 112.800] as [number, number],
+
+  // Sidoarjo Kota - Candi
+  B_SDA_CANDI_1: [-7.489, 112.712] as [number, number],
+  B_SDA_CANDI_2: [-7.491, 112.750] as [number, number],
+  B_SDA_CANDI_3: [-7.495, 112.805] as [number, number],
+
+  // Candi - Porong
+  B_CANDI_PORONG_1: [-7.531, 112.710] as [number, number],
+  B_CANDI_PORONG_2: [-7.533, 112.750] as [number, number],
+  B_CANDI_PORONG_3: [-7.536, 112.795] as [number, number],
+};
+
+// 12 Wilayah Koridor Penanganan (Surabaya & Sidoarjo)
+// Hanya 2 Warna: Hijau (Banyak Ditangani) & Kuning (Sedang Ditangani)
 export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
   {
     id: "KEC-BUDURAN",
@@ -37,12 +135,19 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 4820,
     kkTerlayani: 1205,
     catatanKewilayahan: "Distribusi logistik tahap 1 dan 2 telah tuntas disalurkan ke seluruh titik pengungsian dan rumah warga.",
-    center: [-7.4275, 112.7275],
+    center: [-7.436, 112.750],
     polygon: [
-      [-7.410, 112.695],
-      [-7.405, 112.750],
-      [-7.445, 112.760],
-      [-7.450, 112.700],
+      V.W_BUDURAN,
+      V.W_GEDANGAN,
+      V.B_GED_BUD_1,
+      V.B_GED_BUD_2,
+      V.B_GED_BUD_SED,
+      V.B_BUD_SED_1,
+      V.COAST_SEDATI_2,
+      V.COAST_BUDURAN,
+      V.B_BUD_SDA_3,
+      V.B_BUD_SDA_2,
+      V.B_BUD_SDA_1,
     ],
   },
   {
@@ -58,12 +163,16 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 3410,
     kkTerlayani: 852,
     catatanKewilayahan: "Penyaluran terverifikasi tuntas melalui armada logistik bergerak menyisir 4 kelurahan terdampak.",
-    center: [-7.3325, 112.7325],
+    center: [-7.338, 112.726],
     polygon: [
-      [-7.320, 112.715],
-      [-7.315, 112.745],
-      [-7.345, 112.750],
-      [-7.350, 112.720],
+      V.W_GAYUNGAN,
+      V.W_WONOKROMO,
+      V.B_WONO_GAY_1,
+      V.B_WONO_GAY_2,
+      V.B_WONO_GAY_RUNG,
+      V.B_GAY_WARU_RUNG,
+      V.B_GAY_WARU_2,
+      V.B_GAY_WARU_1,
     ],
   },
   {
@@ -79,12 +188,14 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 2980,
     kkTerlayani: 745,
     catatanKewilayahan: "Kebutuhan vital air bersih dan tim medis keliling telah mencakup seluruh pos pengungsian mandiri warga.",
-    center: [-7.2675, 112.7025],
+    center: [-7.260, 112.705],
     polygon: [
-      [-7.255, 112.685],
-      [-7.250, 112.715],
-      [-7.280, 112.720],
-      [-7.285, 112.690],
+      V.W_SUKO,
+      V.N_WEST,
+      V.N_NW,
+      V.B_SUKO_GUB_1,
+      V.B_SUKO_GUB_WONO,
+      V.B_SUKO_WONO_1,
     ],
   },
   {
@@ -100,34 +211,16 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 4120,
     kkTerlayani: 1030,
     catatanKewilayahan: "Layanan makanan siap saji dari dapur umum terpusat beroperasi harian melayani warga bantaran sungai.",
-    center: [-7.3050, 112.7425],
+    center: [-7.306, 112.722],
     polygon: [
-      [-7.295, 112.730],
-      [-7.290, 112.755],
-      [-7.315, 112.760],
-      [-7.320, 112.735],
-      [-7.305, 112.725],
-    ],
-  },
-  {
-    id: "KEC-SIDOARJO-KOTA",
-    nama: "Kecamatan Sidoarjo Kota",
-    kabupaten: "Kabupaten Sidoarjo",
-    status: "banyak_ditangani", // HIJAU
-    persentasePenanganan: 92,
-    jumlahBantuan: "1.100 Paket Sembako & 350 Kit Medis",
-    komoditasUtama: "Pangan Sembako, Vitamin, Perlengkapan Bayi",
-    mitraBpbdAktif: "BPBD Kab. Sidoarjo & MDMC Muhammadiyah",
-    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
-    jiwaTerbantu: 3890,
-    kkTerlayani: 972,
-    catatanKewilayahan: "Seluruh laporan kebutuhan mendesak telah diverifikasi dan didistribusikan bersama relawan lokal.",
-    center: [-7.4600, 112.7175],
-    polygon: [
-      [-7.445, 112.695],
-      [-7.440, 112.745],
-      [-7.475, 112.750],
-      [-7.480, 112.690],
+      V.W_WONOKROMO,
+      V.W_SUKO,
+      V.B_SUKO_WONO_1,
+      V.B_SUKO_GUB_WONO,
+      V.B_GUB_WONO_RUNG,
+      V.B_WONO_GAY_RUNG,
+      V.B_WONO_GAY_2,
+      V.B_WONO_GAY_1,
     ],
   },
   {
@@ -143,13 +236,18 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 4450,
     kkTerlayani: 1112,
     catatanKewilayahan: "Pusat rujukan logistik medis dan penyangga kebutuhan darurat beroperasi 24 jam dengan stok memadai.",
-    center: [-7.2750, 112.7550],
+    center: [-7.265, 112.768],
     polygon: [
-      [-7.265, 112.740],
-      [-7.260, 112.765],
-      [-7.285, 112.775],
-      [-7.295, 112.750],
-      [-7.280, 112.735],
+      V.N_NW,
+      V.N_MID,
+      V.N_NE,
+      V.N_EAST,
+      V.COAST_GUBENG,
+      V.B_GUB_RUNG_2,
+      V.B_GUB_RUNG_1,
+      V.B_GUB_WONO_RUNG,
+      V.B_SUKO_GUB_WONO,
+      V.B_SUKO_GUB_1,
     ],
   },
   {
@@ -165,13 +263,19 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 2850,
     kkTerlayani: 712,
     catatanKewilayahan: "Pemasangan tandon air darurat di fasilitas umum dan rumah ibadah telah selesai 100%.",
-    center: [-7.3200, 112.7850],
+    center: [-7.322, 112.805],
     polygon: [
-      [-7.305, 112.760],
-      [-7.300, 112.805],
-      [-7.335, 112.815],
-      [-7.340, 112.770],
-      [-7.320, 112.755],
+      V.B_GUB_WONO_RUNG,
+      V.B_GUB_RUNG_1,
+      V.B_GUB_RUNG_2,
+      V.COAST_GUBENG,
+      V.COAST_RUNGKUT_1,
+      V.COAST_RUNGKUT_2,
+      V.B_RUNG_SED_2,
+      V.B_RUNG_SED_1,
+      V.B_WARU_RUNG_SED,
+      V.B_GAY_WARU_RUNG,
+      V.B_WONO_GAY_RUNG,
     ],
   },
   {
@@ -187,75 +291,18 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 2450,
     kkTerlayani: 612,
     catatanKewilayahan: "Armada tangki air dan truk sembako sedang beroperasi menyisir gang pemukiman warga terdampak banjir luapan.",
-    center: [-7.3600, 112.7425],
+    center: [-7.366, 112.735],
     polygon: [
-      [-7.345, 112.715],
-      [-7.340, 112.765],
-      [-7.375, 112.775],
-      [-7.380, 112.720],
-    ],
-  },
-  {
-    id: "KEC-GEDANGAN",
-    nama: "Kecamatan Gedangan",
-    kabupaten: "Kabupaten Sidoarjo",
-    status: "sedang_ditangani", // KUNING
-    persentasePenanganan: 55,
-    jumlahBantuan: "280 Paket Sembako & 120 Lembar Terpal",
-    komoditasUtama: "Terpal Hunian, Sembako Keluarga",
-    mitraBpbdAktif: "Relawan LPBI NU & BPBD Sidoarjo",
-    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
-    jiwaTerbantu: 1720,
-    kkTerlayani: 430,
-    catatanKewilayahan: "Dalam proses penambahan kuota logistik bursa mitra untuk 3 titik pengungsian mandiri warga.",
-    center: [-7.3925, 112.7325],
-    polygon: [
-      [-7.375, 112.710],
-      [-7.370, 112.755],
-      [-7.410, 112.760],
-      [-7.415, 112.705],
-    ],
-  },
-  {
-    id: "KEC-CANDI",
-    nama: "Kecamatan Candi",
-    kabupaten: "Kabupaten Sidoarjo",
-    status: "sedang_ditangani", // KUNING
-    persentasePenanganan: 62,
-    jumlahBantuan: "420 Paket Pangan & 150 Selimut",
-    komoditasUtama: "Beras, Minyak Goreng, Selimut Bayi",
-    mitraBpbdAktif: "BPBD Sidoarjo & Relawan Pramuka Peduli",
-    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
-    jiwaTerbantu: 1980,
-    kkTerlayani: 495,
-    catatanKewilayahan: "Distribusi tahap kedua sedang disiapkan posko pendukung untuk menjangkau dusun terisolasi akses jalan becek.",
-    center: [-7.4925, 112.7250],
-    polygon: [
-      [-7.475, 112.690],
-      [-7.470, 112.755],
-      [-7.510, 112.760],
-      [-7.515, 112.695],
-    ],
-  },
-  {
-    id: "KEC-PORONG",
-    nama: "Kecamatan Porong",
-    kabupaten: "Kabupaten Sidoarjo",
-    status: "sedang_ditangani", // KUNING
-    persentasePenanganan: 58,
-    jumlahBantuan: "300 Paket Sembako & 80 Unit Tenda",
-    komoditasUtama: "Tenda Darurat, Makanan Kaleng, Genset",
-    mitraBpbdAktif: "Posko Taktis Porong & Mitra SAR Gabungan",
-    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
-    jiwaTerbantu: 1640,
-    kkTerlayani: 410,
-    catatanKewilayahan: "Tim gabungan sedang menyalurkan bantuan penyangga sambil memonitor ketinggian air di tanggul darurat.",
-    center: [-7.5300, 112.7175],
-    polygon: [
-      [-7.510, 112.685],
-      [-7.505, 112.755],
-      [-7.550, 112.750],
-      [-7.555, 112.680],
+      V.W_WARU,
+      V.W_GAYUNGAN,
+      V.B_GAY_WARU_1,
+      V.B_GAY_WARU_2,
+      V.B_GAY_WARU_RUNG,
+      V.B_WARU_RUNG_SED,
+      V.B_WARU_SED_1,
+      V.B_WARU_GED_SED,
+      V.B_WARU_GED_2,
+      V.B_WARU_GED_1,
     ],
   },
   {
@@ -271,13 +318,124 @@ export const WILAYAH_CHOROPLETH_DATA: WilayahPenanganan[] = [
     jiwaTerbantu: 1410,
     kkTerlayani: 352,
     catatanKewilayahan: "Penyaluran logistik pesisir pantai terus berlanjut melalui koordinasi armada kapal motor dan pick-up.",
-    center: [-7.3825, 112.8075],
+    center: [-7.385, 112.825],
     polygon: [
-      [-7.360, 112.770],
-      [-7.355, 112.835],
-      [-7.405, 112.845],
-      [-7.410, 112.780],
-      [-7.380, 112.770],
+      V.B_WARU_RUNG_SED,
+      V.B_RUNG_SED_1,
+      V.B_RUNG_SED_2,
+      V.COAST_RUNGKUT_2,
+      V.COAST_SEDATI_1,
+      V.COAST_SEDATI_2,
+      V.B_BUD_SED_1,
+      V.B_GED_BUD_SED,
+      V.B_GED_SED_1,
+      V.B_WARU_GED_SED,
+      V.B_WARU_SED_1,
+    ],
+  },
+  {
+    id: "KEC-GEDANGAN",
+    nama: "Kecamatan Gedangan",
+    kabupaten: "Kabupaten Sidoarjo",
+    status: "sedang_ditangani", // KUNING
+    persentasePenanganan: 55,
+    jumlahBantuan: "280 Paket Sembako & 120 Lembar Terpal",
+    komoditasUtama: "Terpal Hunian, Sembako Keluarga",
+    mitraBpbdAktif: "Relawan LPBI NU & BPBD Sidoarjo",
+    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
+    jiwaTerbantu: 1720,
+    kkTerlayani: 430,
+    catatanKewilayahan: "Dalam proses penambahan kuota logistik bursa mitra untuk 3 titik pengungsian mandiri warga.",
+    center: [-7.400, 112.730],
+    polygon: [
+      V.W_GEDANGAN,
+      V.W_WARU,
+      V.B_WARU_GED_1,
+      V.B_WARU_GED_2,
+      V.B_WARU_GED_SED,
+      V.B_GED_SED_1,
+      V.B_GED_BUD_SED,
+      V.B_GED_BUD_2,
+      V.B_GED_BUD_1,
+    ],
+  },
+  {
+    id: "KEC-SIDOARJO-KOTA",
+    nama: "Kecamatan Sidoarjo Kota",
+    kabupaten: "Kabupaten Sidoarjo",
+    status: "banyak_ditangani", // HIJAU
+    persentasePenanganan: 92,
+    jumlahBantuan: "1.100 Paket Sembako & 350 Kit Medis",
+    komoditasUtama: "Pangan Sembako, Vitamin, Perlengkapan Bayi",
+    mitraBpbdAktif: "BPBD Kab. Sidoarjo & MDMC Muhammadiyah",
+    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
+    jiwaTerbantu: 3890,
+    kkTerlayani: 972,
+    catatanKewilayahan: "Seluruh laporan kebutuhan mendesak telah diverifikasi dan didistribusikan bersama relawan lokal.",
+    center: [-7.468, 112.740],
+    polygon: [
+      V.W_SDA,
+      V.W_BUDURAN,
+      V.B_BUD_SDA_1,
+      V.B_BUD_SDA_2,
+      V.B_BUD_SDA_3,
+      V.COAST_BUDURAN,
+      V.COAST_SDA,
+      V.B_SDA_CANDI_3,
+      V.B_SDA_CANDI_2,
+      V.B_SDA_CANDI_1,
+    ],
+  },
+  {
+    id: "KEC-CANDI",
+    nama: "Kecamatan Candi",
+    kabupaten: "Kabupaten Sidoarjo",
+    status: "sedang_ditangani", // KUNING
+    persentasePenanganan: 62,
+    jumlahBantuan: "420 Paket Pangan & 150 Selimut",
+    komoditasUtama: "Beras, Minyak Goreng, Selimut Bayi",
+    mitraBpbdAktif: "BPBD Sidoarjo & Relawan Pramuka Peduli",
+    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
+    jiwaTerbantu: 1980,
+    kkTerlayani: 495,
+    catatanKewilayahan: "Distribusi tahap kedua sedang disiapkan posko pendukung untuk menjangkau dusun terisolasi akses jalan becek.",
+    center: [-7.505, 112.735],
+    polygon: [
+      V.W_CANDI,
+      V.W_SDA,
+      V.B_SDA_CANDI_1,
+      V.B_SDA_CANDI_2,
+      V.B_SDA_CANDI_3,
+      V.COAST_SDA,
+      V.COAST_CANDI,
+      V.B_CANDI_PORONG_3,
+      V.B_CANDI_PORONG_2,
+      V.B_CANDI_PORONG_1,
+    ],
+  },
+  {
+    id: "KEC-PORONG",
+    nama: "Kecamatan Porong",
+    kabupaten: "Kabupaten Sidoarjo",
+    status: "sedang_ditangani", // KUNING
+    persentasePenanganan: 58,
+    jumlahBantuan: "300 Paket Sembako & 80 Unit Tenda",
+    komoditasUtama: "Tenda Darurat, Makanan Kaleng, Genset",
+    mitraBpbdAktif: "Posko Taktis Porong & Mitra SAR Gabungan",
+    poskoPenyangga: "Posko BPBD Kabupaten Buduran",
+    jiwaTerbantu: 1640,
+    kkTerlayani: 410,
+    catatanKewilayahan: "Tim gabungan sedang menyalurkan bantuan penyangga sambil memonitor ketinggian air di tanggul darurat.",
+    center: [-7.545, 112.730],
+    polygon: [
+      V.S_WEST,
+      V.W_CANDI,
+      V.B_CANDI_PORONG_1,
+      V.B_CANDI_PORONG_2,
+      V.B_CANDI_PORONG_3,
+      V.COAST_CANDI,
+      V.COAST_PORONG,
+      V.S_MID,
     ],
   },
 ];
@@ -300,7 +458,7 @@ export function PetaSebaranPenanganan({
   const [activeTabFilter, setActiveTabFilter] = useState<"all" | "banyak_ditangani" | "sedang_ditangani">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWilayah, setSelectedWilayah] = useState<WilayahPenanganan | null>(WILAYAH_CHOROPLETH_DATA[0]);
-  const [viewMode, setViewMode] = useState<"map" | "table">("map");
+  const [viewMode, setViewMode] = useState<"vector" | "map" | "table">("vector");
 
   // Summary counts
   const totalWilayah = WILAYAH_CHOROPLETH_DATA.length;
@@ -325,11 +483,12 @@ export function PetaSebaranPenanganan({
 
   // Leaflet map initialization
   useEffect(() => {
+    if (viewMode !== "map") return;
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
-        center: [-7.395, 112.745],
+        center: [-7.405, 112.760],
         zoom: 11,
         minZoom: 10,
         maxZoom: 15,
@@ -339,6 +498,7 @@ export function PetaSebaranPenanganan({
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
+        subdomains: ["a", "b", "c"],
       }).addTo(map);
 
       polygonLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -351,42 +511,42 @@ export function PetaSebaranPenanganan({
 
     layerGroup.clearLayers();
 
-    // Render each district polygon with ONLY TWO COLORS (Hijau vs Kuning)
+    // Render interlocking polygons with clean solid white boundary lines
     filteredWilayah.forEach((w) => {
       const isGreen = w.status === "banyak_ditangani";
       const fillColor = isGreen ? "#16a34a" : "#eab308";
-      const strokeColor = isGreen ? "#15803d" : "#ca8a04";
       const isSelected = selectedWilayah?.id === w.id;
 
       const polygon = L.polygon(w.polygon, {
-        color: isSelected ? "#013220" : strokeColor,
-        weight: isSelected ? 4 : 2,
+        color: isSelected ? "#013220" : "#ffffff", // Garis putih bersih pemisah antar-wilayah
+        weight: isSelected ? 4 : 2.5,
         fillColor: fillColor,
-        fillOpacity: isSelected ? 0.75 : 0.52,
-        dashArray: isSelected ? "" : "3",
+        fillOpacity: isSelected ? 0.95 : 0.82,
+        opacity: 1,
       });
 
-      // Label Icon at district center
+      // Clean, elegant label at district center (NO ugly black pins)
       const labelIcon = L.divIcon({
-        className: "choropleth-label-badge",
+        className: "choropleth-label-clean",
         html: `
           <div style="
-            background: ${isGreen ? "#052e16" : "#451a03"};
+            background: ${isSelected ? "#013220" : "rgba(15, 23, 42, 0.85)"};
             color: #ffffff;
-            padding: 3px 8px;
-            border-radius: 999px;
+            padding: 2px 7px;
+            border-radius: 6px;
             font-size: 10px;
             font-weight: 700;
             white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-            border: 1.5px solid ${isGreen ? "#86efac" : "#fef08a"};
-            display: flex;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.7);
+            display: inline-flex;
             align-items: center;
             gap: 4px;
             transform: translate(-50%, -50%);
+            cursor: pointer;
           ">
             <span>${isGreen ? "🟢" : "🟡"}</span>
-            <span>${w.nama.replace("Kecamatan ", "")} (${w.persentasePenanganan}%)</span>
+            <span>${w.nama.replace("Kecamatan ", "")}</span>
           </div>
         `,
         iconSize: [0, 0],
@@ -394,24 +554,23 @@ export function PetaSebaranPenanganan({
 
       const marker = L.marker(w.center, { icon: labelIcon });
 
-      // Interactive popup / tooltip
+      // Interactive tooltip
       polygon.bindTooltip(
         `
         <div style="font-family: inherit; font-size: 12px; padding: 4px 6px;">
           <strong style="color: ${isGreen ? "#15803d" : "#b45309"}; font-size: 13px;">${w.nama}</strong><br/>
           <span style="font-size: 11px; color: #64748b;">${w.kabupaten}</span>
-          <div style="margin-top: 4px; font-weight: 600; color: #1e293b;">
-            ${isGreen ? "🟢 Sudah Banyak Ditangani" : "🟡 Sedang Dalam Penanganan"} (${w.persentasePenanganan}%)
+          <div style="margin-top: 4px; font-weight: 700; color: #0f172a;">
+            ${isGreen ? "🟢 Banyak Ditangani" : "🟡 Sedang Ditangani"} (${w.persentasePenanganan}%)
           </div>
           <div style="font-size: 11px; color: #475569; margin-top: 2px;">
-            Jiwa Terbantu: <b>${w.jiwaTerbantu.toLocaleString("id-ID")} Jiwa</b>
+            Terbantu: <b>${w.jiwaTerbantu.toLocaleString("id-ID")} Jiwa</b>
           </div>
         </div>
         `,
         { sticky: true, direction: "top" }
       );
 
-      // Click event
       const handleClick = () => {
         setSelectedWilayah(w);
         map.panTo(w.center);
@@ -420,19 +579,20 @@ export function PetaSebaranPenanganan({
       polygon.on("click", handleClick);
       marker.on("click", handleClick);
 
-      // Hover glow
       polygon.on("mouseover", () => {
         polygon.setStyle({
-          fillOpacity: 0.82,
+          fillOpacity: 0.96,
           weight: 3.5,
+          color: "#013220",
         });
       });
 
       polygon.on("mouseout", () => {
         if (selectedWilayah?.id !== w.id) {
           polygon.setStyle({
-            fillOpacity: 0.52,
-            weight: 2,
+            fillOpacity: 0.82,
+            weight: 2.5,
+            color: "#ffffff",
           });
         }
       });
@@ -441,11 +601,40 @@ export function PetaSebaranPenanganan({
       layerGroup.addLayer(marker);
     });
 
-    // Invalidate map size on view switch
     setTimeout(() => {
       map.invalidateSize();
     }, 200);
-  }, [filteredWilayah, selectedWilayah]);
+  }, [viewMode, filteredWilayah, selectedWilayah]);
+
+  // Convert (lat, lng) to SVG (x, y) coordinates for Vector Canvas View
+  const svgBounds = useMemo(() => {
+    const lats = Object.values(V).map((pt) => pt[0]);
+    const lngs = Object.values(V).map((pt) => pt[1]);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    return { minLat, maxLat, minLng, maxLng };
+  }, []);
+
+  const getSvgPoint = (lat: number, lng: number, width = 580, height = 520, pad = 36) => {
+    const x = ((lng - svgBounds.minLng) / (svgBounds.maxLng - svgBounds.minLng)) * (width - 2 * pad) + pad;
+    const y = ((svgBounds.maxLat - lat) / (svgBounds.maxLat - svgBounds.minLat)) * (height - 2 * pad) + pad;
+    return [Number(x.toFixed(1)), Number(y.toFixed(1))];
+  };
+
+  const svgPaths = useMemo(() => {
+    return WILAYAH_CHOROPLETH_DATA.map((w) => {
+      const pts = w.polygon.map((p) => getSvgPoint(p[0], p[1]));
+      const pathD = pts.reduce((acc, curr, i) => `${acc} ${i === 0 ? "M" : "L"} ${curr[0]} ${curr[1]}`, "") + " Z";
+      const centerPt = getSvgPoint(w.center[0], w.center[1]);
+      return {
+        ...w,
+        pathD,
+        svgCenter: centerPt,
+      };
+    });
+  }, [svgBounds]);
 
   return (
     <section className={`choropleth-thematic-section ${className}`} style={{ marginBottom: "32px" }}>
@@ -488,12 +677,32 @@ export function PetaSebaranPenanganan({
             <span>Peta Cakupan Penanganan Bantuan BPBD &amp; Mitra</span>
           </h2>
           <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.88rem", maxWidth: "780px", lineHeight: 1.5 }}>
-            Gambaran visual transparansi dua warna: Daerah yang telah banyak ditangani tuntas oleh armada Mitra &amp; BPBD (<strong>Hijau</strong>) dan daerah yang sedang dalam proses penanganan berjalan (<strong>Kuning</strong>).
+            Peta tematik kewilayahan presisi yang <strong>menyatu rapat antar-garis batas daerah</strong> dengan dua warna tegas: Daerah yang telah banyak ditangani tuntas (<strong>Hijau</strong>) dan daerah yang sedang dalam penanganan berjalan (<strong>Kuning</strong>).
           </p>
         </div>
 
-        {/* View Mode Toggle: Peta Interaktif vs Rekap Tabel Excel */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        {/* View Mode Switcher: Mode Vektor Tematik vs Peta Leaflet vs Tabel */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => setViewMode("vector")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 14px",
+              borderRadius: "8px",
+              border: viewMode === "vector" ? "1.5px solid #013220" : "1px solid #cbd5e1",
+              background: viewMode === "vector" ? "#013220" : "#ffffff",
+              color: viewMode === "vector" ? "#ffffff" : "#475569",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <span>🎨 Mode Vektor Tematik</span>
+          </button>
           <button
             type="button"
             onClick={() => setViewMode("map")}
@@ -507,12 +716,12 @@ export function PetaSebaranPenanganan({
               background: viewMode === "map" ? "#013220" : "#ffffff",
               color: viewMode === "map" ? "#ffffff" : "#475569",
               fontSize: "0.82rem",
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s ease",
             }}
           >
-            <AppIcon name="map" size={14} /> Peta Tematik
+            <AppIcon name="map" size={14} /> Peta Geografis (Leaflet)
           </button>
           <button
             type="button"
@@ -527,7 +736,7 @@ export function PetaSebaranPenanganan({
               background: viewMode === "table" ? "#013220" : "#ffffff",
               color: viewMode === "table" ? "#ffffff" : "#475569",
               fontSize: "0.82rem",
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s ease",
             }}
@@ -817,203 +1026,13 @@ export function PetaSebaranPenanganan({
         </div>
       </div>
 
-      {/* MAIN VIEW: MAP OR TABLE */}
-      {viewMode === "map" ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: selectedWilayah ? "1.6fr 1fr" : "1fr",
-            gap: "16px",
-            background: "#ffffff",
-            padding: "14px",
-            borderRadius: "16px",
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
-          }}
-        >
-          {/* LEAFLET CHOROPLETH MAP CONTAINER */}
-          <div style={{ position: "relative", borderRadius: "12px", overflow: "hidden", border: "1px solid #cbd5e1" }}>
-            <div
-              ref={mapContainerRef}
-              style={{
-                width: "100%",
-                height: "460px",
-                background: "#f8fafc",
-                zIndex: 1,
-              }}
-            />
-
-            {/* Map Legend Overlay (Top Right of Map) */}
-            <div
-              style={{
-                position: "absolute",
-                top: "12px",
-                right: "12px",
-                background: "rgba(255, 255, 255, 0.95)",
-                backdropFilter: "blur(6px)",
-                padding: "8px 12px",
-                borderRadius: "10px",
-                border: "1px solid rgba(0,0,0,0.1)",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-                zIndex: 400,
-                fontSize: "0.76rem",
-              }}
-            >
-              <span style={{ fontWeight: 800, color: "#013220", display: "block", marginBottom: "4px" }}>
-                LEGENDA DUA WARNA
-              </span>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#16a34a",
-                    border: "1px solid #15803d",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                  }}
-                />
-                <span style={{ color: "#166534", fontWeight: 700 }}>Hijau: Banyak Ditangani (&gt;80%)</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#eab308",
-                    border: "1px solid #ca8a04",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                  }}
-                />
-                <span style={{ color: "#854d0e", fontWeight: 700 }}>Kuning: Sedang Ditangani (40-79%)</span>
-              </div>
-            </div>
-          </div>
-
-          {/* DETAIL PANEL OF SELECTED WILAYAH */}
-          {selectedWilayah && (
-            <div
-              style={{
-                background: selectedWilayah.status === "banyak_ditangani" ? "#fbfdfb" : "#fffef9",
-                border: selectedWilayah.status === "banyak_ditangani" ? "1.5px solid #86efac" : "1.5px solid #fde047",
-                borderRadius: "12px",
-                padding: "16px 18px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-            >
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
-                  <div>
-                    <span
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        color: "#64748b",
-                      }}
-                    >
-                      {selectedWilayah.kabupaten}
-                    </span>
-                    <h3 style={{ margin: "2px 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
-                      {selectedWilayah.nama}
-                    </h3>
-                  </div>
-
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 800,
-                      padding: "4px 10px",
-                      borderRadius: "999px",
-                      background: selectedWilayah.status === "banyak_ditangani" ? "#dcfce7" : "#fef9c3",
-                      color: selectedWilayah.status === "banyak_ditangani" ? "#15803d" : "#854d0e",
-                      border: `1px solid ${selectedWilayah.status === "banyak_ditangani" ? "#86efac" : "#fde047"}`,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                    }}
-                  >
-                    <span>{selectedWilayah.status === "banyak_ditangani" ? "🟢" : "🟡"}</span>
-                    <span>{selectedWilayah.status === "banyak_ditangani" ? "Banyak Ditangani" : "Sedang Ditangani"}</span>
-                  </span>
-                </div>
-
-                {/* Progress bar penanganan */}
-                <div style={{ margin: "10px 0 14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", fontWeight: 700, marginBottom: "4px" }}>
-                    <span style={{ color: "#64748b" }}>Cakupan Bantuan Tersalurkan</span>
-                    <span style={{ color: selectedWilayah.status === "banyak_ditangani" ? "#15803d" : "#b45309" }}>
-                      {selectedWilayah.persentasePenanganan}%
-                    </span>
-                  </div>
-                  <div style={{ height: "8px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
-                    <div
-                      style={{
-                        height: "100%",
-                        width: `${selectedWilayah.persentasePenanganan}%`,
-                        background: selectedWilayah.status === "banyak_ditangani" ? "#16a34a" : "#eab308",
-                        borderRadius: "999px",
-                        transition: "width 0.3s ease",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Logistics & Beneficiary Info */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.82rem" }}>
-                  <div style={{ background: "#ffffff", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
-                      Realisasi Bantuan Logistik:
-                    </span>
-                    <strong style={{ color: "#013220", fontSize: "0.88rem" }}>{selectedWilayah.jumlahBantuan}</strong>
-                    <div style={{ color: "#475569", fontSize: "0.75rem", marginTop: "2px" }}>
-                      Komoditas: {selectedWilayah.komoditasUtama}
-                    </div>
-                  </div>
-
-                  <div style={{ background: "#ffffff", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
-                      Warga Terlayani:
-                    </span>
-                    <strong style={{ color: "#013220", fontSize: "0.88rem" }}>
-                      {selectedWilayah.jiwaTerbantu.toLocaleString("id-ID")} Jiwa ({selectedWilayah.kkTerlayani} KK)
-                    </strong>
-                    <div style={{ color: "#475569", fontSize: "0.75rem", marginTop: "2px" }}>
-                      Posko Penyangga: <strong>{selectedWilayah.poskoPenyangga}</strong>
-                    </div>
-                  </div>
-
-                  <div style={{ background: "#ffffff", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
-                      Mitra &amp; Satgas BPBD di Lapangan:
-                    </span>
-                    <span style={{ color: "#013220", fontWeight: 600 }}>{selectedWilayah.mitraBpbdAktif}</span>
-                  </div>
-
-                  <div style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(0,0,0,0.02)", borderLeft: `3px solid ${selectedWilayah.status === "banyak_ditangani" ? "#16a34a" : "#eab308"}` }}>
-                    <p style={{ margin: 0, fontSize: "0.78rem", color: "#334155", fontStyle: "italic", lineHeight: 1.45 }}>
-                      "{selectedWilayah.catatanKewilayahan}"
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #e2e8f0", fontSize: "0.72rem", color: "#94a3b8", textAlign: "right" }}>
-                ✓ Diperbarui berkala dari Sistem Pusdalops BPBD
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
+      {/* MAIN VIEW CONTENT */}
+      {viewMode === "table" ? (
         /* TABLE VIEW (CHOROCHROMATIC REKAP EXCEL FORMAT) */
         <div style={{ background: "#ffffff", borderRadius: "14px", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
           <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <strong style={{ fontSize: "0.86rem", color: "#013220" }}>
-              Tabel Klasifikasi Dua Warna Penanganan Kewilayahan (Excel/GIS)
+              Tabel Klasifikasi Dua Warna Penanganan Kewilayahan (Format Excel / GIS)
             </strong>
             <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
               Menampilkan {filteredWilayah.length} dari {totalWilayah} Wilayah
@@ -1042,7 +1061,7 @@ export function PetaSebaranPenanganan({
                       key={w.id}
                       onClick={() => {
                         setSelectedWilayah(w);
-                        setViewMode("map");
+                        setViewMode("vector");
                       }}
                       style={{
                         borderBottom: "1px solid #f1f5f9",
@@ -1110,6 +1129,312 @@ export function PetaSebaranPenanganan({
               </tbody>
             </table>
           </div>
+        </div>
+      ) : (
+        /* MAP CONTAINER (DUAL VIEW: SVG VECTOR CANVAS OR LEAFLET) */
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: selectedWilayah ? "1.6fr 1fr" : "1fr",
+            gap: "16px",
+            background: "#ffffff",
+            padding: "16px",
+            borderRadius: "16px",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* MAP CANVAS */}
+          <div
+            style={{
+              position: "relative",
+              borderRadius: "14px",
+              overflow: "hidden",
+              border: "1px solid #cbd5e1",
+              background: viewMode === "vector" ? "#fbfcf8" : "#ffffff",
+            }}
+          >
+            {viewMode === "vector" ? (
+              /* =========================================================================
+                 MODE VEKTOR TEMATIK INTERLOCKING (SESUAI PERSIS DENGAN REFERENSI GAMBAR)
+                 Setiap poligon kecamatan saling menempel sempurna dengan garis pemisah putih
+                 dan background grid tipis layaknya visualisasi peta tematik GIS / Excel.
+                 ========================================================================= */
+              <div
+                style={{
+                  width: "100%",
+                  height: "490px",
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundImage:
+                    "linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px)",
+                  backgroundSize: "22px 22px",
+                }}
+              >
+                <svg
+                  viewBox="0 0 580 520"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    filter: "drop-shadow(0 10px 24px rgba(0,0,0,0.08))",
+                  }}
+                >
+                  <defs>
+                    <filter id="vector-glow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#013220" floodOpacity="0.3" />
+                    </filter>
+                  </defs>
+
+                  {/* Render Interlocking Polygon Paths */}
+                  {svgPaths.map((w) => {
+                    const isGreen = w.status === "banyak_ditangani";
+                    const isSelected = selectedWilayah?.id === w.id;
+                    const fillColor = isGreen ? "#16a34a" : "#eab308";
+
+                    return (
+                      <g key={w.id} onClick={() => setSelectedWilayah(w)} style={{ cursor: "pointer" }}>
+                        <path
+                          d={w.pathD}
+                          fill={fillColor}
+                          fillOpacity={isSelected ? 0.96 : 0.84}
+                          stroke="#ffffff"
+                          strokeWidth={isSelected ? 3.5 : 2}
+                          strokeLinejoin="round"
+                          strokeLinecap="round"
+                          filter={isSelected ? "url(#vector-glow)" : undefined}
+                          style={{
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <title>
+                            {w.nama} ({w.status === "banyak_ditangani" ? "🟢 Banyak Ditangani" : "🟡 Sedang Ditangani"}) - {w.persentasePenanganan}%
+                          </title>
+                        </path>
+
+                        {/* District Name Label */}
+                        <text
+                          x={w.svgCenter[0]}
+                          y={w.svgCenter[1]}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill="#ffffff"
+                          fontSize={isSelected ? "11px" : "10px"}
+                          fontWeight="800"
+                          style={{
+                            pointerEvents: "none",
+                            textShadow: "0 1px 3px rgba(0,0,0,0.85), 0 0 2px rgba(0,0,0,0.9)",
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          {w.nama.replace("Kecamatan ", "")}
+                        </text>
+
+                        <text
+                          x={w.svgCenter[0]}
+                          y={w.svgCenter[1] + 13}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill={isGreen ? "#bbf7d0" : "#fef08a"}
+                          fontSize="8.5px"
+                          fontWeight="700"
+                          style={{
+                            pointerEvents: "none",
+                            textShadow: "0 1px 2px rgba(0,0,0,0.9)",
+                          }}
+                        >
+                          {w.persentasePenanganan}%
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+            ) : (
+              /* LEAFLET GEOGRAPHIC MAP */
+              <div
+                ref={mapContainerRef}
+                style={{
+                  width: "100%",
+                  height: "490px",
+                  background: "#f8fafc",
+                  zIndex: 1,
+                }}
+              />
+            )}
+
+            {/* LEGENDA DUA WARNA (BOTTOM LEFT OVERLAY) */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "14px",
+                left: "14px",
+                background: "rgba(255, 255, 255, 0.96)",
+                backdropFilter: "blur(8px)",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                border: "1px solid #cbd5e1",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.10)",
+                zIndex: 400,
+                fontSize: "0.75rem",
+                maxWidth: "260px",
+              }}
+            >
+              <span style={{ fontWeight: 800, color: "#013220", display: "block", marginBottom: "5px", fontSize: "0.76rem", letterSpacing: "0.03em" }}>
+                LEGENDA DUA WARNA
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                <span
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    background: "#16a34a",
+                    border: "1.5px solid #ffffff",
+                    borderRadius: "3px",
+                    display: "inline-block",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                  }}
+                />
+                <span style={{ color: "#166534", fontWeight: 700 }}>Hijau: Banyak Ditangani (&gt;80%)</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    background: "#eab308",
+                    border: "1.5px solid #ffffff",
+                    borderRadius: "3px",
+                    display: "inline-block",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                  }}
+                />
+                <span style={{ color: "#854d0e", fontWeight: 700 }}>Kuning: Sedang Ditangani (40-79%)</span>
+              </div>
+              <small style={{ display: "block", color: "#64748b", marginTop: "5px", fontSize: "9.5px", borderTop: "1px dashed #e2e8f0", paddingTop: "3px" }}>
+                *Garis putih memisahkan batas antar-kecamatan yang saling menempel
+              </small>
+            </div>
+          </div>
+
+          {/* DETAIL PANEL OF SELECTED WILAYAH */}
+          {selectedWilayah && (
+            <div
+              style={{
+                background: selectedWilayah.status === "banyak_ditangani" ? "#fbfdfb" : "#fffef9",
+                border: selectedWilayah.status === "banyak_ditangani" ? "1.5px solid #86efac" : "1.5px solid #fde047",
+                borderRadius: "14px",
+                padding: "18px 20px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.02)",
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        color: "#64748b",
+                      }}
+                    >
+                      {selectedWilayah.kabupaten}
+                    </span>
+                    <h3 style={{ margin: "2px 0 6px", fontSize: "1.25rem", fontWeight: 800, color: "#013220" }}>
+                      {selectedWilayah.nama}
+                    </h3>
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      background: selectedWilayah.status === "banyak_ditangani" ? "#dcfce7" : "#fef9c3",
+                      color: selectedWilayah.status === "banyak_ditangani" ? "#15803d" : "#854d0e",
+                      border: `1px solid ${selectedWilayah.status === "banyak_ditangani" ? "#86efac" : "#fde047"}`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    <span>{selectedWilayah.status === "banyak_ditangani" ? "🟢" : "🟡"}</span>
+                    <span>{selectedWilayah.status === "banyak_ditangani" ? "Banyak Ditangani" : "Sedang Ditangani"}</span>
+                  </span>
+                </div>
+
+                {/* Progress bar penanganan */}
+                <div style={{ margin: "12px 0 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", fontWeight: 700, marginBottom: "4px" }}>
+                    <span style={{ color: "#64748b" }}>Cakupan Bantuan Tersalurkan</span>
+                    <span style={{ color: selectedWilayah.status === "banyak_ditangani" ? "#15803d" : "#b45309" }}>
+                      {selectedWilayah.persentasePenanganan}%
+                    </span>
+                  </div>
+                  <div style={{ height: "8px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${selectedWilayah.persentasePenanganan}%`,
+                        background: selectedWilayah.status === "banyak_ditangani" ? "#16a34a" : "#eab308",
+                        borderRadius: "999px",
+                        transition: "width 0.3s ease",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Logistics & Beneficiary Info */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.82rem" }}>
+                  <div style={{ background: "#ffffff", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
+                      Realisasi Bantuan Logistik:
+                    </span>
+                    <strong style={{ color: "#013220", fontSize: "0.88rem" }}>{selectedWilayah.jumlahBantuan}</strong>
+                    <div style={{ color: "#475569", fontSize: "0.75rem", marginTop: "2px" }}>
+                      Komoditas: {selectedWilayah.komoditasUtama}
+                    </div>
+                  </div>
+
+                  <div style={{ background: "#ffffff", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
+                      Warga Terlayani:
+                    </span>
+                    <strong style={{ color: "#013220", fontSize: "0.88rem" }}>
+                      {selectedWilayah.jiwaTerbantu.toLocaleString("id-ID")} Jiwa ({selectedWilayah.kkTerlayani} KK)
+                    </strong>
+                    <div style={{ color: "#475569", fontSize: "0.75rem", marginTop: "2px" }}>
+                      Posko Penyangga: <strong>{selectedWilayah.poskoPenyangga}</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ background: "#ffffff", padding: "10px 12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
+                      Mitra &amp; Satgas BPBD di Lapangan:
+                    </span>
+                    <span style={{ color: "#013220", fontWeight: 600 }}>{selectedWilayah.mitraBpbdAktif}</span>
+                  </div>
+
+                  <div style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(0,0,0,0.02)", borderLeft: `3px solid ${selectedWilayah.status === "banyak_ditangani" ? "#16a34a" : "#eab308"}` }}>
+                    <p style={{ margin: 0, fontSize: "0.78rem", color: "#334155", fontStyle: "italic", lineHeight: 1.45 }}>
+                      "{selectedWilayah.catatanKewilayahan}"
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #e2e8f0", fontSize: "0.72rem", color: "#94a3b8", textAlign: "right" }}>
+                ✓ Diperbarui berkala dari Sistem Pusdalops BPBD
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>
