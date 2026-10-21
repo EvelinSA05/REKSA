@@ -95,9 +95,16 @@ Aplikasi REKSA beroperasi di bawah matriks otorisasi berbasis peran (*Role-Based
 - **Fitur Kunci:** Form 5-step wizard, kompresi otomatis foto via HTML5 Canvas (< 300 KB), picker peta interaktif OpenStreetMap, dashboard pelacakan status transparan, modal tanggapan klarifikasi satu klik.
 
 ### 3.2 Persona 2: Posko Komando BPBD (`posko`)
-- **Tujuan:** Memvalidasi ribuan laporan masuk, menentukan skala prioritas darurat, memverifikasi foto bukti, mengoordinasikan distribusi multi-mitra, dan menerbitkan BAST resmi pemerintah.
+Platform REKSA membedakan dua tingkatan operasional akun BPBD guna menjamin otonomi daerah sekaligus pengawasan terpadu nasional:
+1. **BPBD Daerah (`scope: daerah`):**
+   - **Cakupan & Yurisdiksi:** Beroperasi di wilayah provinsi / kabupaten / kota masing-masing (contoh: BPBD Jawa Timur, BPBD Jawa Barat, BPBD DKI Jakarta, BPBD Jawa Tengah, BPBA Aceh, BPBD Sulawesi Tengah).
+   - **Tanggung Jawab:** Menangani secara langsung permohonan logistik warga di daerahnya masing-masing, memvalidasi bukti fisik & foto lapangan, membuka kekurangan ke bursa daerah, menyetujui komitmen mitra, serta memverifikasi fisik BAST di titik serah terima posko.
+2. **BPBD Nasional / BNPB Pusat (`scope: nasional`):**
+   - **Cakupan & Yurisdiksi:** Beroperasi di tingkat komando pusat (Pusdalops BNPB / BPBD Nasional) dengan visibilitas komprehensif (*full nationwide oversight*) terhadap seluruh 32+ provinsi di Indonesia.
+   - **Tanggung Jawab:** Memantau dan mensupervisi seluruh metrik kesiapsiagaan nasional, mendeteksi bottleneck permohonan kritis antar-wilayah yang lambat tertangani, mengawasi kepatuhan SLA verifikasi daerah, serta mengoordinasikan mobilisasi logistik skala besar lintas-provinsi.
+- **Tujuan Bersama:** Memvalidasi laporan masuk, menentukan skala prioritas darurat, memverifikasi foto bukti, mengoordinasikan distribusi multi-mitra, dan menerbitkan BAST resmi pemerintah.
 - **Tantangan:** Beban kerja tinggi, duplikasi permintaan, data tidak realistis, kekurangan armada angkut posko.
-- **Fitur Kunci:** 6 Kartu ringkasan metrik beban kerja, antarmuka verifikasi cepat (< 24 jam), sistem penolakan berarahan, kontrol pembatasan alokasi multi-mitra (*anti-over-allocation*), pencatatan tanda terima logistik parsial/penuh, cetak Berita Acara Serah Terima (BAST).
+- **Fitur Kunci:** 6 Kartu ringkasan metrik beban kerja, pemilih tingkatan akun (Nasional vs Daerah), antarmuka verifikasi cepat (< 24 jam), sistem penolakan berarahan, kontrol pembatasan alokasi multi-mitra (*anti-over-allocation*), pencatatan tanda terima logistik parsial/penuh, cetak Berita Acara Serah Terima (BAST).
 
 ### 3.3 Persona 3: Mitra Penyalur / Organisasi Kemanusiaan (`responder`)
 - **Tujuan:** Mengetahui posko atau titik mana yang membutuhkan komoditas spesifik sesuai kapasitas logistik organisasi mereka (misal: beras, selimut, armada tangki air, perahu karet).
@@ -196,8 +203,11 @@ Setiap kebutuhan warga berpindah status sesuai *state machine* berikut:
 
 ## BAB 7: SPESIFIKASI KEBUTUHAN FUNGSIONAL MODUL POSKO KOMANDO BPBD (`posko`)
 
-### 7.1 Ringkasan Beban Kerja Operasional (6 Workload Metrics Cards)
-- **FR-POS-01:** Menampilkan 6 metrik utama operasional real-time:
+### 7.1 Hierarki Akun BPBD & Ringkasan Beban Kerja Operasional
+- **FR-POS-00 (Dua Tingkat Hak Akses & Yurisdiksi Operasional):**
+  - **BPBD Daerah (`scope: daerah`):** Dibatasi secara ketat (*strictly scoped*) untuk menangani permohonan logistik di wilayah administratifnya masing-masing (provinsi/kabupaten/kota). Metrik antrean verifikasi, katalog bursa, penawaran mitra, dan misi pengiriman terisolasi per yurisdiksi daerah guna menjaga efisiensi penanganan lokal.
+  - **BPBD Nasional / BNPB Pusat (`scope: nasional`):** Memiliki hak supervisi penuh tanpa batasan wilayah terhadap seluruh 32+ provinsi di Indonesia. Dilengkapi panel *Matriks Pemantauan 32 Provinsi*, analisis agregat bottleneck permohonan kritis antar-wilayah, serta fasilitas koordinasi distribusi bantuan lintas-daerah.
+- **FR-POS-01:** Menampilkan 6 metrik utama operasional real-time (agregat nasional untuk akun pusat, atau spesifik wilayah untuk akun daerah):
   1. **Menunggu Verifikasi:** Jumlah laporan baru yang butuh audit posko.
   2. **Kebutuhan Prioritas:** Laporan berurgensi Kritis dan Tinggi.
   3. **Katalog Bursa Terbuka:** Kebutuhan terverifikasi yang sedang dibuka untuk mitra.
@@ -374,7 +384,7 @@ Komponen: [ReksaAiChatbot.tsx](file:///d:/reksa-v1/src/components/common/ReksaAi
 ```
 
 ### 11.1 Deskripsi Entitas Utama
-1. **`users`**: Menyimpan kredensial pengguna, profil instansi/organisasi, nomor kontak darurat, dan hak peran (`citizen`, `posko`, `responder`, `admin`).
+1. **`users`**: Menyimpan kredensial pengguna, profil instansi/organisasi, nomor kontak darurat, hak peran (`citizen`, `posko`, `responder`, `admin`), tingkat cakupan operasional (`scope`: `'nasional'` atau `'daerah'`), nama provinsi yurisdiksi (`provinsi`), dan relasi posko induk (`posko_id`).
 2. **`posko_wilayahs`**: Entitas pos komando resmi terdata (koordinat lat/lng untuk Leaflet map, nomor telepon siaga 24 jam, kapasitas pengungsi, penanggung jawab).
 3. **`kebutuhan_wargas`**: Entitas master laporan kasus (kategori, kuantitas volume, data wilayah terperinci, koordinat GPS, foto bukti kompresi, alasan penolakan, total alokasi dan penerimaan resmi).
 4. **`bursa_bantuans`**: Entitas etalase katalog terbuka kebutuhan yang siap didanai/disuplai mitra.
@@ -398,17 +408,17 @@ Seluruh endpoint mengembalikan format standar JSON:
 
 ### 12.1 Autentikasi & Pengguna
 - `POST /api/auth/register`: Mendaftarkan akun baru (warga atau mitra).
-- `POST /api/auth/login`: Masuk sistem, mengembalikan Laravel Sanctum token dan data role.
-- `GET /api/auth/me`: Mengambil data profil sesi aktif.
+- `POST /api/auth/login`: Masuk sistem, mengembalikan Laravel Sanctum token dan data role serta scope operasional (`nasional` / `daerah`).
+- `GET /api/auth/me`: Mengambil data profil sesi aktif beserta yurisdiksi wilayah.
 - `POST /api/auth/logout`: Menghapus token otentikasi aktif.
 
 ### 12.2 Posko Wilayah & GIS Geospasial
-- `GET /api/posko`: Mendapatkan seluruh posko aktif beserta koordinat peta Leaflet.
-- `GET /api/posko/stats`: Metrik agregat kapasitas pengungsi dan status siaga posko.
+- `GET /api/posko`: Mendapatkan seluruh posko aktif beserta koordinat peta Leaflet (mendukung filter `provinsi`).
+- `GET /api/posko/stats`: Metrik agregat kapasitas pengungsi dan status siaga posko (mendukung filter `posko_id` dan `provinsi`).
 - `GET /api/posko/{id}`: Detail informasi satu posko dan penanggung jawabnya.
 
 ### 12.3 Kebutuhan Warga (Laporan & Siklus Kasus)
-- `GET /api/kebutuhan`: Mengambil daftar laporan (mendukung filter `posko_id`, `status`, `citizen_id`).
+- `GET /api/kebutuhan`: Mengambil daftar laporan (mendukung filter `posko_id`, `provinsi`, `status`, `citizen_id`, dan pencarian teks `search`).
 - `POST /api/kebutuhan`: Mengajukan laporan kebutuhan darurat baru (5-step wizard).
 - `GET /api/kebutuhan/{id}`: Detail lengkap satu laporan beserta relasi bursa dan misinya.
 - `PUT /api/kebutuhan/{id}`: Mengubah isi laporan kebutuhan (khusus pemilik akun).
