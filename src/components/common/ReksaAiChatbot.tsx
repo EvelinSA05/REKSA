@@ -6,7 +6,7 @@ import { AppIcon } from "./Icons";
 interface ReksaAiChatbotProps {
   state: SharedState;
   update: RouterProps["update"];
-  setPage: RouterProps["setPage"];
+  setPage: (p: any) => void;
 }
 
 interface ChatMessage {

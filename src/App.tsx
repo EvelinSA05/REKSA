@@ -1191,6 +1191,7 @@ export type SharedState = {
   bpbdScope?: "nasional" | "daerah";
   bpbdProvince?: string;
   bpbdOfficerEmail?: string;
+  role?: Role;
   userProfile?: UserProfile;
   casesList: CaseRecord[];
   activeCaseId?: string;

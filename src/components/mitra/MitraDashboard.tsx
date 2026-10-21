@@ -6,7 +6,7 @@ import { AppIcon } from "../common/Icons";
 interface MitraDashboardProps {
   state: SharedState;
   update?: RouterProps["update"];
-  setPage: (page: string) => void;
+  setPage: (page: any) => void;
   notify?: (msg: string) => void;
   onRefresh?: () => Promise<void> | void;
 }
