@@ -1,15 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { execSync } from 'child_process';
 import { marked } from 'marked';
+import puppeteer from 'puppeteer-core';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
 const markdownPath = path.join(rootDir, 'PRD.md');
-const tempHtmlPath = path.join(rootDir, 'PRD_Document_Print.html');
 const outputPdfPath = path.join(rootDir, 'PRD-REKSA.pdf');
 
 if (!fs.existsSync(markdownPath)) {
@@ -25,7 +24,7 @@ marked.setOptions({
   breaks: true,
 });
 
-const htmlContent = marked.parse(markdownContent);
+const htmlBody = marked.parse(markdownContent);
 
 const fullHtml = `<!DOCTYPE html>
 <html lang="id">
@@ -33,11 +32,6 @@ const fullHtml = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <title>PRD - REKSA (Ruang Ekosistem Kolaborasi Pascabencana)</title>
   <style>
-    @page {
-      size: A4 portrait;
-      margin: 18mm 15mm 18mm 15mm;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
@@ -45,7 +39,7 @@ const fullHtml = `<!DOCTYPE html>
     }
 
     body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       font-size: 10pt;
       line-height: 1.6;
       color: #1e293b;
@@ -54,12 +48,12 @@ const fullHtml = `<!DOCTYPE html>
       print-color-adjust: exact !important;
     }
 
-    /* Cover Page Styling */
+    /* Cover Page */
     .cover-page {
       page-break-after: always;
-      padding: 40px 25px 40px 30px;
+      break-after: always;
+      padding: 40px 20px 40px 25px;
       border-left: 8px solid #013220;
-      background: #ffffff;
       margin-bottom: 20px;
     }
 
@@ -68,9 +62,9 @@ const fullHtml = `<!DOCTYPE html>
       background: #ecfdf5;
       color: #013220;
       border: 1.5px solid #10b981;
-      padding: 5px 16px;
+      padding: 4px 14px;
       border-radius: 999px;
-      font-size: 9pt;
+      font-size: 8.5pt;
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -78,11 +72,11 @@ const fullHtml = `<!DOCTYPE html>
     }
 
     .cover-title {
-      font-size: 28pt;
-      font-weight: 800;
+      font-size: 30pt;
+      font-weight: 900;
       color: #013220;
       line-height: 1.15;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       letter-spacing: -0.02em;
     }
 
@@ -90,14 +84,14 @@ const fullHtml = `<!DOCTYPE html>
       font-size: 16pt;
       font-weight: 700;
       color: #059669;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .cover-subtitle-desc {
-      font-size: 11.5pt;
+      font-size: 11pt;
       color: #475569;
       font-weight: 500;
-      line-height: 1.5;
+      line-height: 1.55;
       margin-bottom: 35px;
     }
 
@@ -111,7 +105,7 @@ const fullHtml = `<!DOCTYPE html>
 
     .cover-meta-grid {
       display: grid;
-      grid-template-columns: 150px 1fr;
+      grid-template-columns: 160px 1fr;
       row-gap: 10px;
       font-size: 9.5pt;
     }
@@ -133,7 +127,7 @@ const fullHtml = `<!DOCTYPE html>
       padding-top: 16px;
       display: flex;
       justify-content: space-between;
-      margin-top: 40px;
+      margin-top: 50px;
     }
 
     /* Content Typography */
@@ -145,7 +139,7 @@ const fullHtml = `<!DOCTYPE html>
       font-size: 16pt;
       font-weight: 800;
       color: #013220;
-      margin-top: 24pt;
+      margin-top: 26pt;
       margin-bottom: 12pt;
       padding-bottom: 6pt;
       border-bottom: 2.5px solid #10b981;
@@ -158,7 +152,7 @@ const fullHtml = `<!DOCTYPE html>
       font-size: 13pt;
       font-weight: 800;
       color: #013220;
-      margin-top: 18pt;
+      margin-top: 20pt;
       margin-bottom: 8pt;
       page-break-after: avoid;
       break-after: avoid;
@@ -193,7 +187,7 @@ const fullHtml = `<!DOCTYPE html>
     }
 
     ul, ol {
-      margin-left: 20px;
+      margin-left: 22px;
       margin-bottom: 10pt;
       color: #334155;
     }
@@ -287,7 +281,7 @@ const fullHtml = `<!DOCTYPE html>
 
     /* Blockquote / Notes */
     blockquote {
-      border-left: 3px solid #10b981;
+      border-left: 3.5px solid #10b981;
       background: #f0fdf4 !important;
       padding: 8pt 12pt;
       margin: 10pt 0;
@@ -323,13 +317,13 @@ const fullHtml = `<!DOCTYPE html>
         <div class="cover-meta-value">1.0.0 (Comprehensive Release)</div>
 
         <div class="cover-meta-label">Status:</div>
-        <div class="cover-meta-value">Disetujui (Approved & Baseline)</div>
+        <div class="cover-meta-value">Disetujui (Approved &amp; Baseline)</div>
 
         <div class="cover-meta-label">Tanggal Efektif:</div>
         <div class="cover-meta-value">21 Oktober 2026</div>
 
         <div class="cover-meta-label">Klasifikasi:</div>
-        <div class="cover-meta-value">Terbuka / Tim Teknis & Pemangku Kepentingan</div>
+        <div class="cover-meta-value">Terbuka / Tim Teknis &amp; Pemangku Kepentingan</div>
 
         <div class="cover-meta-label">Repositori Proyek:</div>
         <div class="cover-meta-value">https://github.com/Septian-wq11/REKSA</div>
@@ -344,17 +338,14 @@ const fullHtml = `<!DOCTYPE html>
 
   <!-- Document Body Content -->
   <div class="content-body">
-    ${htmlContent}
+    ${htmlBody}
   </div>
 
 </body>
 </html>
 `;
 
-fs.writeFileSync(tempHtmlPath, fullHtml, 'utf-8');
-console.log('HTML berhasil dibuat di:', tempHtmlPath);
-
-// Path executable Edge
+// Cari executable Edge di Windows
 const edgePaths = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -363,29 +354,62 @@ const edgePaths = [
 const edgeBin = edgePaths.find(p => fs.existsSync(p));
 
 if (!edgeBin) {
-  console.error('Browser Microsoft Edge tidak ditemukan di path sistem default!');
+  console.error('Executable Microsoft Edge tidak ditemukan!');
   process.exit(1);
 }
 
-console.log('Mengonversi HTML ke PDF menggunakan Microsoft Edge Headless...');
-const fileUrl = 'file:///' + tempHtmlPath.replace(/\\/g, '/');
+console.log('Meluncurkan headless browser via Puppeteer-core...');
+console.log('Path browser:', edgeBin);
 
-const command = `"${edgeBin}" --headless --disable-gpu --no-pdf-header-footer --virtual-time-budget=5000 --print-to-pdf="${outputPdfPath}" "${fileUrl}"`;
+async function run() {
+  const browser = await puppeteer.launch({
+    executablePath: edgeBin,
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--font-render-hinting=none',
+    ],
+  });
 
-try {
-  execSync(command, { stdio: 'inherit' });
+  const page = await browser.newPage();
+  
+  console.log('Memuat konten HTML PRD ke halaman...');
+  await page.setContent(fullHtml, {
+    waitUntil: 'networkidle0',
+    timeout: 30000,
+  });
+
+  console.log('Mengonversi ke PDF dengan printBackground = true...');
+  await page.pdf({
+    path: outputPdfPath,
+    format: 'A4',
+    printBackground: true,
+    margin: {
+      top: '18mm',
+      bottom: '18mm',
+      left: '15mm',
+      right: '15mm',
+    },
+    displayHeaderFooter: false,
+  });
+
+  await browser.close();
+
   if (fs.existsSync(outputPdfPath)) {
     const stats = fs.statSync(outputPdfPath);
     console.log(`\nBERHASIL: File PDF berhasil digenerate!`);
     console.log(`Lokasi: ${outputPdfPath}`);
     console.log(`Ukuran: ${(stats.size / 1024).toFixed(2)} KB`);
   } else {
-    console.error('Gagal: File PDF tidak ditemukan setelah eksekusi Edge.');
+    console.error('File PDF tidak berhasil dibuat.');
     process.exit(1);
   }
-} catch (err) {
-  console.error('Terjadi kesalahan saat generate PDF:', err);
-  process.exit(1);
-} finally {
-  console.log('Proses selesai.');
 }
+
+run().catch(err => {
+  console.error('Error saat kompilasi PDF:', err);
+  process.exit(1);
+});
