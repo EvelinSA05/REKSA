@@ -33,12 +33,24 @@ class KebutuhanWargaController extends Controller
             $query->where('citizen_id', $request->citizen_id);
         }
 
+        if ($request->has('provinsi') && !empty($request->provinsi) && strtolower($request->provinsi) !== 'semua' && strtolower($request->provinsi) !== 'nasional') {
+            $prov = $request->provinsi;
+            $query->where(function ($q) use ($prov) {
+                $q->where('provinsi', 'ilike', "%{$prov}%")
+                  ->orWhereHas('posko', function ($pq) use ($prov) {
+                      $pq->where('provinsi', 'ilike', "%{$prov}%");
+                  });
+            });
+        }
+
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('kode_kasus', 'ilike', "%{$search}%")
                   ->orWhere('citizen_name', 'ilike', "%{$search}%")
-                  ->orWhere('kategori_kebutuhan', 'ilike', "%{$search}%");
+                  ->orWhere('kategori_kebutuhan', 'ilike', "%{$search}%")
+                  ->orWhere('provinsi', 'ilike', "%{$search}%")
+                  ->orWhere('kabupaten', 'ilike', "%{$search}%");
             });
         }
 
