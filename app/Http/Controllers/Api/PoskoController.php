@@ -12,13 +12,20 @@ use Illuminate\Http\Request;
 
 class PoskoController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $poskos = PoskoWilayah::withCount([
+        $provinsi = $request->query('provinsi');
+        $query = PoskoWilayah::withCount([
             'kebutuhanWarga',
             'bursaBantuan',
             'misiPenyaluran',
-        ])->get();
+        ]);
+
+        if ($provinsi) {
+            $query->where('provinsi', $provinsi);
+        }
+
+        $poskos = $query->get();
 
         return response()->json([
             'success' => true,
@@ -44,10 +51,14 @@ class PoskoController extends Controller
     public function stats(Request $request): JsonResponse
     {
         $poskoId = $request->query('posko_id');
+        $provinsi = $request->query('provinsi');
 
         $query = KebutuhanWarga::query();
         if ($poskoId) {
             $query->where('posko_id', $poskoId);
+        }
+        if ($provinsi) {
+            $query->where('provinsi', $provinsi);
         }
 
         $laporanMasuk = (clone $query)->whereIn('status', ['Dalam Verifikasi', 'Diajukan'])->count();
@@ -65,6 +76,7 @@ class PoskoController extends Controller
                 'disalurkan_mitra' => $disalurkanMitra,
                 'selesai_diserahkan' => $selesai,
                 'total_kk_terdampak' => $totalKkTerdampak,
+                'filter_provinsi' => $provinsi,
             ],
         ]);
     }
