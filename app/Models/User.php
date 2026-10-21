@@ -10,9 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'role', 'organization', 'address', 'nik', 'is_verified', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'phone', 'role', 'scope', 'provinsi', 'posko_id', 'organization', 'address', 'nik', 'is_verified', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -32,5 +33,29 @@ class User extends Authenticatable
             'is_verified' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Posko penempatan untuk petugas BPBD Daerah
+     */
+    public function posko(): BelongsTo
+    {
+        return $this->belongsTo(PoskoWilayah::class, 'posko_id');
+    }
+
+    /**
+     * Cek apakah akun memiliki cakupan pengawasan nasional
+     */
+    public function isNasional(): bool
+    {
+        return $this->scope === 'nasional';
+    }
+
+    /**
+     * Cek apakah akun adalah BPBD Daerah
+     */
+    public function isDaerah(): bool
+    {
+        return $this->scope === 'daerah';
     }
 }
