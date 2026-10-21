@@ -1737,18 +1737,6 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       {role === "citizen" && <CitizenRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "posko" && <PoskoRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "responder" && <ResponderRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
-      {page !== "chat" && (
-        <button
-          className="floating-chat-trigger-btn"
-          onClick={() => go("chat")}
-          title="Buka Ruang Komunikasi Terpadu 3 Role (Live)"
-          type="button"
-        >
-          <span className="floating-chat-icon">💬</span>
-          <span className="floating-chat-text">Ruang Komunikasi</span>
-          <span className="floating-chat-badge">Live</span>
-        </button>
-      )}
       <MobileNav role={role} page={page} go={go} notifCount={unreadCount} />
     </div>
     {liveToastNotif && (
