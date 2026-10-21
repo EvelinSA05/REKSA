@@ -28,6 +28,9 @@ export interface KebutuhanItem {
   kode_kasus: string;
   citizen_name: string;
   citizen_phone?: string;
+  nama_pemohon?: string;
+  nik?: string;
+  telepon?: string;
   posko_id: number;
   kategori_kebutuhan: string;
   volume_permintaan: string;
@@ -135,6 +138,7 @@ export interface MisiItem {
   penawaran_id?: number;
   posko_id: number;
   responder_name: string;
+  responder_phone?: string;
   organisasi: string;
   armada_info: string;
   muatan: string;
@@ -144,6 +148,8 @@ export interface MisiItem {
   estimasi_waktu?: string;
   catatan_lapangan?: string;
   status_kendala?: string;
+  bukti_penyerahan?: string;
+  foto_serah_terima?: string;
   posko?: PoskoItem;
   kebutuhan?: KebutuhanItem;
   penawaran?: PenawaranItem;
