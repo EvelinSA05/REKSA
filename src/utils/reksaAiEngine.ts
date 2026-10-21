@@ -84,18 +84,32 @@ export function analyzeReportTriage(
     score += 14;
   }
 
-  // C. Deteksi Komoditas
-  if (text.includes("makan") || text.includes("beras") || text.includes("sembako") || text.includes("mie") || text.includes("lauk") || text.includes("dapur")) {
-    detectedCommodities.push("Pangan & Sembako");
+  // C. Deteksi Komoditas & Bantuan Pasca-Bencana Berdasarkan Regulasi BNPB
+  if (text.includes("makan") || text.includes("beras") || text.includes("sembako") || text.includes("mie") || text.includes("lauk") || text.includes("dapur") || text.includes("pangan")) {
+    detectedCommodities.push("Pangan & Makanan Siap Saji");
   }
-  if (text.includes("air") || text.includes("minum") || text.includes("galon") || text.includes("sanitasi") || text.includes("toilet") || text.includes("mandi")) {
+  if (text.includes("air") || text.includes("minum") || text.includes("galon") || text.includes("sanitasi") || text.includes("toilet") || text.includes("mandi") || text.includes("mck")) {
     detectedCommodities.push("Air Bersih & Sanitasi");
   }
-  if (text.includes("obat") || text.includes("dokter") || text.includes("medis") || text.includes("perban") || text.includes("luka") || text.includes("vitamin") || text.includes("p3k")) {
-    detectedCommodities.push("Kesehatan & Obat-obatan");
+  if (text.includes("obat") || text.includes("dokter") || text.includes("medis") || text.includes("perban") || text.includes("luka") || text.includes("vitamin") || text.includes("p3k") || text.includes("kesehatan")) {
+    detectedCommodities.push("Pelayanan Kesehatan & Medis");
   }
-  if (text.includes("tenda") || text.includes("terpal") || text.includes("selimut") || text.includes("matras") || text.includes("hunian") || text.includes("atap")) {
-    detectedCommodities.push("Hunian Sementara & Shelter");
+  if (text.includes("tenda") || text.includes("terpal") || text.includes("huntara") || text.includes("hunian") || text.includes("barak") || text.includes("posko pengungsian")) {
+    detectedCommodities.push("Hunian Sementara (Huntara / Tenda)");
+  }
+  if (text.includes("pakaian") || text.includes("baju") || text.includes("selimut") || text.includes("matras") || text.includes("kidware") || text.includes("family kit") || text.includes("sandang")) {
+    detectedCommodities.push("Sandang & Paket Non-Pangan");
+  }
+  if (text.includes("rumah roboh") || text.includes("rusak berat") || text.includes("hancur total") || text.includes("tembok retak") || text.includes("atap ambruk") || text.includes("stimulan") || text.includes("rekonstruksi") || text.includes("perbaikan rumah")) {
+    detectedCommodities.push("Bantuan Stimulan Rumah (Pasca-Bencana)");
+    if (text.includes("roboh") || text.includes("hancur total") || text.includes("rusak berat")) {
+      score += 20;
+    } else if (text.includes("retak parah") || text.includes("rusak sedang")) {
+      score += 12;
+    }
+  }
+  if (text.includes("listrik") || text.includes("genset") || text.includes("jembatan putus") || text.includes("jalan tertutup") || text.includes("pipa air") || text.includes("sarana vital") || text.includes("infrastruktur")) {
+    detectedCommodities.push("Pemulihan Sarana & Fasilitas Vital");
   }
   if (text.includes("evakuasi") || text.includes("perahu") || text.includes("tali") || text.includes("pelampung") || text.includes("terkepung")) {
     detectedCommodities.push("Evakuasi & Penyelamatan");
@@ -310,6 +324,53 @@ export function generateReksaAiResponse(
 4. **Hubungi Posko**: Laporkan posisi dan jumlah jiwa terdampak melalui REKSA agar tim relawan dan armada perahu dapat menjangkau titik Anda.`,
       actionSuggestion: { label: "Buka Peta Sebaran Posko", page: "map" },
       quickFollowUps: ["Di mana lokasi posko terdekat?", "Cara melapor via REKSA", "Apa isi tas siaga bencana?"],
+    };
+  }
+
+  // G. Kategori Kebutuhan & Regulasi Resmi BNPB / BPBD
+  if (
+    q.includes("kategori") ||
+    q.includes("standar bnpb") ||
+    q.includes("perka bnpb") ||
+    q.includes("stimulan") ||
+    q.includes("rusak berat") ||
+    q.includes("rusak sedang") ||
+    q.includes("rusak ringan") ||
+    q.includes("fase darurat") ||
+    q.includes("skala kewenangan") ||
+    q.includes("dana siap pakai") ||
+    q.includes("dsp") ||
+    q.includes("perbaikan rumah")
+  ) {
+    return {
+      text: `**Klasifikasi Resmi Kondisi & Bantuan BNPB / BPBD**:
+1. **Fase Status Keadaan Darurat Bencana**:
+   - ⚠️ **Siaga Darurat**: Kesiapsiagaan logistik, kaji cepat & evakuasi pencegahan.
+   - 🚨 **Tanggap Darurat**: Bencana terjadi; fokus penyelamatan jiwa, evakuasi medis & pemenuhan kebutuhan dasar pengungsi.
+   - 🛠️ **Transisi Darurat ke Pemulihan**: Perbaikan fungsi sarana prasarana vital & stimulan perbaikan rumah warga.
+
+2. **Standar Minimal Kebutuhan Dasar (Perka BNPB No. 7/2008)**:
+   - **Pangan**: Min. 400 gram beras / jiwa / hari (setara 2.100 kkal).
+   - **Air Bersih & Minum**: Air minum min. 2,5 Liter/jiwa/hari, sanitasi 7-15 Liter/jiwa/hari.
+   - **Hunian Sementara (Huntara/Tenda)**: Standar layak min. 3 m² per orang.
+   - **Sandang**: Family kits, kidware, hygiene kits, selimut & matras.
+   - **Kesehatan & Sanitasi**: Obat esensial, nakes reaksi cepat & MCK darurat.
+
+3. **Bantuan Stimulan Kerusakan Rumah (Kepka BNPB No. 296A/2023)**:
+   - 🔴 **Rusak Berat**: Stimulan tunai **Rp 60.000.000,-** per unit rumah.
+   - 🟡 **Rusak Sedang**: Stimulan tunai **Rp 30.000.000,-** per unit rumah.
+   - 🟢 **Rusak Ringan**: Stimulan tunai **Rp 15.000.000,-** per unit rumah.
+
+4. **Skala Wilayah & Kewenangan**:
+   - **Kab/Kota**: BPBD Kab/Kota pilar utama penanganan dampak bencana lokal.
+   - **Provinsi**: Intervensi logistik regional jika kapasitas kab/kota terlampaui.
+   - **Nasional**: BNPB Pusat mengaktifkan **Dana Siap Pakai (DSP)** & koordinasi logistik nasional.`,
+      actionSuggestion: { label: "Buat Laporan Sesuai Standar BNPB", page: "report" },
+      quickFollowUps: [
+        "Bagaimana cara klaim stimulan rumah rusak?",
+        "Berapa standar air bersih pengungsi?",
+        "Kapan status tanggap darurat berakhir?",
+      ],
     };
   }
 

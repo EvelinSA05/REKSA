@@ -338,6 +338,38 @@ export function PoskoVerifikasiLaporan({
                       </span>
                     )}
 
+                    {c.faseDarurat && (
+                      <span
+                        style={{
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          padding: "3px 9px",
+                          borderRadius: "999px",
+                          background: c.faseDarurat === "Tanggap Darurat" ? "#fef2f2" : c.faseDarurat === "Siaga Darurat" ? "#fffbeb" : "#f0fdf4",
+                          color: c.faseDarurat === "Tanggap Darurat" ? "#991b1b" : c.faseDarurat === "Siaga Darurat" ? "#92400e" : "#065f46",
+                          border: `1px solid ${c.faseDarurat === "Tanggap Darurat" ? "#fca5a5" : c.faseDarurat === "Siaga Darurat" ? "#fde68a" : "#bbf7d0"}`,
+                        }}
+                      >
+                        {c.faseDarurat}
+                      </span>
+                    )}
+                    {c.kategoriKerusakanRumah && (
+                      <span
+                        style={{
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          padding: "3px 9px",
+                          borderRadius: "999px",
+                          background: "#ecfdf5",
+                          color: "#065f46",
+                          border: "1px solid #a7f3d0",
+                        }}
+                        title="Stimulan Perbaikan Rumah Kepka BNPB No. 296A/2023"
+                      >
+                        🏠 {c.kategoriKerusakanRumah}
+                      </span>
+                    )}
+
                     {/* Live SLA Countdown / Status Badge */}
                     {isPending && !isEscalated && (
                       sla.status === "warning" ? (
@@ -441,6 +473,37 @@ export function PoskoVerifikasiLaporan({
                       <div style={{ marginTop: "2px" }}><AppIcon name="shield" size={15} /></div>
                       <div>
                         <strong>Rekomendasi Sistem Validasi:</strong> {c.priorityRationale}
+                      </div>
+                    </div>
+                  )}
+
+                  {(c.standarBnpbNote || c.kategoriKerusakanRumah) && (
+                    <div
+                      style={{
+                        background: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: "10px",
+                        padding: "10px 14px",
+                        fontSize: "0.82rem",
+                        color: "#166534",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "8px",
+                      }}
+                    >
+                      <span style={{ fontSize: "1rem", marginTop: "1px" }}>📜</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                          <strong>Pedoman Regulasi &amp; Standar Bantuan BNPB:</strong>
+                          {c.skalaWilayah && (
+                            <span style={{ fontSize: "0.72rem", background: "#dcfce7", color: "#166534", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                              Kewenangan: Skala {c.skalaWilayah}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, color: "#14532d", lineHeight: 1.45 }}>
+                          {c.standarBnpbNote || (c.kategoriKerusakanRumah ? `Kepka BNPB No. 296A/2023: Stimulan Rumah ${c.kategoriKerusakanRumah} ${c.estimasiStimulanNominal ? `(Rp ${c.estimasiStimulanNominal.toLocaleString('id-ID')},-)` : ''}` : 'Standar Perka BNPB No. 7/2008')}
+                        </p>
                       </div>
                     </div>
                   )}

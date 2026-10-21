@@ -69,6 +69,13 @@ export type CaseRecord = {
   mitraHandler?: string;
   verifiedByRole?: "bpbd" | "mitra";
   responseTimeMinutes?: number;
+
+  // BNPB & BPBD Disaster Regulation Taxonomy
+  faseDarurat?: "Siaga Darurat" | "Tanggap Darurat" | "Transisi Darurat ke Pemulihan";
+  skalaWilayah?: "Kabupaten/Kota" | "Provinsi" | "Nasional";
+  standarBnpbNote?: string;
+  kategoriKerusakanRumah?: "Rusak Berat" | "Rusak Sedang" | "Rusak Ringan";
+  estimasiStimulanNominal?: number;
 };
 
 const initialCases: CaseRecord[] = [];
@@ -152,8 +159,14 @@ export const getFieldEvidencePhoto = (item?: string, fotoBukti?: string) => {
   if (category.includes("air") || category.includes("sanitasi") || category.includes("tandon") || category.includes("toren") || category.includes("mck")) {
     return "https://images.unsplash.com/photo-1541888946425-d0fbb18f15f6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
   }
-  if (category.includes("tenda") || category.includes("terpal") || category.includes("hunian") || category.includes("selimut") || category.includes("matras")) {
+  if (category.includes("tenda") || category.includes("terpal") || category.includes("hunian") || category.includes("huntara")) {
     return "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+  }
+  if (category.includes("stimulan") || category.includes("rumah") || category.includes("rekonstruksi") || category.includes("kerusakan")) {
+    return "https://images.unsplash.com/photo-1590402494682-cd3fb53b1f70?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+  }
+  if (category.includes("sandang") || category.includes("pakaian") || category.includes("selimut") || category.includes("matras") || category.includes("kidware")) {
+    return "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
   }
   if (category.includes("obat") || category.includes("medis") || category.includes("kesehatan") || category.includes("perban")) {
     return "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
@@ -161,17 +174,22 @@ export const getFieldEvidencePhoto = (item?: string, fotoBukti?: string) => {
   if (category.includes("bayi") || category.includes("balita") || category.includes("lansia") || category.includes("popok") || category.includes("susu")) {
     return "https://images.unsplash.com/photo-1516627145497-ae6968895b74?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
   }
+  if (category.includes("sarana") || category.includes("vital") || category.includes("listrik") || category.includes("genset")) {
+    return "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+  }
   return "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
 };
 
 export const getCategoryEmoji = (category?: string) => {
   const cat = (category || "").toLowerCase();
-  if (cat.includes("air") || cat.includes("sanitasi") || cat.includes("tandon")) return "💧";
+  if (cat.includes("air") || cat.includes("sanitasi") || cat.includes("tandon") || cat.includes("mck")) return "💧";
   if (cat.includes("makan") || cat.includes("sembako") || cat.includes("dapur") || cat.includes("pangan") || cat.includes("beras")) return "🍚";
   if (cat.includes("obat") || cat.includes("medis") || cat.includes("kesehatan") || cat.includes("perban")) return "💊";
-  if (cat.includes("tenda") || cat.includes("terpal") || cat.includes("hunian") || cat.includes("selimut") || cat.includes("matras")) return "⛺";
+  if (cat.includes("tenda") || cat.includes("terpal") || cat.includes("hunian") || cat.includes("huntara")) return "⛺";
+  if (cat.includes("stimulan") || cat.includes("rumah")) return "🏠";
+  if (cat.includes("sandang") || cat.includes("pakaian") || cat.includes("selimut")) return "👕";
   if (cat.includes("bayi") || cat.includes("balita") || cat.includes("popok") || cat.includes("susu")) return "🍼";
-  if (cat.includes("listrik") || cat.includes("genset") || cat.includes("solar")) return "⚡";
+  if (cat.includes("listrik") || cat.includes("genset") || cat.includes("solar") || cat.includes("vital") || cat.includes("sarana")) return "⚡";
   return "📦";
 };
 
@@ -6191,6 +6209,11 @@ export default function App() {
                 mitraHandler: localCase?.mitraHandler,
                 verifiedByRole: localCase?.verifiedByRole || (item.verified_at ? "bpbd" : undefined),
                 responseTimeMinutes: localCase?.responseTimeMinutes || (item.verified_at ? 38 : undefined),
+                faseDarurat: localCase?.faseDarurat || (item.kategori_kebutuhan?.includes("Stimulan") ? "Transisi Darurat ke Pemulihan" : "Tanggap Darurat"),
+                skalaWilayah: localCase?.skalaWilayah || (p && k && k.toLowerCase().includes("provinsi") ? "Provinsi" : "Kabupaten/Kota"),
+                standarBnpbNote: localCase?.standarBnpbNote,
+                kategoriKerusakanRumah: localCase?.kategoriKerusakanRumah,
+                estimasiStimulanNominal: localCase?.estimasiStimulanNominal,
               };
             });
 

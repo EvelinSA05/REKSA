@@ -504,7 +504,38 @@ export function CitizenCaseList({
               >
                 <div className="case-card-header">
                   <div className="case-code-badge">{c.id}</div>
-                  <div style={{ display: "flex", gap: "6px" }}>
+                  <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                    {c.faseDarurat && (
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          borderRadius: "8px",
+                          background: c.faseDarurat === "Tanggap Darurat" ? "#fef2f2" : c.faseDarurat === "Siaga Darurat" ? "#fffbeb" : "#f0fdf4",
+                          color: c.faseDarurat === "Tanggap Darurat" ? "#991b1b" : c.faseDarurat === "Siaga Darurat" ? "#92400e" : "#065f46",
+                          border: `1px solid ${c.faseDarurat === "Tanggap Darurat" ? "#fca5a5" : c.faseDarurat === "Siaga Darurat" ? "#fde68a" : "#bbf7d0"}`,
+                        }}
+                      >
+                        {c.faseDarurat}
+                      </span>
+                    )}
+                    {c.kategoriKerusakanRumah && (
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          borderRadius: "8px",
+                          background: "#ecfdf5",
+                          color: "#065f46",
+                          border: "1px solid #a7f3d0",
+                        }}
+                        title={`Stimulan BNPB: ${c.kategoriKerusakanRumah}`}
+                      >
+                        🏠 {c.kategoriKerusakanRumah}
+                      </span>
+                    )}
                     {isWaitingReceipt && (
                       <span style={{ fontSize: "0.76rem", background: "#d1fae5", color: "#065f46", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: "10px", fontWeight: 700 }}>
                         ✓ Tiba di Lokasi

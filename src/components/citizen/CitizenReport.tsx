@@ -111,6 +111,20 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
   
+  // BNPB & BPBD Disaster Regulation Taxonomy
+  const [faseDarurat, setFaseDarurat] = useState<"Siaga Darurat" | "Tanggap Darurat" | "Transisi Darurat ke Pemulihan">(
+    () => initialDraft?.faseDarurat || "Tanggap Darurat"
+  );
+  const [skalaWilayah, setSkalaWilayah] = useState<"Kabupaten/Kota" | "Provinsi" | "Nasional">(
+    () => initialDraft?.skalaWilayah || "Kabupaten/Kota"
+  );
+  const [kategoriKerusakanRumah, setKategoriKerusakanRumah] = useState<"Rusak Berat" | "Rusak Sedang" | "Rusak Ringan" | "">(
+    () => initialDraft?.kategoriKerusakanRumah || ""
+  );
+  const [estimasiStimulanNominal, setEstimasiStimulanNominal] = useState<number>(
+    () => initialDraft?.estimasiStimulanNominal || 0
+  );
+
   // Step 1: Kebutuhan
   const [category, setCategory] = useState<string>(() => initialDraft?.category || "");
   const [customCategory, setCustomCategory] = useState<string>(() => initialDraft?.customCategory || "");
@@ -158,12 +172,17 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
       category || customCategory || amount || customUnit || notes ||
       applicantNik || poskoTarget || shelterStatus || province || regency || district || village ||
       affectedPeople !== "" || familyCount !== "" || vulnerableList.length > 0 ||
-      availabilityCondition || citizenUrgency || conditionDescription || fileName || fotoBukti
+      availabilityCondition || citizenUrgency || conditionDescription || fileName || fotoBukti ||
+      faseDarurat !== "Tanggap Darurat" || skalaWilayah !== "Kabupaten/Kota" || kategoriKerusakanRumah
     );
 
     if (hasAnyContent) {
       const draft = {
         step,
+        faseDarurat,
+        skalaWilayah,
+        kategoriKerusakanRumah,
+        estimasiStimulanNominal,
         category,
         customCategory,
         amount,
@@ -193,6 +212,10 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
     }
   }, [
     step,
+    faseDarurat,
+    skalaWilayah,
+    kategoriKerusakanRumah,
+    estimasiStimulanNominal,
     category,
     customCategory,
     amount,
@@ -220,6 +243,10 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
   const resetForm = () => {
     localStorage.removeItem("reksa_report_draft");
+    setFaseDarurat("Tanggap Darurat");
+    setSkalaWilayah("Kabupaten/Kota");
+    setKategoriKerusakanRumah("");
+    setEstimasiStimulanNominal(0);
     setCategory("");
     setCustomCategory("");
     setAmount("");
@@ -269,13 +296,14 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   // Satuan Menyesuaikan Kategori Kebutuhan
   const getUnit = () => {
     if (!category) return "Pilih kategori";
-    if (category === "Air Bersih") return "Liter (L)";
-    if (category === "Pangan") return "Porsi / Paket";
-    if (category === "Kesehatan") return "Paket / Unit";
-    if (category === "Hunian & Tempat Tinggal") return "Unit / Paket";
-    if (category === "Sanitasi & Kebersihan") return "Paket / Unit";
-    if (category === "Penerangan & Energi") return "Unit / Paket";
-    if (category === "Sandang & Kebutuhan Dasar") return "Paket / Unit";
+    if (category.includes("Hunian") || category.includes("Tenda") || category.includes("Tempat Tinggal")) return "Unit Huntara / Tenda";
+    if (category.includes("Pangan") || category.includes("Makanan") || category.includes("Beras")) return "Paket / Kg Beras / Porsi";
+    if (category.includes("Air Bersih") || category.includes("Air Minum")) return "Liter (L) / Galon / Tangki";
+    if (category.includes("Sandang") || category.includes("Pakaian")) return "Paket (Family/Kidware/Hygiene)";
+    if (category.includes("Kesehatan") || category.includes("Medis") || category.includes("Obat")) return "Paket Medis / Obat / Nakes";
+    if (category.includes("Stimulan") || category.includes("Rumah")) return "Unit Rumah Rusak";
+    if (category.includes("Sarana") || category.includes("Vital") || category.includes("Energi") || category.includes("Listrik")) return "Titik / Unit Fasilitas";
+    if (category.includes("Sanitasi") || category.includes("Kebersihan")) return "Paket Sanitasi / MCK Darurat";
     return customUnit || "Unit / Paket";
   };
 
@@ -319,75 +347,159 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
     }
   }, [province, regency]);
 
+  // Klasifikasi Resmi Jenis Kebutuhan Dasar & Bantuan Pasca-Bencana (Perka BNPB No. 7/2008 & Kepka BNPB No. 296A/2023)
   const categories = [
-    "Air Bersih",
-    "Pangan",
-    "Kesehatan",
-    "Hunian & Tempat Tinggal",
-    "Sanitasi & Kebersihan",
-    "Penerangan & Energi",
-    "Sandang & Kebutuhan Dasar",
+    "Hunian Sementara (Huntara / Tenda)",
+    "Pangan & Makanan Siap Saji",
+    "Air Bersih & Sanitasi",
+    "Sandang & Paket Non-Pangan",
+    "Pelayanan Kesehatan & Medis",
+    "Bantuan Stimulan Rumah (Pasca-Bencana)",
+    "Pemulihan Sarana & Fasilitas Vital",
     "Lainnya",
   ];
 
   const getCategoryIcon = (cat: string) => {
-    if (cat === "Air Bersih") return "pin";
-    if (cat === "Pangan") return "box";
-    if (cat === "Kesehatan") return "file";
-    if (cat === "Hunian & Tempat Tinggal") return "map";
-    if (cat === "Sanitasi & Kebersihan") return "check";
-    if (cat === "Penerangan & Energi") return "settings";
-    if (cat === "Sandang & Kebutuhan Dasar") return "box";
+    if (cat.includes("Hunian") || cat.includes("Tenda") || cat.includes("Tempat Tinggal")) return "map";
+    if (cat.includes("Pangan") || cat.includes("Makanan")) return "box";
+    if (cat.includes("Air Bersih") || cat.includes("Air Minum")) return "pin";
+    if (cat.includes("Sandang") || cat.includes("Pakaian")) return "box";
+    if (cat.includes("Kesehatan") || cat.includes("Medis")) return "file";
+    if (cat.includes("Stimulan") || cat.includes("Rumah")) return "grid";
+    if (cat.includes("Sarana") || cat.includes("Vital") || cat.includes("Energi")) return "bolt";
     return "plus";
   };
 
   const getAvailabilityConfig = (cat: string) => {
-    if (cat === "Air Bersih") {
+    if (cat.includes("Hunian") || cat.includes("Tenda") || cat.includes("Tempat Tinggal")) {
       return {
-        label: "Bagaimana akses air saat ini?",
-        options: ["Masih tersedia", "Terbatas", "Tidak tersedia"],
+        label: "Bagaimana kondisi tempat tinggal saat ini?",
+        options: [
+          "Rumah rusak berat / roboh total (Wajib Tenda/Huntara)",
+          "Rumah rusak sedang (Tidak aman ditinggali)",
+          "Mengungsi di tenda darurat tak layak",
+          "Masih dapat dihuni dengan perbaikan ringan",
+        ],
       };
     }
-    if (cat === "Pangan") {
+    if (cat.includes("Pangan") || cat.includes("Makanan")) {
       return {
-        label: "Bagaimana ketersediaan makanan?",
-        options: ["Cukup", "Terbatas", "Tidak tersedia"],
+        label: "Bagaimana ketersediaan stok bahan pangan / makanan?",
+        options: [
+          "Habis total / Belum makan > 12 jam",
+          "Stok sangat menipis (< 1 hari)",
+          "Dapur umum posko belum menjangkau",
+          "Tersedia terbatas (Cukup untuk hari ini)",
+        ],
       };
     }
-    if (cat === "Hunian & Tempat Tinggal") {
+    if (cat.includes("Air Bersih") || cat.includes("Air Minum")) {
       return {
-        label: "Bagaimana kondisi tempat tinggal?",
-        options: ["Dapat ditempati", "Rusak sebagian", "Tidak dapat ditempati"],
+        label: "Bagaimana akses air minum & air bersih saat ini?",
+        options: [
+          "Sumber air tercemar lumpur / pipa terputus total",
+          "Kritis (< 2,5 Liter air minum per orang)",
+          "Air bersih MCK sangat terbatas",
+          "Tersedia namun keruh / perlu tandon penampung",
+        ],
       };
     }
-    if (cat === "Kesehatan") {
+    if (cat.includes("Sandang") || cat.includes("Pakaian")) {
       return {
-        label: "Bagaimana ketersediaan layanan & fasilitas kesehatan?",
-        options: ["Masih memadai", "Terbatas", "Tidak tersedia"],
+        label: "Bagaimana ketersediaan pakaian, selimut & paket keluarga?",
+        options: [
+          "Pakaian basah / tertimbun reruntuhan tanpa ganti",
+          "Kekurangan selimut hangat & matras tidur",
+          "Butuh hygiene kit & kidware anak mendesak",
+          "Masih ada pakaian seadanya",
+        ],
       };
     }
-    if (cat === "Sanitasi & Kebersihan") {
+    if (cat.includes("Kesehatan") || cat.includes("Medis")) {
       return {
-        label: "Bagaimana kondisi fasilitas sanitasi & kebersihan?",
-        options: ["Masih berfungsi", "Terbatas", "Tidak dapat digunakan"],
+        label: "Bagaimana kondisi fasilitas & layanan medis di lokasi?",
+        options: [
+          "Ada warga luka berat / demam tanpa obat & nakes",
+          "Stok obat kronis & P3K pengungsian habis",
+          "Faskes terdekat lumpuh / terisolasi",
+          "Layanan darurat beroperasi terbatas",
+        ],
       };
     }
-    if (cat === "Penerangan & Energi") {
+    if (cat.includes("Stimulan") || cat.includes("Rumah")) {
       return {
-        label: "Bagaimana pasokan listrik & penerangan?",
-        options: ["Normal", "Terputus berkala", "Padam total"],
+        label: "Bagaimana tingkat kerusakan fisik bangunan rumah?",
+        options: [
+          "Rusak Berat (Roboh / Runtuh Total - Stimulan Rp60 Juta)",
+          "Rusak Sedang (Struktur Retak Parah / Atap Ambruk - Stimulan Rp30 Juta)",
+          "Rusak Ringan (Dinding Retak / Plesteran Lepas - Stimulan Rp15 Juta)",
+        ],
       };
     }
-    if (cat === "Sandang & Kebutuhan Dasar") {
+    if (cat.includes("Sarana") || cat.includes("Vital") || cat.includes("Energi")) {
       return {
-        label: "Bagaimana ketersediaan sandang & kebutuhan dasar?",
-        options: ["Masih mencukupi", "Terbatas", "Habis / Sangat mendesak"],
+        label: "Bagaimana status prasarana vital & jaringan energi?",
+        options: [
+          "Jalur listrik & jembatan putus total",
+          "Padam bergilir / butuh genset darurat",
+          "Akses jalan tertutup material longsor/banjir",
+          "Beroperasi darurat",
+        ],
       };
     }
     return {
       label: "Bagaimana ketersediaan kebutuhan saat ini?",
-      options: ["Masih tersedia", "Terbatas", "Tidak tersedia"],
+      options: ["Habis / Tidak tersedia", "Sangat terbatas", "Masih tersedia"],
     };
+  };
+
+  // Helper Perhitungan Regulasi BNPB (Perka No. 7/2008 & Kepka No. 296A/2023)
+  const getBnpbStandardNote = (cat: string, damage?: string, units?: string | number, people?: string | number) => {
+    const count = typeof people === "number" && people > 0 ? people : (parseInt(String(people)) || 0);
+    const unitNum = typeof units === "number" && units > 0 ? units : (parseInt(String(units)) || 1);
+
+    if (cat.includes("Pangan") || cat.includes("Makanan")) {
+      if (count > 0) {
+        const berasKg = ((count * 400) / 1000).toFixed(1).replace(".0", "");
+        const kalori = (count * 2100).toLocaleString("id-ID");
+        return `Standar Perka BNPB No. 7/2008: ${count} jiwa membutuhkan minimal ${berasKg} kg beras dan setara ${kalori} kkal per hari.`;
+      }
+      return "Standar Perka BNPB No. 7/2008: Minimal 400 gram beras per orang per hari atau setara 2.100 kkal.";
+    }
+    if (cat.includes("Air Bersih") || cat.includes("Air Minum")) {
+      if (count > 0) {
+        const airMinum = (count * 2.5).toFixed(1).replace(".0", "");
+        const airBersihMin = count * 7;
+        const airBersihMax = count * 15;
+        return `Standar Perka BNPB No. 7/2008: ${count} jiwa membutuhkan min. ${airMinum} Liter air minum/hari dan ${airBersihMin} - ${airBersihMax} Liter air bersih sanitasi/hari.`;
+      }
+      return "Standar Perka BNPB No. 7/2008: Air minum min. 2,5 liter/orang/hari, serta air bersih sanitasi 7 - 15 liter/orang/hari.";
+    }
+    if (cat.includes("Hunian") || cat.includes("Tenda") || cat.includes("Tempat Tinggal")) {
+      if (count > 0) {
+        const luas = count * 3;
+        return `Standar Perka BNPB No. 7/2008: ${count} jiwa membutuhkan penampungan/tenda layak min. ${luas} m² (standar min. 3 m²/orang).`;
+      }
+      return "Standar Perka BNPB No. 7/2008: Penyediaan tempat penampungan/tenda yang layak dengan standar minimal luas 3 m² per orang.";
+    }
+    if (cat.includes("Sandang") || cat.includes("Pakaian")) {
+      return "Standar Perka BNPB No. 7/2008: Distribusi pakaian, selimut, matras, serta paket family kits, kidware, & hygiene kits.";
+    }
+    if (cat.includes("Kesehatan") || cat.includes("Medis")) {
+      return "Standar Perka BNPB No. 7/2008: Penyediaan obat-obatan esensial, tenaga medis reaksi cepat, & fasilitas MCK darurat.";
+    }
+    if (cat.includes("Stimulan") || cat.includes("Rumah")) {
+      const nominalPerUnit = damage === "Rusak Berat" ? 60000000 : damage === "Rusak Sedang" ? 30000000 : damage === "Rusak Ringan" ? 15000000 : 0;
+      if (nominalPerUnit > 0) {
+        const total = (unitNum * nominalPerUnit).toLocaleString("id-ID");
+        return `Kepka BNPB No. 296A Tahun 2023: Stimulan ${damage} sebesar Rp${nominalPerUnit.toLocaleString("id-ID")},- per unit. Total estimasi bantuan untuk ${unitNum} unit rumah: Rp${total},-`;
+      }
+      return "Keputusan Kepala BNPB No. 296A Tahun 2023: Stimulan tunai perbaikan rumah korban (Rusak Berat: Rp60jt, Rusak Sedang: Rp30jt, Rusak Ringan: Rp15jt).";
+    }
+    if (cat.includes("Sarana") || cat.includes("Vital") || cat.includes("Energi")) {
+      return "Fase Transisi Darurat ke Pemulihan BNPB: Bantuan peralatan perbaikan fungsi sarana prasarana vital & pemulihan sosial ekonomi.";
+    }
+    return "Standar pemenuhan kebutuhan dasar korban bencana mengacu pada Peraturan Kepala BNPB No. 7/2008.";
   };
 
   const titles = ["Kebutuhan", "Lokasi & Posko", "Kondisi", "Bukti", "Review"];
@@ -518,11 +630,101 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
           </div>
 
           <div className="report-form-body">
-            {/* STEP 1: KEBUTUHAN */}
+            {/* STEP 1: KEBUTUHAN & REGULASI BNPB/BPBD */}
             {step === 1 && (
               <div className="form-fields-group">
+                {/* 1. KATEGORI BERDASARKAN FASE STATUS DARURAT BENCANA */}
+                <div className="form-group" style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
+                    <label className="form-label" style={{ margin: 0 }}>
+                      Fase Status Darurat Bencana (BNPB &amp; BPBD)
+                    </label>
+                    <span style={{ fontSize: "0.78rem", color: "#1c5a39", fontWeight: 700 }}>
+                      Klasifikasi Kesiapsiagaan &amp; Eskalasi
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px" }}>
+                    {[
+                      {
+                        fase: "Siaga Darurat" as const,
+                        icon: "⚠️",
+                        badge: "Fase 1 · Kesiapsiagaan",
+                        desc: "Potensi ancaman sudah mengarah pada bencana. Fokus kaji cepat, logistik & evakuasi pencegahan.",
+                        activeBg: "#fffbeb",
+                        activeBorder: "#f59e0b",
+                        textColor: "#92400e",
+                      },
+                      {
+                        fase: "Tanggap Darurat" as const,
+                        icon: "🚨",
+                        badge: "Fase 2 · Tanggap Bencana",
+                        desc: "Bencana sudah terjadi. Fokus penuh penyelamatan, evakuasi, medis & pemenuhan kebutuhan dasar.",
+                        activeBg: "#fef2f2",
+                        activeBorder: "#ef4444",
+                        textColor: "#991b1b",
+                      },
+                      {
+                        fase: "Transisi Darurat ke Pemulihan" as const,
+                        icon: "🛠️",
+                        badge: "Fase 3 · Pemulihan Pascabencana",
+                        desc: "Eskalasi menurun. Bantuan fokus pada perbaikan sarana prasarana vital & stimulan perbaikan rumah.",
+                        activeBg: "#f0fdf4",
+                        activeBorder: "#10b981",
+                        textColor: "#065f46",
+                      },
+                    ].map((item) => {
+                      const isSelected = faseDarurat === item.fase;
+                      return (
+                        <div
+                          key={item.fase}
+                          onClick={() => setFaseDarurat(item.fase)}
+                          style={{
+                            border: isSelected ? `2px solid ${item.activeBorder}` : "1px solid #d4ded3",
+                            background: isSelected ? item.activeBg : "#ffffff",
+                            padding: "12px 14px",
+                            borderRadius: "12px",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "1.1rem" }}>{item.icon}</span>
+                              <span
+                                style={{
+                                  fontSize: "0.70rem",
+                                  fontWeight: 700,
+                                  background: isSelected ? item.activeBorder : "#e5e7eb",
+                                  color: isSelected ? "#ffffff" : "#4b5563",
+                                  padding: "2px 7px",
+                                  borderRadius: "6px",
+                                }}
+                              >
+                                {item.badge}
+                              </span>
+                            </div>
+                            <strong style={{ display: "block", fontSize: "0.88rem", color: isSelected ? item.textColor : "#013220", marginTop: "4px" }}>
+                              {item.fase}
+                            </strong>
+                          </div>
+                          <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: "#607264", lineHeight: 1.4 }}>
+                            {item.desc}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. KATEGORI KEBUTUHAN DASAR (PERKA BNPB NO. 7/2008 & KEPKA NO. 296A/2023) */}
                 <div className="form-group">
-                  <label className="form-label">Kategori Kebutuhan</label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                    <label className="form-label" style={{ margin: 0 }}>Kategori Jenis Kebutuhan Pascabencana</label>
+                    <span style={{ fontSize: "0.76rem", color: "#64748b" }}>Standar Perka BNPB No. 7/2008</span>
+                  </div>
                   <div className="category-pills-row" style={{ flexWrap: "wrap", gap: "8px" }}>
                     {categories.map((cat) => (
                       <button
@@ -532,7 +734,15 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         onClick={() => {
                           setCategory(cat);
                           const cfg = getAvailabilityConfig(cat);
-                          setAvailabilityCondition(cfg.options[cfg.options.length - 1]);
+                          setAvailabilityCondition(cfg.options[0]);
+                          if (cat.includes("Stimulan") || cat.includes("Rumah")) {
+                            setFaseDarurat("Transisi Darurat ke Pemulihan");
+                            if (!kategoriKerusakanRumah) {
+                              setKategoriKerusakanRumah("Rusak Berat");
+                              const qty = parseInt(amount) || 1;
+                              setEstimasiStimulanNominal(qty * 60000000);
+                            }
+                          }
                         }}
                       >
                         <Icon name={getCategoryIcon(cat)} />
@@ -541,6 +751,121 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     ))}
                   </div>
                 </div>
+
+                {/* KHUSUS: KATEGORI KERUSAKAN RUMAH & STIMULAN KEPKA BNPB NO. 296A/2023 */}
+                {category === "Bantuan Stimulan Rumah (Pasca-Bencana)" && (
+                  <div
+                    style={{
+                      background: "#f0fdf4",
+                      border: "1.5px solid #10b981",
+                      borderRadius: "14px",
+                      padding: "16px",
+                      marginBottom: "16px",
+                      marginTop: "6px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 800, color: "#065f46", fontSize: "0.88rem" }}>
+                        <span>🏠 Bantuan Stimulan Perbaikan Rumah (Kepka BNPB No. 296A/2023)</span>
+                      </div>
+                      <span style={{ fontSize: "0.74rem", background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: "6px", fontWeight: 700 }}>
+                        Bantuan Tunai Rekonstruksi
+                      </span>
+                    </div>
+                    <p style={{ margin: "0 0 12px", fontSize: "0.80rem", color: "#064e3b", lineHeight: 1.45 }}>
+                      Pemerintah melalui BNPB mengalokasikan bantuan stimulan uang tunai bagi korban yang tempat tinggalnya rusak fisik akibat bencana, diverifikasi melalui Posko &amp; BPBD setempat.
+                    </p>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "10px", marginBottom: "12px" }}>
+                      {[
+                        {
+                          tier: "Rusak Berat" as const,
+                          nominal: 60000000,
+                          nominalText: "Rp 60.000.000,-",
+                          desc: "Bangunan roboh / struktur patah total, tidak aman untuk ditempati.",
+                          tone: "#ef4444",
+                          bg: "#fef2f2",
+                        },
+                        {
+                          tier: "Rusak Sedang" as const,
+                          nominal: 30000000,
+                          nominalText: "Rp 30.000.000,-",
+                          desc: "Sebagian dinding/atap ambruk, struktur retak parah namun masih berdiri.",
+                          tone: "#f59e0b",
+                          bg: "#fffbeb",
+                        },
+                        {
+                          tier: "Rusak Ringan" as const,
+                          nominal: 15000000,
+                          nominalText: "Rp 15.000.000,-",
+                          desc: "Kerusakan non-struktural (genteng, plafon, plester dinding retak rambut).",
+                          tone: "#10b981",
+                          bg: "#f0fdf4",
+                        },
+                      ].map((item) => {
+                        const isChosen = kategoriKerusakanRumah === item.tier;
+                        return (
+                          <div
+                            key={item.tier}
+                            onClick={() => {
+                              setKategoriKerusakanRumah(item.tier);
+                              const qty = parseInt(amount) || 1;
+                              setEstimasiStimulanNominal(qty * item.nominal);
+                            }}
+                            style={{
+                              border: isChosen ? `2px solid ${item.tone}` : "1px solid #d1fae5",
+                              background: isChosen ? item.bg : "#ffffff",
+                              borderRadius: "10px",
+                              padding: "12px",
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <strong style={{ fontSize: "0.85rem", color: isChosen ? item.tone : "#013220" }}>
+                                {item.tier}
+                              </strong>
+                              {isChosen && <span style={{ color: item.tone, fontWeight: 800, fontSize: "0.8rem" }}>✓</span>}
+                            </div>
+                            <div style={{ fontSize: "0.96rem", fontWeight: 800, color: item.tone, margin: "4px 0" }}>
+                              {item.nominalText}
+                              <small style={{ fontSize: "0.70rem", fontWeight: 600, color: "#6b7280" }}> / unit</small>
+                            </div>
+                            <p style={{ margin: 0, fontSize: "0.72rem", color: "#4b5563", lineHeight: 1.35 }}>
+                              {item.desc}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {kategoriKerusakanRumah && (
+                      <div
+                        style={{
+                          background: "#ffffff",
+                          border: "1px dashed #059669",
+                          borderRadius: "8px",
+                          padding: "10px 14px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "8px",
+                        }}
+                      >
+                        <span style={{ fontSize: "0.82rem", color: "#065f46" }}>
+                          Total Estimasi Bantuan Stimulan BNPB:
+                        </span>
+                        <strong style={{ fontSize: "1.05rem", color: "#047857" }}>
+                          Rp {((parseInt(amount) || 1) * (kategoriKerusakanRumah === "Rusak Berat" ? 60000000 : kategoriKerusakanRumah === "Rusak Sedang" ? 30000000 : 15000000)).toLocaleString("id-ID")},-
+                          <small style={{ fontSize: "0.75rem", fontWeight: 600, color: "#4b5563" }}>
+                            {" "}({parseInt(amount) || 1} Unit Rumah)
+                          </small>
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {category === "Lainnya" && (
                   <div className="form-row-two" style={{ marginTop: "10px" }}>
@@ -569,13 +894,24 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
                 <div className="form-row-two">
                   <div className="form-group">
-                    <label className="form-label">Perkiraan Jumlah Kebutuhan</label>
+                    <label className="form-label">
+                      {category === "Bantuan Stimulan Rumah (Pasca-Bencana)"
+                        ? "Jumlah Unit Rumah Rusak"
+                        : "Perkiraan Jumlah Kebutuhan"}
+                    </label>
                     <input 
                       type="text" 
                       className="form-control" 
                       value={amount} 
-                      onChange={(e) => setAmount(e.target.value)} 
-                      placeholder="Contoh: 1000, 250, 50" 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setAmount(val);
+                        if (category === "Bantuan Stimulan Rumah (Pasca-Bencana)" && kategoriKerusakanRumah) {
+                          const rate = kategoriKerusakanRumah === "Rusak Berat" ? 60000000 : kategoriKerusakanRumah === "Rusak Sedang" ? 30000000 : 15000000;
+                          setEstimasiStimulanNominal((parseInt(val) || 1) * rate);
+                        }
+                      }} 
+                      placeholder={category === "Bantuan Stimulan Rumah (Pasca-Bencana)" ? "Contoh: 1, 3, 5" : "Contoh: 1000, 250, 50"} 
                     />
                   </div>
                   <div className="form-group">
@@ -590,17 +926,46 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   </div>
                 </div>
 
+                {/* BANNER STANDAR REGULASI BNPB PERKA NO. 7/2008 & KEPKA NO. 296A/2023 */}
+                {category && (
+                  <div
+                    style={{
+                      background: "#f4f8f5",
+                      border: "1px solid #c2dfc9",
+                      borderRadius: "10px",
+                      padding: "10px 14px",
+                      marginTop: "-4px",
+                      marginBottom: "14px",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "9px",
+                    }}
+                  >
+                    <div style={{ color: "#166534", marginTop: "2px" }}>
+                      <Icon name="check" />
+                    </div>
+                    <div>
+                      <strong style={{ fontSize: "0.82rem", color: "#013220", display: "block" }}>
+                        Pedoman Standar Bantuan BNPB:
+                      </strong>
+                      <p style={{ margin: "2px 0 0", fontSize: "0.80rem", color: "#2d4a36", lineHeight: 1.45 }}>
+                        {getBnpbStandardNote(category, kategoriKerusakanRumah, amount, affectedPeople)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="form-group">
-                  <label className="form-label">Jelaskan Kebutuhan</label>
+                  <label className="form-label">Jelaskan Kebutuhan &amp; Dampak Kerusakan</label>
                   <textarea 
                     className="form-control textarea" 
                     rows={4}
                     value={notes} 
                     onChange={(e) => setNotes(e.target.value)} 
-                    placeholder="Jelaskan kebutuhan dan kondisi yang membuat kebutuhan ini diperlukan."
+                    placeholder="Jelaskan kebutuhan riil dan kondisi lapangan yang menyebabkan kebutuhan ini sangat diperlukan..."
                   />
                   <small style={{ color: "#758378", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
-                    Contoh: Sumber air warga tercemar dan tidak dapat digunakan sejak kejadian bencana.
+                    Contoh: 3 unit rumah roboh akibat gempa, warga sementara tinggal di teras tetangga membutuhkan tenda darurat dan stimulan perbaikan rumah.
                   </small>
                 </div>
               </div>
@@ -766,6 +1131,68 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     </span>
                     <span><b>Terkunci Otomatis:</b> Posko BPBD rujukan ditetapkan otomatis oleh sistem sesuai wilayah bencana Anda dan tidak dapat diubah manual.</span>
                   </small>
+                </div>
+
+                {/* 3. KATEGORI BERDASARKAN SKALA WILAYAH DAN KEWENANGAN PENANGANAN */}
+                <div className="form-group" style={{ marginTop: "12px", marginBottom: "14px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                    <label className="form-label" style={{ margin: 0 }}>Skala Wilayah &amp; Kewenangan Penanganan (BNPB / BPBD)</label>
+                    <span style={{ fontSize: "0.76rem", color: "#2e774f", fontWeight: 700 }}>Pengerahan Sumber Daya Wilayah</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px" }}>
+                    {[
+                      {
+                        scale: "Kabupaten/Kota" as const,
+                        authority: "BPBD Kabupaten/Kota",
+                        desc: "Pilar utama penyalur bantuan jika dampak bencana masih dapat ditangani secara lokal di tingkat daerah.",
+                        icon: "🏛️",
+                      },
+                      {
+                        scale: "Provinsi" as const,
+                        authority: "BPBD Provinsi",
+                        desc: "Intervensi logistik regional & personel tambahan jika kapasitas kabupaten/kota terlampaui.",
+                        icon: "🏢",
+                      },
+                      {
+                        scale: "Nasional" as const,
+                        authority: "BNPB Pusat (Aktivasi DSP)",
+                        desc: "Bencana berskala luas melampaui provinsi, BNPB mengaktifkan Dana Siap Pakai (DSP) & logistik nasional.",
+                        icon: "🇮🇩",
+                      },
+                    ].map((item) => {
+                      const isSelected = skalaWilayah === item.scale;
+                      return (
+                        <div
+                          key={item.scale}
+                          onClick={() => setSkalaWilayah(item.scale)}
+                          style={{
+                            border: isSelected ? "2px solid #013220" : "1px solid #d4ded3",
+                            background: isSelected ? "#eef6f0" : "#ffffff",
+                            padding: "12px 14px",
+                            borderRadius: "12px",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "1.1rem" }}>{item.icon}</span>
+                              <strong style={{ fontSize: "0.86rem", color: "#013220" }}>Skala {item.scale}</strong>
+                            </div>
+                            {isSelected && (
+                              <span style={{ color: "#166534", fontSize: "0.75rem", fontWeight: 800 }}>✓ Terpilih</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1c5a39", marginBottom: "3px" }}>
+                            {item.authority}
+                          </div>
+                          <p style={{ margin: 0, fontSize: "0.74rem", color: "#607264", lineHeight: 1.4 }}>
+                            {item.desc}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -1359,22 +1786,53 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   </div>
 
                   <div className="review-details-grid">
-                    {/* SECTION 1 — KEBUTUHAN */}
+                    {/* SECTION 1 — KEBUTUHAN & REGULASI BNPB */}
                     <div className="review-item wide" style={{ borderBottom: "1px solid rgba(1, 50, 32, 0.08)", paddingBottom: "8px", marginTop: "4px" }}>
                       <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#013220", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                        1. Kebutuhan
+                        1. Kebutuhan &amp; Klasifikasi Regulasi BNPB
                       </span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Fase Status Darurat Bencana</span>
+                      <strong style={{ color: faseDarurat === "Tanggap Darurat" ? "#b91c1c" : faseDarurat === "Siaga Darurat" ? "#b45309" : "#047857" }}>
+                        {faseDarurat}
+                      </strong>
                     </div>
                     <div className="review-item">
                       <span className="review-label">Kategori Kebutuhan</span>
                       <strong>{category === "Lainnya" && customCategory ? customCategory : category}</strong>
                     </div>
+                    {category === "Bantuan Stimulan Rumah (Pasca-Bencana)" && kategoriKerusakanRumah && (
+                      <>
+                        <div className="review-item">
+                          <span className="review-label">Tingkat Kerusakan Rumah</span>
+                          <strong style={{ color: "#047857" }}>{kategoriKerusakanRumah}</strong>
+                        </div>
+                        <div className="review-item">
+                          <span className="review-label">Estimasi Stimulan BNPB</span>
+                          <strong style={{ color: "#047857" }}>
+                            Rp {((parseInt(amount) || 1) * (kategoriKerusakanRumah === "Rusak Berat" ? 60000000 : kategoriKerusakanRumah === "Rusak Sedang" ? 30000000 : 15000000)).toLocaleString("id-ID")},-
+                            <small style={{ fontWeight: 400, color: "#64748b" }}> ({parseInt(amount) || 1} Unit)</small>
+                          </strong>
+                        </div>
+                      </>
+                    )}
                     <div className="review-item">
                       <span className="review-label">Perkiraan Jumlah Kebutuhan</span>
                       <strong>{amount ? `${amount} ${getUnit()}` : "-"}</strong>
                     </div>
+                    <div className="review-item">
+                      <span className="review-label">Skala Kewenangan Wilayah</span>
+                      <strong>Skala {skalaWilayah} (BPBD / BNPB)</strong>
+                    </div>
                     <div className="review-item wide">
-                      <span className="review-label">Deskripsi Kebutuhan</span>
+                      <span className="review-label">Pedoman Standar Regulasi BNPB</span>
+                      <p style={{ margin: 0, fontSize: "0.80rem", color: "#2d4a36" }}>
+                        {getBnpbStandardNote(category, kategoriKerusakanRumah, amount, affectedPeople)}
+                      </p>
+                    </div>
+                    <div className="review-item wide">
+                      <span className="review-label">Deskripsi Kebutuhan &amp; Dampak</span>
                       <p>{notes || "-"}</p>
                     </div>
 
@@ -1611,6 +2069,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       conditionDescription: conditionDescription,
                       createdAtTime: timeStr,
                       createdAtRaw: createdDbItem?.created_at || new Date().toISOString(),
+                      faseDarurat: faseDarurat,
+                      skalaWilayah: skalaWilayah,
+                      standarBnpbNote: getBnpbStandardNote(displayCat, kategoriKerusakanRumah, amount, affectedPeople),
+                      kategoriKerusakanRumah: (category.includes("Stimulan") || category.includes("Rumah")) ? (kategoriKerusakanRumah as any) : undefined,
+                      estimasiStimulanNominal: (category.includes("Stimulan") || category.includes("Rumah")) ? estimasiStimulanNominal : undefined,
                     };
 
                     addUserReportedId(finalCode);
@@ -1710,6 +2173,33 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
             <div className="guidance-footer-note">
               <Icon name="help" />
               <span>Butuh bantuan kedaruratan segera? Hubungi Call Center 112 atau Posko BPBD Sukabumi.</span>
+            </div>
+
+            {/* KARTU REFERENSI REGULASI BNPB & BPBD */}
+            <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: "12px", padding: "14px", marginTop: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, fontSize: "0.82rem", color: "#065f46", marginBottom: "8px" }}>
+                <span>📜 Pedoman Regulasi BNPB &amp; BPBD</span>
+              </div>
+              <div style={{ fontSize: "0.76rem", color: "#166534", lineHeight: 1.45, display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div>
+                  <strong>Perka BNPB No. 7/2008</strong>
+                  <p style={{ margin: "2px 0 0", color: "#2d4a36" }}>
+                    Standar minimal kebutuhan dasar: Pangan 400g beras/2.100 kkal, Air Minum 2.5L, Sanitasi 7-15L, &amp; Huntara min 3 m²/jiwa.
+                  </p>
+                </div>
+                <div>
+                  <strong>Kepka BNPB No. 296A/2023</strong>
+                  <p style={{ margin: "2px 0 0", color: "#2d4a36" }}>
+                    Stimulan perbaikan rumah korban: Rusak Berat (Rp60 Jt), Rusak Sedang (Rp30 Jt), Rusak Ringan (Rp15 Jt).
+                  </p>
+                </div>
+                <div>
+                  <strong>3 Skala Wilayah Kewenangan</strong>
+                  <p style={{ margin: "2px 0 0", color: "#2d4a36" }}>
+                    Tingkat Kab/Kota (BPBD Kab/Kota) → Provinsi (BPBD Prov) → Nasional (BNPB Pusat &amp; Dana Siap Pakai / DSP).
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
