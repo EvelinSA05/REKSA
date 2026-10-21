@@ -29,6 +29,12 @@ export function PerbandinganKecepatanRespon({
     );
   }, [metrics, filterCategory]);
 
+  const monoEmojiStyle: React.CSSProperties = {
+    filter: "grayscale(100%)",
+    display: "inline-block",
+    verticalAlign: "middle",
+  };
+
   return (
     <section
       className={`comparative-response-section ${className}`}
@@ -70,7 +76,7 @@ export function PerbandinganKecepatanRespon({
               marginBottom: "8px",
             }}
           >
-            <span>⚡</span> Akuntabilitas Kemitraan &amp; SLA Respon Bencana
+            <span style={monoEmojiStyle}>⚡</span> Akuntabilitas Kemitraan &amp; SLA Respon Bencana
           </span>
           <h2
             style={{
@@ -128,7 +134,7 @@ export function PerbandinganKecepatanRespon({
               gap: "6px",
             }}
           >
-            <span>📊</span>
+            <span style={monoEmojiStyle}>📊</span>
             <span>Grafik Kecepatan Respon</span>
           </button>
 
@@ -150,7 +156,7 @@ export function PerbandinganKecepatanRespon({
               gap: "6px",
             }}
           >
-            <span>📋</span>
+            <span style={monoEmojiStyle}>📋</span>
             <span>Log Audit Pengalihan SLA ({metrics.recentEscalations.length})</span>
           </button>
 
@@ -172,7 +178,7 @@ export function PerbandinganKecepatanRespon({
               gap: "6px",
             }}
           >
-            <span>⚙️</span>
+            <span style={monoEmojiStyle}>⚙️</span>
             <span>Alur Sistem Fail-Safe</span>
           </button>
         </div>
@@ -212,7 +218,7 @@ export function PerbandinganKecepatanRespon({
               fontSize: "20px",
             }}
           >
-            🏢
+            <span style={monoEmojiStyle}>🏢</span>
           </div>
           <div>
             <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
@@ -254,7 +260,7 @@ export function PerbandinganKecepatanRespon({
               boxShadow: "0 2px 6px rgba(1, 50, 32, 0.25)",
             }}
           >
-            🤝
+            <span style={monoEmojiStyle}>🤝</span>
           </div>
           <div>
             <span style={{ fontSize: "0.72rem", color: "#013220", fontWeight: 700, textTransform: "uppercase" }}>
@@ -265,7 +271,7 @@ export function PerbandinganKecepatanRespon({
               <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Menit</span>
             </div>
             <small style={{ color: "#047857", fontWeight: 800, fontSize: "0.74rem" }}>
-              ⚡ 48% Lebih Cepat Menangani
+              <span style={monoEmojiStyle}>⚡</span> 48% Lebih Cepat Menangani
             </small>
           </div>
         </div>
@@ -295,7 +301,7 @@ export function PerbandinganKecepatanRespon({
               fontSize: "20px",
             }}
           >
-            ⏱️
+            <span style={monoEmojiStyle}>⏱️</span>
           </div>
           <div>
             <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
@@ -336,7 +342,7 @@ export function PerbandinganKecepatanRespon({
               fontSize: "20px",
             }}
           >
-            🛡️
+            <span style={monoEmojiStyle}>🛡️</span>
           </div>
           <div>
             <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
@@ -438,7 +444,7 @@ export function PerbandinganKecepatanRespon({
                         border: "1px solid #a7f3d0",
                       }}
                     >
-                      ⚡ Mitra {deltaMinutes}m lebih cepat
+                      <span style={monoEmojiStyle}>⚡</span> Mitra {deltaMinutes}m lebih cepat
                     </span>
                   </div>
 
@@ -447,7 +453,7 @@ export function PerbandinganKecepatanRespon({
                     {/* BPBD Bar (Forest Green) */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <span style={{ width: "95px", fontSize: "0.75rem", fontWeight: 700, color: "#013220" }}>
-                        🏢 BPBD:
+                        <span style={monoEmojiStyle}>🏢</span> BPBD:
                       </span>
                       <div style={{ flex: 1, height: "10px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
                         <div
@@ -468,7 +474,7 @@ export function PerbandinganKecepatanRespon({
                     {/* Mitra Bar (Emerald Green) */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <span style={{ width: "95px", fontSize: "0.75rem", fontWeight: 700, color: "#047857" }}>
-                        🤝 Mitra:
+                        <span style={monoEmojiStyle}>🤝</span> Mitra:
                       </span>
                       <div style={{ flex: 1, height: "10px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
                         <div
@@ -554,7 +560,7 @@ export function PerbandinganKecepatanRespon({
                     </td>
                     <td style={{ padding: "10px 14px", textAlign: "right" }}>
                       <span style={{ padding: "2px 8px", borderRadius: "6px", background: "#ecfdf5", color: "#013220", border: "1px solid #a7f3d0", fontWeight: 800, fontSize: "0.78rem" }}>
-                        ⚡ {log.verifiedTimeMinutes} Menit
+                        <span style={monoEmojiStyle}>⚡</span> {log.verifiedTimeMinutes} Menit
                       </span>
                     </td>
                   </tr>
