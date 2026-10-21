@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CaseRecord } from "../../App";
 import { apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
+import { evaluateCaseSla, getMitraByCommodity } from "../../utils/slaEscalationEngine";
 
 interface PoskoVerifikasiLaporanProps {
   cases: CaseRecord[];
@@ -18,25 +19,44 @@ export function PoskoVerifikasiLaporan({
   notify,
   selectedCaseId,
 }: PoskoVerifikasiLaporanProps) {
-  const [tab, setTab] = useState<"all" | "pending" | "clarify" | "verified" | "rejected">("pending");
+  const [tab, setTab] = useState<"all" | "pending" | "escalated" | "clarify" | "verified" | "rejected">("pending");
   const [search, setSearch] = useState(selectedCaseId || "");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
+
+  // Local state for tracking reports escalated to Mitra due to SLA timeout
+  const [localEscalatedIds, setLocalEscalatedIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("reksa_escalated_case_ids") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const handleSimulateEscalate = (c: CaseRecord) => {
+    const partner = c.mitraHandler || getMitraByCommodity(c.item, c.location);
+    const next = Array.from(new Set([...localEscalatedIds, c.id]));
+    setLocalEscalatedIds(next);
+    localStorage.setItem("reksa_escalated_case_ids", JSON.stringify(next));
+    notify?.(`⚡ Laporan ${c.id} dialihkan otomatis ke ${partner} karena batas waktu SLA verifikasi BPBD terlampaui!`);
+  };
 
   useEffect(() => {
     if (selectedCaseId) {
       setSearch(selectedCaseId);
       const found = cases.find((c) => c.id.toLowerCase() === selectedCaseId.toLowerCase());
       if (found) {
+        const isEscalated = found.escalatedToMitra || localEscalatedIds.includes(found.id);
         const s = (found.status || "").toLowerCase();
-        if (s.includes("klarifikasi")) setTab("clarify");
+        if (isEscalated) setTab("escalated");
+        else if (s.includes("klarifikasi")) setTab("clarify");
         else if (s.includes("verifikasi") || s === "diajukan" || s === "baru") setTab("pending");
         else if (s.includes("tolak")) setTab("rejected");
         else setTab("verified");
       }
     }
-  }, [selectedCaseId, cases]);
+  }, [selectedCaseId, cases, localEscalatedIds]);
 
   // Modals
   const [modalAction, setModalAction] = useState<"verify" | "clarify" | "reject" | "further" | null>(null);
@@ -49,9 +69,13 @@ export function PoskoVerifikasiLaporan({
 
   const filterCases = cases.filter((c) => {
     const s = (c.status || "").toLowerCase();
+    const isEscalated = c.escalatedToMitra || localEscalatedIds.includes(c.id);
     let matchesTab = true;
+
     if (tab === "pending") {
-      matchesTab = s.includes("verifikasi") || s === "diajukan" || s === "baru";
+      matchesTab = !isEscalated && (s.includes("verifikasi") || s === "diajukan" || s === "baru");
+    } else if (tab === "escalated") {
+      matchesTab = isEscalated;
     } else if (tab === "clarify") {
       matchesTab = s.includes("klarifikasi");
     } else if (tab === "verified") {
@@ -138,7 +162,12 @@ export function PoskoVerifikasiLaporan({
     }
   };
 
-  const pendingCount = cases.filter((c) => (c.status || "").toLowerCase().includes("verifikasi") || c.status === "Diajukan" || c.status === "Baru").length;
+  const escalatedCount = cases.filter((c) => c.escalatedToMitra || localEscalatedIds.includes(c.id)).length;
+  const pendingCount = cases.filter((c) => {
+    const isEsc = c.escalatedToMitra || localEscalatedIds.includes(c.id);
+    const s = (c.status || "").toLowerCase();
+    return !isEsc && (s.includes("verifikasi") || s === "diajukan" || s === "baru");
+  }).length;
   const clarifyCount = cases.filter((c) => (c.status || "").toLowerCase().includes("klarifikasi")).length;
   const verifiedCount = cases.filter((c) => (c.status || "").toLowerCase().includes("terbuka") || (c.status || "").toLowerCase().includes("sebagian") || (c.status || "").toLowerCase().includes("teralokasi") || (c.status || "").toLowerCase().includes("selesai")).length;
   const rejectedCount = cases.filter((c) => (c.status || "").toLowerCase().includes("tolak")).length;
@@ -170,6 +199,7 @@ export function PoskoVerifikasiLaporan({
         <div className="posko-toolbar-tabs">
           {[
             { id: "pending", label: "Menunggu Verifikasi", count: pendingCount },
+            { id: "escalated", label: "⚡ Dialihkan ke Mitra (SLA Timeout)", count: escalatedCount },
             { id: "clarify", label: "Perlu Klarifikasi", count: clarifyCount },
             { id: "verified", label: "Terverifikasi / Terbuka", count: verifiedCount },
             { id: "rejected", label: "Ditolak", count: rejectedCount },
@@ -264,14 +294,17 @@ export function PoskoVerifikasiLaporan({
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {paginatedCases.map((c) => {
-            const isPending = (c.status || "").toLowerCase().includes("verifikasi") || c.status === "Diajukan" || c.status === "Baru";
+            const isEscalated = c.escalatedToMitra || localEscalatedIds.includes(c.id);
+            const isPending = !isEscalated && ((c.status || "").toLowerCase().includes("verifikasi") || c.status === "Diajukan" || c.status === "Baru");
             const isClarify = (c.status || "").toLowerCase().includes("klarifikasi");
             const isRejected = (c.status || "").toLowerCase().includes("tolak");
             const isVerified = (c.status || "").toLowerCase().includes("terbuka") || (c.status || "").toLowerCase().includes("sebagian") || (c.status || "").toLowerCase().includes("teralokasi") || (c.status || "").toLowerCase().includes("selesai");
 
-            const cardStateClass = isRejected ? "card-rejected" : isClarify ? "card-clarify" : isVerified ? "card-verified" : "card-pending";
-            const statusClass = isVerified ? "status-verified" : isRejected ? "status-rejected" : isClarify ? "status-clarify" : "status-pending";
+            const cardStateClass = isEscalated ? "card-clarify" : isRejected ? "card-rejected" : isClarify ? "card-clarify" : isVerified ? "card-verified" : "card-pending";
+            const statusClass = isEscalated ? "status-clarify" : isVerified ? "status-verified" : isRejected ? "status-rejected" : isClarify ? "status-clarify" : "status-pending";
             const urgencyClass = (c.urgency || "sedang").toLowerCase().replace(/\s+/g, "-");
+            const sla = evaluateCaseSla(c);
+            const assignedMitra = c.mitraHandler || getMitraByCommodity(c.item, c.location);
 
             return (
               <div key={c.id} className={`posko-case-card ${cardStateClass}`}>
@@ -282,9 +315,71 @@ export function PoskoVerifikasiLaporan({
                     <span className={`posko-case-urgency-badge urgency-${urgencyClass}`}>
                       Prioritas {c.urgency}
                     </span>
-                    <span className={`posko-case-status-badge ${statusClass}`}>
-                      {c.status}
-                    </span>
+                    {isEscalated ? (
+                      <span
+                        style={{
+                          background: "#fef3c7",
+                          color: "#92400e",
+                          border: "1px solid #fde68a",
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.76rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        ⚡ Dialihkan ke Mitra
+                      </span>
+                    ) : (
+                      <span className={`posko-case-status-badge ${statusClass}`}>
+                        {c.status}
+                      </span>
+                    )}
+
+                    {/* Live SLA Countdown / Status Badge */}
+                    {isPending && !isEscalated && (
+                      sla.status === "warning" ? (
+                        <span
+                          style={{
+                            background: "#fff7ed",
+                            color: "#c2410c",
+                            border: "1px solid #fdba74",
+                            padding: "3px 9px",
+                            borderRadius: "999px",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title="SLA verifikasi BPBD segera habis! Jika terlampaui, laporan otomatis dialihkan ke Mitra."
+                        >
+                          <AppIcon name="clock" size={12} />
+                          SLA: {sla.minutesRemaining}m (Kritis)
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            background: "#f0fdf4",
+                            color: "#166534",
+                            border: "1px solid #bbf7d0",
+                            padding: "3px 9px",
+                            borderRadius: "999px",
+                            fontSize: "0.74rem",
+                            fontWeight: 600,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title="SLA batas verifikasi BPBD"
+                        >
+                          <AppIcon name="clock" size={12} />
+                          SLA: {sla.minutesRemaining}m tersisa
+                        </span>
+                      )
+                    )}
                   </div>
 
                   <span className="posko-case-date">
@@ -316,6 +411,31 @@ export function PoskoVerifikasiLaporan({
 
                 {/* 4. Context & Validation Notes */}
                 <div className="posko-case-context-section">
+                  {/* SLA Escalation Notice Banner */}
+                  {isEscalated && (
+                    <div
+                      style={{
+                        background: "#fffbeb",
+                        border: "1px solid #fde68a",
+                        borderRadius: "10px",
+                        padding: "12px 14px",
+                        fontSize: "0.84rem",
+                        color: "#92400e",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, color: "#b45309" }}>
+                        <AppIcon name="bolt" size={15} />
+                        <span>VERIFIKASI DIALIHKAN OTOMATIS KE MITRA (SLA TIMEOUT BPBD)</span>
+                      </div>
+                      <p style={{ margin: 0, color: "#78350f", lineHeight: 1.45 }}>
+                        Laporan telah melewati batas waktu respon BPBD ({sla.slaHours} Jam) dan langsung dialihkan ke <strong>{assignedMitra}</strong> untuk verifikasi lapangan &amp; pemenuhan bantuan tanpa menunggu birokrasi posko.
+                      </p>
+                    </div>
+                  )}
+
                   {c.priorityRationale && (
                     <div className="posko-validation-box">
                       <div style={{ marginTop: "2px" }}><AppIcon name="shield" size={15} /></div>
@@ -421,8 +541,30 @@ export function PoskoVerifikasiLaporan({
                   </button>
 
                   <div className="posko-case-actions-cluster">
-                    {isPending && (
+                    {isPending && !isEscalated && (
                       <>
+                        <button
+                          type="button"
+                          onClick={() => handleSimulateEscalate(c)}
+                          className="btn-case-escalate"
+                          style={{
+                            background: "#fffbeb",
+                            color: "#b45309",
+                            border: "1px solid #fde68a",
+                            padding: "6px 12px",
+                            borderRadius: "8px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            cursor: "pointer",
+                          }}
+                          title="Simulasikan trigger keterlambatan: Alihkan verifikasi langsung ke Mitra responder"
+                        >
+                          <AppIcon name="bolt" size={13} />
+                          <span>⚡ Alihkan ke Mitra (SLA Timeout)</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "clarify")}
@@ -451,6 +593,23 @@ export function PoskoVerifikasiLaporan({
                           <span>Verifikasi &amp; Rilis</span>
                         </button>
                       </>
+                    )}
+
+                    {isEscalated && (
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "0.82rem", color: "#80866e", fontStyle: "italic" }}>
+                          Dialihkan ke: <strong>{assignedMitra}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal(c, "verify")}
+                          className="btn-case-verify"
+                          title="Validasi bersama Posko BPBD"
+                        >
+                          <AppIcon name="check" size={14} />
+                          <span>Validasi Bersama Posko</span>
+                        </button>
+                      </div>
                     )}
 
                     {isClarify && (

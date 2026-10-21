@@ -16,6 +16,7 @@ import { CitizenClarificationModal } from "./CitizenClarificationModal";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 import { GrafikTransparansiBantuan } from "../common/GrafikTransparansiBantuan";
 import { PetaSebaranPenanganan } from "./PetaSebaranPenanganan";
+import { PerbandinganKecepatanRespon } from "../common/PerbandinganKecepatanRespon";
 import { MisiItem, apiService } from "../../services/api";
 
 interface CitizenDashboardProps {
@@ -604,6 +605,11 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         cases={state.casesList}
         misiList={localMisiList}
         penawaranList={state.penawaranList}
+      />
+
+      {/* 6. PERBANDINGAN KECEPATAN RESPON & SLA VERIFIKASI BPBD VS MITRA */}
+      <PerbandinganKecepatanRespon
+        cases={state.casesList}
       />
 
       {/* QUICK ACCESS SECTION */}
