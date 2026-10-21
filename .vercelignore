@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+tests
+database/database.sqlite
+database/database.sqlite-shm
+database/database.sqlite-wal
+.env
+.env.*
+.phpunit.result.cache
+*.log
