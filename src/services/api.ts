@@ -237,11 +237,32 @@ export const apiService = {
     }),
 
   // Posko
-  getPoskos: () => fetchApi<{ success: boolean; data: PoskoItem[] }>('/posko'),
-  getPoskoStats: (poskoId?: number) =>
-    fetchApi<{ success: boolean; data: { laporan_masuk_kk: number; kebutuhan_terbuka: number; disalurkan_mitra: number; selesai_diserahkan: number; total_kk_terdampak: number } }>(
-      `/posko/stats${poskoId ? `?posko_id=${poskoId}` : ''}`
-    ),
+  getPoskos: (params?: { provinsi?: string }) => {
+    const query = params?.provinsi ? `?provinsi=${encodeURIComponent(params.provinsi)}` : '';
+    return fetchApi<{ success: boolean; data: PoskoItem[] }>(`/posko${query}`);
+  },
+  getPoskoStats: (params?: { posko_id?: number; provinsi?: string } | number) => {
+    let query = '';
+    if (typeof params === 'number') {
+      query = `?posko_id=${params}`;
+    } else if (params) {
+      const q = new URLSearchParams();
+      if (params.posko_id) q.append('posko_id', String(params.posko_id));
+      if (params.provinsi) q.append('provinsi', params.provinsi);
+      query = q.toString() ? `?${q.toString()}` : '';
+    }
+    return fetchApi<{
+      success: boolean;
+      data: {
+        laporan_masuk_kk: number;
+        kebutuhan_terbuka: number;
+        disalurkan_mitra: number;
+        selesai_diserahkan: number;
+        total_kk_terdampak: number;
+        filter_provinsi?: string;
+      };
+    }>(`/posko/stats${query}`);
+  },
 
   // Kebutuhan Warga
   getKebutuhan: (params: Record<string, any> = {}) => {
