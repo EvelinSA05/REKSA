@@ -313,7 +313,11 @@ export function PetaSebaranPenanganan({
   return (
     <section
       className={`choropleth-thematic-section ${className}`}
-      style={{ marginBottom: "32px" }}
+      style={{
+        marginTop: "56px",
+        marginBottom: "48px",
+        paddingTop: "4px",
+      }}
     >
       {/* SECTION HEADER */}
       <div
@@ -323,8 +327,8 @@ export function PetaSebaranPenanganan({
           justifyContent: "space-between",
           alignItems: "flex-end",
           flexWrap: "wrap",
-          gap: "14px",
-          marginBottom: "16px",
+          gap: "16px",
+          marginBottom: "18px",
         }}
       >
         <div>
@@ -337,7 +341,7 @@ export function PetaSebaranPenanganan({
               color: "#013220",
               background: "#ecfdf5",
               border: "1px solid #a7f3d0",
-              padding: "3px 10px",
+              padding: "4px 12px",
               borderRadius: "999px",
               fontWeight: 700,
               fontSize: "0.74rem",
@@ -346,29 +350,29 @@ export function PetaSebaranPenanganan({
               marginBottom: "8px",
             }}
           >
-            <span style={monoEmojiStyle}>🇮🇩</span> Peta Persebaran Respon Bantuan Nasional
+            <span style={monoEmojiStyle}>🇮🇩</span> Sebaran Respon Bantuan Nasional
           </span>
           <h2
             style={{
               margin: 0,
-              fontSize: "1.5rem",
+              fontSize: "1.45rem",
               fontWeight: 800,
               color: "#013220",
               letterSpacing: "-0.02em",
             }}
           >
-            Persebaran Banyaknya Respon Bantuan: BPBD vs Mitra Kemanusiaan
+            Persebaran Respon Bantuan: BPBD vs Mitra Kemanusiaan
           </h2>
           <p
             style={{
               margin: "6px 0 0",
-              color: "#475569",
-              fontSize: "0.86rem",
-              maxWidth: "840px",
+              color: "#64748b",
+              fontSize: "0.85rem",
+              maxWidth: "760px",
               lineHeight: 1.5,
             }}
           >
-            Visualisasi pemetaan proporsi penanganan dan distribusi bantuan pascabencana dari Sabang sampai Merauke, membandingkan respon yang ditangani langsung oleh posko BPBD wilayah (<strong style={{ color: "#013220" }}>Hijau Tua</strong>) vs jaringan mitra kemanusiaan siaga (<strong style={{ color: "#047857" }}>Hijau Terang</strong>).
+            Komparasi volume penanganan bantuan darurat langsung oleh posko <strong style={{ color: "#013220" }}>BPBD (Hijau Tua)</strong> vs jejaring relawan <strong style={{ color: "#047857" }}>Mitra Siaga (Hijau Terang)</strong>.
           </p>
         </div>
 
@@ -377,315 +381,128 @@ export function PetaSebaranPenanganan({
           style={{
             display: "inline-flex",
             background: "#f1f5f9",
-            padding: "4px",
+            padding: "3px",
             borderRadius: "10px",
             border: "1px solid #e2e8f0",
-            gap: "4px",
+            gap: "2px",
           }}
         >
           <button
             type="button"
             onClick={() => setViewMode("vector")}
             style={{
-              padding: "6px 14px",
+              padding: "6px 12px",
               borderRadius: "8px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               border: "none",
               cursor: "pointer",
-              transition: "all 0.2s ease",
+              transition: "all 0.15s ease",
               background: viewMode === "vector" ? "#013220" : "transparent",
               color: viewMode === "vector" ? "#ffffff" : "#475569",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
             }}
           >
             <span style={monoEmojiStyle}>🎨</span>
-            <span>Mode Vektor Tematik</span>
+            <span>Mode Vektor</span>
           </button>
 
           <button
             type="button"
             onClick={() => setViewMode("map")}
             style={{
-              padding: "6px 14px",
+              padding: "6px 12px",
               borderRadius: "8px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               border: "none",
               cursor: "pointer",
-              transition: "all 0.2s ease",
+              transition: "all 0.15s ease",
               background: viewMode === "map" ? "#013220" : "transparent",
               color: viewMode === "map" ? "#ffffff" : "#475569",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
             }}
           >
-            <AppIcon name="map" size={15} />
-            <span>Peta Geografis (Leaflet)</span>
+            <AppIcon name="map" size={14} />
+            <span>Peta Geografis</span>
           </button>
 
           <button
             type="button"
             onClick={() => setViewMode("table")}
             style={{
-              padding: "6px 14px",
+              padding: "6px 12px",
               borderRadius: "8px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               border: "none",
               cursor: "pointer",
-              transition: "all 0.2s ease",
+              transition: "all 0.15s ease",
               background: viewMode === "table" ? "#013220" : "transparent",
               color: viewMode === "table" ? "#ffffff" : "#475569",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
             }}
           >
-            <span>Rekapitulasi Data</span>
+            <span>Rekap Data</span>
           </button>
         </div>
       </div>
 
-      {/* METRIC HIGHLIGHTS CARDS */}
+      {/* COMPACT CLEAN STATS SUMMARY RIBBON */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
           gap: "12px",
-          marginBottom: "16px",
+          background: "#ffffff",
+          padding: "10px 16px",
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.02)",
+          marginBottom: "14px",
         }}
       >
-        {/* TOTAL PROVINSI */}
-        <div
-          style={{
-            background: "#ffffff",
-            padding: "14px 16px",
-            borderRadius: "14px",
-            border: "1px solid #e2e8f0",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-          }}
-        >
-          <div
-            style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "10px",
-              background: "#ecfdf5",
-              color: "#013220",
-              border: "1px solid #d1fae5",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px",
-            }}
-          >
-            <span style={monoEmojiStyle}>🗺️</span>
-          </div>
-          <div>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                color: "#64748b",
-                fontWeight: 700,
-                textTransform: "uppercase",
-              }}
-            >
-              Cakupan Wilayah Indonesia
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
+          {/* Dominan BPBD */}
+          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+            <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#013220", display: "inline-block" }} />
+            <span style={{ fontSize: "0.82rem", color: "#475569" }}>
+              Dominan BPBD: <strong style={{ color: "#013220" }}>{countBpbd} Wilayah</strong> ({Math.round((countBpbd / disasterProvinces.length) * 100)}%)
             </span>
-            <div
-              style={{
-                fontSize: "1.35rem",
-                fontWeight: 800,
-                color: "#013220",
-                lineHeight: 1.2,
-              }}
-            >
-              {totalAllProvinces}{" "}
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                Provinsi
-              </span>
-            </div>
+          </div>
+
+          <span style={{ color: "#e2e8f0" }}>|</span>
+
+          {/* Dominan Mitra */}
+          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+            <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+            <span style={{ fontSize: "0.82rem", color: "#475569" }}>
+              Dominan Mitra: <strong style={{ color: "#047857" }}>{countMitra} Wilayah</strong> ({Math.round((countMitra / disasterProvinces.length) * 100)}%)
+            </span>
+          </div>
+
+          <span style={{ color: "#e2e8f0" }}>|</span>
+
+          {/* Total Respon */}
+          <div style={{ fontSize: "0.82rem", color: "#475569" }}>
+            Total Penanganan: <strong style={{ color: "#013220" }}>{totalResponAll.toLocaleString("id-ID")} Respon</strong>
           </div>
         </div>
 
-        {/* DOMINAN BPBD (HIJAU TUA) */}
-        <div
-          style={{
-            background: "#f0fdf4",
-            padding: "14px 16px",
-            borderRadius: "14px",
-            border: "1.5px solid #10b981",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            boxShadow: "0 2px 8px rgba(1, 50, 32, 0.06)",
-          }}
-        >
-          <div
-            style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "10px",
-              background: "#013220",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-              boxShadow: "0 2px 6px rgba(1, 50, 32, 0.3)",
-              fontSize: "18px",
-            }}
-          >
-            <span style={monoEmojiStyle}>🏢</span>
-          </div>
-          <div>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                color: "#013220",
-                fontWeight: 700,
-                textTransform: "uppercase",
-              }}
-            >
-              Respon Dominan Posko BPBD
-            </span>
-            <div
-              style={{
-                fontSize: "1.35rem",
-                fontWeight: 800,
-                color: "#013220",
-                lineHeight: 1.2,
-              }}
-            >
-              {countBpbd}{" "}
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                Provinsi ({Math.round((countBpbd / disasterProvinces.length) * 100)}%)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* DOMINAN MITRA (HIJAU TERANG) */}
-        <div
-          style={{
-            background: "#ffffff",
-            padding: "14px 16px",
-            borderRadius: "14px",
-            border: "1px solid #bbf7d0",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            boxShadow: "0 2px 8px rgba(16, 185, 129, 0.05)",
-          }}
-        >
-          <div
-            style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "10px",
-              background: "#ecfdf5",
-              border: "1px solid #10b981",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#047857",
-              boxShadow: "0 2px 6px rgba(16, 185, 129, 0.15)",
-              fontSize: "18px",
-            }}
-          >
-            <span style={monoEmojiStyle}>🤝</span>
-          </div>
-          <div>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                color: "#047857",
-                fontWeight: 700,
-                textTransform: "uppercase",
-              }}
-            >
-              Respon Dominan Mitra Siaga
-            </span>
-            <div
-              style={{
-                fontSize: "1.35rem",
-                fontWeight: 800,
-                color: "#013220",
-                lineHeight: 1.2,
-              }}
-            >
-              {countMitra}{" "}
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                Provinsi ({Math.round((countMitra / disasterProvinces.length) * 100)}%)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* TOTAL RESPON BANTUAN */}
-        <div
-          style={{
-            background: "#ffffff",
-            padding: "14px 16px",
-            borderRadius: "14px",
-            border: "1px solid #e2e8f0",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-          }}
-        >
-          <div
-            style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "10px",
-              background: "#ecfdf5",
-              color: "#013220",
-              border: "1px solid #d1fae5",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px",
-            }}
-          >
-            <span style={monoEmojiStyle}>📦</span>
-          </div>
-          <div>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                color: "#64748b",
-                fontWeight: 700,
-                textTransform: "uppercase",
-              }}
-            >
-              Total Respon Terverifikasi
-            </span>
-            <div
-              style={{
-                fontSize: "1.35rem",
-                fontWeight: 800,
-                color: "#013220",
-                lineHeight: 1.2,
-              }}
-            >
-              {totalResponAll.toLocaleString("id-ID")}{" "}
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                Respon Misi
-              </span>
-            </div>
-          </div>
+        <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600 }}>
+          📍 {disasterProvinces.length} Daerah Terpantau Aktif
         </div>
       </div>
 
-      {/* FILTER CONTROLS & SEARCH */}
+      {/* SINGLE STREAMLINED TOOLBAR */}
       <div
         style={{
           display: "flex",
@@ -696,136 +513,102 @@ export function PetaSebaranPenanganan({
           marginBottom: "14px",
         }}
       >
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+        {/* Quick Filter Pills */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={() => setActiveStatusFilter("all_disaster")}
             style={{
-              padding: "6px 14px",
+              padding: "5px 11px",
               borderRadius: "999px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s ease",
-              border:
-                activeStatusFilter === "all_disaster"
-                  ? "1.5px solid #013220"
-                  : "1px solid #cbd5e1",
-              background:
-                activeStatusFilter === "all_disaster" ? "#013220" : "#ffffff",
-              color:
-                activeStatusFilter === "all_disaster" ? "#ffffff" : "#334155",
+              border: activeStatusFilter === "all_disaster" ? "1.5px solid #013220" : "1px solid #cbd5e1",
+              background: activeStatusFilter === "all_disaster" ? "#013220" : "#ffffff",
+              color: activeStatusFilter === "all_disaster" ? "#ffffff" : "#475569",
             }}
           >
-            Daerah Bencana Terpantau ({disasterProvinces.length})
+            Semua ({disasterProvinces.length})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveStatusFilter("bpbd_dominan")}
             style={{
-              padding: "6px 14px",
+              padding: "5px 11px",
               borderRadius: "999px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s ease",
-              border:
-                activeStatusFilter === "bpbd_dominan"
-                  ? "1.5px solid #013220"
-                  : "1px solid #cbd5e1",
-              background:
-                activeStatusFilter === "bpbd_dominan" ? "#f0fdf4" : "#ffffff",
-              color:
-                activeStatusFilter === "bpbd_dominan" ? "#013220" : "#334155",
+              border: activeStatusFilter === "bpbd_dominan" ? "1.5px solid #013220" : "1px solid #cbd5e1",
+              background: activeStatusFilter === "bpbd_dominan" ? "#f0fdf4" : "#ffffff",
+              color: activeStatusFilter === "bpbd_dominan" ? "#013220" : "#475569",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
             }}
           >
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                background: "#013220",
-              }}
-            />
-            Dominan BPBD ({countBpbd})
+            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#013220" }} />
+            BPBD ({countBpbd})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveStatusFilter("mitra_dominan")}
             style={{
-              padding: "6px 14px",
+              padding: "5px 11px",
               borderRadius: "999px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s ease",
-              border:
-                activeStatusFilter === "mitra_dominan"
-                  ? "1.5px solid #10b981"
-                  : "1px solid #cbd5e1",
-              background:
-                activeStatusFilter === "mitra_dominan" ? "#ecfdf5" : "#ffffff",
-              color:
-                activeStatusFilter === "mitra_dominan" ? "#047857" : "#334155",
+              border: activeStatusFilter === "mitra_dominan" ? "1.5px solid #10b981" : "1px solid #cbd5e1",
+              background: activeStatusFilter === "mitra_dominan" ? "#ecfdf5" : "#ffffff",
+              color: activeStatusFilter === "mitra_dominan" ? "#047857" : "#475569",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
             }}
           >
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                background: "#10b981",
-              }}
-            />
-            Dominan Mitra ({countMitra})
+            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981" }} />
+            Mitra ({countMitra})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveStatusFilter("all_indonesia")}
             style={{
-              padding: "6px 14px",
+              padding: "5px 11px",
               borderRadius: "999px",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s ease",
-              border:
-                activeStatusFilter === "all_indonesia"
-                  ? "1.5px solid #475569"
-                  : "1px solid #cbd5e1",
-              background:
-                activeStatusFilter === "all_indonesia" ? "#475569" : "#ffffff",
-              color:
-                activeStatusFilter === "all_indonesia" ? "#ffffff" : "#334155",
+              border: activeStatusFilter === "all_indonesia" ? "1.5px solid #475569" : "1px solid #cbd5e1",
+              background: activeStatusFilter === "all_indonesia" ? "#475569" : "#ffffff",
+              color: activeStatusFilter === "all_indonesia" ? "#ffffff" : "#475569",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
             }}
           >
-            <span style={monoEmojiStyle}>🇮🇩</span>
-            Seluruh Indonesia ({totalAllProvinces})
+            32 Provinsi
           </button>
         </div>
 
-        {/* ISLAND DROPDOWN & SEARCH */}
+        {/* Island filter & Search */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <select
             value={selectedPulau}
             onChange={(e) => setSelectedPulau(e.target.value)}
             style={{
-              padding: "6px 12px",
+              padding: "5px 10px",
               borderRadius: "8px",
               border: "1px solid #cbd5e1",
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               background: "#ffffff",
               color: "#334155",
               fontWeight: 600,
@@ -833,9 +616,7 @@ export function PetaSebaranPenanganan({
             }}
           >
             {islandsList.map((is) => (
-              <option key={is} value={is}>
-                {is}
-              </option>
+              <option key={is} value={is}>{is}</option>
             ))}
           </select>
 
@@ -843,26 +624,26 @@ export function PetaSebaranPenanganan({
             <span
               style={{
                 position: "absolute",
-                left: "10px",
+                left: "9px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#94a3b8",
-                fontSize: "13px",
+                fontSize: "12px",
               }}
             >
               <span style={monoEmojiStyle}>🔍</span>
             </span>
             <input
               type="text"
-              placeholder="Cari provinsi atau mitra..."
+              placeholder="Cari provinsi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                padding: "6px 12px 6px 30px",
+                padding: "5px 10px 5px 28px",
                 borderRadius: "8px",
                 border: "1px solid #cbd5e1",
-                fontSize: "0.8rem",
-                width: "210px",
+                fontSize: "0.78rem",
+                width: "180px",
                 background: "#ffffff",
               }}
             />
@@ -1552,117 +1333,52 @@ export function PetaSebaranPenanganan({
                     </div>
                   </div>
 
-                  {/* Logistics & Beneficiary Info */}
+                  {/* Logistics & Beneficiary Info - Clean 2-Card Layout */}
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "10px",
+                      gap: "8px",
                       fontSize: "0.82rem",
                     }}
                   >
                     <div
                       style={{
                         background: "#ffffff",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
                         border: "1px solid #e2e8f0",
                       }}
                     >
-                      <span
-                        style={{
-                          color: "#64748b",
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          display: "block",
-                        }}
-                      >
-                        Bencana Terpantau:
-                      </span>
-                      <strong style={{ color: "#013220", fontSize: "0.88rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                        <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
+                          Bencana Terpantau
+                        </span>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                          {selectedProvinsi.jiwaTerbantu > 0 ? `${selectedProvinsi.jiwaTerbantu.toLocaleString("id-ID")} Jiwa Terbantu` : "Kondisi Kondusif"}
+                        </span>
+                      </div>
+                      <strong style={{ color: "#013220", fontSize: "0.90rem", display: "block", marginTop: "2px" }}>
                         {selectedProvinsi.kejadianBencana}
                       </strong>
-                      <div
-                        style={{
-                          color: "#475569",
-                          fontSize: "0.75rem",
-                          marginTop: "2px",
-                        }}
-                      >
-                        Realisasi Total: {selectedProvinsi.jumlahBantuan}
-                      </div>
                     </div>
 
                     <div
                       style={{
                         background: "#ffffff",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
                         border: "1px solid #e2e8f0",
                       }}
                     >
-                      <span
-                        style={{
-                          color: "#64748b",
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          display: "block",
-                        }}
-                      >
-                        Warga Terlayani:
+                      <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
+                        Penyaluran &amp; Mitra Terlibat
                       </span>
-                      <strong style={{ color: "#013220", fontSize: "0.88rem" }}>
-                        {selectedProvinsi.jiwaTerbantu > 0
-                          ? `${selectedProvinsi.jiwaTerbantu.toLocaleString(
-                              "id-ID"
-                            )} Jiwa (${selectedProvinsi.kkTerlayani.toLocaleString(
-                              "id-ID"
-                            )} KK)`
-                          : "Kondisi Kondusif (Nihil Pengungsi)"}
-                      </strong>
-                      <div
-                        style={{
-                          color: "#475569",
-                          fontSize: "0.75rem",
-                          marginTop: "2px",
-                        }}
-                      >
-                        Komoditas: {selectedProvinsi.komoditasUtama}
+                      <div style={{ color: "#013220", fontWeight: 700, fontSize: "0.84rem", marginTop: "2px" }}>
+                        {selectedProvinsi.jumlahBantuan}
                       </div>
-                    </div>
-
-                    <div
-                      style={{
-                        background: "#ffffff",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: "#64748b",
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          display: "block",
-                        }}
-                      >
-                        Mitra &amp; Satgas BPBD di Lapangan:
-                      </span>
-                      <span style={{ color: "#013220", fontWeight: 600 }}>
-                        {selectedProvinsi.mitraBpbdAktif}
-                      </span>
-                      <div
-                        style={{
-                          color: "#64748b",
-                          fontSize: "0.72rem",
-                          marginTop: "4px",
-                        }}
-                      >
-                        Pusat Komando: {selectedProvinsi.poskoPenyangga}
+                      <div style={{ color: "#475569", fontSize: "0.74rem", marginTop: "3px" }}>
+                        Mitra: {selectedProvinsi.mitraBpbdAktif}
                       </div>
                     </div>
 
