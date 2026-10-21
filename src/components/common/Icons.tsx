@@ -25,7 +25,10 @@ export type IconName =
   | "eye"
   | "edit"
   | "trash"
-  | "map";
+  | "map"
+  | "bolt"
+  | "tag"
+  | "send";
 
 interface AppIconProps {
   name: IconName;
@@ -218,6 +221,26 @@ export function AppIcon({ name, className = "", size = 16, style }: AppIconProps
           <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
           <line x1="9" y1="3" x2="9" y2="18" />
           <line x1="15" y1="6" x2="15" y2="21" />
+        </svg>
+      );
+    case "bolt":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle} className={className}>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      );
+    case "tag":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle} className={className}>
+          <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+          <path d="M7 7h.01" />
+        </svg>
+      );
+    case "send":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={iconStyle} className={className}>
+          <path d="m22 2-7 20-4-9-9-4Z" />
+          <path d="M22 2 11 13" />
         </svg>
       );
     default:

@@ -353,6 +353,7 @@ export function PoskoVerifikasiLaporan({
                         {c.faseDarurat}
                       </span>
                     )}
+                    
                     {c.province && (
                       <span
                         style={{

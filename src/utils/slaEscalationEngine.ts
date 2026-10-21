@@ -6,6 +6,8 @@ export interface SlaCalculationResult {
   minutesRemaining: number;
   isOverdue: boolean;
   slaStatus: "aman" | "mendekati" | "terlambat_dialihkan";
+  status: "warning" | "danger" | "success";
+  slaHours: number;
   mitraHandler: string;
   escalationReason: string;
 }
@@ -101,6 +103,8 @@ export function evaluateCaseSla(c: CaseRecord, now = new Date()): SlaCalculation
     minutesRemaining,
     isOverdue,
     slaStatus,
+    status: isOverdue ? "danger" : slaStatus === "mendekati" ? "warning" : "success",
+    slaHours,
     mitraHandler,
     escalationReason: `Batas SLA BPBD (${slaHours} Jam) terlampaui. Verifikasi dan pemenuhan dialihkan ke ${mitraHandler}.`,
   };
