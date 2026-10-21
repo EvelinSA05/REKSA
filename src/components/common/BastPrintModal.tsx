@@ -58,6 +58,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
   // Pihak Kedua (Penerima)
   const penerimaName =
     caseRecord?.applicantName ||
+    misi?.kebutuhan?.citizen_name ||
     misi?.kebutuhan?.nama_pemohon ||
     "Andi Pratama";
   const penerimaNik =
@@ -66,6 +67,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
     "3202110482910002";
   const penerimaPhone =
     caseRecord?.applicantPhone ||
+    misi?.kebutuhan?.citizen_phone ||
     misi?.kebutuhan?.telepon ||
     "0812-9876-5432";
   const penerimaLokasi =
@@ -98,6 +100,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
 
   // Bukti Dokumentasi Fisik
   const evidencePhoto =
+    misi?.bukti_penyerahan ||
     misi?.foto_serah_terima ||
     getFieldEvidencePhoto(itemName, caseRecord?.fotoBukti);
 
