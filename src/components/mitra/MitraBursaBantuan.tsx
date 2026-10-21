@@ -694,7 +694,7 @@ export function MitraBursaBantuan({
         const parsedFulfilled = parseVolume(modalBursa.volume_terpenuhi || "0");
         const remainingNum = Math.max(0, parsedTarget.num - parsedFulfilled.num) || parsedTarget.num || 100;
         const halfNum = Math.ceil(remainingNum / 2);
-        const unit = modalBursa.satuan || parsedTarget.unit || "Unit";
+        const unit = (modalBursa as any).satuan || parsedTarget.unit || "Unit";
         const isKritis = modalBursa.urgensi?.toLowerCase().includes("kritis");
         const isTinggi = modalBursa.urgensi?.toLowerCase().includes("tinggi") || !modalBursa.urgensi;
 

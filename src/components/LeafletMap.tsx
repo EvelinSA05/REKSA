@@ -1266,7 +1266,7 @@ export function LeafletMap({
             if (!targetMarker.isPopupOpen()) {
               const popup = targetMarker.getPopup();
               if (popup) {
-                map.openPopup(popup, latLng);
+                map.openPopup(popup as any, latLng);
               }
             }
           } catch (e) {

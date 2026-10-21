@@ -228,7 +228,7 @@ export function ChatKoordinasi({
         message: cleanText,
         tag: selectedTag,
         kebutuhan_id: selectedCaseId,
-        posko_id: state.casesList?.[0]?.posko_id || 1,
+        posko_id: (state.casesList?.[0] as any)?.posko_id || 1,
       });
 
       if (res && res.success && res.data) {
@@ -648,7 +648,7 @@ export function ChatKoordinasi({
                       <option value="">📎 Tautkan Kasus (Opsional)</option>
                       {state.casesList.slice(0, 10).map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.kode_kasus || `#${c.id}`} - {c.item_bantuan || "Kebutuhan"}
+                          {(c as any).kode_kasus || `#${c.id}`} - {(c as any).item_bantuan || c.item || "Kebutuhan"}
                         </option>
                       ))}
                     </select>
