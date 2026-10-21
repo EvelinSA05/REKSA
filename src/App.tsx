@@ -240,6 +240,7 @@ import { MitraRiwayatPenyaluran } from "./components/mitra/MitraRiwayatPenyalura
 import { MitraDashboard } from "./components/mitra/MitraDashboard";
 import { BastPrintModal } from "./components/common/BastPrintModal";
 import { PerbandinganKecepatanRespon } from "./components/common/PerbandinganKecepatanRespon";
+import { ReksaAiChatbot } from "./components/common/ReksaAiChatbot";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: any) {
@@ -1781,6 +1782,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
     )}
     {logoutOpen && <Modal icon="logout" title="Keluar dari akun?" close={() => setLogoutOpen(false)}><p>Sesi Anda akan diakhiri. Anda dapat masuk kembali kapan saja.</p><div className="modal-actions"><Button variant="secondary" onClick={() => setLogoutOpen(false)}>Batal</Button><Button onClick={logout}>Keluar</Button></div></Modal>}
     {toast && <div className="toast"><Icon name="check" /> {toast}</div>}
+    <ReksaAiChatbot state={state} update={update} setPage={setPage} />
   </div>;
 }
 

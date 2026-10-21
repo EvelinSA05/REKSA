@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { BursaItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
+import { getAiMatchScore } from "../../utils/reksaAiEngine";
 
 interface MitraBursaBantuanProps {
   bursaList: BursaItem[];
@@ -22,6 +23,7 @@ export function MitraBursaBantuan({
   // Search & Filter state
   const [filterUrgency, setFilterUrgency] = useState<"Semua" | "Kritis" | "Tinggi" | "Sedang">("Semua");
   const [search, setSearch] = useState("");
+  const [onlyAiMatch, setOnlyAiMatch] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
@@ -55,7 +57,7 @@ export function MitraBursaBantuan({
     { label: "Sedang" as const, count: countSedang },
   ];
 
-  // Filtered items based on tab & live search
+  // Filtered items based on tab & live search & AI Match
   const filteredItems = useMemo(() => {
     return openItems.filter((b) => {
       if (filterUrgency !== "Semua") {
@@ -64,6 +66,10 @@ export function MitraBursaBantuan({
         } else if (b.urgensi !== filterUrgency) {
           return false;
         }
+      }
+      if (onlyAiMatch) {
+        const ai = getAiMatchScore(b.item_bantuan, userOrg, b.urgensi);
+        if (ai.matchScore < 85) return false;
       }
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -85,7 +91,7 @@ export function MitraBursaBantuan({
       }
       return true;
     });
-  }, [openItems, filterUrgency, search]);
+  }, [openItems, filterUrgency, search, onlyAiMatch, userOrg]);
 
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
@@ -315,24 +321,51 @@ export function MitraBursaBantuan({
           overflow: "hidden",
         }}
       >
-        {/* Row 1: Urgency Filter Tabs */}
-        <div className="posko-toolbar-tabs">
-          {urgencyTabs.map((tabItem) => {
-            const isActive = filterUrgency === tabItem.label;
-            return (
-              <button
-                key={tabItem.label}
-                type="button"
-                onClick={() => handleTabChange(tabItem.label)}
-                className={`posko-tab-pill ${isActive ? "active" : ""}`}
-              >
-                <span>{tabItem.label === "Semua" ? "Semua Kebutuhan" : `Prioritas ${tabItem.label}`}</span>
-                <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
-                  {tabItem.count}
-                </span>
-              </button>
-            );
-          })}
+        {/* Row 1: Urgency Filter Tabs & AI Match Toggle */}
+        <div className="posko-toolbar-tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {urgencyTabs.map((tabItem) => {
+              const isActive = filterUrgency === tabItem.label;
+              return (
+                <button
+                  key={tabItem.label}
+                  type="button"
+                  onClick={() => handleTabChange(tabItem.label)}
+                  className={`posko-tab-pill ${isActive ? "active" : ""}`}
+                >
+                  <span>{tabItem.label === "Semua" ? "Semua Kebutuhan" : `Prioritas ${tabItem.label}`}</span>
+                  <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
+                    {tabItem.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOnlyAiMatch(!onlyAiMatch);
+              setCurrentPage(1);
+            }}
+            style={{
+              background: onlyAiMatch ? "#064e3b" : "#f0fdf4",
+              color: onlyAiMatch ? "#ffffff" : "#065f46",
+              border: `1.5px solid ${onlyAiMatch ? "#047857" : "#a7f3d0"}`,
+              padding: "7px 14px",
+              borderRadius: "999px",
+              fontSize: "0.80rem",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            title="Saring kebutuhan dengan rekomendasi kecocokan AI tertinggi (>85% Match)"
+          >
+            <span>✨ {onlyAiMatch ? "Tampilkan Semua" : "Rekomendasi AI Tertinggi (>85% Match)"}</span>
+          </button>
         </div>
 
         {/* Row 2: Search Input and Results Counter */}
@@ -427,6 +460,8 @@ export function MitraBursaBantuan({
               ? `${item.posko.desa}, ${item.posko.kecamatan || ""}`
               : item.posko?.nama_posko || "Area Bencana";
 
+            const aiMatch = getAiMatchScore(item.item_bantuan, userOrg, item.urgensi);
+
             return (
               <div
                 key={item.id}
@@ -447,6 +482,23 @@ export function MitraBursaBantuan({
                     <span className="posko-case-status-badge status-pending">
                       {item.status || "Terbuka"}
                     </span>
+                    <span
+                      style={{
+                        background: aiMatch.matchScore >= 95 ? "#ecfdf5" : "#f0fdf4",
+                        color: "#065f46",
+                        border: "1px solid #a7f3d0",
+                        padding: "3px 9px",
+                        borderRadius: "999px",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                      title={aiMatch.rationale}
+                    >
+                      <span>✨ {aiMatch.matchScore}% Match AI</span>
+                    </span>
                   </div>
 
                   <div className="posko-case-date">
@@ -460,6 +512,25 @@ export function MitraBursaBantuan({
                   <h3 className="posko-case-title">
                     Kebutuhan {item.item_bantuan} · Target {item.target_volume}
                   </h3>
+                </div>
+
+                {/* AI Logistic Matchmaker Insight Banner */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
+                    border: "1px solid #a7f3d0",
+                    borderRadius: "10px",
+                    padding: "8px 14px",
+                    marginBottom: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "0.80rem",
+                    color: "#065f46",
+                  }}
+                >
+                  <span style={{ fontSize: "1.05rem" }}>✨</span>
+                  <span><strong>Rekomendasi REKSA AI untuk {userOrg}:</strong> {aiMatch.rationale}</span>
                 </div>
 
                 {/* 3. Metadata Row */}

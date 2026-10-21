@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   SharedState,
   RouterProps,
@@ -10,6 +10,7 @@ import {
   addUserReportedId,
 } from "../../App";
 import { apiService } from "../../services/api";
+import { analyzeReportTriage } from "../../utils/reksaAiEngine";
 
 interface CitizenReportProps {
   complete: () => void;
@@ -137,6 +138,13 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [availabilityCondition, setAvailabilityCondition] = useState<string>(() => initialDraft?.availabilityCondition || "");
   const [citizenUrgency, setCitizenUrgency] = useState<string>(() => initialDraft?.citizenUrgency || "");
   const [conditionDescription, setConditionDescription] = useState<string>(() => initialDraft?.conditionDescription || "");
+
+  // AI Smart Triage & Prioritization calculation
+  const aiTriage = useMemo(() => {
+    const combined = `${conditionDescription} ${notes}`.trim();
+    if (!combined || combined.length < 5) return null;
+    return analyzeReportTriage(combined, category, vulnerableList);
+  }, [conditionDescription, notes, category, vulnerableList]);
 
   // Step 4: Bukti Unggahan
   const [fileName, setFileName] = useState<string>(() => initialDraft?.fileName || "");
@@ -1027,14 +1035,101 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
                 {/* 5. DESKRIPSI KONDISI */}
                 <div className="form-group">
-                  <label className="form-label">Jelaskan kondisi yang Anda alami</label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label className="form-label" style={{ margin: 0 }}>Jelaskan kondisi yang Anda alami</label>
+                    <span style={{ fontSize: "0.75rem", color: "#047857", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                      <span>✨ REKSA AI Smart Triage Aktif</span>
+                    </span>
+                  </div>
                   <textarea 
                     className="form-control textarea" 
                     rows={3}
                     value={conditionDescription} 
                     onChange={(e) => setConditionDescription(e.target.value)} 
-                    placeholder="Contoh: Sumber air warga tercemar dan tidak dapat digunakan sejak kejadian bencana."
+                    placeholder="Contoh: Terjebak banjir 1.5 meter, ada 2 lansia dan 1 bayi membutuhkan evakuasi, air bersih dan susu darurat segera..."
                   />
+
+                  {/* AI SMART TRIAGE CARD */}
+                  {aiTriage && (
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, rgba(240, 253, 244, 0.95) 0%, rgba(236, 253, 245, 0.95) 100%)",
+                        border: "1.5px solid #10b981",
+                        borderRadius: "14px",
+                        padding: "16px 18px",
+                        marginTop: "12px",
+                        boxShadow: "0 4px 16px rgba(16, 185, 129, 0.12)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "7px", color: "#065f46", fontWeight: 800, fontSize: "0.88rem" }}>
+                          <span>✨ REKSA AI Smart Triage</span>
+                          <span style={{ background: "#10b981", color: "#ffffff", fontSize: "0.68rem", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                            {aiTriage.confidence}% Akurasi
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            background: aiTriage.urgency === "Kritis" ? "#fee2e2" : aiTriage.urgency === "Tinggi" ? "#ffedd5" : "#f0fdf4",
+                            color: aiTriage.urgency === "Kritis" ? "#991b1b" : aiTriage.urgency === "Tinggi" ? "#9a3412" : "#166534",
+                            border: `1px solid ${aiTriage.urgency === "Kritis" ? "#fca5a5" : aiTriage.urgency === "Tinggi" ? "#fdba74" : "#bbf7d0"}`,
+                            fontSize: "0.78rem",
+                            fontWeight: 800,
+                            padding: "3px 10px",
+                            borderRadius: "999px",
+                          }}
+                        >
+                          Prediksi: Prioritas {aiTriage.urgency} (Skor {aiTriage.score}/100)
+                        </span>
+                      </div>
+
+                      <p style={{ margin: "0 0 10px", fontSize: "0.83rem", color: "#064e3b", lineHeight: 1.5 }}>
+                        {aiTriage.rationale}
+                      </p>
+
+                      {/* Detected vulnerable groups chip */}
+                      {aiTriage.detectedVulnerables.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+                          <span style={{ fontSize: "0.76rem", color: "#047857", fontWeight: 700 }}>Kelompok Rentan Terdeteksi:</span>
+                          {aiTriage.detectedVulnerables.map((vuln, vIdx) => (
+                            <span key={vIdx} style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.74rem", padding: "2px 8px", borderRadius: "6px", fontWeight: 600 }}>
+                              ✓ {vuln}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 1-Click Apply AI Recommendation button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (aiTriage.urgency === "Kritis") setCitizenUrgency("Sangat mendesak");
+                          else if (aiTriage.urgency === "Tinggi") setCitizenUrgency("Perlu segera");
+                          else setCitizenUrgency("Bisa menunggu");
+
+                          // Auto-check vulnerable groups
+                          const nextVulns = Array.from(new Set([...vulnerableList.filter((x) => x !== "Tidak ada"), ...aiTriage.detectedVulnerables]));
+                          if (nextVulns.length > 0) setVulnerableList(nextVulns);
+                        }}
+                        style={{
+                          background: "#013220",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: "8px 14px",
+                          borderRadius: "8px",
+                          fontSize: "0.80rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 2px 6px rgba(1,50,32,0.2)",
+                        }}
+                      >
+                        <span>✨ Terapkan Rekomendasi AI ke Formulir</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* CATATAN PANDUAN PENGISIAN KONDISI */}
