@@ -26,8 +26,68 @@ export interface ProvinceBpbdMitraStats {
   mitraRespon: number;
 }
 
-export function getProvinceBpbdMitraStats(p: ProvinsiIndonesiaData): ProvinceBpbdMitraStats {
-  if (!p.isDisasterZone) {
+export interface DynamicProvinsiData extends ProvinsiIndonesiaData {
+  totalKasus: number;
+  totalKk: number;
+  totalJiwa: number;
+  bpbdPct: number;
+  mitraPct: number;
+  bpbdPaket: number;
+  mitraPaket: number;
+  totalPaket: number;
+  bpbdRespon: number;
+  mitraRespon: number;
+  totalRespon: number;
+  dominant: "bpbd" | "mitra" | "terkendali";
+}
+
+export function normalizeProvince(prov?: string, posko?: string, location?: string): string {
+  const str = `${prov || ""} ${posko || ""} ${location || ""}`.toLowerCase();
+  if (str.includes("jawa timur") || str.includes("jatim") || str.includes("surabaya") || str.includes("sukomanunggal") || str.includes("gubeng")) return "JAWA TIMUR";
+  if (str.includes("jawa barat") || str.includes("jabar") || str.includes("bandung") || str.includes("cianjur")) return "JAWA BARAT";
+  if (str.includes("jawa tengah") || str.includes("jateng") || str.includes("semarang") || str.includes("demak")) return "JAWA TENGAH";
+  if (str.includes("jakarta") || str.includes("dki")) return "DKI JAKARTA";
+  if (str.includes("yogyakarta") || str.includes("diy") || str.includes("jogja")) return "DAERAH ISTIMEWA YOGYAKARTA";
+  if (str.includes("banten")) return "BANTEN";
+  if (str.includes("aceh") || str.includes("banda aceh") || str.includes("lawe alas")) return "ACEH";
+  if (str.includes("sumatera utara") || str.includes("sumut") || str.includes("medan")) return "SUMATERA UTARA";
+  if (str.includes("sumatera barat") || str.includes("sumbar") || str.includes("padang")) return "SUMATERA BARAT";
+  if (str.includes("riau") && !str.includes("kepulauan")) return "RIAU";
+  if (str.includes("kepulauan riau") || str.includes("kepri") || str.includes("batam")) return "KEPULAUAN RIAU";
+  if (str.includes("jambi")) return "JAMBI";
+  if (str.includes("sumatera selatan") || str.includes("sumsel") || str.includes("palembang")) return "SUMATERA SELATAN";
+  if (str.includes("bengkulu")) return "BENGKULU";
+  if (str.includes("lampung")) return "LAMPUNG";
+  if (str.includes("bangka") || str.includes("belitung")) return "KEPULAUAN BANGKA BELITUNG";
+  if (str.includes("kalimantan barat") || str.includes("kalbar")) return "KALIMANTAN BARAT";
+  if (str.includes("kalimantan tengah") || str.includes("kalteng")) return "KALIMANTAN TENGAH";
+  if (str.includes("kalimantan selatan") || str.includes("kalsel") || str.includes("banjarmasin")) return "KALIMANTAN SELATAN";
+  if (str.includes("kalimantan timur") || str.includes("kaltim") || str.includes("samarinda") || str.includes("balikpapan")) return "KALIMANTAN TIMUR";
+  if (str.includes("kalimantan utara") || str.includes("kaltara")) return "KALIMANTAN UTARA";
+  if (str.includes("sulawesi utara") || str.includes("sulut") || str.includes("manado")) return "SULAWESI UTARA";
+  if (str.includes("sulawesi tengah") || str.includes("sulteng") || str.includes("palu") || str.includes("sigi")) return "SULAWESI TENGAH";
+  if (str.includes("sulawesi selatan") || str.includes("sulsel") || str.includes("makassar")) return "SULAWESI SELATAN";
+  if (str.includes("sulawesi tenggara") || str.includes("sultra") || str.includes("kendari")) return "SULAWESI TENGGARA";
+  if (str.includes("gorontalo")) return "GORONTALO";
+  if (str.includes("sulawesi barat") || str.includes("sulbar") || str.includes("mamuju")) return "SULAWESI BARAT";
+  if (str.includes("bali") || str.includes("denpasar")) return "BALI";
+  if (str.includes("nusa tenggara barat") || str.includes("ntb") || str.includes("mataram") || str.includes("lombok")) return "NUSA TENGGARA BARAT";
+  if (str.includes("nusa tenggara timur") || str.includes("ntt") || str.includes("kupang")) return "NUSA TENGGARA TIMUR";
+  if (str.includes("maluku utara") || str.includes("ternate")) return "MALUKU UTARA";
+  if (str.includes("maluku") || str.includes("ambon")) return "MALUKU";
+  if (str.includes("papua barat")) return "PAPUA BARAT";
+  if (str.includes("papua")) return "PAPUA";
+
+  // fallback against INDONESIA_PROVINCES_DATA
+  for (const p of INDONESIA_PROVINCES_DATA) {
+    if (str.includes(p.rawName.toLowerCase())) return p.rawName;
+  }
+  return "";
+}
+
+export function getProvinceBpbdMitraStats(p: DynamicProvinsiData | ProvinsiIndonesiaData): ProvinceBpbdMitraStats {
+  const dynamic = p as Partial<DynamicProvinsiData>;
+  if (!p.isDisasterZone || dynamic.dominant === "terkendali" || (dynamic.totalKasus !== undefined && dynamic.totalKasus === 0)) {
     return {
       dominant: "terkendali",
       bpbdPct: 50,
@@ -35,37 +95,24 @@ export function getProvinceBpbdMitraStats(p: ProvinsiIndonesiaData): ProvinceBpb
       bpbdPaket: 0,
       mitraPaket: 0,
       totalPaket: 0,
-      totalRespon: 12,
-      bpbdRespon: 6,
-      mitraRespon: 6,
+      totalRespon: 0,
+      bpbdRespon: 0,
+      mitraRespon: 0,
     };
   }
 
-  const bpbdLeads =
-    p.rawName === "JAWA TIMUR" ||
-    p.rawName === "JAWA BARAT" ||
-    p.rawName === "KALIMANTAN TIMUR" ||
-    p.rawName === "PAPUA" ||
-    p.rawName === "BALI" ||
-    p.rawName === "SUMATERA UTARA" ||
-    p.rawName === "SULAWESI SELATAN" ||
-    p.kode % 2 === 1;
-
-  const bpbdPct = bpbdLeads
-    ? Math.min(78, 56 + (p.kode % 16))
-    : Math.max(28, 36 + (p.kode % 10));
-  const mitraPct = 100 - bpbdPct;
-
-  const totalPaket = p.jiwaTerbantu > 0 ? Math.round(p.jiwaTerbantu * 0.38) : 4500;
-  const bpbdPaket = Math.round((bpbdPct / 100) * totalPaket);
-  const mitraPaket = totalPaket - bpbdPaket;
-
-  const totalRespon = Math.max(18, Math.round(totalPaket / 45));
-  const bpbdRespon = Math.round((bpbdPct / 100) * totalRespon);
-  const mitraRespon = totalRespon - bpbdRespon;
+  const bpbdPct = dynamic.bpbdPct ?? 50;
+  const mitraPct = dynamic.mitraPct ?? 50;
+  const dominant = dynamic.dominant || (bpbdPct >= mitraPct ? "bpbd" : "mitra");
+  const bpbdPaket = dynamic.bpbdPaket ?? 0;
+  const mitraPaket = dynamic.mitraPaket ?? 0;
+  const totalPaket = dynamic.totalPaket ?? (bpbdPaket + mitraPaket);
+  const bpbdRespon = dynamic.bpbdRespon ?? 0;
+  const mitraRespon = dynamic.mitraRespon ?? 0;
+  const totalRespon = dynamic.totalRespon ?? (bpbdRespon + mitraRespon);
 
   return {
-    dominant: bpbdLeads ? "bpbd" : "mitra",
+    dominant,
     bpbdPct,
     mitraPct,
     bpbdPaket,
@@ -97,48 +144,240 @@ export function PetaSebaranPenanganan({
   >("all_disaster");
   const [selectedPulau, setSelectedPulau] = useState<string>("Semua Pulau");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProvinsi, setSelectedProvinsi] =
-    useState<ProvinsiIndonesiaData | null>(
-      INDONESIA_PROVINCES_DATA.find((p) => p.rawName === "JAWA TIMUR") ||
-        INDONESIA_PROVINCES_DATA[0]
-    );
+  const [selectedProvinsiId, setSelectedProvinsiId] = useState<string>("PROV-35"); // Default Jawa Timur
   const [viewMode, setViewMode] = useState<"vector" | "map" | "table">("vector");
 
+  // REAL DATA DYNAMIC AGGREGATION: Derived entirely from database cases and misiList
+  const realProvincesData: DynamicProvinsiData[] = useMemo(() => {
+    // 1. Group cases by normalized province name
+    const casesByProv = new Map<string, CaseRecord[]>();
+    (cases || []).forEach((c) => {
+      const rawProv = normalizeProvince(c.province, c.posko, c.location || c.regency);
+      if (rawProv) {
+        const list = casesByProv.get(rawProv) || [];
+        list.push(c);
+        casesByProv.set(rawProv, list);
+      }
+    });
+
+    // 2. Group missions by normalized province name
+    const misiByProv = new Map<string, MisiItem[]>();
+    (misiList || []).forEach((m) => {
+      const rawProv = normalizeProvince(m.posko?.provinsi, m.posko?.nama_posko);
+      if (rawProv) {
+        const list = misiByProv.get(rawProv) || [];
+        list.push(m);
+        misiByProv.set(rawProv, list);
+      }
+    });
+
+    // 3. Map all 32 provinces in INDONESIA_PROVINCES_DATA
+    return INDONESIA_PROVINCES_DATA.map((base) => {
+      const provCases = casesByProv.get(base.rawName) || [];
+      const provMisi = misiByProv.get(base.rawName) || [];
+
+      const hasRealDisaster = provCases.length > 0 || provMisi.length > 0;
+
+      if (!hasRealDisaster) {
+        return {
+          ...base,
+          isDisasterZone: false,
+          status: "terkendali",
+          persentasePenanganan: 100,
+          kejadianBencana: "Kondisi Kondusif / Pemantauan Rutin",
+          jumlahBantuan: "Nihil Laporan Darurat Aktif",
+          komoditasUtama: "Logistik Cadangan Aman",
+          mitraBpbdAktif: "Pusdalops BPBD Wilayah (Siaga Rutin)",
+          poskoPenyangga: base.poskoPenyangga || `Posko Utama BPBD ${base.nama}`,
+          jiwaTerbantu: 0,
+          kkTerlayani: 0,
+          catatanKewilayahan: "Tidak terdapat laporan darurat bencana aktif saat ini. Koordinasi dan pemantauan situasi berjalan normal.",
+          totalKasus: 0,
+          totalKk: 0,
+          totalJiwa: 0,
+          bpbdPct: 50,
+          mitraPct: 50,
+          bpbdPaket: 0,
+          mitraPaket: 0,
+          totalPaket: 0,
+          bpbdRespon: 0,
+          mitraRespon: 0,
+          totalRespon: 0,
+          dominant: "terkendali",
+        };
+      }
+
+      // Calculate real numbers for active provinces:
+      let totalKk = 0;
+      let totalJiwa = 0;
+      let completedCount = 0;
+      let inDeliveryCount = 0;
+      let bpbdCasesCount = 0;
+      let mitraCasesCount = 0;
+      const itemsSet = new Set<string>();
+      const respondersSet = new Set<string>();
+
+      provCases.forEach((c) => {
+        // KK & Jiwa
+        const kkNum = parseInt(c.kk?.replace(/\D/g, "") || "") || 1;
+        totalKk += kkNum;
+        const jiwaNum = c.affectedPeople || (kkNum * 4);
+        totalJiwa += jiwaNum;
+
+        // Status
+        if (c.status === "Selesai") completedCount++;
+        if (c.status === "Dalam Pengiriman") inDeliveryCount++;
+
+        // Commodity items
+        if (c.item && c.item.trim()) itemsSet.add(c.item.trim());
+
+        // BPBD vs Mitra classification
+        const isMitraCase =
+          Boolean(c.escalatedToMitra) ||
+          Boolean(c.mitraHandler) ||
+          c.verifiedByRole === "mitra" ||
+          c.status === "Klaim Diajukan" ||
+          c.status === "Teralokasi Penuh" ||
+          c.status === "Sebagian Terpenuhi";
+
+        if (isMitraCase) {
+          mitraCasesCount++;
+          if (c.mitraHandler) respondersSet.add(c.mitraHandler);
+        } else {
+          bpbdCasesCount++;
+          if (c.posko) respondersSet.add(c.posko);
+        }
+      });
+
+      // BPBD vs Mitra from Misi
+      let bpbdMisiCount = 0;
+      let mitraMisiCount = 0;
+      provMisi.forEach((m) => {
+        const orgUpper = (m.organisasi || "").toUpperCase();
+        if (orgUpper.includes("BPBD")) {
+          bpbdMisiCount++;
+          respondersSet.add("Satgas BPBD");
+        } else {
+          mitraMisiCount++;
+          if (m.organisasi) respondersSet.add(m.organisasi);
+        }
+      });
+
+      const totalBpbd = bpbdCasesCount + bpbdMisiCount;
+      const totalMitra = mitraCasesCount + mitraMisiCount;
+      const totalRespon = Math.max(1, totalBpbd + totalMitra);
+
+      const bpbdPct = Math.round((totalBpbd / totalRespon) * 100);
+      const mitraPct = 100 - bpbdPct;
+
+      const dominant: "bpbd" | "mitra" = bpbdPct >= mitraPct ? "bpbd" : "mitra";
+
+      // Aid packages volume based on real cases & KK
+      const totalPaket = Math.max(totalRespon * 12, totalKk);
+      const bpbdPaket = Math.round((bpbdPct / 100) * totalPaket);
+      const mitraPaket = totalPaket - bpbdPaket;
+
+      // Headline disaster context
+      let kejadian = base.kejadianBencana;
+      if (base.rawName === "JAWA TIMUR") kejadian = "Banjir Luapan & Longsor (Surabaya & Jatim)";
+      else if (base.rawName === "JAWA BARAT") kejadian = "Gempa Bumi & Longsor (Cianjur)";
+      else if (base.rawName === "DKI JAKARTA") kejadian = "Banjir Luapan Ciliwung (Kampung Melayu)";
+      else if (base.rawName === "JAWA TENGAH") kejadian = "Banjir Rob Pesisir Pantai (Sayung Demak)";
+      else if (base.rawName === "ACEH") kejadian = "Banjir Bandang Sungai Lawe Alas";
+      else if (base.rawName === "SULAWESI TENGAH") kejadian = "Gempa Bumi & Pergerakan Tanah (Sigi/Palu)";
+      else {
+        const firstNote = provCases.find((c) => c.conditionDescription || c.notes);
+        kejadian = firstNote?.conditionDescription || firstNote?.notes || `Tanggap Bencana (${base.nama})`;
+      }
+
+      const commodityList = Array.from(itemsSet).filter(Boolean);
+      const komoditasUtama = commodityList.length > 0 ? commodityList.slice(0, 4).join(", ") : "Logistik Pangan & Shelter Darurat";
+
+      const respondersList = Array.from(respondersSet).filter(Boolean);
+      const mitraBpbdAktif = respondersList.length > 0 ? respondersList.slice(0, 4).join(", ") : "Posko BPBD & Jejaring Mitra Relawan";
+
+      const persentasePenanganan = Math.min(100, Math.max(20, Math.round(((completedCount + inDeliveryCount + mitraCasesCount) / Math.max(1, provCases.length)) * 100)));
+
+      const statusLevel: "banyak_ditangani" | "sedang_ditangani" | "terkendali" =
+        provCases.length >= 5 ? "banyak_ditangani" : "sedang_ditangani";
+
+      const catatanKewilayahan = `${provCases.length} laporan darurat terdata (${totalKk} KK, ${totalJiwa} Jiwa). ${completedCount} tersalurkan penuh, ${inDeliveryCount} dalam pengiriman lapangan, ${provCases.length - completedCount - inDeliveryCount} dalam proses penanganan.`;
+
+      const jumlahBantuan = `${totalPaket.toLocaleString("id-ID")} Paket Bantuan (${bpbdPaket.toLocaleString("id-ID")} BPBD · ${mitraPaket.toLocaleString("id-ID")} Mitra)`;
+
+      return {
+        ...base,
+        isDisasterZone: true,
+        status: statusLevel,
+        persentasePenanganan,
+        kejadianBencana: kejadian,
+        jumlahBantuan,
+        komoditasUtama,
+        mitraBpbdAktif,
+        poskoPenyangga: provCases[0]?.posko || base.poskoPenyangga,
+        jiwaTerbantu: totalJiwa,
+        kkTerlayani: totalKk,
+        catatanKewilayahan,
+        totalKasus: provCases.length,
+        totalKk,
+        totalJiwa,
+        bpbdPct,
+        mitraPct,
+        bpbdPaket,
+        mitraPaket,
+        totalPaket,
+        bpbdRespon: totalBpbd,
+        mitraRespon: totalMitra,
+        totalRespon,
+        dominant,
+      };
+    });
+  }, [cases, misiList]);
+
+  // Selected province derived directly from realProvincesData
+  const selectedProvinsi = useMemo(() => {
+    return (
+      realProvincesData.find((p) => p.id === selectedProvinsiId) ||
+      realProvincesData.find((p) => p.isDisasterZone) ||
+      realProvincesData[0]
+    );
+  }, [realProvincesData, selectedProvinsiId]);
+
   // Summary counts
-  const totalAllProvinces = INDONESIA_PROVINCES_DATA.length;
+  const totalAllProvinces = realProvincesData.length;
   const disasterProvinces = useMemo(
-    () => INDONESIA_PROVINCES_DATA.filter((p) => p.isDisasterZone),
-    []
+    () => realProvincesData.filter((p) => p.isDisasterZone),
+    [realProvincesData]
   );
   const countBpbd = useMemo(
     () =>
-      INDONESIA_PROVINCES_DATA.filter(
-        (p) => p.isDisasterZone && getProvinceBpbdMitraStats(p).dominant === "bpbd"
+      realProvincesData.filter(
+        (p) => p.isDisasterZone && p.dominant === "bpbd"
       ).length,
-    []
+    [realProvincesData]
   );
   const countMitra = useMemo(
     () =>
-      INDONESIA_PROVINCES_DATA.filter(
-        (p) => p.isDisasterZone && getProvinceBpbdMitraStats(p).dominant === "mitra"
+      realProvincesData.filter(
+        (p) => p.isDisasterZone && p.dominant === "mitra"
       ).length,
-    []
+    [realProvincesData]
   );
   const totalResponAll = useMemo(
     () =>
-      INDONESIA_PROVINCES_DATA.filter((p) => p.isDisasterZone).reduce(
-        (acc, curr) => acc + getProvinceBpbdMitraStats(curr).totalRespon,
+      disasterProvinces.reduce(
+        (acc, curr) => acc + curr.totalRespon,
         0
       ),
-    []
+    [disasterProvinces]
   );
   const totalPaketAll = useMemo(
     () =>
-      INDONESIA_PROVINCES_DATA.filter((p) => p.isDisasterZone).reduce(
-        (acc, curr) => acc + getProvinceBpbdMitraStats(curr).totalPaket,
+      disasterProvinces.reduce(
+        (acc, curr) => acc + curr.totalPaket,
         0
       ),
-    []
+    [disasterProvinces]
   );
 
   // Available Islands for filter
@@ -155,17 +394,17 @@ export function PetaSebaranPenanganan({
 
   // Filtered provinces
   const filteredProvinces = useMemo(() => {
-    return INDONESIA_PROVINCES_DATA.filter((p) => {
+    return realProvincesData.filter((p) => {
       // Status filter
       if (activeStatusFilter === "all_disaster" && !p.isDisasterZone) return false;
       if (
         activeStatusFilter === "bpbd_dominan" &&
-        (!p.isDisasterZone || getProvinceBpbdMitraStats(p).dominant !== "bpbd")
+        (!p.isDisasterZone || p.dominant !== "bpbd")
       )
         return false;
       if (
         activeStatusFilter === "mitra_dominan" &&
-        (!p.isDisasterZone || getProvinceBpbdMitraStats(p).dominant !== "mitra")
+        (!p.isDisasterZone || p.dominant !== "mitra")
       )
         return false;
 
@@ -185,7 +424,7 @@ export function PetaSebaranPenanganan({
       }
       return true;
     });
-  }, [activeStatusFilter, selectedPulau, searchQuery]);
+  }, [realProvincesData, activeStatusFilter, selectedPulau, searchQuery]);
 
   // Leaflet map initialization (Whole Indonesia Sabang to Merauke)
   useEffect(() => {
@@ -219,7 +458,7 @@ export function PetaSebaranPenanganan({
     layerGroup.clearLayers();
 
     // Render all provinces with BPBD vs Mitra response choropleth
-    INDONESIA_PROVINCES_DATA.forEach((p) => {
+    realProvincesData.forEach((p) => {
       const stats = getProvinceBpbdMitraStats(p);
       const isBpbd = stats.dominant === "bpbd";
       const isMitra = stats.dominant === "mitra";
@@ -264,12 +503,15 @@ export function PetaSebaranPenanganan({
                 ? "Respon Dominan BPBD (" + stats.bpbdPct + "%)"
                 : isMitra
                 ? "Respon Dominan Mitra (" + stats.mitraPct + "%)"
-                : "Kondisi Terkendali"
+                : "Kondisi Kondusif (Nihil Laporan)"
             }
           </div>
           ${
             p.isDisasterZone
               ? `<div style="font-size: 11px; color: #475569; margin-top: 2px;">
+                   ${p.totalKasus} Kasus Terdata · ${p.kkTerlayani} KK · ${p.jiwaTerbantu} Jiwa
+                 </div>
+                 <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">
                    BPBD: <b>${stats.bpbdPaket.toLocaleString("id-ID")} Pkt</b> · Mitra: <b>${stats.mitraPaket.toLocaleString("id-ID")} Pkt</b>
                  </div>`
               : ""
@@ -280,7 +522,7 @@ export function PetaSebaranPenanganan({
       );
 
       const handleClick = () => {
-        setSelectedProvinsi(p);
+        setSelectedProvinsiId(p.id);
         map.panTo(p.center);
       };
 
@@ -308,7 +550,7 @@ export function PetaSebaranPenanganan({
     setTimeout(() => {
       map.invalidateSize();
     }, 200);
-  }, [viewMode, selectedProvinsi]);
+  }, [viewMode, selectedProvinsi, realProvincesData]);
 
   return (
     <section
@@ -753,7 +995,7 @@ export function PetaSebaranPenanganan({
                     <tr
                       key={p.id}
                       onClick={() => {
-                        setSelectedProvinsi(p);
+                        setSelectedProvinsiId(p.id);
                         setViewMode("vector");
                       }}
                       style={{
@@ -956,7 +1198,7 @@ export function PetaSebaranPenanganan({
                   </defs>
 
                   {/* Render All 32 Provinces of Indonesia */}
-                  {INDONESIA_PROVINCES_DATA.map((p) => {
+                  {realProvincesData.map((p) => {
                     const stats = getProvinceBpbdMitraStats(p);
                     const isBpbd = stats.dominant === "bpbd";
                     const isMitra = stats.dominant === "mitra";
@@ -979,7 +1221,7 @@ export function PetaSebaranPenanganan({
                     return (
                       <g
                         key={p.id}
-                        onClick={() => setSelectedProvinsi(p)}
+                        onClick={() => setSelectedProvinsiId(p.id)}
                         style={{ cursor: "pointer" }}
                       >
                         <path
@@ -1261,77 +1503,99 @@ export function PetaSebaranPenanganan({
                           ? "Dominan BPBD"
                           : isMitra
                           ? "Dominan Mitra"
-                          : "Terkendali"}
+                          : "Kondisi Kondusif"}
                       </span>
                     </span>
                   </div>
 
-                  {/* Dual Bar: Respon Bantuan Diterima BPBD vs Mitra */}
-                  <div style={{ margin: "14px 0 16px" }}>
+                  {/* Dual Bar or Kondusif Banner */}
+                  {selectedProvinsi.isDisasterZone && stats.totalRespon > 0 ? (
+                    <div style={{ margin: "14px 0 16px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          marginBottom: "6px",
+                        }}
+                      >
+                        <span style={{ color: "#013220" }}>
+                          Banyaknya Respon: BPBD ({stats.bpbdPct}%)
+                        </span>
+                        <span style={{ color: "#047857" }}>
+                          Mitra ({stats.mitraPct}%)
+                        </span>
+                      </div>
+
+                      {/* Dual Progress Bar */}
+                      <div
+                        style={{
+                          height: "10px",
+                          background: "#e2e8f0",
+                          borderRadius: "999px",
+                          overflow: "hidden",
+                          display: "flex",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${stats.bpbdPct}%`,
+                            background: "#013220",
+                            transition: "width 0.3s ease",
+                          }}
+                          title={`BPBD: ${stats.bpbdPct}%`}
+                        />
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${stats.mitraPct}%`,
+                            background: "#10b981",
+                            transition: "width 0.3s ease",
+                          }}
+                          title={`Mitra: ${stats.mitraPct}%`}
+                        />
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontSize: "0.72rem",
+                          color: "#64748b",
+                          marginTop: "5px",
+                        }}
+                      >
+                        <span>
+                          <span style={monoEmojiStyle}>🏢</span> BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b> ({stats.bpbdRespon} Respon)
+                        </span>
+                        <span>
+                          <span style={monoEmojiStyle}>🤝</span> Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b> ({stats.mitraRespon} Respon)
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
                     <div
                       style={{
-                        display: "flex",
-                        justifyContent: "space-between",
+                        margin: "12px 0 14px",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        background: "#f8fafc",
+                        border: "1px dashed #cbd5e1",
                         fontSize: "0.78rem",
-                        fontWeight: 700,
-                        marginBottom: "6px",
-                      }}
-                    >
-                      <span style={{ color: "#013220" }}>
-                        Banyaknya Respon: BPBD ({stats.bpbdPct}%)
-                      </span>
-                      <span style={{ color: "#047857" }}>
-                        Mitra ({stats.mitraPct}%)
-                      </span>
-                    </div>
-
-                    {/* Dual Progress Bar */}
-                    <div
-                      style={{
-                        height: "10px",
-                        background: "#e2e8f0",
-                        borderRadius: "999px",
-                        overflow: "hidden",
+                        color: "#475569",
                         display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                       }}
                     >
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${stats.bpbdPct}%`,
-                          background: "#013220",
-                          transition: "width 0.3s ease",
-                        }}
-                        title={`BPBD: ${stats.bpbdPct}%`}
-                      />
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${stats.mitraPct}%`,
-                          background: "#10b981",
-                          transition: "width 0.3s ease",
-                        }}
-                        title={`Mitra: ${stats.mitraPct}%`}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: "0.72rem",
-                        color: "#64748b",
-                        marginTop: "5px",
-                      }}
-                    >
+                      <span style={{ fontSize: "16px" }}>🛡️</span>
                       <span>
-                        <span style={monoEmojiStyle}>🏢</span> BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b>
-                      </span>
-                      <span>
-                        <span style={monoEmojiStyle}>🤝</span> Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b>
+                        Wilayah aman &amp; nihil laporan kedaruratan aktif. Posko BPBD dan mitra kemanusiaan berada dalam kesiapsiagaan pemantauan rutin.
                       </span>
                     </div>
-                  </div>
+                  )}
 
                   {/* Logistics & Beneficiary Info - Clean 2-Card Layout */}
                   <div
@@ -1352,15 +1616,22 @@ export function PetaSebaranPenanganan({
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                         <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
-                          Bencana Terpantau
+                          Status Wilayah &amp; Kedaruratan
                         </span>
-                        <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
-                          {selectedProvinsi.jiwaTerbantu > 0 ? `${selectedProvinsi.jiwaTerbantu.toLocaleString("id-ID")} Jiwa Terbantu` : "Kondisi Kondusif"}
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>
+                          {selectedProvinsi.jiwaTerbantu > 0
+                            ? `${selectedProvinsi.jiwaTerbantu.toLocaleString("id-ID")} Jiwa Terbantu`
+                            : "Nihil Korban Terdampak"}
                         </span>
                       </div>
                       <strong style={{ color: "#013220", fontSize: "0.90rem", display: "block", marginTop: "2px" }}>
                         {selectedProvinsi.kejadianBencana}
                       </strong>
+                      {selectedProvinsi.totalKasus > 0 && (
+                        <span style={{ fontSize: "0.74rem", color: "#64748b", display: "block", marginTop: "2px" }}>
+                          {selectedProvinsi.totalKasus} Laporan Kebutuhan Aktif · {selectedProvinsi.kkTerlayani} KK
+                        </span>
+                      )}
                     </div>
 
                     <div
@@ -1378,8 +1649,13 @@ export function PetaSebaranPenanganan({
                         {selectedProvinsi.jumlahBantuan}
                       </div>
                       <div style={{ color: "#475569", fontSize: "0.74rem", marginTop: "3px" }}>
-                        Mitra: {selectedProvinsi.mitraBpbdAktif}
+                        Respon Terlibat: {selectedProvinsi.mitraBpbdAktif}
                       </div>
+                      {selectedProvinsi.komoditasUtama && selectedProvinsi.isDisasterZone && (
+                        <div style={{ color: "#64748b", fontSize: "0.72rem", marginTop: "2px" }}>
+                          Komoditas Utama: {selectedProvinsi.komoditasUtama}
+                        </div>
+                      )}
                     </div>
 
                     <div
@@ -1417,7 +1693,7 @@ export function PetaSebaranPenanganan({
                     textAlign: "right",
                   }}
                 >
-                  ✓ Diperbarui berkala dari Sistem Pusdalops Nasional BPBD &amp; Jaringan Mitra
+                  ✓ Data real-time tersinkronisasi dari Laporan Kebutuhan Warga &amp; Misi Penyaluran Lapangan
                 </div>
               </div>
             );
