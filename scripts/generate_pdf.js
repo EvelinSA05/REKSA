@@ -33,11 +33,9 @@ const fullHtml = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <title>PRD - REKSA (Ruang Ekosistem Kolaborasi Pascabencana)</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-
     @page {
-      size: A4;
-      margin: 20mm 15mm 20mm 15mm;
+      size: A4 portrait;
+      margin: 18mm 15mm 18mm 15mm;
     }
 
     * {
@@ -47,69 +45,75 @@ const fullHtml = `<!DOCTYPE html>
     }
 
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 10pt;
-      line-height: 1.55;
+      line-height: 1.6;
       color: #1e293b;
       background: #ffffff;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     /* Cover Page Styling */
     .cover-page {
       page-break-after: always;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 250mm;
-      padding: 30mm 10mm 20mm 10mm;
+      padding: 40px 25px 40px 30px;
       border-left: 8px solid #013220;
-      padding-left: 25px;
+      background: #ffffff;
+      margin-bottom: 20px;
     }
 
     .cover-badge {
       display: inline-block;
       background: #ecfdf5;
       color: #013220;
-      border: 1px solid #10b981;
-      padding: 4px 14px;
+      border: 1.5px solid #10b981;
+      padding: 5px 16px;
       border-radius: 999px;
-      font-size: 8.5pt;
-      font-weight: 700;
+      font-size: 9pt;
+      font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      margin-bottom: 25px;
+      margin-bottom: 24px;
     }
 
     .cover-title {
-      font-size: 26pt;
+      font-size: 28pt;
       font-weight: 800;
       color: #013220;
-      line-height: 1.2;
+      line-height: 1.15;
       margin-bottom: 12px;
       letter-spacing: -0.02em;
     }
 
-    .cover-subtitle {
-      font-size: 13pt;
+    .cover-subtitle-app {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #059669;
+      margin-bottom: 14px;
+    }
+
+    .cover-subtitle-desc {
+      font-size: 11.5pt;
       color: #475569;
       font-weight: 500;
-      line-height: 1.4;
+      line-height: 1.5;
       margin-bottom: 35px;
     }
 
     .cover-meta-box {
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      border: 1.5px solid #cbd5e1;
       border-radius: 8px;
-      padding: 16px 20px;
-      margin-top: 20px;
+      padding: 18px 22px;
+      margin: 30px 0;
     }
 
     .cover-meta-grid {
       display: grid;
-      grid-template-columns: 140px 1fr;
-      row-gap: 8px;
-      font-size: 9pt;
+      grid-template-columns: 150px 1fr;
+      row-gap: 10px;
+      font-size: 9.5pt;
     }
 
     .cover-meta-label {
@@ -123,24 +127,30 @@ const fullHtml = `<!DOCTYPE html>
     }
 
     .cover-footer {
-      font-size: 8.5pt;
+      font-size: 9pt;
       color: #94a3b8;
       border-top: 1px solid #e2e8f0;
-      padding-top: 15px;
+      padding-top: 16px;
       display: flex;
       justify-content: space-between;
+      margin-top: 40px;
     }
 
     /* Content Typography */
+    .content-body {
+      padding-top: 10px;
+    }
+
     h1 {
       font-size: 16pt;
       font-weight: 800;
       color: #013220;
-      margin-top: 26pt;
+      margin-top: 24pt;
       margin-bottom: 12pt;
       padding-bottom: 6pt;
-      border-bottom: 2px solid #10b981;
+      border-bottom: 2.5px solid #10b981;
       page-break-after: avoid;
+      break-after: avoid;
       letter-spacing: -0.01em;
     }
 
@@ -148,9 +158,10 @@ const fullHtml = `<!DOCTYPE html>
       font-size: 13pt;
       font-weight: 800;
       color: #013220;
-      margin-top: 20pt;
+      margin-top: 18pt;
       margin-bottom: 8pt;
       page-break-after: avoid;
+      break-after: avoid;
       border-left: 4px solid #10b981;
       padding-left: 8px;
     }
@@ -162,6 +173,7 @@ const fullHtml = `<!DOCTYPE html>
       margin-top: 14pt;
       margin-bottom: 6pt;
       page-break-after: avoid;
+      break-after: avoid;
     }
 
     h4 {
@@ -171,17 +183,18 @@ const fullHtml = `<!DOCTYPE html>
       margin-top: 10pt;
       margin-bottom: 4pt;
       page-break-after: avoid;
+      break-after: avoid;
     }
 
     p {
-      margin-bottom: 9pt;
+      margin-bottom: 10pt;
       color: #334155;
       text-align: justify;
     }
 
     ul, ol {
-      margin-left: 18px;
-      margin-bottom: 9pt;
+      margin-left: 20px;
+      margin-bottom: 10pt;
       color: #334155;
     }
 
@@ -207,18 +220,21 @@ const fullHtml = `<!DOCTYPE html>
       margin: 12pt 0 16pt;
       font-size: 8.5pt;
       page-break-inside: avoid;
+      break-inside: avoid;
       border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 0 0 1px #cbd5e1;
+      border: 1px solid #cbd5e1;
     }
 
     th {
-      background: #013220;
-      color: #ffffff;
+      background: #013220 !important;
+      color: #ffffff !important;
       font-weight: 700;
       text-align: left;
       padding: 7pt 9pt;
       border: 1px solid #013220;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     td {
@@ -229,27 +245,31 @@ const fullHtml = `<!DOCTYPE html>
     }
 
     tr:nth-child(even) {
-      background: #f8fafc;
+      background: #f8fafc !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     /* Code & ASCII Diagrams */
     pre {
-      background: #f1f5f9;
-      color: #0f172a;
+      background: #f8fafc !important;
+      color: #0f172a !important;
       padding: 10pt 12pt;
       border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+      border: 1.5px solid #cbd5e1;
+      font-family: Consolas, 'Courier New', Monaco, monospace;
       font-size: 7.5pt;
       line-height: 1.45;
-      overflow-x: auto;
       margin: 10pt 0 14pt;
       page-break-inside: avoid;
+      break-inside: avoid;
       white-space: pre;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
 
     code {
-      font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+      font-family: Consolas, 'Courier New', Monaco, monospace;
       font-size: 8.5pt;
       background: #f1f5f9;
       color: #013220;
@@ -268,24 +288,16 @@ const fullHtml = `<!DOCTYPE html>
     /* Blockquote / Notes */
     blockquote {
       border-left: 3px solid #10b981;
-      background: #f0fdf4;
+      background: #f0fdf4 !important;
       padding: 8pt 12pt;
       margin: 10pt 0;
       border-radius: 0 6px 6px 0;
       font-size: 9pt;
       color: #166534;
       page-break-inside: avoid;
-    }
-
-    /* Header & Footer in Print */
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .page-break {
-        page-break-before: always;
-      }
+      break-inside: avoid;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
   </style>
 </head>
@@ -293,38 +305,34 @@ const fullHtml = `<!DOCTYPE html>
 
   <!-- Cover Page -->
   <div class="cover-page">
-    <div>
-      <div class="cover-badge">Dokumen Resmi Produk Kebencanaan</div>
-      <div class="cover-title">REKSA</div>
-      <div style="font-size: 15pt; font-weight: 700; color: #10b981; margin-bottom: 6px;">
-        Ruang Ekosistem Kolaborasi Pascabencana
-      </div>
-      <div class="cover-subtitle">
-        Product Requirements Document (PRD) — Cetak Biru Fungsional, Arsitektur Sistem, Mesin Alokasi Logistik, dan Integritas Rantai Pasok Penanggulangan Bencana
-      </div>
+    <div class="cover-badge">Dokumen Resmi Produk Kebencanaan</div>
+    <div class="cover-title">REKSA</div>
+    <div class="cover-subtitle-app">
+      Ruang Ekosistem Kolaborasi Pascabencana
+    </div>
+    <div class="cover-subtitle-desc">
+      Product Requirements Document (PRD) — Cetak Biru Fungsional, Arsitektur Sistem, Mesin Alokasi Logistik, dan Integritas Rantai Pasok Penanggulangan Bencana
     </div>
 
-    <div>
-      <div class="cover-meta-box">
-        <div class="cover-meta-grid">
-          <div class="cover-meta-label">Kode Dokumen:</div>
-          <div class="cover-meta-value">PRD-REKSA-2026-V1.0</div>
+    <div class="cover-meta-box">
+      <div class="cover-meta-grid">
+        <div class="cover-meta-label">Kode Dokumen:</div>
+        <div class="cover-meta-value">PRD-REKSA-2026-V1.0</div>
 
-          <div class="cover-meta-label">Versi Dokumen:</div>
-          <div class="cover-meta-value">1.0.0 (Comprehensive Release)</div>
+        <div class="cover-meta-label">Versi Dokumen:</div>
+        <div class="cover-meta-value">1.0.0 (Comprehensive Release)</div>
 
-          <div class="cover-meta-label">Status:</div>
-          <div class="cover-meta-value">Disetujui (Approved & Baseline)</div>
+        <div class="cover-meta-label">Status:</div>
+        <div class="cover-meta-value">Disetujui (Approved & Baseline)</div>
 
-          <div class="cover-meta-label">Tanggal Efektif:</div>
-          <div class="cover-meta-value">21 Oktober 2026</div>
+        <div class="cover-meta-label">Tanggal Efektif:</div>
+        <div class="cover-meta-value">21 Oktober 2026</div>
 
-          <div class="cover-meta-label">Klasifikasi:</div>
-          <div class="cover-meta-value">Terbuka / Tim Teknis & Pemangku Kepentingan</div>
+        <div class="cover-meta-label">Klasifikasi:</div>
+        <div class="cover-meta-value">Terbuka / Tim Teknis & Pemangku Kepentingan</div>
 
-          <div class="cover-meta-label">Repositori Proyek:</div>
-          <div class="cover-meta-value">https://github.com/Septian-wq11/REKSA</div>
-        </div>
+        <div class="cover-meta-label">Repositori Proyek:</div>
+        <div class="cover-meta-value">https://github.com/Septian-wq11/REKSA</div>
       </div>
     </div>
 
@@ -344,7 +352,7 @@ const fullHtml = `<!DOCTYPE html>
 `;
 
 fs.writeFileSync(tempHtmlPath, fullHtml, 'utf-8');
-console.log('HTML sementara berhasil dibuat di:', tempHtmlPath);
+console.log('HTML berhasil dibuat di:', tempHtmlPath);
 
 // Path executable Edge
 const edgePaths = [
@@ -362,7 +370,7 @@ if (!edgeBin) {
 console.log('Mengonversi HTML ke PDF menggunakan Microsoft Edge Headless...');
 const fileUrl = 'file:///' + tempHtmlPath.replace(/\\/g, '/');
 
-const command = `"${edgeBin}" --headless --disable-gpu --no-pdf-header-footer --print-to-pdf="${outputPdfPath}" "${fileUrl}"`;
+const command = `"${edgeBin}" --headless --disable-gpu --no-pdf-header-footer --virtual-time-budget=5000 --print-to-pdf="${outputPdfPath}" "${fileUrl}"`;
 
 try {
   execSync(command, { stdio: 'inherit' });
@@ -379,6 +387,5 @@ try {
   console.error('Terjadi kesalahan saat generate PDF:', err);
   process.exit(1);
 } finally {
-  // Bersihkan file HTML temporary jika diinginkan atau pertahankan untuk preview
   console.log('Proses selesai.');
 }
