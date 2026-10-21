@@ -9435,6 +9435,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color: #000000 !important;
+    overflow: visible !important;
   }
 
   .portal-shell,
@@ -9444,13 +9445,12 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   .floating-chat-trigger-btn,
   .live-toast-banner,
   .toast,
-  .bast-modal-footer,
   .btn-mark-all-read {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* Make only the BAST paper and its descendants visible */
+  /* Make only the BAST sheet visible and start from top with no scrollbar */
   .bast-modal-backdrop {
     position: static !important;
     inset: auto !important;
@@ -9470,18 +9470,39 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
     max-width: 100% !important;
     width: 100% !important;
     max-height: none !important;
+    height: auto !important;
     overflow: visible !important;
+    overflow-y: visible !important;
+    scrollbar-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
+  .bast-modal-paper::-webkit-scrollbar {
+    display: none !important;
+  }
+
   .bast-modal-paper,
-  .bast-modal-paper * {
+  .bast-modal-paper .bast-doc-sheet,
+  .bast-modal-paper .bast-doc-sheet * {
     visibility: visible !important;
   }
 
+  /* Force hide modal footer and buttons */
+  .bast-modal-footer,
+  .bast-modal-paper .bast-modal-footer,
+  div.bast-modal-footer,
+  .bast-modal-footer * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   .bast-doc-sheet {
-    padding: 8mm 10mm !important;
+    padding: 0 !important;
+    margin: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
   }
@@ -9489,7 +9510,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   .bast-doc-header {
     border-bottom: 2pt double #013220 !important;
     padding-bottom: 12px !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 14px !important;
   }
 
   .bast-table th {
@@ -9516,7 +9537,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 10mm 12mm;
   }
 }
 

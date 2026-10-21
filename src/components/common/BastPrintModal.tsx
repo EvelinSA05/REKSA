@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { MisiItem } from "../../services/api";
 import { AppIcon } from "./Icons";
@@ -10,6 +10,9 @@ export interface BastPrintModalProps {
 }
 
 export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const modalPaperRef = useRef<HTMLDivElement>(null);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -107,12 +110,195 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
     "Siti Rahma (Koordinator Wilayah)";
 
   const handlePrint = () => {
-    window.print();
+    // 1. Scroll back to top
+    if (modalPaperRef.current) {
+      modalPaperRef.current.scrollTop = 0;
+    }
+
+    if (!sheetRef.current) {
+      window.print();
+      return;
+    }
+
+    // 2. Remove any leftover iframe
+    const oldIframe = document.getElementById("bast-isolated-print-frame");
+    if (oldIframe) {
+      oldIframe.remove();
+    }
+
+    // 3. Create isolated hidden print frame to bypass viewport scroll & UI chrome
+    const printFrame = document.createElement("iframe");
+    printFrame.id = "bast-isolated-print-frame";
+    printFrame.style.position = "fixed";
+    printFrame.style.top = "-9999px";
+    printFrame.style.left = "-9999px";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "none";
+    document.body.appendChild(printFrame);
+
+    const doc = printFrame.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    const htmlContent = sheetRef.current.innerHTML;
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <title>${docNumber}</title>
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 10mm 14mm 10mm 14mm;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 9.8pt;
+            line-height: 1.45;
+          }
+          .bast-doc-sheet {
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+          }
+          .bast-doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2.5pt double #013220;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+          }
+          .bast-doc-title-block h2 {
+            font-size: 13.5pt;
+            font-weight: 800;
+            color: #013220;
+            margin: 2px 0 0;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+          }
+          .bast-doc-title-block p {
+            font-size: 8.5pt;
+            color: #64748b;
+            margin: 2px 0 0;
+          }
+          .bast-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+          }
+          .bast-meta-cell {
+            border: 1pt solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #f8fafc;
+          }
+          .bast-meta-cell span {
+            display: block;
+            font-size: 7.5pt;
+            font-weight: 700;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+          }
+          .bast-meta-cell strong {
+            font-size: 9.5pt;
+            color: #0f172a;
+          }
+          .bast-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 12px;
+            font-size: 9pt;
+          }
+          .bast-table th {
+            background: #f1f5f9;
+            color: #013220;
+            font-weight: 700;
+            border: 1pt solid #94a3b8;
+            padding: 7px 10px;
+            font-size: 8pt;
+            text-transform: uppercase;
+          }
+          .bast-table td {
+            border: 1pt solid #cbd5e1;
+            padding: 7px 10px;
+          }
+          .bast-signatures-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1pt dashed #cbd5e1;
+            page-break-inside: avoid;
+          }
+          .bast-sign-box {
+            border: 1pt dashed #94a3b8;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            background: #fafaf9;
+          }
+          .bast-seal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #ecfdf5;
+            color: #047857;
+            border: 1pt solid #059669;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 8pt;
+            font-weight: 700;
+          }
+          ::-webkit-scrollbar {
+            display: none !important;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="bast-doc-sheet">
+          ${htmlContent}
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+              setTimeout(function() {
+                window.frameElement?.remove();
+              }, 2000);
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    doc.close();
   };
 
   return (
     <div className="bast-modal-backdrop" onClick={onClose}>
       <div
+        ref={modalPaperRef}
         className="bast-modal-paper"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -120,7 +306,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
         aria-label="Berita Acara Serah Terima Digital"
       >
         {/* PRINTABLE BAST DOCUMENT SHEET */}
-        <div className="bast-doc-sheet">
+        <div ref={sheetRef} className="bast-doc-sheet" id="bast-printable-doc">
           {/* HEADER RESMI / KOP SURAT */}
           <div className="bast-doc-header">
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
