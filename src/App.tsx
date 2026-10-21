@@ -102,10 +102,140 @@ export function removeUserReportedId(id: string): void {
 }
 
 
-const accounts = [
-  { role: "Masyarakat Terdampak", name: "Andi Pratama", email: "andi.masyarakat@reksa.id", type: "citizen" as Role },
-  { role: "Koordinator Posko Wilayah", name: "Siti Rahma", email: "siti.posko@reksa.id", type: "posko" as Role },
-  { role: "Mitra Bantuan · Satgas BPBD", name: "Arif Nugroho", email: "arif.bpbd@reksa.id", type: "responder" as Role },
+export interface DemoAccount {
+  role: string;
+  name: string;
+  email: string;
+  type: Role;
+  scope: 'nasional' | 'daerah';
+  provinsi?: string;
+  poskoName?: string;
+  phone?: string;
+  nik?: string;
+  address?: string;
+}
+
+export const accounts: DemoAccount[] = [
+  {
+    role: "Masyarakat Terdampak",
+    name: "Andi Pratama",
+    email: "andi.masyarakat@reksa.id",
+    type: "citizen",
+    scope: "daerah",
+    provinsi: "Jawa Timur",
+    poskoName: "Posko BPBD Provinsi Jawa Timur",
+    phone: "+62 812 4455 0188",
+    nik: "3202110482910002",
+    address: "Jl. Raya Gubeng No. 18, Kec. Gubeng, Kota Surabaya",
+  },
+  {
+    role: "BPBD Nasional (Pusdalops BNPB)",
+    name: "Pusdalops BNPB / BPBD Nasional",
+    email: "nasional.bpbd@reksa.id",
+    type: "posko",
+    scope: "nasional",
+    provinsi: undefined,
+    poskoName: "Badan Penanggulangan Bencana (Komando Nasional)",
+    phone: "+62 811 1234 5678",
+    nik: "BPBD-NAS-001",
+    address: "Gedung Graha BNPB, Jl. Pramuka Kav. 38, Jakarta Timur",
+  },
+  {
+    role: "BPBD Jawa Timur",
+    name: "Siti Rahma",
+    email: "siti.posko@reksa.id",
+    type: "posko",
+    scope: "daerah",
+    provinsi: "Jawa Timur",
+    poskoName: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
+    phone: "+62 812 8899 1102",
+    nik: "PSK-SKB-2026-01",
+    address: "Gedung Serbaguna Posko Utama, Jl. Pemuda No. 1, Kota Surabaya",
+  },
+  {
+    role: "BPBD Jawa Barat",
+    name: "Dedi Mulyadi, S.T.",
+    email: "jabar.bpbd@reksa.id",
+    type: "posko",
+    scope: "daerah",
+    provinsi: "Jawa Barat",
+    poskoName: "Posko Siaga Bencana BPBD Jawa Barat",
+    phone: "+62 812 2233 4455",
+    nik: "PSK-JBR-2026-01",
+    address: "Jl. Soekarno Hatta No. 629, Kota Bandung",
+  },
+  {
+    role: "BPBD DKI Jakarta",
+    name: "Bambang Suryono",
+    email: "jakarta.bpbd@reksa.id",
+    type: "posko",
+    scope: "daerah",
+    provinsi: "DKI Jakarta",
+    poskoName: "Posko Reaksi Cepat BPBD DKI Jakarta",
+    phone: "+62 811 9988 7766",
+    nik: "PSK-DKI-2026-01",
+    address: "Gedung Dinas Teknis Abdul Muis No. 66, Gambir, Jakarta Pusat",
+  },
+  {
+    role: "BPBD Jawa Tengah",
+    name: "Agus Triyono",
+    email: "jateng.bpbd@reksa.id",
+    type: "posko",
+    scope: "daerah",
+    provinsi: "Jawa Tengah",
+    poskoName: "Posko Tanggap Darurat BPBD Jawa Tengah",
+    phone: "+62 812 5544 3322",
+    nik: "PSK-JTG-2026-01",
+    address: "Jl. Imam Bonjol No. 195, Kota Semarang",
+  },
+  {
+    role: "BPBD D.I. Aceh",
+    name: "Teuku Iskandar",
+    email: "aceh.bpbd@reksa.id",
+    type: "posko",
+    scope: "daerah",
+    provinsi: "Aceh",
+    poskoName: "Posko Induk Komando Penanggulangan Bencana Aceh",
+    phone: "+62 812 6677 8899",
+    nik: "PSK-ACH-2026-01",
+    address: "Jl. Daud Beureueh No. 18, Kota Banda Aceh",
+  },
+  {
+    role: "BPBD Sulawesi Tengah",
+    name: "Faisal Palu",
+    email: "sulteng.bpbd@reksa.id",
+    type: "posko",
+    scope: "daerah",
+    provinsi: "Sulawesi Tengah",
+    poskoName: "Posko Reaksi Cepat Bencana BPBD Sulteng",
+    phone: "+62 813 4455 6677",
+    nik: "PSK-STG-2026-01",
+    address: "Jl. MT Haryono No. 12, Besusu Barat, Palu",
+  },
+  {
+    role: "Mitra Bantuan · Satgas BPBD",
+    name: "Arif Nugroho",
+    email: "arif.bpbd@reksa.id",
+    type: "responder",
+    scope: "daerah",
+    provinsi: "Jawa Timur",
+    poskoName: "Satgas Reaksi Cepat BPBD Wilayah",
+    phone: "+62 813 7722 9901",
+    nik: "RSP-BPBD-9941",
+    address: "Markas Komando BPBD, Jl. Perintis Kemerdekaan No. 15",
+  },
+  {
+    role: "Mitra Kemanusiaan · PMI",
+    name: "dr. Hendra Wijaya",
+    email: "hendra.pmi@reksa.id",
+    type: "responder",
+    scope: "daerah",
+    provinsi: "Jawa Timur",
+    poskoName: "Markas PMI Cabang Jawa Timur",
+    phone: "+62 812 3344 5566",
+    nik: "RSP-PMI-8812",
+    address: "Markas PMI Jawa Timur, Jl. Karang Menjangan No. 22, Surabaya",
+  },
 ];
 
 const icons: Record<string, React.ReactNode> = {
@@ -651,7 +781,7 @@ function Home({ navigate }: { navigate: (s: Screen) => void }) {
   );
 }
 
-function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: (r: Role, name: string) => void }) {
+function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: (r: Role, name: string, acc?: DemoAccount) => void }) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -684,7 +814,7 @@ function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: 
     if (!a || (password !== "password" && password !== "reksa123")) {
       return setError(true);
     }
-    onLogin(a.type, a.name);
+    onLogin(a.type, a.name, a);
   };
 
   return (
@@ -1023,8 +1153,9 @@ function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: 
               </div>
               <ul style={{ margin: 0, paddingLeft: "18px", color: "#48554a", fontSize: "0.84rem", lineHeight: 1.6 }}>
                 <li><strong>Masyarakat:</strong> <code>andi.masyarakat@reksa.id</code></li>
-                <li><strong>Koordinator Posko BPBD:</strong> <code>siti.posko@reksa.id</code></li>
-                <li><strong>Mitra Bantuan (BPBD/PMI):</strong> <code>arif.bpbd@reksa.id</code></li>
+                <li><strong>BPBD Nasional (Komando 32 Provinsi):</strong> <code>nasional.bpbd@reksa.id</code></li>
+                <li><strong>BPBD Daerah:</strong> <code>siti.posko@reksa.id</code> (Jatim), <code>jabar.bpbd@reksa.id</code> (Jabar), <code>jakarta.bpbd@reksa.id</code> (DKI), <code>jateng.bpbd@reksa.id</code> (Jateng), <code>aceh.bpbd@reksa.id</code> (Aceh), <code>sulteng.bpbd@reksa.id</code> (Sulteng)</li>
+                <li><strong>Mitra Bantuan:</strong> <code>arif.bpbd@reksa.id</code> / <code>hendra.pmi@reksa.id</code></li>
               </ul>
             </div>
           )}
@@ -1042,6 +1173,8 @@ export type UserProfile = {
   org: string;
   address: string;
   role: string;
+  scope?: "nasional" | "daerah";
+  provinsi?: string;
 };
 
 export type SharedState = { 
@@ -1055,6 +1188,9 @@ export type SharedState = {
   poskoPic?: string;
   poskoPhone?: string;
   poskoAddress?: string;
+  bpbdScope?: "nasional" | "daerah";
+  bpbdProvince?: string;
+  bpbdOfficerEmail?: string;
   userProfile?: UserProfile;
   casesList: CaseRecord[];
   activeCaseId?: string;
@@ -1385,7 +1521,7 @@ function Modal({ title, children, close, icon }: { title: string; children: Reac
   );
 }
 
-function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0 }: { 
+function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0, state, update }: { 
   role: Role; 
   page: PortalPage; 
   collapsed: boolean; 
@@ -1397,10 +1533,20 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
   setName?: (n: string) => void;
   notify?: (msg: string) => void;
   notifCount?: number;
+  state?: SharedState;
+  update?: (changes: Partial<SharedState>, log?: string) => void;
 }) {
   const group = roleNavigation[role];
-  const roleLabel = role === "citizen" ? "Masyarakat" : role === "posko" ? "Petugas Posko" : "Responder";
-  const roleCopy = role === "citizen" ? "Akun pribadi" : role === "posko" ? "Akun institusi" : "Mitra terverifikasi";
+  const roleLabel = role === "citizen" 
+    ? "Masyarakat" 
+    : role === "posko" 
+    ? (state?.bpbdScope === "nasional" ? "BPBD Nasional (Pusat)" : `BPBD ${state?.bpbdProvince || "Jawa Timur"}`)
+    : "Responder";
+  const roleCopy = role === "citizen" 
+    ? "Akun pribadi" 
+    : role === "posko" 
+    ? (state?.bpbdScope === "nasional" ? "Supervisi 32 Provinsi" : `Yurisdiksi ${state?.bpbdProvince || "Wilayah"}`)
+    : "Mitra terverifikasi";
   const badgeText = notifCount > 99 ? "99+" : notifCount > 0 ? String(notifCount) : null;
   const items = (rows: NavItem[]) => rows.map((item) => {
     const isNotif = item.label === "Notifikasi" || item.page === "notifications";
@@ -1468,7 +1614,17 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setRole("posko"); setName?.("Siti Rahma"); select("dashboard"); notify?.("Beralih ke role BPBD (Siti Rahma)"); close(); }}
+                  onClick={() => {
+                    setRole("posko");
+                    const targetAcc = state?.bpbdScope === "nasional"
+                      ? accounts.find(a => a.scope === "nasional")
+                      : (accounts.find(a => a.provinsi === (state?.bpbdProvince || "Jawa Timur") && a.type === "posko") || accounts.find(a => a.email === "siti.posko@reksa.id"));
+                    const n = targetAcc?.name || "Siti Rahma";
+                    setName?.(n);
+                    select("dashboard");
+                    notify?.(`Beralih ke role BPBD (${n})`);
+                    close();
+                  }}
                   style={{
                     fontSize: "11px",
                     padding: "6px 2px",
@@ -1481,7 +1637,7 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
                     textAlign: "center",
                     fontFamily: "inherit",
                   }}
-                  title="Koordinator Posko BPBD (Siti Rahma)"
+                  title="Koordinator Posko BPBD"
                 >
                   BPBD
                 </button>
@@ -1505,6 +1661,95 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
                   Mitra
                 </button>
               </div>
+
+              {role === "posko" && (
+                <div style={{ marginTop: "8px", paddingTop: "6px", borderTop: "1px dashed rgba(255,255,255,0.15)" }}>
+                  <small style={{ fontSize: "10px", color: "rgba(255,255,255,0.85)", fontWeight: 700, display: "block", marginBottom: "4px" }}>
+                    Tingkat Akun BPBD:
+                  </small>
+                  <select
+                    value={state?.bpbdScope === "nasional" ? "nasional" : (state?.bpbdProvince || "Jawa Timur")}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "nasional") {
+                        const acc = accounts.find(a => a.scope === "nasional");
+                        if (acc) {
+                          setName?.(acc.name);
+                          localStorage.setItem("reksa_auth_name", acc.name);
+                          localStorage.setItem("reksa_bpbd_scope", "nasional");
+                          localStorage.removeItem("reksa_bpbd_province");
+                          update?.({
+                            bpbdScope: "nasional",
+                            bpbdProvince: undefined,
+                            bpbdOfficerEmail: acc.email,
+                            poskoName: acc.poskoName,
+                            poskoPic: acc.name,
+                            poskoAddress: acc.address,
+                            userProfile: {
+                              name: acc.name,
+                              email: acc.email,
+                              phone: acc.phone || "",
+                              nik: acc.nik || "",
+                              org: acc.poskoName || "",
+                              address: acc.address || "",
+                              role: "Petugas BPBD Nasional (Pusat)",
+                              scope: "nasional",
+                            }
+                          });
+                          notify?.("Beralih ke BPBD Nasional (Supervisi 32 Provinsi)");
+                        }
+                      } else {
+                        const acc = accounts.find(a => a.provinsi === val && a.type === "posko");
+                        if (acc) {
+                          setName?.(acc.name);
+                          localStorage.setItem("reksa_auth_name", acc.name);
+                          localStorage.setItem("reksa_bpbd_scope", "daerah");
+                          localStorage.setItem("reksa_bpbd_province", acc.provinsi || "");
+                          update?.({
+                            bpbdScope: "daerah",
+                            bpbdProvince: acc.provinsi,
+                            bpbdOfficerEmail: acc.email,
+                            poskoName: acc.poskoName,
+                            poskoPic: acc.name,
+                            poskoAddress: acc.address,
+                            userProfile: {
+                              name: acc.name,
+                              email: acc.email,
+                              phone: acc.phone || "",
+                              nik: acc.nik || "",
+                              org: acc.poskoName || "",
+                              address: acc.address || "",
+                              role: `Petugas BPBD ${acc.provinsi}`,
+                              scope: "daerah",
+                              provinsi: acc.provinsi,
+                            }
+                          });
+                          notify?.(`Beralih ke BPBD ${acc.provinsi} (${acc.name})`);
+                        }
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      fontSize: "10.5px",
+                      padding: "5px 6px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      background: "#013220",
+                      color: "#ffffff",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    <option value="nasional">🌐 BPBD Nasional (Supervisi 32 Prov)</option>
+                    <option value="Jawa Timur">📍 BPBD Jawa Timur</option>
+                    <option value="Jawa Barat">📍 BPBD Jawa Barat</option>
+                    <option value="DKI Jakarta">📍 BPBD DKI Jakarta</option>
+                    <option value="Jawa Tengah">📍 BPBD Jawa Tengah</option>
+                    <option value="Aceh">📍 BPBD D.I. Aceh</option>
+                    <option value="Sulawesi Tengah">📍 BPBD Sulawesi Tengah</option>
+                  </select>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1720,7 +1965,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   };
 
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
-    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} />
+    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} state={state} update={update} />
     <header className="mobile-header">
       <button onClick={() => setMobile(true)} aria-label="Buka menu"><Icon name="menu" /></button>
       <Logo />
@@ -3488,14 +3733,53 @@ function CaseDetail({
 }
 
 function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma", setName, onRefresh, setRole }: RouterProps) {
+  const isNasional = state.bpbdScope === "nasional";
+  const activeProvince = state.bpbdProvince;
+
+  const scopedCases = useMemo(() => {
+    return (state.casesList || []).filter(c => {
+      if (isNasional || !activeProvince) return true;
+      const cProv = (c.province || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return cProv.includes(targetProv) || targetProv.includes(cProv);
+    });
+  }, [state.casesList, isNasional, activeProvince]);
+
+  const scopedBursa = useMemo(() => {
+    return (state.bursaList || []).filter(b => {
+      if (isNasional || !activeProvince) return true;
+      const bProv = (b.posko?.provinsi || b.kebutuhan?.provinsi || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return !bProv || bProv.includes(targetProv) || targetProv.includes(bProv);
+    });
+  }, [state.bursaList, isNasional, activeProvince]);
+
+  const scopedPenawaran = useMemo(() => {
+    return (state.penawaranList || []).filter(p => {
+      if (isNasional || !activeProvince) return true;
+      const pProv = (p.posko?.provinsi || p.kebutuhan?.provinsi || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return !pProv || pProv.includes(targetProv) || targetProv.includes(pProv);
+    });
+  }, [state.penawaranList, isNasional, activeProvince]);
+
+  const scopedMisi = useMemo(() => {
+    return (state.misiList || []).filter(m => {
+      if (isNasional || !activeProvince) return true;
+      const mProv = (m.posko?.provinsi || m.kebutuhan?.provinsi || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return !mProv || mProv.includes(targetProv) || targetProv.includes(mProv);
+    });
+  }, [state.misiList, isNasional, activeProvince]);
+
   if (page === "dashboard") return <PoskoDashboard state={state} update={update} setPage={setPage} onRefresh={onRefresh} />;
   if (page === "chat") return <ChatKoordinasi role="posko" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} posko onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
-  if (page === "cases") return <PoskoVerifikasiLaporan cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} selectedCaseId={state.activeCaseId} />;
-  if (page === "resources") return <PoskoKebutuhanBursa cases={state.casesList || []} bursaList={state.bursaList || []} penawaranList={state.penawaranList || []} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
-  if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} selectedCaseId={state.activeCaseId} />;
-  if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={state.misiList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} selectedCaseId={state.activeCaseId} />;
-  if (page === "map") return <MapPage open={() => setPage("case")} cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} role="posko" />;
+  if (page === "cases") return <PoskoVerifikasiLaporan cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} selectedCaseId={state.activeCaseId} />;
+  if (page === "resources") return <PoskoKebutuhanBursa cases={scopedCases} bursaList={scopedBursa} penawaranList={scopedPenawaran} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
+  if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={scopedPenawaran} bursaList={scopedBursa} cases={scopedCases} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} selectedCaseId={state.activeCaseId} />;
+  if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={scopedMisi} cases={scopedCases} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} selectedCaseId={state.activeCaseId} />;
+  if (page === "map") return <MapPage open={() => setPage("case")} cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} role="posko" />;
   if (page === "notifications") return <Notifications role="posko" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Petugas Posko" notify={notify} state={state} update={update} setName={setName} />;
   if (page === "settings") return <Settings notify={notify} />;
@@ -3503,12 +3787,64 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
 }
 
 function PoskoDashboard({ state, update, setPage }: { state: SharedState; update: RouterProps["update"]; setPage: RouterProps["setPage"]; onRefresh?: () => Promise<void> | void }) {
-  const currentPoskoTitle = state.poskoName || state.userProfile?.org || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)";
-  const currentCoordName = state.poskoPic || state.userProfile?.name || "Siti Rahma";
-  const allCases = state.casesList || [];
-  const bursaList = state.bursaList || [];
-  const misiList = state.misiList || [];
-  const penawaranList = state.penawaranList || [];
+  const isNasional = state.bpbdScope === "nasional";
+  const activeProvince = state.bpbdProvince;
+
+  const currentPoskoTitle = state.poskoName || state.userProfile?.org || (isNasional ? "Badan Penanggulangan Bencana (Komando Nasional)" : "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)");
+  const currentCoordName = state.poskoPic || state.userProfile?.name || (isNasional ? "Pusdalops BNPB / BPBD Nasional" : "Siti Rahma");
+
+  const allCases = useMemo(() => {
+    return (state.casesList || []).filter(c => {
+      if (isNasional || !activeProvince) return true;
+      const cProv = (c.province || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return cProv.includes(targetProv) || targetProv.includes(cProv);
+    });
+  }, [state.casesList, isNasional, activeProvince]);
+
+  const bursaList = useMemo(() => {
+    return (state.bursaList || []).filter(b => {
+      if (isNasional || !activeProvince) return true;
+      const bProv = (b.posko?.provinsi || b.kebutuhan?.provinsi || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return !bProv || bProv.includes(targetProv) || targetProv.includes(bProv);
+    });
+  }, [state.bursaList, isNasional, activeProvince]);
+
+  const misiList = useMemo(() => {
+    return (state.misiList || []).filter(m => {
+      if (isNasional || !activeProvince) return true;
+      const mProv = (m.posko?.provinsi || m.kebutuhan?.provinsi || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return !mProv || mProv.includes(targetProv) || targetProv.includes(mProv);
+    });
+  }, [state.misiList, isNasional, activeProvince]);
+
+  const penawaranList = useMemo(() => {
+    return (state.penawaranList || []).filter(p => {
+      if (isNasional || !activeProvince) return true;
+      const pProv = (p.posko?.provinsi || p.kebutuhan?.provinsi || "").toLowerCase().trim();
+      const targetProv = activeProvince.toLowerCase().trim();
+      return !pProv || pProv.includes(targetProv) || targetProv.includes(pProv);
+    });
+  }, [state.penawaranList, isNasional, activeProvince]);
+
+  // Ringkasan multi-provinsi untuk BPBD Nasional
+  const provinceSummary = useMemo(() => {
+    const map: Record<string, { total: number; kritis: number; terbuka: number; disalurkan: number }> = {};
+    (state.casesList || []).forEach(c => {
+      const p = c.province || "Lainnya";
+      if (!map[p]) {
+        map[p] = { total: 0, kritis: 0, terbuka: 0, disalurkan: 0 };
+      }
+      map[p].total += 1;
+      if (c.urgency === 'Kritis' || c.urgency === 'Tinggi') map[p].kritis += 1;
+      const s = (c.status || '').toLowerCase();
+      if (s.includes('terbuka') || s.includes('sebagian')) map[p].terbuka += 1;
+      if (s.includes('pengiriman') || s.includes('tugas')) map[p].disalurkan += 1;
+    });
+    return Object.entries(map).map(([prov, stats]) => ({ prov, ...stats }));
+  }, [state.casesList]);
 
   const primaryCase = allCases.find(c => c.id === state.activeCaseId) || allCases[0];
   const primaryLat = primaryCase?.lat ? Number(primaryCase.lat) : -7.336272;
@@ -3554,15 +3890,156 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
   return (
     <main className="workspace posko-dashboard-workspace">
       <PageHead 
-        eyebrow={`${currentPoskoTitle} (Koordinator: ${currentCoordName})`} 
-        title="Ringkasan Operasional Posko" 
-        copy="Pusat penampungan data warga, verifikasi kebutuhan KK, penetapan alokasi mitra, dan pengawasan serah terima logistik." 
+        eyebrow={isNasional ? "Pusdalops BNPB / BPBD Nasional (Supervisi 32 Provinsi)" : `${currentPoskoTitle} (Koordinator: ${currentCoordName})`} 
+        title={isNasional ? "Ringkasan Operasional Komando Nasional" : `Ringkasan Operasional BPBD ${activeProvince || "Daerah"}`} 
+        copy={isNasional 
+          ? "Pusat pemantauan menyeluruh, pengawasan bottleneck penanganan bencana, dan koordinasi bantuan lintas-provinsi di Indonesia." 
+          : `Pusat penampungan data warga, verifikasi kebutuhan KK, penetapan alokasi mitra, dan serah terima logistik di yurisdiksi ${activeProvince || "daerah"}.`} 
         action={
           <div className="posko-status-live-badge">
-            <span className="live-indicator-dot" /> Posko Wilayah Aktif ({allCases.length} Laporan Kasus)
+            <span className="live-indicator-dot" /> {isNasional ? "Supervisi Nasional Aktif" : `Yurisdiksi ${activeProvince || "Daerah"}`} ({allCases.length} Kasus)
           </div>
         }
       />
+
+      {/* JURISDICTION & ACCOUNT TIER BANNER */}
+      <div
+        style={{
+          background: isNasional
+            ? "linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, rgba(1, 50, 32, 0.05) 100%)"
+            : "linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(1, 50, 32, 0.05) 100%)",
+          border: isNasional ? "1px solid rgba(180, 83, 9, 0.25)" : "1px solid rgba(15, 118, 110, 0.25)",
+          borderRadius: "14px",
+          padding: "16px 20px",
+          marginBottom: "20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "14px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "12px",
+              background: isNasional ? "#b45309" : "#013220",
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "20px",
+              flexShrink: 0,
+            }}
+          >
+            {isNasional ? "🌐" : "📍"}
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: isNasional ? "#b45309" : "#0f766e",
+                }}
+              >
+                {isNasional ? "Pusat Komando & Supervisi Nasional" : `Yurisdiksi Daerah: BPBD Provinsi ${activeProvince || "Jawa Timur"}`}
+              </span>
+              <span
+                className="pill"
+                style={{
+                  fontSize: "11px",
+                  padding: "2px 8px",
+                  background: isNasional ? "#fef3c7" : "#ecfdf5",
+                  color: isNasional ? "#92400e" : "#047857",
+                  border: isNasional ? "1px solid #fde68a" : "1px solid #a7f3d0",
+                  fontWeight: 700,
+                }}
+              >
+                {isNasional ? "⭐ Akun BPBD Nasional" : "🏛️ Akun BPBD Daerah"}
+              </span>
+            </div>
+            <p style={{ margin: "3px 0 0", fontSize: "0.88rem", color: "#1f2937", fontWeight: 500 }}>
+              {isNasional
+                ? "Memantau, mensupervisi, dan mengoordinasikan logistik penanggulangan bencana di seluruh 32+ provinsi secara agregat nasional."
+                : `Menangani verifikasi laporan kebutuhan, penetapan alokasi, dan penugasan mitra secara spesifik untuk permohonan di wilayah ${activeProvince || "daerah ini"}.`}
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Regional Stats Pill */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "8px 14px", textAlign: "right" }}>
+            <span style={{ fontSize: "11px", color: "#6b7280", display: "block" }}>Laporan dalam Yurisdiksi</span>
+            <strong style={{ fontSize: "1.1rem", color: "#013220" }}>{allCases.length} Kasus</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* REKAPITULASI PEMANTAUAN PROVINSI KHUSUS BPBD NASIONAL */}
+      {isNasional && provinceSummary.length > 0 && (
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: "14px",
+            padding: "18px 20px",
+            marginBottom: "20px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: "0.98rem", color: "#013220", fontWeight: 700 }}>
+                📊 Rekapitulasi Pemantauan Bencana 32 Provinsi (Agregat Nasional)
+              </h3>
+              <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#6b7280" }}>
+                Pengawasan langsung beban permohonan, kasus kritis, defisit bursa terbuka, dan misi berjalan per daerah
+              </p>
+            </div>
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#0f766e" }}>
+              Total Terpantau: {provinceSummary.length} Wilayah Aktif
+            </span>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "10px" }}>
+            {provinceSummary.map(({ prov, total, kritis, terbuka, disalurkan }) => (
+              <div
+                key={prov}
+                style={{
+                  background: "#f9fafb",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "10px",
+                  padding: "12px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <strong style={{ fontSize: "0.88rem", color: "#111827" }}>📍 {prov}</strong>
+                  <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#013220" }}>{total} kasus</span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", fontSize: "0.78rem" }}>
+                  <div style={{ color: kritis > 0 ? "#b91c1c" : "#6b7280", fontWeight: kritis > 0 ? 700 : 500 }}>
+                    Kritis: {kritis}
+                  </div>
+                  <div style={{ color: terbuka > 0 ? "#0f766e" : "#6b7280", fontWeight: terbuka > 0 ? 700 : 500 }}>
+                    Bursa: {terbuka}
+                  </div>
+                  <div style={{ color: disalurkan > 0 ? "#b45309" : "#6b7280", fontWeight: disalurkan > 0 ? 700 : 500 }}>
+                    Misi: {disalurkan}
+                  </div>
+                  <div style={{ color: "#15803d", fontWeight: 500 }}>
+                    Aktif
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 6 WORKLOAD SUMMARY METRICS CARDS PER PRD Bab 5.1 & Bab 12 */}
       <div className="posko-workload-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
@@ -6074,6 +6551,8 @@ export default function App() {
       poskoPic: "Siti Rahma",
       poskoPhone: "+62 812 8899 1102",
       poskoAddress: "Jl. Pemuda No. 1, Kota Surabaya",
+      bpbdScope: (localStorage.getItem("reksa_bpbd_scope") as "nasional" | "daerah") || "daerah",
+      bpbdProvince: localStorage.getItem("reksa_bpbd_province") || "Jawa Timur",
       userProfile: savedProfile,
       casesList: savedList,
       activeCaseId: savedList[0]?.id,
@@ -6293,14 +6772,40 @@ export default function App() {
   return (
     <>
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
-      {screen === "login" && <Login navigate={navigate} onLogin={(r, n) => { 
+      {screen === "login" && <Login navigate={navigate} onLogin={(r, n, acc) => { 
         setRole(r); 
         setName(n); 
         localStorage.setItem("reksa_auth_role", r);
         localStorage.setItem("reksa_auth_name", n);
-        if (r === "posko") {
+        if (acc) {
+          localStorage.setItem("reksa_bpbd_scope", acc.scope);
+          if (acc.provinsi) localStorage.setItem("reksa_bpbd_province", acc.provinsi);
+          else localStorage.removeItem("reksa_bpbd_province");
           setState((s) => ({
             ...s,
+            bpbdScope: acc.scope,
+            bpbdProvince: acc.provinsi,
+            bpbdOfficerEmail: acc.email,
+            poskoName: acc.poskoName,
+            poskoPic: acc.name,
+            poskoAddress: acc.address,
+            userProfile: {
+              name: acc.name,
+              email: acc.email,
+              phone: acc.phone || "",
+              nik: acc.nik || "",
+              org: acc.poskoName || "",
+              address: acc.address || "",
+              role: acc.role,
+              scope: acc.scope,
+              provinsi: acc.provinsi,
+            }
+          }));
+        } else if (r === "posko") {
+          setState((s) => ({
+            ...s,
+            bpbdScope: "daerah",
+            bpbdProvince: "Jawa Timur",
             userProfile: {
               name: n,
               email: "siti.posko@reksa.id",
@@ -6308,7 +6813,9 @@ export default function App() {
               nik: "PSK-SKB-2026-01",
               org: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
               address: "Gedung Serbaguna Posko Utama, Jl. Pemuda No. 1, Kota Surabaya",
-              role: "Petugas Posko",
+              role: "Petugas BPBD Jawa Timur",
+              scope: "daerah",
+              provinsi: "Jawa Timur",
             }
           }));
         } else if (r === "responder") {
@@ -6334,18 +6841,32 @@ export default function App() {
             setRole(newRole);
             localStorage.setItem("reksa_auth_role", newRole);
             if (newRole === "posko") {
-              setName("Siti Rahma");
-              localStorage.setItem("reksa_auth_name", "Siti Rahma");
+              const currentScope = (localStorage.getItem("reksa_bpbd_scope") as "nasional" | "daerah") || "daerah";
+              const currentProv = localStorage.getItem("reksa_bpbd_province") || "Jawa Timur";
+              const acc = currentScope === "nasional"
+                ? accounts.find(a => a.scope === "nasional")
+                : (accounts.find(a => a.provinsi === currentProv && a.type === "posko") || accounts.find(a => a.email === "siti.posko@reksa.id"));
+              const officialName = acc?.name || "Siti Rahma";
+              setName(officialName);
+              localStorage.setItem("reksa_auth_name", officialName);
               setState((s) => ({
                 ...s,
+                bpbdScope: acc?.scope || "daerah",
+                bpbdProvince: acc?.provinsi,
+                bpbdOfficerEmail: acc?.email,
+                poskoName: acc?.poskoName,
+                poskoPic: officialName,
+                poskoAddress: acc?.address,
                 userProfile: {
-                  name: "Siti Rahma",
-                  email: "siti.posko@reksa.id",
-                  phone: "+62 812 8899 1102",
-                  nik: "PSK-SKB-2026-01",
-                  org: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
-                  address: "Gedung Serbaguna Posko Utama, Jl. Pemuda No. 1, Kota Surabaya",
-                  role: "Petugas Posko",
+                  name: officialName,
+                  email: acc?.email || "siti.posko@reksa.id",
+                  phone: acc?.phone || "+62 812 8899 1102",
+                  nik: acc?.nik || "PSK-SKB-2026-01",
+                  org: acc?.poskoName || "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
+                  address: acc?.address || "Gedung Serbaguna Posko Utama, Jl. Pemuda No. 1, Kota Surabaya",
+                  role: acc?.scope === "nasional" ? "Petugas BPBD Nasional (Pusat)" : `Petugas BPBD ${acc?.provinsi || "Jawa Timur"}`,
+                  scope: acc?.scope || "daerah",
+                  provinsi: acc?.provinsi,
                 }
               }));
             } else if (newRole === "responder") {
