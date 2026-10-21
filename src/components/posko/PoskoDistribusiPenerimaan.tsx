@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CaseRecord } from "../../App";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
@@ -10,6 +10,7 @@ interface PoskoDistribusiPenerimaanProps {
   onRefresh?: () => Promise<void> | void;
   notify?: (msg: string) => void;
   onSelectCase: (c: CaseRecord) => void;
+  selectedCaseId?: string;
 }
 
 export function PoskoDistribusiPenerimaan({
@@ -18,11 +19,37 @@ export function PoskoDistribusiPenerimaan({
   onRefresh,
   notify,
   onSelectCase,
+  selectedCaseId,
 }: PoskoDistribusiPenerimaanProps) {
   const [tab, setTab] = useState<"all" | "active" | "arrived" | "completed">("active");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(selectedCaseId || "");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+
+  useEffect(() => {
+    if (selectedCaseId) {
+      setSearch(selectedCaseId);
+      const target = selectedCaseId.toLowerCase();
+      const foundMisi = misiList.find(
+        (m) =>
+          m.kebutuhan?.kode_kasus?.toLowerCase() === target ||
+          m.kode_misi?.toLowerCase() === target ||
+          String(m.kebutuhan_id) === target.replace(/\D/g, "")
+      );
+      if (foundMisi) {
+        if (foundMisi.status_tahapan === "Selesai") {
+          setTab("completed");
+        } else if (
+          foundMisi.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
+          foundMisi.status_tahapan === "Menunggu Konfirmasi Penerimaan"
+        ) {
+          setTab("arrived");
+        } else {
+          setTab("active");
+        }
+      }
+    }
+  }, [selectedCaseId, misiList]);
 
   // Receipt confirmation modal
   const [confirmModalMisi, setConfirmModalMisi] = useState<MisiItem | null>(null);

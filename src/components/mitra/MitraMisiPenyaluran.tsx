@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
@@ -11,6 +11,7 @@ interface MitraMisiPenyaluranProps {
   notify?: (msg: string) => void;
   onNavigateToHistory: () => void;
   onNavigateToBursa: () => void;
+  selectedCaseId?: string;
 }
 
 export function MitraMisiPenyaluran({
@@ -21,12 +22,36 @@ export function MitraMisiPenyaluran({
   notify,
   onNavigateToHistory,
   onNavigateToBursa,
+  selectedCaseId,
 }: MitraMisiPenyaluranProps) {
   const activeMissions = misiList.filter((m) => m.status_tahapan !== "Selesai");
 
-  const [selectedMisiId, setSelectedMisiId] = useState<number | null>(
-    activeMissions[0]?.id || null
-  );
+  const [selectedMisiId, setSelectedMisiId] = useState<number | null>(() => {
+    if (selectedCaseId) {
+      const target = selectedCaseId.toLowerCase();
+      const match = misiList.find(
+        (m) =>
+          m.kebutuhan?.kode_kasus?.toLowerCase() === target ||
+          m.kode_misi?.toLowerCase() === target ||
+          String(m.kebutuhan_id) === target.replace(/\D/g, "")
+      );
+      if (match) return match.id;
+    }
+    return activeMissions[0]?.id || null;
+  });
+
+  useEffect(() => {
+    if (selectedCaseId) {
+      const target = selectedCaseId.toLowerCase();
+      const match = misiList.find(
+        (m) =>
+          m.kebutuhan?.kode_kasus?.toLowerCase() === target ||
+          m.kode_misi?.toLowerCase() === target ||
+          String(m.kebutuhan_id) === target.replace(/\D/g, "")
+      );
+      if (match) setSelectedMisiId(match.id);
+    }
+  }, [selectedCaseId, misiList]);
 
   // Obstacle reporting modal
   const [obstacleModalMisi, setObstacleModalMisi] = useState<MisiItem | null>(null);

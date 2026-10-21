@@ -1048,6 +1048,246 @@ export type RouterProps = {
 };
 type NavItem = { label: string; page: PortalPage | "logout"; icon: string };
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  desc: string;
+  time: string;
+  code: string;
+  cat: "Pengiriman" | "Verifikasi" | "Penugasan" | "Laporan";
+  unread: boolean;
+  caseId: string;
+  targetPage: PortalPage;
+  actionLabel: string;
+  badgeRole: string;
+  destinationLabel: string;
+  iconName: string;
+}
+
+export function resolveDeepLinkForRole(
+  role: Role,
+  aksi: string = "",
+  desc: string = "",
+  cat: string = ""
+): {
+  targetPage: PortalPage;
+  actionLabel: string;
+  categoryLabel: "Pengiriman" | "Verifikasi" | "Penugasan" | "Laporan";
+  iconName: string;
+  badgeRole: string;
+  destinationLabel: string;
+  titleOverride?: string;
+} {
+  const text = `${aksi} ${desc} ${cat}`.toLowerCase();
+
+  // 1. CHAT / KOORDINASI
+  if (text.includes("chat") || text.includes("koordinasi") || text.includes("pesan")) {
+    return {
+      targetPage: "chat",
+      actionLabel: "Buka Ruang Komunikasi",
+      categoryLabel: "Laporan",
+      iconName: "chat",
+      badgeRole: "Komunikasi",
+      destinationLabel: "Ruang Komunikasi",
+      titleOverride: "Pesan Koordinasi Baru",
+    };
+  }
+
+  // 2. ROLE: PETUGAS POSKO BPBD (posko)
+  if (role === "posko") {
+    // Penawaran & Alokasi Mitra
+    if (text.includes("penawaran") || text.includes("alokasi") || text.includes("klaim")) {
+      const isApproved = text.includes("disetujui");
+      return {
+        targetPage: isApproved ? "assignments" : "offers",
+        actionLabel: isApproved ? "Pantau Penyaluran Mitra" : "Tinjau Penawaran Mitra",
+        categoryLabel: "Penugasan",
+        iconName: isApproved ? "pin" : "task",
+        badgeRole: "Mitra Satgas",
+        destinationLabel: isApproved ? "Distribusi & Penerimaan" : "Penawaran & Alokasi",
+        titleOverride: isApproved ? "Alokasi Penyaluran Mitra Ditetapkan" : "Penawaran Bantuan Mitra Masuk",
+      };
+    }
+    // Distribusi & Penyaluran Lapangan (Armada, Tiba, Konfirmasi Penerimaan, BAST)
+    if (
+      text.includes("kirim") ||
+      text.includes("distribusi") ||
+      text.includes("misi") ||
+      text.includes("armada") ||
+      text.includes("tiba") ||
+      text.includes("penerimaan") ||
+      text.includes("bast") ||
+      text.includes("kendala")
+    ) {
+      return {
+        targetPage: "assignments",
+        actionLabel: "Pantau Distribusi Lapangan",
+        categoryLabel: "Pengiriman",
+        iconName: "pin",
+        badgeRole: "Penyaluran",
+        destinationLabel: "Distribusi & Penerimaan",
+        titleOverride: text.includes("tiba") ? "Armada Penyaluran Tiba di Lokasi" : "Armada Distribusi Bergerak",
+      };
+    }
+    // Kebutuhan Terbuka ke Bursa
+    if (text.includes("bursa") || text.includes("kebutuhan terbuka")) {
+      return {
+        targetPage: "resources",
+        actionLabel: "Kelola Kebutuhan Bursa",
+        categoryLabel: "Penugasan",
+        iconName: "box",
+        badgeRole: "Posko BPBD",
+        destinationLabel: "Kebutuhan & Bursa",
+        titleOverride: "Kebutuhan Dipublikasikan ke Bursa",
+      };
+    }
+    // Verifikasi Laporan & Klarifikasi
+    if (text.includes("klarifikasi") || text.includes("verifikasi") || text.includes("laporan") || text.includes("tolak")) {
+      return {
+        targetPage: "cases",
+        actionLabel: text.includes("klarifikasi") ? "Periksa Jawaban Warga" : "Verifikasi Laporan Posko",
+        categoryLabel: "Verifikasi",
+        iconName: "file",
+        badgeRole: "Warga Pelapor",
+        destinationLabel: "Verifikasi Laporan",
+        titleOverride: text.includes("klarifikasi") ? "Jawaban Klarifikasi Diterima" : "Verifikasi & Validasi Laporan",
+      };
+    }
+    // Fallback Posko
+    return {
+      targetPage: "cases",
+      actionLabel: "Lihat Verifikasi Laporan",
+      categoryLabel: "Verifikasi",
+      iconName: "file",
+      badgeRole: "Posko BPBD",
+      destinationLabel: "Verifikasi Laporan",
+    };
+  }
+
+  // 3. ROLE: MITRA BANTUAN / SATGAS BPBD (responder)
+  if (role === "responder") {
+    // Misi Lapangan / Armada Bergerak / Penugasan Disetujui
+    if (
+      text.includes("disetujui") ||
+      text.includes("alokasi ditetapkan") ||
+      text.includes("misi") ||
+      text.includes("armada") ||
+      text.includes("kirim") ||
+      text.includes("penyaluran") ||
+      text.includes("tiba") ||
+      text.includes("kendala")
+    ) {
+      if (text.includes("selesai") || text.includes("tuntas")) {
+        return {
+          targetPage: "history",
+          actionLabel: "Buka Riwayat Penyaluran",
+          categoryLabel: "Pengiriman",
+          iconName: "clock",
+          badgeRole: "Arsip Misi",
+          destinationLabel: "Riwayat Penyaluran",
+          titleOverride: "Misi Penyaluran Telah Selesai",
+        };
+      }
+      return {
+        targetPage: "tasks",
+        actionLabel: "Buka Konsol Misi Lapangan",
+        categoryLabel: "Pengiriman",
+        iconName: "task",
+        badgeRole: "Misi Aktif",
+        destinationLabel: "Misi Penyaluran",
+        titleOverride: "Misi Penyaluran Baru Ditetapkan",
+      };
+    }
+    // Bursa Bantuan (Kebutuhan Terbuka)
+    if (text.includes("terbuka") || text.includes("bursa") || text.includes("kebutuhan")) {
+      return {
+        targetPage: "bursa",
+        actionLabel: "Ajukan di Bursa Bantuan",
+        categoryLabel: "Penugasan",
+        iconName: "box",
+        badgeRole: "Bursa Logistik",
+        destinationLabel: "Bursa Bantuan",
+        titleOverride: "Kebutuhan Terbuka Siap Dialokasikan",
+      };
+    }
+    // Penawaran Saya
+    if (text.includes("penawaran") || text.includes("klaim")) {
+      return {
+        targetPage: "my-offers",
+        actionLabel: "Lihat Status Penawaran",
+        categoryLabel: "Penugasan",
+        iconName: "file",
+        badgeRole: "Penawaran Saya",
+        destinationLabel: "Penawaran Saya",
+        titleOverride: "Pembaruan Status Penawaran Bantuan",
+      };
+    }
+    // Fallback Responder
+    return {
+      targetPage: "tasks",
+      actionLabel: "Buka Konsol Misi",
+      categoryLabel: "Penugasan",
+      iconName: "task",
+      badgeRole: "Misi Mitra",
+      destinationLabel: "Misi Penyaluran",
+    };
+  }
+
+  // 4. ROLE: MASYARAKAT / WARGA (citizen)
+  // Klarifikasi Lapangan
+  if (text.includes("klarifikasi")) {
+    return {
+      targetPage: "case",
+      actionLabel: "Jawab Klarifikasi Posko",
+      categoryLabel: "Verifikasi",
+      iconName: "file",
+      badgeRole: "Posko BPBD",
+      destinationLabel: "Detail Laporan",
+      titleOverride: "Permintaan Klarifikasi untuk Laporan Anda",
+    };
+  }
+  // Bantuan Tiba / Konfirmasi Penerimaan BAST
+  if (
+    text.includes("tiba") ||
+    text.includes("diterima") ||
+    text.includes("bast") ||
+    text.includes("konfirmasi penerimaan") ||
+    text.includes("menunggu konfirmasi")
+  ) {
+    return {
+      targetPage: "cases",
+      actionLabel: "Konfirmasi Penerimaan BAST",
+      categoryLabel: "Pengiriman",
+      iconName: "check",
+      badgeRole: "Serah Terima",
+      destinationLabel: "Laporan Saya",
+      titleOverride: "Bantuan Tiba di Lokasi - Siap Diterima",
+    };
+  }
+  // Bantuan Selesai
+  if (text.includes("selesai") || text.includes("tuntas")) {
+    return {
+      targetPage: "history",
+      actionLabel: "Lihat Riwayat Selesai",
+      categoryLabel: "Pengiriman",
+      iconName: "clock",
+      badgeRole: "Selesai",
+      destinationLabel: "Riwayat",
+      titleOverride: "Bantuan Berhasil Diterima & Selesai",
+    };
+  }
+  // Status Laporan / Progress
+  return {
+    targetPage: "case",
+    actionLabel: "Pantau Status Laporan",
+    categoryLabel: text.includes("verifikasi") ? "Verifikasi" : "Laporan",
+    iconName: "file",
+    badgeRole: "Posko BPBD",
+    destinationLabel: "Detail Laporan",
+    titleOverride: text.includes("verifikasi") ? "Status Verifikasi Laporan Diperbarui" : "Pembaruan Kasus Laporan",
+  };
+}
+
 const roleNavigation: Record<Role, { main: NavItem[]; bottom: NavItem[] }> = {
   citizen: {
     main: [
@@ -1302,7 +1542,29 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
     }
   });
 
-  // Fetch db activity logs for live unread counting
+  const [liveToastNotif, setLiveToastNotif] = useState<{
+    id: string;
+    title: string;
+    desc: string;
+    targetPage: PortalPage;
+    caseId?: string;
+    actionLabel: string;
+    destinationLabel: string;
+    iconName: string;
+  } | null>(null);
+
+  const lastSeenLogIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (liveToastNotif) {
+      const timer = setTimeout(() => {
+        setLiveToastNotif(null);
+      }, 9000);
+      return () => clearTimeout(timer);
+    }
+  }, [liveToastNotif]);
+
+  // Fetch db activity logs for live unread counting and real-time alert toast
   useEffect(() => {
     let isMounted = true;
     const fetchLogs = () => {
@@ -1310,6 +1572,29 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
         .then((res) => {
           if (isMounted && res.success && Array.isArray(res.data)) {
             setDbLogs(res.data);
+            if (res.data.length > 0) {
+              const newest = res.data[0];
+              if (lastSeenLogIdRef.current !== null && newest.id > lastSeenLogIdRef.current) {
+                // Real-time event detected!
+                const code = newest.kebutuhan?.kode_kasus || `RK-2026-00${newest.kebutuhan_id || 124}`;
+                const meta = resolveDeepLinkForRole(role, newest.aksi || "", newest.deskripsi || "");
+                const saved = localStorage.getItem("reksa_read_notifications");
+                const readArr: string[] = saved ? JSON.parse(saved) : [];
+                if (!readArr.includes(`db-log-${newest.id}`)) {
+                  setLiveToastNotif({
+                    id: `db-log-${newest.id}`,
+                    title: meta.titleOverride || newest.aksi || "Pembaruan Kasus Baru",
+                    desc: newest.deskripsi || "Aktivitas baru penanganan bencana tercatat di sistem.",
+                    targetPage: meta.targetPage,
+                    caseId: code,
+                    actionLabel: meta.actionLabel,
+                    destinationLabel: meta.destinationLabel,
+                    iconName: meta.iconName,
+                  });
+                }
+              }
+              lastSeenLogIdRef.current = newest.id;
+            }
           }
         })
         .catch(() => {});
@@ -1321,7 +1606,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       isMounted = false;
       clearInterval(interval);
     };
-  }, [state?.logs]);
+  }, [role, state?.logs]);
 
   // Sync read notification IDs across components
   useEffect(() => {
@@ -1385,6 +1670,23 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
     window.scrollTo(0, 0);
   };
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(""), 2800); };
+
+  const handleToastDeepLink = () => {
+    if (!liveToastNotif) return;
+    const notifId = liveToastNotif.id;
+    if (!readNotifIds.includes(notifId)) {
+      const next = [...readNotifIds, notifId];
+      setReadNotifIds(next);
+      localStorage.setItem("reksa_read_notifications", JSON.stringify(next));
+      window.dispatchEvent(new Event("reksa_notifications_updated"));
+    }
+    if (liveToastNotif.caseId && update) {
+      update({ activeCaseId: liveToastNotif.caseId });
+    }
+    go(liveToastNotif.targetPage);
+    setLiveToastNotif(null);
+  };
+
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
     <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} />
     <header className="mobile-header">
@@ -1417,6 +1719,53 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       )}
       <MobileNav role={role} page={page} go={go} notifCount={unreadCount} />
     </div>
+    {liveToastNotif && (
+      <div className="live-toast-banner" role="alert">
+        <div className="live-toast-banner-header">
+          <span className="live-toast-badge">
+            <span className="live-toast-pulse" />
+            Notifikasi Real-time
+          </span>
+          <span className="notif-dest-chip" style={{ fontSize: "10.5px" }}>
+            → {liveToastNotif.destinationLabel}
+          </span>
+          <button 
+            type="button" 
+            className="live-toast-close" 
+            onClick={() => setLiveToastNotif(null)}
+            aria-label="Tutup notifikasi"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="live-toast-body">
+          <h4>{liveToastNotif.title}</h4>
+          <p>{liveToastNotif.desc}</p>
+        </div>
+        <div className="live-toast-actions">
+          <button 
+            type="button" 
+            className="btn-live-toast-deeplink" 
+            onClick={handleToastDeepLink}
+          >
+            {liveToastNotif.actionLabel} <Icon name="next" />
+          </button>
+          <button 
+            type="button" 
+            className="btn-live-toast-dismiss" 
+            onClick={() => {
+              const next = [...readNotifIds, liveToastNotif.id];
+              setReadNotifIds(next);
+              localStorage.setItem("reksa_read_notifications", JSON.stringify(next));
+              window.dispatchEvent(new Event("reksa_notifications_updated"));
+              setLiveToastNotif(null);
+            }}
+          >
+            Abaikan
+          </button>
+        </div>
+      </div>
+    )}
     {logoutOpen && <Modal icon="logout" title="Keluar dari akun?" close={() => setLogoutOpen(false)}><p>Sesi Anda akan diakhiri. Anda dapat masuk kembali kapan saja.</p><div className="modal-actions"><Button variant="secondary" onClick={() => setLogoutOpen(false)}>Batal</Button><Button onClick={logout}>Keluar</Button></div></Modal>}
     {toast && <div className="toast"><Icon name="check" /> {toast}</div>}
   </div>;
@@ -3091,10 +3440,10 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
   if (page === "dashboard") return <PoskoDashboard state={state} update={update} setPage={setPage} onRefresh={onRefresh} />;
   if (page === "chat") return <ChatKoordinasi role="posko" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} posko onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
-  if (page === "cases") return <PoskoVerifikasiLaporan cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} />;
+  if (page === "cases") return <PoskoVerifikasiLaporan cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} selectedCaseId={state.activeCaseId} />;
   if (page === "resources") return <PoskoKebutuhanBursa cases={state.casesList || []} bursaList={state.bursaList || []} penawaranList={state.penawaranList || []} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
-  if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} />;
-  if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={state.misiList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
+  if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} selectedCaseId={state.activeCaseId} />;
+  if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={state.misiList || []} cases={state.casesList || []} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} selectedCaseId={state.activeCaseId} />;
   if (page === "map") return <MapPage open={() => setPage("case")} cases={state.casesList || []} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} role="posko" />;
   if (page === "notifications") return <Notifications role="posko" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Petugas Posko" notify={notify} state={state} update={update} setName={setName} />;
@@ -4594,7 +4943,7 @@ function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nu
   if (page === "chat") return <ChatKoordinasi role="responder" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
-  if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} />;
+  if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} selectedCaseId={state.activeCaseId} />;
   if (page === "history") return <MitraRiwayatPenyaluran misiList={state.misiList || []} cases={state.casesList || []} onNavigateToTasks={() => setPage("tasks")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("tasks"); }} notify={notify} onRefresh={onRefresh} />;
   if (page === "map") return (
     <MapPage 
@@ -4913,56 +5262,31 @@ function Notifications({
     };
   }, [state?.logs]);
 
-  // Compute live notifications directly from database logs and user actions
-  const computeLiveNotifications = () => {
-    const list: {
-      id: string;
-      title: string;
-      desc: string;
-      time: string;
-      code: string;
-      cat: "Pengiriman" | "Verifikasi" | "Penugasan" | "Laporan";
-      unread: boolean;
-      caseId: string;
-    }[] = [];
+  // Compute live notifications directly from database logs and user actions with role-based deep linking
+  const computeLiveNotifications = (): NotificationItem[] => {
+    const list: NotificationItem[] = [];
 
     // 1. Backend database activity logs (Real persistent log events)
     dbLogs.forEach((dbLog, idx) => {
       const code = dbLog.kebutuhan?.kode_kasus || `RK-2026-00${dbLog.kebutuhan_id || 124}`;
       const aksi = dbLog.aksi || "Pembaruan Kasus";
-      let cat: "Pengiriman" | "Verifikasi" | "Penugasan" | "Laporan" = "Verifikasi";
-      let title = aksi;
-
-      if (aksi.includes("Klarifikasi")) {
-        cat = "Verifikasi";
-        title = aksi.includes("Jawaban") ? "Jawaban Klarifikasi Dikirim" : "Permintaan Klarifikasi Posko BPBD";
-      } else if (aksi.includes("Tolak") || aksi.includes("Ditolak")) {
-        cat = "Verifikasi";
-        title = "Laporan Kebutuhan Ditolak";
-      } else if (aksi.includes("Kirim") || aksi.includes("Penyaluran") || aksi.includes("Selesai") || aksi.includes("Konfirmasi")) {
-        cat = "Pengiriman";
-        title = aksi.includes("Selesai") || aksi.includes("Konfirmasi") ? "Bantuan Berhasil Diterima" : "Armada Penyaluran Berangkat";
-      } else if (aksi.includes("Verifikasi") || aksi.includes("Persetujuan")) {
-        cat = "Verifikasi";
-        title = "Verifikasi & Validasi Posko";
-      } else if (aksi.includes("Masuk") || aksi.includes("Laporan")) {
-        cat = "Laporan";
-        title = "Laporan Kebutuhan Masuk";
-      } else {
-        cat = "Penugasan";
-        title = "Alokasi Logistik Disiapkan";
-      }
-
+      const meta = resolveDeepLinkForRole(role, aksi, dbLog.deskripsi, "");
       const notifId = `db-log-${dbLog.id || idx}`;
+
       list.push({
         id: notifId,
-        title,
+        title: meta.titleOverride || aksi,
         desc: dbLog.deskripsi,
         time: new Date(dbLog.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB",
         code,
-        cat,
+        cat: meta.categoryLabel,
         unread: !readNotifIds.includes(notifId),
         caseId: code,
+        targetPage: meta.targetPage,
+        actionLabel: meta.actionLabel,
+        badgeRole: meta.badgeRole,
+        destinationLabel: meta.destinationLabel,
+        iconName: meta.iconName,
       });
     });
 
@@ -4970,57 +5294,27 @@ function Notifications({
     if (state?.logs && state.logs.length > 0) {
       state.logs.forEach((logText, idx) => {
         const timeAgo = idx === 0 ? "Baru saja" : `${idx * 5} menit lalu`;
-        let cat: "Pengiriman" | "Verifikasi" | "Penugasan" | "Laporan" = "Verifikasi";
-        let title = "Pembaruan Kasus";
         let code = state.activeCaseId || "RK-2026-00272";
-
         const matchCode = logText.match(/RK-\d{4}-\d{5}/);
         if (matchCode) code = matchCode[0];
 
-        if (
-          logText.toLowerCase().includes("kirim") || 
-          logText.toLowerCase().includes("distribusi") || 
-          logText.toLowerCase().includes("diterima") || 
-          logText.toLowerCase().includes("selesai") ||
-          logText.toLowerCase().includes("resolved")
-        ) {
-          cat = "Pengiriman";
-          title = logText.toLowerCase().includes("selesai") || logText.toLowerCase().includes("diterima") || logText.toLowerCase().includes("resolved")
-            ? "Bantuan Selesai Diserahkan" 
-            : "Armada Distribusi Bergerak";
-        } else if (
-          logText.toLowerCase().includes("verifikasi") || 
-          logText.toLowerCase().includes("disetujui") || 
-          logText.toLowerCase().includes("bursa")
-        ) {
-          cat = "Verifikasi";
-          title = "Verifikasi & Persetujuan Posko";
-        } else if (
-          logText.toLowerCase().includes("tugas") || 
-          logText.toLowerCase().includes("mitra") || 
-          logText.toLowerCase().includes("alokasi")
-        ) {
-          cat = "Penugasan";
-          title = "Penetapan Alokasi Bantuan";
-        } else if (
-          logText.toLowerCase().includes("laporan") || 
-          logText.toLowerCase().includes("dibuat") ||
-          logText.toLowerCase().includes("diajukan")
-        ) {
-          cat = "Laporan";
-          title = "Laporan Kebutuhan Masuk";
-        }
-
+        const meta = resolveDeepLinkForRole(role, "", logText, "");
         const notifId = `live-log-${idx}-${logText.slice(0, 20)}`;
+
         list.push({
           id: notifId,
-          title,
+          title: meta.titleOverride || "Pembaruan Aktivitas Kasus",
           desc: logText,
           time: timeAgo,
           code,
-          cat,
+          cat: meta.categoryLabel,
           unread: !readNotifIds.includes(notifId),
           caseId: code,
+          targetPage: meta.targetPage,
+          actionLabel: meta.actionLabel,
+          badgeRole: meta.badgeRole,
+          destinationLabel: meta.destinationLabel,
+          iconName: meta.iconName,
         });
       });
     }
@@ -5050,14 +5344,6 @@ function Notifications({
 
   const handleMarkAllAsRead = () => {
     const allIds: string[] = [];
-    dbLogs.forEach((dbLog, idx) => {
-      allIds.push(`db-log-${dbLog.id || idx}`);
-    });
-    if (state?.logs) {
-      state.logs.forEach((logText, idx) => {
-        allIds.push(`live-log-${idx}-${logText.slice(0, 20)}`);
-      });
-    }
     allNotifications.forEach((n) => allIds.push(n.id));
     const combined = Array.from(new Set([...readNotifIds, ...allIds]));
     setReadNotifIds(combined);
@@ -5065,13 +5351,13 @@ function Notifications({
     window.dispatchEvent(new Event("reksa_notifications_updated"));
   };
 
-  const handleOpenCase = (notifId: string, caseId?: string) => {
-    markAsRead(notifId);
-    if (caseId && update) {
-      update({ activeCaseId: caseId });
+  const handleDeepLinkNotification = (item: NotificationItem) => {
+    markAsRead(item.id);
+    if (item.caseId && update) {
+      update({ activeCaseId: item.caseId });
     }
     if (setPage) {
-      setPage("case");
+      setPage(item.targetPage);
     } else {
       open();
     }
@@ -5080,9 +5366,9 @@ function Notifications({
   return (
     <main className="workspace notifications-workspace">
       <PageHead 
-        eyebrow="Pusat Pemberitahuan" 
-        title="Notifikasi &amp; Pembaruan" 
-        copy="Daftar aktivitas penanganan bantuan dan verifikasi posko terkini." 
+        eyebrow="Pusat Pemberitahuan &amp; Deep-Linking" 
+        title="Notifikasi &amp; Pembaruan Real-Time" 
+        copy="Daftar aktivitas lintas role dengan tautan langsung ke konsol verifikasi posko, penawaran mitra, misi armada, dan konfirmasi serah terima bantuan." 
         action={
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             {unreadCount > 0 && (
@@ -5104,16 +5390,21 @@ function Notifications({
 
       <div className="notif-top-bar">
         <div className="cases-pill-filters">
-          {["Semua", "Pengiriman", "Verifikasi", "Penugasan", "Laporan"].map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              className={`case-filter-btn ${filter === cat ? "active" : ""}`}
-              onClick={() => setFilter(cat)}
-            >
-              {cat}
-            </button>
-          ))}
+          {["Semua", "Pengiriman", "Verifikasi", "Penugasan", "Laporan"].map((cat) => {
+            const count = cat === "Semua" ? allNotifications.length : allNotifications.filter((n) => n.cat === cat).length;
+            const unreadCatCount = cat === "Semua" ? unreadCount : allNotifications.filter((n) => n.cat === cat && n.unread).length;
+            return (
+              <button
+                key={cat}
+                type="button"
+                className={`case-filter-btn ${filter === cat ? "active" : ""}`}
+                onClick={() => setFilter(cat)}
+              >
+                {cat} ({count})
+                {unreadCatCount > 0 && <span className="pill-unread-dot" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -5128,15 +5419,18 @@ function Notifications({
             <div 
               className={`notif-inbox-card ${x.unread ? "unread" : ""}`} 
               key={x.id}
-              onClick={() => markAsRead(x.id)}
+              onClick={() => handleDeepLinkNotification(x)}
+              style={{ cursor: "pointer" }}
             >
               <div className={`notif-inbox-avatar ${x.unread ? "new" : ""}`}>
-                <Icon name="bell" />
+                <Icon name={x.iconName || "bell"} />
                 {x.unread && <span className="notif-dot-pulse" />}
               </div>
               <div className="notif-inbox-content">
                 <div className="notif-meta-row">
                   <span className="notif-tag">{x.cat}</span>
+                  <span className="notif-role-badge">{x.badgeRole}</span>
+                  <span className="notif-dest-chip">→ {x.destinationLabel}</span>
                   <small>{x.time} · {x.code}</small>
                 </div>
                 <h3>{x.title}</h3>
@@ -5147,10 +5441,10 @@ function Notifications({
                 className="btn-notif-action" 
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleOpenCase(x.id, x.caseId);
+                  handleDeepLinkNotification(x);
                 }}
               >
-                Lihat Kasus <Icon name="next" />
+                {x.actionLabel || "Lihat Kasus"} <Icon name="next" />
               </button>
             </div>
           ))

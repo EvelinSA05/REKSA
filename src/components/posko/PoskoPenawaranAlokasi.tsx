@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CaseRecord } from "../../App";
 import { BursaItem, PenawaranItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
@@ -10,6 +10,7 @@ interface PoskoPenawaranAlokasiProps {
   onRefresh?: () => Promise<void> | void;
   notify?: (msg: string) => void;
   onNavigateToMissions: () => void;
+  selectedCaseId?: string;
 }
 
 export function PoskoPenawaranAlokasi({
@@ -19,8 +20,16 @@ export function PoskoPenawaranAlokasi({
   onRefresh,
   notify,
   onNavigateToMissions,
+  selectedCaseId,
 }: PoskoPenawaranAlokasiProps) {
   const [tab, setTab] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [caseFilter, setCaseFilter] = useState<string | null>(selectedCaseId || null);
+
+  useEffect(() => {
+    if (selectedCaseId) {
+      setCaseFilter(selectedCaseId);
+    }
+  }, [selectedCaseId]);
 
   // Approval / Rejection modal
   const [activeOffer, setActiveOffer] = useState<PenawaranItem | null>(null);
@@ -58,12 +67,23 @@ export function PoskoPenawaranAlokasi({
     }
   });
 
-  const filteredOffers = syntheticOffers.filter((o) => {
-    if (tab === "pending") return o.status === "Diajukan";
-    if (tab === "approved") return o.status === "Disetujui";
-    if (tab === "rejected") return o.status === "Ditolak";
-    return true;
-  });
+  const filteredOffers = syntheticOffers
+    .filter((o) => {
+      if (tab === "pending") return o.status === "Diajukan";
+      if (tab === "approved") return o.status === "Disetujui";
+      if (tab === "rejected") return o.status === "Ditolak";
+      return true;
+    })
+    .filter((o) => {
+      if (!caseFilter) return true;
+      const target = caseFilter.toLowerCase();
+      const caseMatch = cases.find(c => c.id.toLowerCase() === target || String(c.rawId) === target.replace(/\D/g, ""));
+      const matchesKebutuhan = (o.kebutuhan_id && caseMatch?.rawId && o.kebutuhan_id === caseMatch.rawId) ||
+        (o.bursa?.kebutuhan?.kode_kasus && o.bursa.kebutuhan.kode_kasus.toLowerCase() === target) ||
+        (o.catatan && o.catatan.toLowerCase().includes(target)) ||
+        (o.kode_penawaran && o.kode_penawaran.toLowerCase().includes(target));
+      return matchesKebutuhan;
+    });
 
   const handleApproveFull = async (offer: PenawaranItem) => {
     try {
@@ -227,6 +247,47 @@ export function PoskoPenawaranAlokasi({
           );
         })}
       </div>
+
+      {/* ACTIVE CASE FILTER BANNER (Deep-Link) */}
+      {caseFilter && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "#ecfdf5",
+            border: "1px solid #a7f3d0",
+            borderRadius: "12px",
+            padding: "10px 16px",
+            marginBottom: "16px",
+            color: "#065f46",
+            fontSize: "0.85rem",
+            flexWrap: "wrap",
+            gap: "8px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span>🎯</span>
+            <span>Menampilkan penawaran khusus untuk kasus: <strong>{caseFilter}</strong> ({filteredOffers.length} penawaran ditemukan)</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCaseFilter(null)}
+            style={{
+              background: "#ffffff",
+              border: "1px solid #10b981",
+              color: "#047857",
+              borderRadius: "8px",
+              padding: "4px 10px",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            ✕ Tampilkan Semua Kasus
+          </button>
+        </div>
+      )}
 
       {/* OFFERS LIST */}
       {filteredOffers.length === 0 ? (

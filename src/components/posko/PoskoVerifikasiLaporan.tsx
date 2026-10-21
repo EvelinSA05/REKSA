@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CaseRecord } from "../../App";
 import { apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
@@ -8,6 +8,7 @@ interface PoskoVerifikasiLaporanProps {
   onSelectCase: (c: CaseRecord) => void;
   onRefresh?: () => Promise<void> | void;
   notify?: (msg: string) => void;
+  selectedCaseId?: string;
 }
 
 export function PoskoVerifikasiLaporan({
@@ -15,12 +16,27 @@ export function PoskoVerifikasiLaporan({
   onSelectCase,
   onRefresh,
   notify,
+  selectedCaseId,
 }: PoskoVerifikasiLaporanProps) {
   const [tab, setTab] = useState<"all" | "pending" | "clarify" | "verified" | "rejected">("pending");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(selectedCaseId || "");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
+
+  useEffect(() => {
+    if (selectedCaseId) {
+      setSearch(selectedCaseId);
+      const found = cases.find((c) => c.id.toLowerCase() === selectedCaseId.toLowerCase());
+      if (found) {
+        const s = (found.status || "").toLowerCase();
+        if (s.includes("klarifikasi")) setTab("clarify");
+        else if (s.includes("verifikasi") || s === "diajukan" || s === "baru") setTab("pending");
+        else if (s.includes("tolak")) setTab("rejected");
+        else setTab("verified");
+      }
+    }
+  }, [selectedCaseId, cases]);
 
   // Modals
   const [modalAction, setModalAction] = useState<"verify" | "clarify" | "reject" | "further" | null>(null);
