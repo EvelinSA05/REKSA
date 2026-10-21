@@ -229,7 +229,7 @@ export function ReksaAiChatbot({ state, update, setPage }: ReksaAiChatbotProps) 
             }}
             title="Buka Asisten Cerdas REKSA AI"
           >
-            <span style={{ fontSize: "1.4rem" }}>✨</span>
+            <span style={{ fontSize: "1.4rem", filter: "grayscale(100%)" }}>✨</span>
             <span
               style={{
                 position: "absolute",
