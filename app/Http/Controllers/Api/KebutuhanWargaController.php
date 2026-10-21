@@ -133,7 +133,9 @@ class KebutuhanWargaController extends Controller
             );
         }
 
-        $randomCode = 'RK-' . date('Y') . '-' . str_pad(rand(100, 999), 5, '0', STR_PAD_LEFT);
+        do {
+            $randomCode = 'RK-' . date('Y') . '-' . strtoupper(\Illuminate\Support\Str::random(6));
+        } while (KebutuhanWarga::where('kode_kasus', $randomCode)->exists());
 
         // System Decision Support Engine (Rekomendasi Prioritas Otomatis Berbasis Fakta)
         $isVulnerable = $validated['vulnerable_group'] ?? false;

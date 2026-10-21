@@ -101,7 +101,9 @@ class PenawaranMitraController extends Controller
             $armadaInfo = $inputArmada;
         }
 
-        $kodePenawaran = 'TWR-' . date('Y') . '-' . str_pad(rand(10, 999), 4, '0', STR_PAD_LEFT);
+        do {
+            $kodePenawaran = 'TWR-' . date('Y') . '-' . strtoupper(\Illuminate\Support\Str::random(5));
+        } while (PenawaranMitra::where('kode_penawaran', $kodePenawaran)->exists());
 
         $penawaran = PenawaranMitra::create([
             'kode_penawaran' => $kodePenawaran,
@@ -233,7 +235,9 @@ class PenawaranMitraController extends Controller
             ]);
 
             // Terbitkan Misi Penyaluran Resmi untuk Mitra
-            $kodeMisi = 'MISI-ASG-' . str_pad(rand(10, 999), 3, '0', STR_PAD_LEFT);
+            do {
+                $kodeMisi = 'MISI-ASG-' . strtoupper(\Illuminate\Support\Str::random(5));
+            } while (MisiPenyaluran::where('kode_misi', $kodeMisi)->exists());
             $misi = MisiPenyaluran::create([
                 'kode_misi' => $kodeMisi,
                 'kebutuhan_id' => $kebutuhan->id,

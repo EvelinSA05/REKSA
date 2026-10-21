@@ -125,7 +125,9 @@ class BursaBantuanController extends Controller
         ]);
 
         // Buat Misi Penyaluran Resmi untuk Mitra
-        $kodeMisi = 'MISI-ASG-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+        do {
+            $kodeMisi = 'MISI-ASG-' . strtoupper(\Illuminate\Support\Str::random(5));
+        } while (MisiPenyaluran::where('kode_misi', $kodeMisi)->exists());
         $defaultMitraId = User::where('role', 'responder')->value('id') ?? User::first()?->id;
         $poskoUserId = $request->user()?->id ?? User::where('role', 'posko')->value('id') ?? User::first()?->id;
 
