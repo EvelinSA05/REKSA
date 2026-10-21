@@ -633,93 +633,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
             {/* STEP 1: KEBUTUHAN & REGULASI BNPB/BPBD */}
             {step === 1 && (
               <div className="form-fields-group">
-                {/* 1. KATEGORI BERDASARKAN FASE STATUS DARURAT BENCANA */}
-                <div className="form-group" style={{ marginBottom: "16px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
-                    <label className="form-label" style={{ margin: 0 }}>
-                      Fase Status Darurat Bencana (BNPB &amp; BPBD)
-                    </label>
-                    <span style={{ fontSize: "0.78rem", color: "#1c5a39", fontWeight: 700 }}>
-                      Klasifikasi Kesiapsiagaan &amp; Eskalasi
-                    </span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px" }}>
-                    {[
-                      {
-                        fase: "Siaga Darurat" as const,
-                        icon: "⚠️",
-                        badge: "Fase 1 · Kesiapsiagaan",
-                        desc: "Potensi ancaman sudah mengarah pada bencana. Fokus kaji cepat, logistik & evakuasi pencegahan.",
-                        activeBg: "#fffbeb",
-                        activeBorder: "#f59e0b",
-                        textColor: "#92400e",
-                      },
-                      {
-                        fase: "Tanggap Darurat" as const,
-                        icon: "🚨",
-                        badge: "Fase 2 · Tanggap Bencana",
-                        desc: "Bencana sudah terjadi. Fokus penuh penyelamatan, evakuasi, medis & pemenuhan kebutuhan dasar.",
-                        activeBg: "#fef2f2",
-                        activeBorder: "#ef4444",
-                        textColor: "#991b1b",
-                      },
-                      {
-                        fase: "Transisi Darurat ke Pemulihan" as const,
-                        icon: "🛠️",
-                        badge: "Fase 3 · Pemulihan Pascabencana",
-                        desc: "Eskalasi menurun. Bantuan fokus pada perbaikan sarana prasarana vital & stimulan perbaikan rumah.",
-                        activeBg: "#f0fdf4",
-                        activeBorder: "#10b981",
-                        textColor: "#065f46",
-                      },
-                    ].map((item) => {
-                      const isSelected = faseDarurat === item.fase;
-                      return (
-                        <div
-                          key={item.fase}
-                          onClick={() => setFaseDarurat(item.fase)}
-                          style={{
-                            border: isSelected ? `2px solid ${item.activeBorder}` : "1px solid #d4ded3",
-                            background: isSelected ? item.activeBg : "#ffffff",
-                            padding: "12px 14px",
-                            borderRadius: "12px",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                              <span style={{ fontSize: "1.1rem" }}>{item.icon}</span>
-                              <span
-                                style={{
-                                  fontSize: "0.70rem",
-                                  fontWeight: 700,
-                                  background: isSelected ? item.activeBorder : "#e5e7eb",
-                                  color: isSelected ? "#ffffff" : "#4b5563",
-                                  padding: "2px 7px",
-                                  borderRadius: "6px",
-                                }}
-                              >
-                                {item.badge}
-                              </span>
-                            </div>
-                            <strong style={{ display: "block", fontSize: "0.88rem", color: isSelected ? item.textColor : "#013220", marginTop: "4px" }}>
-                              {item.fase}
-                            </strong>
-                          </div>
-                          <p style={{ margin: "6px 0 0", fontSize: "0.75rem", color: "#607264", lineHeight: 1.4 }}>
-                            {item.desc}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. KATEGORI KEBUTUHAN DASAR (PERKA BNPB NO. 7/2008 & KEPKA NO. 296A/2023) */}
+                {/* 1. KATEGORI KEBUTUHAN DASAR (PERKA BNPB NO. 7/2008 & KEPKA NO. 296A/2023) */}
                 <div className="form-group">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
                     <label className="form-label" style={{ margin: 0 }}>Kategori Jenis Kebutuhan Pascabencana</label>
@@ -742,6 +656,10 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                               const qty = parseInt(amount) || 1;
                               setEstimasiStimulanNominal(qty * 60000000);
                             }
+                          } else {
+                            setFaseDarurat("Tanggap Darurat");
+                            setKategoriKerusakanRumah("");
+                            setEstimasiStimulanNominal(0);
                           }
                         }}
                       >
@@ -1792,12 +1710,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         1. Kebutuhan &amp; Klasifikasi Regulasi BNPB
                       </span>
                     </div>
-                    <div className="review-item">
-                      <span className="review-label">Fase Status Darurat Bencana</span>
-                      <strong style={{ color: faseDarurat === "Tanggap Darurat" ? "#b91c1c" : faseDarurat === "Siaga Darurat" ? "#b45309" : "#047857" }}>
-                        {faseDarurat}
-                      </strong>
-                    </div>
+
                     <div className="review-item">
                       <span className="review-label">Kategori Kebutuhan</span>
                       <strong>{category === "Lainnya" && customCategory ? customCategory : category}</strong>
