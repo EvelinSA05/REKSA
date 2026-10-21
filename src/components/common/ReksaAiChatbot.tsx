@@ -235,14 +235,15 @@ export function ReksaAiChatbot({ state, update, setPage }: ReksaAiChatbotProps) 
                 position: "absolute",
                 top: "-2px",
                 right: "-2px",
-                background: "#f59e0b",
-                color: "#78350f",
+                background: "#10b981",
+                color: "#ffffff",
                 fontSize: "0.62rem",
                 fontWeight: 800,
                 padding: "2px 5px",
                 borderRadius: "999px",
                 border: "1.5px solid #ffffff",
                 letterSpacing: "0.02em",
+                boxShadow: "0 2px 5px rgba(1, 50, 32, 0.25)",
               }}
             >
               AI
