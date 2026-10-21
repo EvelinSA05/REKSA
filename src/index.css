@@ -9520,6 +9520,13 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   }
 }
 
+/* Choropleth Thematic Map Label Badge */
+.choropleth-label-badge {
+  background: transparent !important;
+  border: none !important;
+  pointer-events: none !important;
+}
+
 /* Map Marker Animations */
 @keyframes gmap-pulse {
   0% {

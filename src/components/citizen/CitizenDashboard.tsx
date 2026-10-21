@@ -15,6 +15,7 @@ import {
 import { CitizenClarificationModal } from "./CitizenClarificationModal";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 import { GrafikTransparansiBantuan } from "../common/GrafikTransparansiBantuan";
+import { PetaSebaranPenanganan } from "./PetaSebaranPenanganan";
 import { MisiItem, apiService } from "../../services/api";
 
 interface CitizenDashboardProps {
@@ -592,7 +593,13 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         )}
       </section>
 
-      {/* 4. GRAFIK TRANSPARANSI BANTUAN DARI BPBD & MITRA */}
+      {/* 4. PETA SEBARAN DUA WARNA (CHOROPLETH) PENANGANAN MITRA & BPBD */}
+      <PetaSebaranPenanganan
+        cases={state.casesList}
+        misiList={localMisiList}
+      />
+
+      {/* 5. GRAFIK TRANSPARANSI BANTUAN DARI BPBD & MITRA */}
       <GrafikTransparansiBantuan
         cases={state.casesList}
         misiList={localMisiList}
