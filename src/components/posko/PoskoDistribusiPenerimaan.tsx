@@ -3,6 +3,7 @@ import { CaseRecord } from "../../App";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
+import { BastPrintModal } from "../common/BastPrintModal";
 
 interface PoskoDistribusiPenerimaanProps {
   misiList: MisiItem[];
@@ -59,6 +60,9 @@ export function PoskoDistribusiPenerimaan({
 
   // Live Fleet Tracking Modal
   const [trackingModalMisi, setTrackingModalMisi] = useState<MisiItem | null>(null);
+
+  // Digital BAST Print/Download Modal
+  const [selectedBastMisi, setSelectedBastMisi] = useState<MisiItem | null>(null);
 
   const activeMissions = misiList.filter((m) => m.status_tahapan !== "Selesai");
   const arrivedMissions = misiList.filter(
@@ -586,13 +590,25 @@ export function PoskoDistribusiPenerimaan({
                         <span>Konfirmasi Penerimaan (BAST)</span>
                       </button>
                     ) : (
-                      <span
-                        className="posko-case-status-badge status-verified"
-                        style={{ padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
-                      >
-                        <AppIcon name="check" size={13} />
-                        <span>✓ Diterima Tuntas &amp; BAST Sah</span>
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <span
+                          className="posko-case-status-badge status-verified"
+                          style={{ padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                        >
+                          <AppIcon name="check" size={13} />
+                          <span>✓ Diterima Tuntas</span>
+                        </span>
+                        <button
+                          type="button"
+                          className="btn-bast-download"
+                          onClick={() => setSelectedBastMisi(m)}
+                          style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                          title="Cetak Berita Acara Serah Terima untuk arsip resmi BPBD"
+                        >
+                          <AppIcon name="file" size={13} />
+                          <span>Cetak BAST Digital</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -805,6 +821,14 @@ export function PoskoDistribusiPenerimaan({
             />
           </div>
         </div>
+      )}
+
+      {/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
+      {selectedBastMisi && (
+        <BastPrintModal
+          misi={selectedBastMisi}
+          onClose={() => setSelectedBastMisi(null)}
+        />
       )}
     </main>
   );

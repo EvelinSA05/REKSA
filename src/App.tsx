@@ -227,6 +227,7 @@ import { MitraPenawaranSaya } from "./components/mitra/MitraPenawaranSaya";
 import { MitraMisiPenyaluran } from "./components/mitra/MitraMisiPenyaluran";
 import { MitraRiwayatPenyaluran } from "./components/mitra/MitraRiwayatPenyaluran";
 import { MitraDashboard } from "./components/mitra/MitraDashboard";
+import { BastPrintModal } from "./components/common/BastPrintModal";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: any) {
@@ -1845,6 +1846,7 @@ function CaseDetail({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isApprovingClaim, setIsApprovingClaim] = useState(false);
+  const [isBastModalOpen, setIsBastModalOpen] = useState(false);
 
   // Clarification answering states for Citizen
   const [clarificationAnswer, setClarificationAnswer] = useState("");
@@ -3326,11 +3328,21 @@ function CaseDetail({
 
                       {/* COMPLETED BANNER IF RESOLVED */}
                       {(activeCase.status === "Selesai" || m.status_tahapan === "Selesai") && (
-                        <div style={{ marginTop: "12px", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 12px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem" }}>
-                          <span style={{ color: "#15803d", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                            <Icon name="check" /> Fisik Bantuan Diterima Lengkap Warga
-                          </span>
-                          <span style={{ color: "#166534", fontWeight: 600 }}>Volume: {m.jumlah_diterima || m.muatan || activeCase.qty}</span>
+                        <div style={{ marginTop: "12px", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "10px 14px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", fontSize: "0.82rem" }}>
+                          <div>
+                            <span style={{ color: "#15803d", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              <Icon name="check" /> Fisik Bantuan Diterima Lengkap Warga
+                            </span>
+                            <span style={{ color: "#166534", fontWeight: 600, display: "block", fontSize: "0.78rem", marginTop: "2px" }}>Volume: {m.jumlah_diterima || m.muatan || activeCase.qty}</span>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-bast-download btn-bast-primary"
+                            onClick={() => setIsBastModalOpen(true)}
+                            title="Unduh dan cetak Berita Acara Serah Terima Resmi (BAST)"
+                          >
+                            <Icon name="file" /> Dokumen BAST Digital
+                          </button>
                         </div>
                       )}
                     </div>
@@ -3391,11 +3403,21 @@ function CaseDetail({
                     )}
 
                     {activeCase.status === "Selesai" && (
-                      <div style={{ marginTop: "12px", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "8px 12px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem" }}>
-                        <span style={{ color: "#15803d", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                          <Icon name="check" /> Fisik Bantuan Diterima Lengkap Warga
-                        </span>
-                        <span style={{ color: "#166534", fontWeight: 600 }}>Volume: {activeCase.qty}</span>
+                      <div style={{ marginTop: "12px", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "10px 14px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", fontSize: "0.82rem" }}>
+                        <div>
+                          <span style={{ color: "#15803d", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                            <Icon name="check" /> Fisik Bantuan Diterima Lengkap Warga
+                          </span>
+                          <span style={{ color: "#166534", fontWeight: 600, display: "block", fontSize: "0.78rem", marginTop: "2px" }}>Volume: {activeCase.qty}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-bast-download btn-bast-primary"
+                          onClick={() => setIsBastModalOpen(true)}
+                          title="Unduh dan cetak Berita Acara Serah Terima Resmi (BAST)"
+                        >
+                          <Icon name="file" /> Dokumen BAST Digital
+                        </button>
                       </div>
                     )}
                   </div>
@@ -3432,6 +3454,15 @@ function CaseDetail({
           </div>
         </div>
       </div>
+
+      {/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
+      {isBastModalOpen && (
+        <BastPrintModal
+          caseRecord={activeCase}
+          misi={matchedMisiList?.[0] || null}
+          onClose={() => setIsBastModalOpen(false)}
+        />
+      )}
     </main>
   );
 }

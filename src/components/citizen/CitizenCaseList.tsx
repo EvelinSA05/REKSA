@@ -12,6 +12,7 @@ import {
 } from "../../App";
 import { apiService } from "../../services/api";
 import { CitizenClarificationModal } from "./CitizenClarificationModal";
+import { BastPrintModal } from "../common/BastPrintModal";
 
 interface CitizenCaseListProps {
   title: string;
@@ -46,6 +47,7 @@ export function CitizenCaseList({
   const [editingCase, setEditingCase] = useState<CaseRecord | null>(null);
   const [deletingCase, setDeletingCase] = useState<CaseRecord | null>(null);
   const [clarificationCase, setClarificationCase] = useState<CaseRecord | null>(null);
+  const [selectedBastCase, setSelectedBastCase] = useState<CaseRecord | null>(null);
 
   // Fast Confirmation states (BAST Digital)
   const [confirmingReceiptCase, setConfirmingReceiptCase] = useState<CaseRecord | null>(null);
@@ -651,63 +653,92 @@ export function CitizenCaseList({
                     </button>
                   )}
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        padding: "6px 10px",
-                        background: "#ffffff",
-                        border: "1px solid #c1c3ac",
-                        borderRadius: "8px",
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        color: "#013220",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Icon name="edit" /> Ubah
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeletingCase(c)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        padding: "6px 10px",
-                        background: "#fff1f0",
-                        border: "1px solid #ffa39e",
-                        borderRadius: "8px",
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        color: "#cf1322",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Icon name="trash" /> Hapus
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-case-action"
-                      onClick={() => handlePantau(c)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "4px",
-                        padding: "6px 8px",
-                        fontSize: "0.8rem",
-                      }}
-                    >
-                      Pantau <Icon name="next" />
-                    </button>
-                  </div>
+                  {isDone ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "8px" }}>
+                      <button
+                        type="button"
+                        className="btn-bast-download"
+                        onClick={() => setSelectedBastCase(c)}
+                        title="Unduh dan cetak Berita Acara Serah Terima Resmi (BAST)"
+                        style={{ padding: "8px 12px", fontSize: "0.82rem" }}
+                      >
+                        <Icon name="file" /> Dokumen BAST
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-case-action"
+                        onClick={() => handlePantau(c)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          padding: "8px 10px",
+                          fontSize: "0.82rem",
+                        }}
+                      >
+                        Detail Kasus <Icon name="next" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "6px 10px",
+                          background: "#ffffff",
+                          border: "1px solid #c1c3ac",
+                          borderRadius: "8px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          color: "#013220",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Icon name="edit" /> Ubah
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeletingCase(c)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "6px 10px",
+                          background: "#fff1f0",
+                          border: "1px solid #ffa39e",
+                          borderRadius: "8px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          color: "#cf1322",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Icon name="trash" /> Hapus
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-case-action"
+                        onClick={() => handlePantau(c)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "4px",
+                          padding: "6px 8px",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        Pantau <Icon name="next" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -964,6 +995,14 @@ export function CitizenCaseList({
             </div>
           </div>
         </div>
+      )}
+
+      {/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
+      {selectedBastCase && (
+        <BastPrintModal
+          caseRecord={selectedBastCase}
+          onClose={() => setSelectedBastCase(null)}
+        />
       )}
     </main>
   );

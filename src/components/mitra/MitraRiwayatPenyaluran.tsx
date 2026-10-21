@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { MisiItem } from "../../services/api";
 import { CaseRecord } from "../../App";
 import { AppIcon } from "../common/Icons";
+import { BastPrintModal } from "../common/BastPrintModal";
 
 interface MitraRiwayatPenyaluranProps {
   misiList: MisiItem[];
@@ -635,189 +636,20 @@ export function MitraRiwayatPenyaluran({
         </div>
       )}
 
-      {/* INTERACTIVE BAST CERTIFICATE MODAL */}
+      {/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
       {selectedBastMisi && (
-        <div className="bast-modal-backdrop" onClick={() => setSelectedBastMisi(null)}>
-          <div className="bast-modal-paper" onClick={(e) => e.stopPropagation()}>
-            <div className="bast-doc-sheet">
-              {/* DOCUMENT HEADER */}
-              <div className="bast-doc-header">
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#013220", color: "#ffffff", display: "grid", placeItems: "center", fontSize: "11px", fontWeight: 800 }}>
-                      R
-                    </div>
-                    <strong style={{ fontSize: "1rem", color: "#013220", letterSpacing: "0.03em" }}>REKSA KEMANUSIAAN</strong>
-                  </div>
-                  <div className="bast-doc-title-block">
-                    <h2>Berita Acara Serah Terima Bantuan (BAST)</h2>
-                    <p>Pemerintah Daerah · Badan Penanggulangan Bencana Daerah (BPBD)</p>
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div className="bast-seal-badge">
-                    <AppIcon name="check" size={13} /> Divalidasi Sah
-                  </div>
-                  <div style={{ fontSize: "0.75rem", color: "#64748b", fontFamily: "monospace" }}>
-                    NO: BAST/REKSA/2026/{selectedBastMisi.kode_misi.replace(/[^a-zA-Z0-9]/g, "")}
-                  </div>
-                </div>
-              </div>
-
-              {/* DOCUMENT META GRID */}
-              <div className="bast-meta-grid">
-                <div className="bast-meta-cell">
-                  <span>Nomor Kode Misi</span>
-                  <strong>{selectedBastMisi.kode_misi}</strong>
-                </div>
-                <div className="bast-meta-cell">
-                  <span>Kasus Terkait</span>
-                  <strong>{selectedBastMisi.kebutuhan?.kode_kasus || `RK-2026-00${selectedBastMisi.kebutuhan_id}`}</strong>
-                </div>
-                <div className="bast-meta-cell">
-                  <span>Posko Penanggung Jawab</span>
-                  <strong>{selectedBastMisi.posko?.nama_posko || "Posko BPBD Provinsi Jawa Timur"}</strong>
-                </div>
-                <div className="bast-meta-cell">
-                  <span>Lokasi Serah Terima</span>
-                  <strong>{selectedBastMisi.kebutuhan?.desa ? `${selectedBastMisi.kebutuhan.desa}, ${selectedBastMisi.kebutuhan.kecamatan}` : "Lokasi Pengungsian"}</strong>
-                </div>
-              </div>
-
-              {/* HANDOVER PARTIES */}
-              <div style={{ marginBottom: "18px" }}>
-                <p style={{ margin: "0 0 10px", fontSize: "0.85rem", color: "#334155", lineHeight: 1.5 }}>
-                  Pada hari ini telah dilakukan serah terima fisik bantuan logistik kemanusiaan pascabencana secara sah dan terukur antara:
-                </p>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", background: "#fafaf9", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2ded4" }}>
-                  <div>
-                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
-                      PIHAK PERTAMA (Penyalur)
-                    </span>
-                    <strong style={{ display: "block", color: "#013220", fontSize: "0.9rem", marginTop: "2px" }}>
-                      {selectedBastMisi.responder_name}
-                    </strong>
-                    <small style={{ color: "#64748b" }}>{selectedBastMisi.organisasi}</small>
-                  </div>
-
-                  <div>
-                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
-                      PIHAK KEDUA (Penerima)
-                    </span>
-                    <strong style={{ display: "block", color: "#013220", fontSize: "0.9rem", marginTop: "2px" }}>
-                      {selectedBastMisi.posko?.penanggung_jawab_nama || "Koordinator Posko BPBD"}
-                    </strong>
-                    <small style={{ color: "#64748b" }}>{selectedBastMisi.posko?.nama_posko || "Posko BPBD Wilayah"}</small>
-                  </div>
-                </div>
-              </div>
-
-              {/* LOGISTICS MANIFEST TABLE */}
-              <div style={{ marginBottom: "18px" }}>
-                <div style={{ fontSize: "0.76rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "6px" }}>
-                  Rincian Logistik yang Diserahterimakan
-                </div>
-                <table className="bast-table">
-                  <thead>
-                    <tr>
-                      <th>Komoditas Bantuan</th>
-                      <th>Muatan Dikirim</th>
-                      <th>Fisik Diterima</th>
-                      <th>Selisih Logistik</th>
-                      <th>Kondisi Fisik</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <strong>{selectedBastMisi.muatan}</strong>
-                        <div style={{ fontSize: "0.74rem", color: "#64748b" }}>
-                          Armada: {selectedBastMisi.armada_info || "Standar Penyaluran"}
-                        </div>
-                      </td>
-                      <td>{selectedBastMisi.muatan}</td>
-                      <td style={{ fontWeight: 700, color: "#15803d" }}>
-                        {selectedBastMisi.jumlah_diterima || selectedBastMisi.muatan}
-                      </td>
-                      <td style={{ fontWeight: 700, color: selectedBastMisi.selisih && selectedBastMisi.selisih !== "0" ? "#dc2626" : "#15803d" }}>
-                        {selectedBastMisi.selisih || "0 (Nihil)"}
-                      </td>
-                      <td>
-                        <span className="reksa-badge success" style={{ fontSize: "0.72rem", padding: "2px 8px" }}>
-                          Baik &amp; Layak Pakai
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* OFFICIAL STATEMENT & NOTES */}
-              <div style={{ background: "#f8fafc", padding: "12px 16px", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "0.82rem", color: "#334155", lineHeight: 1.5 }}>
-                <strong>Pernyataan Bersama:</strong> Seluruh komoditas bantuan telah diterima dalam keadaan fisik lengkap dan baik, disalurkan sesuai sasaran penugasan, serta resmi dicatat dalam sistem komando REKSA.
-                {selectedBastMisi.catatan_lapangan && (
-                  <div style={{ marginTop: "6px", paddingTop: "6px", borderTop: "1px dashed #cbd5e1" }}>
-                    <em>Catatan Lapangan: "{selectedBastMisi.catatan_lapangan}"</em>
-                  </div>
-                )}
-              </div>
-
-              {/* SIGNATURES SECTION */}
-              <div className="bast-signatures-grid">
-                <div className="bast-sign-box">
-                  <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                    Penyalur Bantuan (Mitra)
-                  </span>
-                  <div style={{ height: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontFamily: "cursive", fontSize: "1.2rem", color: "#013220" }}>
-                      {selectedBastMisi.responder_name}
-                    </span>
-                  </div>
-                  <strong style={{ display: "block", fontSize: "0.86rem", color: "#013220" }}>
-                    {selectedBastMisi.responder_name}
-                  </strong>
-                  <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Narahubung Resmi Penyalur</small>
-                </div>
-
-                <div className="bast-sign-box">
-                  <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                    Koordinator Penerima (Posko)
-                  </span>
-                  <div style={{ height: "48px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontFamily: "cursive", fontSize: "1.2rem", color: "#013220" }}>
-                      {selectedBastMisi.posko?.penanggung_jawab_nama || "Siti Rahma"}
-                    </span>
-                  </div>
-                  <strong style={{ display: "block", fontSize: "0.86rem", color: "#013220" }}>
-                    {selectedBastMisi.posko?.penanggung_jawab_nama || "Siti Rahma"}
-                  </strong>
-                  <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Petugas Komando Posko BPBD</small>
-                </div>
-              </div>
-            </div>
-
-            {/* MODAL FOOTER */}
-            <div className="bast-modal-footer">
-              <button
-                type="button"
-                className="reksa-btn reksa-btn-secondary"
-                onClick={() => setSelectedBastMisi(null)}
-              >
-                Tutup
-              </button>
-              <button
-                type="button"
-                className="reksa-btn reksa-btn-primary"
-                onClick={handlePrintBast}
-                style={{ background: "#013220", color: "#ffffff" }}
-              >
-                <AppIcon name="file" size={14} /> Cetak / Unduh Dokumen BAST
-              </button>
-            </div>
-          </div>
-        </div>
+        <BastPrintModal
+          misi={selectedBastMisi}
+          caseRecord={
+            cases.find(
+              (c) =>
+                (c.rawId && c.rawId === selectedBastMisi.kebutuhan_id) ||
+                c.id === selectedBastMisi.kebutuhan?.kode_kasus ||
+                c.id === `RK-2026-00${selectedBastMisi.kebutuhan_id}`
+            ) || null
+          }
+          onClose={() => setSelectedBastMisi(null)}
+        />
       )}
     </main>
   );

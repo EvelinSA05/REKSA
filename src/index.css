@@ -9383,6 +9383,143 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 0 0 18px 18px;
 }
 
+.btn-bast-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #013220;
+  border: 1.5px solid #013220;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-bast-download:hover {
+  background: #013220;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(1, 50, 32, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-bast-download.btn-bast-primary {
+  background: #013220;
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(1, 50, 32, 0.25);
+}
+
+.btn-bast-download.btn-bast-primary:hover {
+  background: #0f766e;
+}
+
+/* =========================================================
+   PRINT STYLES FOR OFFICIAL BAST DIGITAL DOCUMENTS (A4)
+   ========================================================= */
+
+@media print {
+  /* Hide all app chrome and background elements */
+  body * {
+    visibility: hidden;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color: #000000 !important;
+  }
+
+  .portal-shell,
+  .sidebar,
+  .mobile-header,
+  .mobile-bottom,
+  .floating-chat-trigger-btn,
+  .live-toast-banner,
+  .toast,
+  .bast-modal-footer,
+  .btn-mark-all-read {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Make only the BAST paper and its descendants visible */
+  .bast-modal-backdrop {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+  }
+
+  .bast-modal-paper {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .bast-modal-paper,
+  .bast-modal-paper * {
+    visibility: visible !important;
+  }
+
+  .bast-doc-sheet {
+    padding: 8mm 10mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .bast-doc-header {
+    border-bottom: 2pt double #013220 !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .bast-table th {
+    background: #f1f5f9 !important;
+    color: #000000 !important;
+    border: 1pt solid #64748b !important;
+  }
+
+  .bast-table td {
+    border: 1pt solid #cbd5e1 !important;
+    color: #000000 !important;
+  }
+
+  .bast-sign-box {
+    border: 1pt dashed #94a3b8 !important;
+    background: #fafaf9 !important;
+  }
+
+  .bast-seal-badge {
+    border: 1pt solid #059669 !important;
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+}
+
 /* Map Marker Animations */
 @keyframes gmap-pulse {
   0% {
