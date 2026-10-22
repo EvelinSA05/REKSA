@@ -9586,23 +9586,28 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 .chat-koordinasi-container.mono-theme {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 4px 64px;
+  height: 100vh;
+  max-height: 100vh;
+  padding: 10px 16px 12px;
+  box-sizing: border-box;
+  overflow: hidden;
   animation: fadeIn 0.25s ease-out;
 }
 
 /* Top Channel Bar */
 .chat-channels-top-bar {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 10px 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
@@ -9726,34 +9731,42 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   color: #ffffff;
 }
 
-/* Main Grid - Full Width */
+/* Main Grid - Full Width & Flex Container */
 .chat-main-grid.mono-grid {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   width: 100%;
+  overflow: hidden;
 }
 
-/* Stream Panel */
+/* Stream Panel - Container for Fixed Headers, Scrollable Chat, Fixed Compose */
 .chat-stream-panel.mono-stream-panel {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.02);
   overflow: hidden;
-  min-height: 600px;
+  position: relative;
 }
 
 .chat-stream-header.mono-stream-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 12px 18px;
+  padding: 10px 18px;
   border-bottom: 1px solid #e2e8f0;
   background: #ffffff;
+  z-index: 5;
 }
 
 .stream-title-row {
@@ -9883,16 +9896,17 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   font-size: 0.68rem;
 }
 
-/* WhatsApp-Style Messages Scroll Container */
+/* WhatsApp-Style Messages Scroll Container - ONLY THIS ELEMENT SCROLLS */
 .chat-messages-container.mono-messages-container {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 24px 28px;
+  overflow-x: hidden;
+  padding: 20px 24px;
   background-color: #efeae2;
   background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 16px 16px;
-  min-height: 480px;
-  max-height: 560px;
+  scroll-behavior: smooth;
 }
 
 .mono-loading,
@@ -10144,14 +10158,19 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   align-items: center;
 }
 
-/* Streamlined Unified Compose Box */
+/* Fixed / Sticky Compose Box - NEVER SCROLLS AWAY */
 .chat-compose-box.mono-compose-box {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   background: #ffffff;
   border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.04);
+  z-index: 10;
 }
 
 .compose-input-wrapper {
@@ -10168,8 +10187,8 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   color: #0f172a;
   outline: none;
   resize: none;
-  min-height: 44px;
-  max-height: 90px;
+  min-height: 40px;
+  max-height: 80px;
   font-family: inherit;
   transition: all 0.15s ease;
   line-height: 1.4;
@@ -10187,6 +10206,13 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+  padding-right: 175px; /* Safe clearance so Send button is never covered by floating Tanya REKSA AI */
+}
+
+@media (max-width: 1024px) {
+  .compose-bottom-toolbar {
+    padding-right: 0;
+  }
 }
 
 .compose-toolbar-left {
@@ -10534,8 +10560,11 @@ img, svg, video, canvas {
   .chat-koordinasi-container.mono-theme {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 20px 16px 125px 16px !important;
+    height: calc(100dvh - 64px - 64px) !important;
+    max-height: calc(100dvh - 64px - 64px) !important;
+    padding: 8px 10px 8px 10px !important;
     margin: 0 auto !important;
+    overflow: hidden !important;
   }
 
   /* Floating Chat Trigger: hide on mobile & tablet (<= 1024px) because mobile-bottom nav bar already provides direct Ruang Komunikasi access */
@@ -10555,8 +10584,11 @@ img, svg, video, canvas {
   .chat-koordinasi-container.mono-theme {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 12px 10px 150px 10px !important;
+    height: calc(100dvh - 64px - 64px) !important;
+    max-height: calc(100dvh - 64px - 64px) !important;
+    padding: 6px 8px 6px 8px !important;
     margin: 0 auto !important;
+    overflow: hidden !important;
   }
 
   .workspace-title {
