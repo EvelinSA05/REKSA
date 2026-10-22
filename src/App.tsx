@@ -1845,44 +1845,56 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   // Fetch db activity logs for live unread counting and real-time alert toast
   useEffect(() => {
     let isMounted = true;
-    const fetchLogs = () => {
-      apiService.getActivityLogs()
-        .then((res) => {
-          if (isMounted && res.success && Array.isArray(res.data)) {
-            setDbLogs(res.data);
-            if (res.data.length > 0) {
-              const newest = res.data[0];
-              if (lastSeenLogIdRef.current !== null && newest.id > lastSeenLogIdRef.current) {
-                // Real-time event detected!
-                const code = newest.kebutuhan?.kode_kasus || `RK-2026-00${newest.kebutuhan_id || 124}`;
-                const meta = resolveDeepLinkForRole(role, newest.aksi || "", newest.deskripsi || "");
-                const saved = localStorage.getItem("reksa_read_notifications");
-                const readArr: string[] = saved ? JSON.parse(saved) : [];
-                if (!readArr.includes(`db-log-${newest.id}`)) {
-                  setLiveToastNotif({
-                    id: `db-log-${newest.id}`,
-                    title: meta.titleOverride || newest.aksi || "Pembaruan Kasus Baru",
-                    desc: newest.deskripsi || "Aktivitas baru penanganan bencana tercatat di sistem.",
-                    targetPage: meta.targetPage,
-                    caseId: code,
-                    actionLabel: meta.actionLabel,
-                    destinationLabel: meta.destinationLabel,
-                    iconName: meta.iconName,
-                  });
-                }
+    let timer: any = null;
+    let isFetching = false;
+
+    const fetchLogs = async () => {
+      if (isFetching || (typeof document !== "undefined" && document.hidden)) {
+        if (isMounted) timer = setTimeout(fetchLogs, 15000);
+        return;
+      }
+      isFetching = true;
+      try {
+        const res = await apiService.getActivityLogs();
+        if (isMounted && res.success && Array.isArray(res.data)) {
+          setDbLogs(res.data);
+          if (res.data.length > 0) {
+            const newest = res.data[0];
+            if (lastSeenLogIdRef.current !== null && newest.id > lastSeenLogIdRef.current) {
+              // Real-time event detected!
+              const code = newest.kebutuhan?.kode_kasus || `RK-2026-00${newest.kebutuhan_id || 124}`;
+              const meta = resolveDeepLinkForRole(role, newest.aksi || "", newest.deskripsi || "");
+              const saved = localStorage.getItem("reksa_read_notifications");
+              const readArr: string[] = saved ? JSON.parse(saved) : [];
+              if (!readArr.includes(`db-log-${newest.id}`)) {
+                setLiveToastNotif({
+                  id: `db-log-${newest.id}`,
+                  title: meta.titleOverride || newest.aksi || "Pembaruan Kasus Baru",
+                  desc: newest.deskripsi || "Aktivitas baru penanganan bencana tercatat di sistem.",
+                  targetPage: meta.targetPage,
+                  caseId: code,
+                  actionLabel: meta.actionLabel,
+                  destinationLabel: meta.destinationLabel,
+                  iconName: meta.iconName,
+                });
               }
-              lastSeenLogIdRef.current = newest.id;
             }
+            lastSeenLogIdRef.current = newest.id;
           }
-        })
-        .catch(() => {});
+        }
+      } catch {
+      } finally {
+        isFetching = false;
+        if (isMounted) {
+          timer = setTimeout(fetchLogs, 15000);
+        }
+      }
     };
 
     fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (timer) clearTimeout(timer);
     };
   }, [role, state?.logs]);
 
@@ -5778,21 +5790,33 @@ function Notifications({
   // Fetch real-time logs from backend database
   useEffect(() => {
     let isMounted = true;
-    const fetchLogs = () => {
-      apiService.getActivityLogs()
-        .then((res) => {
-          if (isMounted && res.success && Array.isArray(res.data)) {
-            setDbLogs(res.data);
-          }
-        })
-        .catch(() => {});
+    let timer: any = null;
+    let isFetching = false;
+
+    const fetchLogs = async () => {
+      if (isFetching || (typeof document !== "undefined" && document.hidden)) {
+        if (isMounted) timer = setTimeout(fetchLogs, 15000);
+        return;
+      }
+      isFetching = true;
+      try {
+        const res = await apiService.getActivityLogs();
+        if (isMounted && res.success && Array.isArray(res.data)) {
+          setDbLogs(res.data);
+        }
+      } catch {
+      } finally {
+        isFetching = false;
+        if (isMounted) {
+          timer = setTimeout(fetchLogs, 15000);
+        }
+      }
     };
 
     fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
     return () => { 
       isMounted = false; 
-      clearInterval(interval);
+      if (timer) clearTimeout(timer);
     };
   }, [state?.logs]);
 
@@ -6744,11 +6768,31 @@ export default function App() {
   }, [fetchDatabaseCases, fetchDatabaseBursaAndMisi]);
 
   useEffect(() => {
-    fetchDatabaseAll();
-    const interval = setInterval(() => {
-      fetchDatabaseAll();
-    }, 4000);
-    return () => clearInterval(interval);
+    let isMounted = true;
+    let timer: any = null;
+    let isFetching = false;
+
+    const runSync = async () => {
+      if (isFetching || (typeof document !== "undefined" && document.hidden)) {
+        if (isMounted) timer = setTimeout(runSync, 10000);
+        return;
+      }
+      isFetching = true;
+      try {
+        await fetchDatabaseAll();
+      } finally {
+        isFetching = false;
+        if (isMounted) {
+          timer = setTimeout(runSync, 10000);
+        }
+      }
+    };
+
+    runSync();
+    return () => {
+      isMounted = false;
+      if (timer) clearTimeout(timer);
+    };
   }, [fetchDatabaseAll]);
 
   const update = (changes: Partial<SharedState>, log?: string) => {

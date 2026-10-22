@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Route;
 | Web Routes - Single Port Unified Laravel Serving
 |--------------------------------------------------------------------------
 */
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+
 Route::get('/{any?}', function () {
     $paths = [
         public_path('dist/index.html'),
@@ -29,4 +33,11 @@ Route::get('/{any?}', function () {
     }
 
     return view('welcome');
-})->where('any', '^(?!api).*$');
+})
+->withoutMiddleware([
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    PreventRequestForgery::class,
+])
+->where('any', '^(?!api|dist|assets|storage|favicon|\..*).*$');
+
