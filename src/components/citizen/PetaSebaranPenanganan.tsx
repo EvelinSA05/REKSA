@@ -1371,6 +1371,7 @@ export function PetaSebaranPenanganan({
             borderRadius: "16px",
             border: "1px solid #e2e8f0",
             boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+            alignItems: "start",
           }}
         >
           {/* MAP CANVAS */}
@@ -1381,6 +1382,7 @@ export function PetaSebaranPenanganan({
               overflow: "hidden",
               border: "1px solid #cbd5e1",
               background: viewMode === "vector" ? "#fbfcf8" : "#ffffff",
+              height: "440px",
             }}
           >
             {viewMode === "vector" ? (
@@ -1392,7 +1394,7 @@ export function PetaSebaranPenanganan({
               <div
                 style={{
                   width: "100%",
-                  height: "490px",
+                  height: "440px",
                   position: "relative",
                   display: "flex",
                   alignItems: "center",
@@ -1407,6 +1409,7 @@ export function PetaSebaranPenanganan({
                   style={{
                     width: "100%",
                     height: "100%",
+                    maxHeight: "430px",
                     filter: "drop-shadow(0 10px 24px rgba(0,0,0,0.08))",
                   }}
                 >
@@ -1588,7 +1591,7 @@ export function PetaSebaranPenanganan({
                 ref={mapContainerRef}
                 style={{
                   width: "100%",
-                  height: "490px",
+                  height: "440px",
                   background: "#f8fafc",
                   zIndex: 1,
                 }}
@@ -1718,11 +1721,13 @@ export function PetaSebaranPenanganan({
                   background: isBpbd ? "#f0fdf4" : isMitra ? "#ecfdf5" : "#fafafa",
                   border: isBpbd ? "1.5px solid #10b981" : isMitra ? "1.5px solid #6ee7b7" : "1.5px solid #e2e8f0",
                   borderRadius: "14px",
-                  padding: "18px 20px",
+                  padding: "14px 16px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
                   boxShadow: "0 4px 14px rgba(1, 50, 32, 0.05)",
+                  height: "440px",
+                  overflowY: "auto",
                 }}
               >
                 <div>
@@ -1786,7 +1791,7 @@ export function PetaSebaranPenanganan({
 
                   {/* Dual Bar or Kondusif Banner */}
                   {selectedProvinsi.isDisasterZone && stats.totalRespon > 0 ? (
-                    <div style={{ margin: "14px 0 16px" }}>
+                    <div style={{ margin: "8px 0 10px" }}>
                       <div
                         style={{
                           display: "flex",
@@ -1938,7 +1943,7 @@ export function PetaSebaranPenanganan({
                     <div
                       style={{
                         background: "#ffffff",
-                        padding: "12px 14px",
+                        padding: "8px 12px",
                         borderRadius: "10px",
                         border: "1.5px solid #a7f3d0",
                         boxShadow: "0 2px 8px rgba(1, 50, 32, 0.04)",
@@ -1949,15 +1954,15 @@ export function PetaSebaranPenanganan({
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          marginBottom: "8px",
+                          marginBottom: "6px",
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "14px" }}>📍</span>
+                          <span style={{ fontSize: "13px" }}>📍</span>
                           <span
                             style={{
                               color: "#013220",
-                              fontSize: "0.76rem",
+                              fontSize: "0.74rem",
                               fontWeight: 800,
                               textTransform: "uppercase",
                               letterSpacing: "0.04em",
@@ -1980,9 +1985,9 @@ export function PetaSebaranPenanganan({
                               (selectedProvinsi.daerahPenerimaList || []).length > 0
                                 ? "1px solid #6ee7b7"
                                 : "1px solid #cbd5e1",
-                            fontSize: "0.68rem",
+                            fontSize: "0.66rem",
                             fontWeight: 700,
-                            padding: "2px 8px",
+                            padding: "2px 7px",
                             borderRadius: "999px",
                           }}
                         >
@@ -1997,8 +2002,8 @@ export function PetaSebaranPenanganan({
                           style={{
                             display: "flex",
                             flexDirection: "column",
-                            gap: "8px",
-                            maxHeight: "250px",
+                            gap: "6px",
+                            maxHeight: "115px",
                             overflowY: "auto",
                             paddingRight: "4px",
                           }}
