@@ -696,7 +696,7 @@ export function PetaSebaranPenanganan({
       const daerahSummaryHtml =
         p.daerahPenerimaList && p.daerahPenerimaList.length > 0
           ? `<div style="font-size: 11px; color: #013220; margin-top: 5px; border-top: 1px dashed #cbd5e1; padding-top: 4px;">
-               📍 <b>Daerah Penerima Bantuan:</b><br/>
+               <b>Daerah Penerima Bantuan:</b><br/>
                ${p.daerahPenerimaList
                  .slice(0, 3)
                  .map(
@@ -723,8 +723,10 @@ export function PetaSebaranPenanganan({
             isBpbd ? "#013220" : isMitra ? "#047857" : "#334155"
           }; font-size: 13px;">${p.nama}</strong><br/>
           <span style="font-size: 11px; color: #64748b;">Wilayah ${p.pulau}</span>
-          <div style="margin-top: 4px; font-weight: 700; color: #013220;">
-            <span style="filter: grayscale(100%); margin-right: 4px;">${isBpbd ? "🏢" : isMitra ? "🤝" : "⚪"}</span>
+          <div style="margin-top: 4px; font-weight: 700; color: #013220; display: flex; align-items: center; gap: 5px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: ${
+              isBpbd ? "#013220" : isMitra ? "#10b981" : "#94a3b8"
+            }; display: inline-block;"></span>
             ${
               isBpbd
                 ? "Respon Dominan BPBD (" + stats.bpbdPct + "%)"
@@ -928,7 +930,7 @@ export function PetaSebaranPenanganan({
               lineHeight: 1.5,
             }}
           >
-            Komparasi volume penanganan bantuan darurat langsung oleh posko <strong style={{ color: "#013220" }}>BPBD (Hijau Tua)</strong> vs jejaring relawan <strong style={{ color: "#047857" }}>Mitra Siaga (Hijau Terang)</strong>.
+            Perbandingan volume penanganan bantuan darurat antara posko BPBD dan jejaring Mitra Kemanusiaan.
           </p>
         </div>
 
@@ -1011,56 +1013,7 @@ export function PetaSebaranPenanganan({
         </div>
       </div>
 
-      {/* COMPACT CLEAN STATS SUMMARY RIBBON */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "12px",
-          background: "#ffffff",
-          padding: "10px 16px",
-          borderRadius: "12px",
-          border: "1px solid #e2e8f0",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.02)",
-          marginBottom: "14px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-          {/* Dominan BPBD */}
-          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-            <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#013220", display: "inline-block" }} />
-            <span style={{ fontSize: "0.82rem", color: "#475569" }}>
-              Dominan BPBD: <strong style={{ color: "#013220" }}>{countBpbd} Wilayah</strong> ({Math.round((countBpbd / disasterProvinces.length) * 100)}%)
-            </span>
-          </div>
-
-          <span style={{ color: "#e2e8f0" }}>|</span>
-
-          {/* Dominan Mitra */}
-          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-            <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-            <span style={{ fontSize: "0.82rem", color: "#475569" }}>
-              Dominan Mitra: <strong style={{ color: "#047857" }}>{countMitra} Wilayah</strong> ({Math.round((countMitra / disasterProvinces.length) * 100)}%)
-            </span>
-          </div>
-
-          <span style={{ color: "#e2e8f0" }}>|</span>
-
-          {/* Total Respon */}
-          <div style={{ fontSize: "0.82rem", color: "#475569" }}>
-            Total Penanganan: <strong style={{ color: "#013220" }}>{totalResponAll.toLocaleString("id-ID")} Respon</strong>
-          </div>
-        </div>
-
-        <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }} />
-          {disasterProvinces.length} Daerah Terpantau Aktif
-        </div>
-      </div>
-
-      {/* SINGLE STREAMLINED TOOLBAR */}
+      {/* SINGLE UNIFIED MINIMALIST TOOLBAR */}
       <div
         style={{
           display: "flex",
@@ -1068,7 +1021,12 @@ export function PetaSebaranPenanganan({
           alignItems: "center",
           flexWrap: "wrap",
           gap: "10px",
+          background: "#ffffff",
+          padding: "8px 14px",
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
           marginBottom: "14px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
         }}
       >
         {/* Quick Filter Pills */}
@@ -1077,7 +1035,7 @@ export function PetaSebaranPenanganan({
             type="button"
             onClick={() => setActiveStatusFilter("all_disaster")}
             style={{
-              padding: "5px 11px",
+              padding: "5px 12px",
               borderRadius: "999px",
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -1095,7 +1053,7 @@ export function PetaSebaranPenanganan({
             type="button"
             onClick={() => setActiveStatusFilter("bpbd_dominan")}
             style={{
-              padding: "5px 11px",
+              padding: "5px 12px",
               borderRadius: "999px",
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -1106,7 +1064,7 @@ export function PetaSebaranPenanganan({
               color: activeStatusFilter === "bpbd_dominan" ? "#013220" : "#475569",
               display: "inline-flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
             }}
           >
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#013220" }} />
@@ -1117,7 +1075,7 @@ export function PetaSebaranPenanganan({
             type="button"
             onClick={() => setActiveStatusFilter("mitra_dominan")}
             style={{
-              padding: "5px 11px",
+              padding: "5px 12px",
               borderRadius: "999px",
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -1128,7 +1086,7 @@ export function PetaSebaranPenanganan({
               color: activeStatusFilter === "mitra_dominan" ? "#047857" : "#475569",
               display: "inline-flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
             }}
           >
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981" }} />
@@ -1139,7 +1097,7 @@ export function PetaSebaranPenanganan({
             type="button"
             onClick={() => setActiveStatusFilter("all_indonesia")}
             style={{
-              padding: "5px 11px",
+              padding: "5px 12px",
               borderRadius: "999px",
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -1148,9 +1106,6 @@ export function PetaSebaranPenanganan({
               border: activeStatusFilter === "all_indonesia" ? "1.5px solid #475569" : "1px solid #cbd5e1",
               background: activeStatusFilter === "all_indonesia" ? "#475569" : "#ffffff",
               color: activeStatusFilter === "all_indonesia" ? "#ffffff" : "#475569",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
             }}
           >
             32 Provinsi
@@ -1173,17 +1128,20 @@ export function PetaSebaranPenanganan({
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              boxShadow: "0 1px 3px rgba(16, 185, 129, 0.12)",
             }}
-            title="Klik untuk melihat nama daerah mana saja yang sudah memperoleh bantuan secara nasional"
+            title="Daftar daerah penerima bantuan"
           >
-            <AppIcon name="pin" size={13} />
-            <span>Daerah Penerima Bantuan ({totalDaerahTerbantu})</span>
+            <AppIcon name="pin" size={12} />
+            <span>Penerima Bantuan ({totalDaerahTerbantu})</span>
           </button>
         </div>
 
-        {/* Island filter & Search */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        {/* Island filter, Search & Summary */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, paddingRight: "4px" }}>
+            {totalResponAll} Respon · {disasterProvinces.length} Daerah Terpantau
+          </span>
+
           <select
             value={selectedPulau}
             onChange={(e) => setSelectedPulau(e.target.value)}
@@ -1227,7 +1185,7 @@ export function PetaSebaranPenanganan({
                 borderRadius: "8px",
                 border: "1px solid #cbd5e1",
                 fontSize: "0.78rem",
-                width: "180px",
+                width: "160px",
                 background: "#ffffff",
               }}
             />
@@ -1937,16 +1895,6 @@ export function PetaSebaranPenanganan({
                   </span>
                 </div>
               </div>
-
-              <span
-                style={{
-                  color: "#94a3b8",
-                  fontSize: "0.70rem",
-                  fontStyle: "italic",
-                }}
-              >
-                *Berdasarkan volume paket respon bantuan
-              </span>
             </div>
           </div>
 
@@ -2051,7 +1999,7 @@ export function PetaSebaranPenanganan({
                         }}
                       >
                         <span style={{ color: "#013220" }}>
-                          Banyaknya Respon: BPBD ({stats.bpbdPct}%)
+                          Respon BPBD ({stats.bpbdPct}%)
                         </span>
                         <span style={{ color: "#047857" }}>
                           Mitra ({stats.mitraPct}%)
@@ -2061,7 +2009,7 @@ export function PetaSebaranPenanganan({
                       {/* Dual Progress Bar */}
                       <div
                         style={{
-                          height: "10px",
+                          height: "9px",
                           background: "#e2e8f0",
                           borderRadius: "999px",
                           overflow: "hidden",
@@ -2098,11 +2046,11 @@ export function PetaSebaranPenanganan({
                         }}
                       >
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                          <span style={{ width: "7px", height: "7px", borderRadius: "2px", background: "#013220", display: "inline-block" }} />
+                          <span style={{ width: "6px", height: "6px", borderRadius: "2px", background: "#013220", display: "inline-block" }} />
                           BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b> ({stats.bpbdRespon} Respon)
                         </span>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                          <span style={{ width: "7px", height: "7px", borderRadius: "2px", background: "#10b981", display: "inline-block" }} />
+                          <span style={{ width: "6px", height: "6px", borderRadius: "2px", background: "#10b981", display: "inline-block" }} />
                           Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b> ({stats.mitraRespon} Respon)
                         </span>
                       </div>
@@ -2110,9 +2058,9 @@ export function PetaSebaranPenanganan({
                   ) : (
                     <div
                       style={{
-                        margin: "12px 0 14px",
-                        padding: "10px 14px",
-                        borderRadius: "10px",
+                        margin: "10px 0 12px",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
                         background: "#f8fafc",
                         border: "1px dashed #cbd5e1",
                         fontSize: "0.78rem",
@@ -2122,9 +2070,9 @@ export function PetaSebaranPenanganan({
                         gap: "8px",
                       }}
                     >
-                      <AppIcon name="shield" size={15} style={{ color: "#047857" }} />
+                      <AppIcon name="shield" size={14} style={{ color: "#047857" }} />
                       <span>
-                        Wilayah aman &amp; nihil laporan kedaruratan aktif. Posko BPBD dan mitra kemanusiaan berada dalam kesiapsiagaan pemantauan rutin.
+                        Wilayah kondusif. Pemantauan rutin berjalan normal.
                       </span>
                     </div>
                   )}
@@ -2141,27 +2089,27 @@ export function PetaSebaranPenanganan({
                     <div
                       style={{
                         background: "#ffffff",
-                        padding: "10px 14px",
+                        padding: "9px 12px",
                         borderRadius: "10px",
                         border: "1px solid #e2e8f0",
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
-                          Status Wilayah &amp; Kedaruratan
+                        <span style={{ color: "#64748b", fontSize: "0.70rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                          Kondisi Wilayah
                         </span>
-                        <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>
+                        <span style={{ fontSize: "0.70rem", color: "#64748b", fontWeight: 600 }}>
                           {selectedProvinsi.jiwaTerbantu > 0
                             ? `${selectedProvinsi.jiwaTerbantu.toLocaleString("id-ID")} Jiwa Terbantu`
                             : "Nihil Korban Terdampak"}
                         </span>
                       </div>
-                      <strong style={{ color: "#013220", fontSize: "0.90rem", display: "block", marginTop: "2px" }}>
+                      <strong style={{ color: "#013220", fontSize: "0.88rem", display: "block", marginTop: "2px" }}>
                         {selectedProvinsi.kejadianBencana}
                       </strong>
                       {selectedProvinsi.totalKasus > 0 && (
-                        <span style={{ fontSize: "0.74rem", color: "#64748b", display: "block", marginTop: "2px" }}>
-                          {selectedProvinsi.totalKasus} Laporan Kebutuhan Aktif · {selectedProvinsi.kkTerlayani} KK
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", display: "block", marginTop: "2px" }}>
+                          {selectedProvinsi.totalKasus} Kasus Aktif · {selectedProvinsi.kkTerlayani} KK
                         </span>
                       )}
                     </div>
@@ -2169,23 +2117,45 @@ export function PetaSebaranPenanganan({
                     <div
                       style={{
                         background: "#ffffff",
-                        padding: "10px 14px",
+                        padding: "9px 12px",
                         borderRadius: "10px",
                         border: "1px solid #e2e8f0",
                       }}
                     >
-                      <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
-                        Penyaluran &amp; Mitra Terlibat
+                      <span style={{ color: "#64748b", fontSize: "0.70rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.03em", display: "block" }}>
+                        Penyaluran Bantuan
                       </span>
                       <div style={{ color: "#013220", fontWeight: 700, fontSize: "0.84rem", marginTop: "2px" }}>
                         {selectedProvinsi.jumlahBantuan}
                       </div>
-                      <div style={{ color: "#475569", fontSize: "0.74rem", marginTop: "3px" }}>
-                        Respon Terlibat: {selectedProvinsi.mitraBpbdAktif}
-                      </div>
+                      {selectedProvinsi.mitraBpbdAktif && (
+                        <div style={{ color: "#475569", fontSize: "0.72rem", marginTop: "3px" }}>
+                          Penyalur: {selectedProvinsi.mitraBpbdAktif.replace(/Posko BPBD Provinsi /g, "BPBD ").replace(/\(Komando Wilayah\)/g, "").trim()}
+                        </div>
+                      )}
                       {selectedProvinsi.komoditasUtama && selectedProvinsi.isDisasterZone && (
-                        <div style={{ color: "#64748b", fontSize: "0.72rem", marginTop: "2px" }}>
-                          Komoditas Utama: {selectedProvinsi.komoditasUtama}
+                        <div style={{ marginTop: "6px" }}>
+                          <span style={{ fontSize: "0.68rem", color: "#64748b", fontWeight: 600, display: "block", marginBottom: "4px" }}>
+                            Komoditas Utama:
+                          </span>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                            {selectedProvinsi.komoditasUtama.split(/,\s*/).map((k, ki) => (
+                              <span
+                                key={ki}
+                                style={{
+                                  fontSize: "0.68rem",
+                                  background: "#f1f5f9",
+                                  color: "#334155",
+                                  padding: "2px 7px",
+                                  borderRadius: "5px",
+                                  border: "1px solid #e2e8f0",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {k}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -2197,7 +2167,7 @@ export function PetaSebaranPenanganan({
                         padding: "8px 12px",
                         borderRadius: "10px",
                         border: "1.5px solid #a7f3d0",
-                        boxShadow: "0 2px 8px rgba(1, 50, 32, 0.04)",
+                        boxShadow: "0 2px 6px rgba(1, 50, 32, 0.03)",
                       }}
                     >
                       <div
@@ -2216,10 +2186,10 @@ export function PetaSebaranPenanganan({
                               fontSize: "0.74rem",
                               fontWeight: 800,
                               textTransform: "uppercase",
-                              letterSpacing: "0.04em",
+                              letterSpacing: "0.03em",
                             }}
                           >
-                            Daerah Penerima Bantuan
+                            Penerima Bantuan
                           </span>
                         </div>
                         <span
@@ -2243,7 +2213,7 @@ export function PetaSebaranPenanganan({
                           }}
                         >
                           {(selectedProvinsi.daerahPenerimaList || []).length > 0
-                            ? `${(selectedProvinsi.daerahPenerimaList || []).length} Wilayah Terdata`
+                            ? `${(selectedProvinsi.daerahPenerimaList || []).length} Wilayah`
                             : "Nihil Laporan"}
                         </span>
                       </div>
@@ -2266,7 +2236,7 @@ export function PetaSebaranPenanganan({
                                 background: "#f8fafc",
                                 borderRadius: "8px",
                                 border: "1px solid #e2e8f0",
-                                padding: "8px 10px",
+                                padding: "7px 9px",
                                 transition: "all 0.15s ease",
                               }}
                             >
@@ -2276,29 +2246,29 @@ export function PetaSebaranPenanganan({
                                   justifyContent: "space-between",
                                   alignItems: "flex-start",
                                   gap: "6px",
-                                  marginBottom: "4px",
+                                  marginBottom: "3px",
                                 }}
                               >
                                 <div>
                                   <strong
                                     style={{
                                       color: "#0f172a",
-                                      fontSize: "0.84rem",
+                                      fontSize: "0.82rem",
                                       display: "block",
                                     }}
                                   >
                                     {d.namaKabupatenKota}
                                   </strong>
-                                  <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                                  <span style={{ fontSize: "0.70rem", color: "#64748b" }}>
                                     {d.namaKecamatan ? `${d.namaKecamatan}, ` : ""}
                                     {d.namaDesa || d.lokasiSpesifik}
                                   </span>
                                 </div>
                                 <span
                                   style={{
-                                    fontSize: "0.68rem",
+                                    fontSize: "0.66rem",
                                     fontWeight: 700,
-                                    padding: "2px 7px",
+                                    padding: "2px 6px",
                                     borderRadius: "999px",
                                     whiteSpace: "nowrap",
                                     background:
@@ -2325,7 +2295,7 @@ export function PetaSebaranPenanganan({
                                     style={{
                                       display: "inline-flex",
                                       alignItems: "center",
-                                      gap: "5px",
+                                      gap: "4px",
                                     }}
                                   >
                                     <span
@@ -2342,9 +2312,9 @@ export function PetaSebaranPenanganan({
                                       }}
                                     />
                                     {d.statusKategori === "selesai"
-                                      ? "Bantuan Diterima (BAST)"
+                                      ? "Diterima"
                                       : d.statusKategori === "dalam_pengiriman"
-                                      ? "Dalam Penyaluran"
+                                      ? "Penyaluran"
                                       : "Terverifikasi"}
                                   </span>
                                 </span>
@@ -2354,11 +2324,11 @@ export function PetaSebaranPenanganan({
                               <div
                                 style={{
                                   background: "#ffffff",
-                                  padding: "6px 8px",
+                                  padding: "5px 7px",
                                   borderRadius: "6px",
                                   border: "1px solid #f1f5f9",
-                                  fontSize: "0.73rem",
-                                  marginTop: "4px",
+                                  fontSize: "0.72rem",
+                                  marginTop: "3px",
                                   display: "flex",
                                   justifyContent: "space-between",
                                   alignItems: "center",
@@ -2378,15 +2348,15 @@ export function PetaSebaranPenanganan({
                                 </div>
                               </div>
 
-                              {/* Pihak Penyalur & Armada */}
+                              {/* Pihak Penyalur */}
                               <div
                                 style={{
                                   display: "flex",
                                   justifyContent: "space-between",
                                   alignItems: "center",
-                                  fontSize: "0.70rem",
+                                  fontSize: "0.68rem",
                                   color: "#64748b",
-                                  marginTop: "4px",
+                                  marginTop: "3px",
                                   flexWrap: "wrap",
                                   gap: "4px",
                                 }}
@@ -2408,21 +2378,6 @@ export function PetaSebaranPenanganan({
                                   </span>
                                 )}
                               </div>
-
-                              {d.catatan && (
-                                <div
-                                  style={{
-                                    fontSize: "0.68rem",
-                                    color: "#64748b",
-                                    fontStyle: "italic",
-                                    marginTop: "3px",
-                                    borderTop: "1px dashed #e2e8f0",
-                                    paddingTop: "3px",
-                                  }}
-                                >
-                                  "{d.catatan}"
-                                </div>
-                              )}
                             </div>
                           ))}
                         </div>
@@ -2435,48 +2390,48 @@ export function PetaSebaranPenanganan({
                             fontStyle: "italic",
                           }}
                         >
-                          Seluruh daerah di {selectedProvinsi.nama} berstatus kondusif. Belum
-                          ada daerah yang memerlukan penyaluran logistik darurat saat ini.
+                          Seluruh daerah di {selectedProvinsi.nama} berstatus kondusif.
                         </div>
                       )}
                     </div>
 
-                    <div
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        background: "rgba(0,0,0,0.02)",
-                        borderLeft: `3px solid ${
-                          isBpbd ? "#013220" : isMitra ? "#10b981" : "#94a3b8"
-                        }`,
-                      }}
-                    >
-                      <p
+                    {selectedProvinsi.catatanKewilayahan && (
+                      <div
                         style={{
-                          margin: 0,
-                          fontSize: "0.78rem",
-                          color: "#334155",
-                          fontStyle: "italic",
-                          lineHeight: 1.45,
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          background: "rgba(0,0,0,0.02)",
+                          borderLeft: `3px solid ${
+                            isBpbd ? "#013220" : isMitra ? "#10b981" : "#94a3b8"
+                          }`,
                         }}
                       >
-                        "{selectedProvinsi.catatanKewilayahan}"
-                      </p>
-                    </div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: "0.74rem",
+                            color: "#475569",
+                            fontStyle: "italic",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          "{selectedProvinsi.catatanKewilayahan}"
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div
                   style={{
-                    marginTop: "14px",
-                    paddingTop: "10px",
-                    borderTop: "1px solid #e2e8f0",
-                    fontSize: "0.72rem",
+                    marginTop: "8px",
+                    paddingTop: "6px",
+                    fontSize: "0.68rem",
                     color: "#94a3b8",
                     textAlign: "right",
                   }}
                 >
-                  Data tersinkronisasi langsung dari Laporan Kebutuhan Warga &amp; Misi Penyaluran Lapangan
+                  Pembaruan data riil sistem
                 </div>
               </div>
             );
@@ -2720,7 +2675,7 @@ export function PetaSebaranPenanganan({
 
                     <div style={{ marginTop: "6px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.72rem", color: "#64748b" }}>
                       <span>Penyalur: <b style={{ color: d.penyalurTipe === "bpbd" ? "#013220" : "#047857" }}>{d.penyalurNama}</b></span>
-                      <span style={{ color: "#047857", fontWeight: 600 }}>Klik untuk sorot di peta →</span>
+                      <span style={{ color: "#047857", fontWeight: 600 }}>Sorot di peta →</span>
                     </div>
                   </div>
                 ))
