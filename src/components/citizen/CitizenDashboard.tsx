@@ -14,9 +14,8 @@ import {
 } from "../../App";
 import { CitizenClarificationModal } from "./CitizenClarificationModal";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
-import { GrafikTransparansiBantuan } from "../common/GrafikTransparansiBantuan";
 import { PetaSebaranPenanganan } from "./PetaSebaranPenanganan";
-import { PerbandinganKecepatanRespon } from "../common/PerbandinganKecepatanRespon";
+import { PersBaranResponBantuan } from "./PersBaranResponBantuan";
 import { MisiItem, apiService } from "../../services/api";
 
 interface CitizenDashboardProps {
@@ -600,16 +599,10 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         misiList={localMisiList}
       />
 
-      {/* 5. GRAFIK TRANSPARANSI BANTUAN DARI BPBD & MITRA */}
-      <GrafikTransparansiBantuan
+      {/* 5. RINGKASAN PERSEBARAN & RESPON BANTUAN (REAL DATA) */}
+      <PersBaranResponBantuan
         cases={state.casesList}
         misiList={localMisiList}
-        penawaranList={state.penawaranList}
-      />
-
-      {/* 6. PERBANDINGAN KECEPATAN RESPON & SLA VERIFIKASI BPBD VS MITRA */}
-      <PerbandinganKecepatanRespon
-        cases={state.casesList}
       />
 
       {/* QUICK ACCESS SECTION */}
