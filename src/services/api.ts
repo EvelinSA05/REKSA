@@ -178,6 +178,7 @@ export interface ChatMessageItem {
   posko_id?: number;
   created_at: string;
   updated_at?: string;
+  status?: 'sending' | 'sent' | 'error';
 }
 
 export interface ChatChannelItem {

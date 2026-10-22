@@ -132,6 +132,7 @@ export function ChatKoordinasi({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isPollingRef = useRef<boolean>(false);
 
   // Sender info resolution
   const senderRole: "citizen" | "posko" | "responder" =
@@ -190,19 +191,35 @@ export function ChatKoordinasi({
     }
   };
 
-  // Load Messages
+  // Load Messages with Concurrency Lock & Pending Merge
   const loadMessages = async (isInitial = false) => {
+    if (isPollingRef.current) return;
     if (isInitial && messages.length === 0) setLoading(true);
+    isPollingRef.current = true;
     try {
       const res = await apiService.getChatMessages(selectedChannel, undefined, senderRole);
       if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-        setMessages(res.data);
+        setMessages((prev) => {
+          // Preserve any local optimistic messages that are still sending
+          const pending = prev.filter((m) => m.status === "sending");
+          const merged = [...res.data];
+          for (const p of pending) {
+            const alreadyInServer = merged.some(
+              (m) => m.message === p.message && m.sender_name === p.sender_name
+            );
+            if (!alreadyInServer) {
+              merged.push(p);
+            }
+          }
+          return merged;
+        });
         setLastUpdated(new Date());
       }
     } catch (err) {
       console.warn("Gagal memuat pesan live:", err);
     } finally {
       setLoading(false);
+      isPollingRef.current = false;
     }
   };
 
@@ -214,11 +231,13 @@ export function ChatKoordinasi({
     loadMessages(true);
   }, [selectedChannel, senderRole]);
 
-  // Silent background polling for new messages
+  // Silent background polling (active tab only, 10s interval to prevent dev server queue congestion)
   useEffect(() => {
     const timer = setInterval(() => {
-      loadMessages(false);
-    }, 6000);
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadMessages(false);
+      }
+    }, 10000);
     return () => clearInterval(timer);
   }, [selectedChannel, senderRole]);
 
@@ -236,13 +255,32 @@ export function ChatKoordinasi({
     setAutoScroll(isAtBottom);
   };
 
-  // Send message
+  // Send message with Optimistic UI (instant WhatsApp-style UX)
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanText = inputText.trim();
-    if (!cleanText || sending) return;
+    if (!cleanText) return;
 
-    setSending(true);
+    const tempId = Date.now();
+    const optimisticMsg: ChatMessageItem = {
+      id: tempId,
+      channel: selectedChannel,
+      sender_name: senderName,
+      sender_role: senderRole,
+      sender_org: senderOrg,
+      message: cleanText,
+      tag: selectedTag,
+      kebutuhan_id: selectedCaseId,
+      posko_id: (state.casesList?.[0] as any)?.posko_id || 1,
+      created_at: new Date().toISOString(),
+      status: "sending",
+    };
+
+    // Immediately clear input & display bubble with sending checkmark
+    setInputText("");
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setAutoScroll(true);
+
     try {
       const res = await apiService.sendChatMessage({
         channel: selectedChannel,
@@ -256,9 +294,10 @@ export function ChatKoordinasi({
       });
 
       if (res && res.success && res.data) {
-        setMessages((prev) => [...prev, res.data]);
-        setInputText("");
-        setAutoScroll(true);
+        // Upgrade optimistic message to confirmed server message
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...res.data, status: "sent" } : m))
+        );
         if (notify) {
           notify(
             selectedTag === "URGENT"
@@ -266,14 +305,21 @@ export function ChatKoordinasi({
               : "Pesan koordinasi terkirim."
           );
         }
-        if (onRefresh) onRefresh();
-        loadChannels();
+        if (selectedCaseId && onRefresh) {
+          onRefresh();
+        }
+      } else {
+        throw new Error("Gagal menerima konfirmasi dari server");
       }
     } catch (err) {
       console.error("Gagal mengirim pesan chat:", err);
-      alert("Gagal mengirim pesan chat. Periksa koneksi internet Anda.");
-    } finally {
-      setSending(false);
+      // Mark bubble as failed
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, status: "error" } : m))
+      );
+      if (notify) {
+        notify("Pesan belum tersinkronisasi ke server. Silakan coba kembali.");
+      }
     }
   };
 
@@ -579,27 +625,50 @@ export function ChatKoordinasi({
                           </div>
                         )}
 
-                        {/* WhatsApp Bubble Footer with time & blue double check for own message */}
+                        {/* WhatsApp Bubble Footer with time & status check for own message */}
                         <div className="wa-bubble-footer">
                           <span className="wa-timestamp">{timeStr}</span>
                           {isMine && (
-                            <span className="wa-check-marks" title="Terkirim & Terbaca">
-                              <svg viewBox="0 0 18 18" width="16" height="16" fill="none">
-                                <path
-                                  d="M1.5 9.5l3.5 3.5 8-8"
-                                  stroke="#53bdeb"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M5.5 9.5l3.5 3.5 8-8"
-                                  stroke="#53bdeb"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
+                            <span
+                              className="wa-check-marks"
+                              title={
+                                msg.status === "sending"
+                                  ? "Sedang mengirim..."
+                                  : msg.status === "error"
+                                  ? "Gagal terkirim"
+                                  : "Terkirim & Terbaca"
+                              }
+                            >
+                              {msg.status === "sending" ? (
+                                <svg viewBox="0 0 18 18" width="16" height="16" fill="none">
+                                  <path
+                                    d="M3.5 9.5l3.5 3.5 8-8"
+                                    stroke="#94a3b8"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              ) : msg.status === "error" ? (
+                                <span style={{ color: "#ef4444", fontSize: "11px", fontWeight: "bold" }}>⚠️</span>
+                              ) : (
+                                <svg viewBox="0 0 18 18" width="16" height="16" fill="none">
+                                  <path
+                                    d="M1.5 9.5l3.5 3.5 8-8"
+                                    stroke="#53bdeb"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M5.5 9.5l3.5 3.5 8-8"
+                                    stroke="#53bdeb"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              )}
                             </span>
                           )}
                         </div>
@@ -680,19 +749,13 @@ export function ChatKoordinasi({
               <button
                 type="submit"
                 className="chat-send-submit-btn mono-send-btn"
-                disabled={sending || !inputText.trim()}
+                disabled={!inputText.trim()}
               >
-                {sending ? (
-                  <span>Mengirim...</span>
-                ) : (
-                  <>
-                    <span className="send-btn-text">Kirim</span>
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                    </svg>
-                  </>
-                )}
+                <span className="send-btn-text">Kirim</span>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
               </button>
             </div>
           </form>
