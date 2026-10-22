@@ -897,7 +897,16 @@ export function PetaSebaranPenanganan({
               marginBottom: "8px",
             }}
           >
-            <span style={monoEmojiStyle}>🇮🇩</span> Sebaran Respon Bantuan Nasional
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#10b981",
+                display: "inline-block",
+              }}
+            />
+            Sebaran Respon Bantuan Nasional
           </span>
           <h2
             style={{
@@ -949,10 +958,10 @@ export function PetaSebaranPenanganan({
               color: viewMode === "vector" ? "#ffffff" : "#475569",
               display: "flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
             }}
           >
-            <span style={monoEmojiStyle}>🎨</span>
+            <AppIcon name="layers" size={13} />
             <span>Mode Vektor</span>
           </button>
 
@@ -971,10 +980,10 @@ export function PetaSebaranPenanganan({
               color: viewMode === "map" ? "#ffffff" : "#475569",
               display: "flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
             }}
           >
-            <AppIcon name="map" size={14} />
+            <AppIcon name="map" size={13} />
             <span>Peta Geografis</span>
           </button>
 
@@ -993,9 +1002,10 @@ export function PetaSebaranPenanganan({
               color: viewMode === "table" ? "#ffffff" : "#475569",
               display: "flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
             }}
           >
+            <AppIcon name="file" size={13} />
             <span>Rekap Data</span>
           </button>
         </div>
@@ -1044,8 +1054,9 @@ export function PetaSebaranPenanganan({
           </div>
         </div>
 
-        <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600 }}>
-          📍 {disasterProvinces.length} Daerah Terpantau Aktif
+        <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }} />
+          {disasterProvinces.length} Daerah Terpantau Aktif
         </div>
       </div>
 
@@ -1161,12 +1172,12 @@ export function PetaSebaranPenanganan({
               color: "#047857",
               display: "inline-flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
               boxShadow: "0 1px 3px rgba(16, 185, 129, 0.12)",
             }}
             title="Klik untuk melihat nama daerah mana saja yang sudah memperoleh bantuan secara nasional"
           >
-            <span>📍</span>
+            <AppIcon name="pin" size={13} />
             <span>Daerah Penerima Bantuan ({totalDaerahTerbantu})</span>
           </button>
         </div>
@@ -1200,10 +1211,11 @@ export function PetaSebaranPenanganan({
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#94a3b8",
-                fontSize: "12px",
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              <span style={monoEmojiStyle}>🔍</span>
+              <AppIcon name="search" size={13} style={{ color: "#94a3b8" }} />
             </span>
             <input
               type="text"
@@ -1693,7 +1705,7 @@ export function PetaSebaranPenanganan({
                                       fontWeight="800"
                                       style={{ letterSpacing: "0.02em" }}
                                     >
-                                      📍 {p.daerahPenerimaList[0].namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")}
+                                      {p.daerahPenerimaList[0].namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")}
                                     </text>
                                     <text
                                       x={p.svgCenter[0]}
@@ -1847,19 +1859,19 @@ export function PetaSebaranPenanganan({
               )}
             </div>
 
-            {/* DEDICATED HORIZONTAL BOTTOM LEGENDA BAR */}
+            {/* DEDICATED HORIZONTAL BOTTOM LEGENDA BAR (MINIMALIST) */}
             <div
               style={{
                 flexShrink: 0,
                 background: "#f8fafc",
                 borderTop: "1px solid #e2e8f0",
-                padding: "7px 14px",
+                padding: "8px 16px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 flexWrap: "wrap",
-                gap: "8px",
-                fontSize: "0.73rem",
+                gap: "8px 16px",
+                fontSize: "0.72rem",
                 zIndex: 10,
               }}
             >
@@ -1868,85 +1880,73 @@ export function PetaSebaranPenanganan({
                   display: "flex",
                   alignItems: "center",
                   flexWrap: "wrap",
-                  gap: "12px",
+                  gap: "14px",
                 }}
               >
                 <span
                   style={{
                     fontWeight: 800,
-                    color: "#013220",
-                    fontSize: "0.72rem",
-                    letterSpacing: "0.03em",
+                    color: "#475569",
+                    fontSize: "0.70rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
                   }}
                 >
-                  LEGENDA RESPON:
+                  Legenda:
                 </span>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span
                     style={{
-                      width: "12px",
-                      height: "12px",
+                      width: "8px",
+                      height: "8px",
                       background: "#013220",
-                      border: "1px solid #ffffff",
-                      borderRadius: "3px",
+                      borderRadius: "2px",
                       display: "inline-block",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
                     }}
                   />
                   <span style={{ color: "#013220", fontWeight: 700 }}>
-                    Hijau Tua: Dominan BPBD (&gt;50%)
+                    Dominan BPBD (&gt;50%)
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span
                     style={{
-                      width: "12px",
-                      height: "12px",
+                      width: "8px",
+                      height: "8px",
                       background: "#10b981",
-                      border: "1px solid #ffffff",
-                      borderRadius: "3px",
+                      borderRadius: "2px",
                       display: "inline-block",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
                     }}
                   />
                   <span style={{ color: "#047857", fontWeight: 700 }}>
-                    Hijau Emerald: Dominan Mitra (&gt;50%)
+                    Dominan Mitra (&gt;50%)
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span
                     style={{
-                      width: "12px",
-                      height: "12px",
-                      background: "#e2e8f0",
-                      border: "1px solid #cbd5e1",
-                      borderRadius: "3px",
+                      width: "8px",
+                      height: "8px",
+                      background: "#cbd5e1",
+                      borderRadius: "2px",
                       display: "inline-block",
                     }}
                   />
                   <span style={{ color: "#64748b", fontWeight: 600 }}>
-                    Abu-abu: Terkendali / Rutin
+                    Terkendali / Rutin
                   </span>
                 </div>
               </div>
 
-              <div
+              <span
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  color: "#64748b",
-                  fontSize: "9px",
+                  color: "#94a3b8",
+                  fontSize: "0.70rem",
+                  fontStyle: "italic",
                 }}
               >
-                <span style={{ fontStyle: "italic" }}>
-                  *Volume paket respon BPBD vs Mitra
-                </span>
-                <span style={{ color: "#cbd5e1" }}>•</span>
-                <span style={{ color: "#047857", fontWeight: 600 }}>
-                  💡 Scroll mouse atau seret untuk zoom & geser
-                </span>
-              </div>
+                *Berdasarkan volume paket respon bantuan
+              </span>
             </div>
           </div>
 
@@ -2015,12 +2015,20 @@ export function PetaSebaranPenanganan({
                         border: isBpbd ? "1px solid #013220" : isMitra ? "1px solid #059669" : "1px solid #cbd5e1",
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "5px",
+                        gap: "6px",
                         boxShadow: "0 2px 4px rgba(1, 50, 32, 0.15)",
                       }}
                     >
+                      <span
+                        style={{
+                          width: "6px",
+                          height: "6px",
+                          borderRadius: "50%",
+                          background: isBpbd || isMitra ? "#ffffff" : "#64748b",
+                          display: "inline-block",
+                        }}
+                      />
                       <span>
-                        <span style={monoEmojiStyle}>{isBpbd ? "🏢" : isMitra ? "🤝" : "⚪"}</span>{" "}
                         {isBpbd
                           ? "Dominan BPBD"
                           : isMitra
@@ -2089,11 +2097,13 @@ export function PetaSebaranPenanganan({
                           marginTop: "5px",
                         }}
                       >
-                        <span>
-                          <span style={monoEmojiStyle}>🏢</span> BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b> ({stats.bpbdRespon} Respon)
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <span style={{ width: "7px", height: "7px", borderRadius: "2px", background: "#013220", display: "inline-block" }} />
+                          BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b> ({stats.bpbdRespon} Respon)
                         </span>
-                        <span>
-                          <span style={monoEmojiStyle}>🤝</span> Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b> ({stats.mitraRespon} Respon)
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                          <span style={{ width: "7px", height: "7px", borderRadius: "2px", background: "#10b981", display: "inline-block" }} />
+                          Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b> ({stats.mitraRespon} Respon)
                         </span>
                       </div>
                     </div>
@@ -2112,7 +2122,7 @@ export function PetaSebaranPenanganan({
                         gap: "8px",
                       }}
                     >
-                      <span style={{ fontSize: "16px" }}>🛡️</span>
+                      <AppIcon name="shield" size={15} style={{ color: "#047857" }} />
                       <span>
                         Wilayah aman &amp; nihil laporan kedaruratan aktif. Posko BPBD dan mitra kemanusiaan berada dalam kesiapsiagaan pemantauan rutin.
                       </span>
@@ -2199,7 +2209,7 @@ export function PetaSebaranPenanganan({
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "13px" }}>📍</span>
+                          <AppIcon name="pin" size={13} style={{ color: "#047857" }} />
                           <span
                             style={{
                               color: "#013220",
@@ -2311,11 +2321,32 @@ export function PetaSebaranPenanganan({
                                         : "1px solid #fef08a",
                                   }}
                                 >
-                                  {d.statusKategori === "selesai"
-                                    ? "🟢 Bantuan Diterima (BAST)"
-                                    : d.statusKategori === "dalam_pengiriman"
-                                    ? "🚚 Dalam Penyaluran"
-                                    : "📦 Terverifikasi"}
+                                  <span
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: "5px",
+                                        height: "5px",
+                                        borderRadius: "50%",
+                                        background:
+                                          d.statusKategori === "selesai"
+                                            ? "#10b981"
+                                            : d.statusKategori === "dalam_pengiriman"
+                                            ? "#3b82f6"
+                                            : "#eab308",
+                                      }}
+                                    />
+                                    {d.statusKategori === "selesai"
+                                      ? "Bantuan Diterima (BAST)"
+                                      : d.statusKategori === "dalam_pengiriman"
+                                      ? "Dalam Penyaluran"
+                                      : "Terverifikasi"}
+                                  </span>
                                 </span>
                               </div>
 
@@ -2343,7 +2374,7 @@ export function PetaSebaranPenanganan({
                                   <span style={{ color: "#475569" }}>({d.komoditas})</span>
                                 </div>
                                 <div style={{ color: "#013220", fontWeight: 700 }}>
-                                  👥 {d.jumlahKk} KK ({d.jumlahJiwa} Jiwa)
+                                  {d.jumlahKk} KK ({d.jumlahJiwa} Jiwa)
                                 </div>
                               </div>
 
@@ -2373,7 +2404,7 @@ export function PetaSebaranPenanganan({
                                 </span>
                                 {d.armadaInfo && (
                                   <span style={{ color: "#64748b" }}>
-                                    🚛 {d.armadaInfo}
+                                    {d.armadaInfo}
                                   </span>
                                 )}
                               </div>
@@ -2404,7 +2435,7 @@ export function PetaSebaranPenanganan({
                             fontStyle: "italic",
                           }}
                         >
-                          🛡️ Seluruh daerah di {selectedProvinsi.nama} berstatus kondusif. Belum
+                          Seluruh daerah di {selectedProvinsi.nama} berstatus kondusif. Belum
                           ada daerah yang memerlukan penyaluran logistik darurat saat ini.
                         </div>
                       )}
@@ -2445,7 +2476,7 @@ export function PetaSebaranPenanganan({
                     textAlign: "right",
                   }}
                 >
-                  ✓ Data real-time tersinkronisasi dari Laporan Kebutuhan Warga &amp; Misi Penyaluran Lapangan
+                  Data tersinkronisasi langsung dari Laporan Kebutuhan Warga &amp; Misi Penyaluran Lapangan
                 </div>
               </div>
             );
@@ -2506,7 +2537,8 @@ export function PetaSebaranPenanganan({
                     gap: "8px",
                   }}
                 >
-                  <span>📍</span> Daftar Daerah Penerima Bantuan Pascabencana
+                  <AppIcon name="pin" size={15} style={{ color: "#047857" }} />
+                  <span>Daftar Daerah Penerima Bantuan Pascabencana</span>
                 </h3>
                 <p
                   style={{
@@ -2635,7 +2667,7 @@ export function PetaSebaranPenanganan({
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "14px" }}>📍</span>
+                          <AppIcon name="pin" size={13} style={{ color: "#047857" }} />
                           <strong style={{ fontSize: "0.92rem", color: "#013220" }}>
                             {d.namaKabupatenKota}
                           </strong>
@@ -2682,7 +2714,7 @@ export function PetaSebaranPenanganan({
                         <strong style={{ color: "#013220" }}>{d.volume || d.komoditas}</strong> ({d.komoditas})
                       </div>
                       <div style={{ color: "#013220", fontWeight: 700 }}>
-                        👥 {d.jumlahKk} KK ({d.jumlahJiwa} Jiwa Terbantu)
+                        {d.jumlahKk} KK ({d.jumlahJiwa} Jiwa Terbantu)
                       </div>
                     </div>
 
