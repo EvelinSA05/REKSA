@@ -146,6 +146,7 @@ export function PetaSebaranPenanganan({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProvinsiId, setSelectedProvinsiId] = useState<string>("PROV-35"); // Default Jawa Timur
   const [viewMode, setViewMode] = useState<"vector" | "map" | "table">("vector");
+  const [hoveredProvinsiId, setHoveredProvinsiId] = useState<string | null>(null);
 
   // REAL DATA DYNAMIC AGGREGATION: Derived entirely from database cases and misiList
   const realProvincesData: DynamicProvinsiData[] = useMemo(() => {
@@ -301,6 +302,14 @@ export function PetaSebaranPenanganan({
       const statusLevel: "banyak_ditangani" | "sedang_ditangani" | "terkendali" =
         provCases.length >= 5 ? "banyak_ditangani" : "sedang_ditangani";
 
+      const completedCases = provCases.filter((c) =>
+        c.status === "Bantuan Diterima" || c.status === "Selesai"
+      );
+      const inProgressCases = provCases.filter((c) =>
+        c.status !== "Bantuan Diterima" && c.status !== "Selesai" && c.status !== "Ditolak"
+      );
+      const hasReceivedAid = completedCases.length > 0;
+
       const catatanKewilayahan = `${provCases.length} laporan darurat terdata (${totalKk} KK, ${totalJiwa} Jiwa). ${completedCount} tersalurkan penuh, ${inDeliveryCount} dalam pengiriman lapangan, ${provCases.length - completedCount - inDeliveryCount} dalam proses penanganan.`;
 
       const jumlahBantuan = `${totalPaket.toLocaleString("id-ID")} Paket Bantuan (${bpbdPaket.toLocaleString("id-ID")} BPBD · ${mitraPaket.toLocaleString("id-ID")} Mitra)`;
@@ -330,6 +339,11 @@ export function PetaSebaranPenanganan({
         mitraRespon: totalMitra,
         totalRespon,
         dominant,
+        // Extra: raw case records for panel
+        _rawCases: provCases,
+        _completedCases: completedCases,
+        _inProgressCases: inProgressCases,
+        hasReceivedAid,
       };
     });
   }, [cases, misiList]);
@@ -1203,17 +1217,21 @@ export function PetaSebaranPenanganan({
                     const isBpbd = stats.dominant === "bpbd";
                     const isMitra = stats.dominant === "mitra";
                     const isSelected = selectedProvinsi?.id === p.id;
+                    const isHovered = hoveredProvinsiId === p.id;
+                    const pd = p as any;
+                    const hasReceivedAid = pd.hasReceivedAid === true;
+                    const completedCount = pd._completedCases?.length ?? 0;
 
                     let fillColor = "#e2e8f0"; // Neutral soft slate
                     let fillOpacity = 0.55;
 
                     if (isBpbd) {
-                      fillColor = "#013220"; // Forest Green (BPBD)
-                      fillOpacity = isSelected ? 0.98 : 0.88;
+                      fillColor = hasReceivedAid ? "#005c2e" : "#013220"; // Slightly lighter if aid received
+                      fillOpacity = isSelected || isHovered ? 1 : 0.88;
                     } else if (isMitra) {
-                      fillColor = "#10b981"; // Emerald Green (Mitra)
-                      fillOpacity = isSelected ? 0.98 : 0.88;
-                    } else if (isSelected) {
+                      fillColor = hasReceivedAid ? "#34d399" : "#10b981";
+                      fillOpacity = isSelected || isHovered ? 1 : 0.88;
+                    } else if (isSelected || isHovered) {
                       fillColor = "#cbd5e1";
                       fillOpacity = 0.9;
                     }
@@ -1222,36 +1240,29 @@ export function PetaSebaranPenanganan({
                       <g
                         key={p.id}
                         onClick={() => setSelectedProvinsiId(p.id)}
-                        style={{ cursor: "pointer" }}
+                        onMouseEnter={() => setHoveredProvinsiId(p.id)}
+                        onMouseLeave={() => setHoveredProvinsiId(null)}
+                        style={{ cursor: p.isDisasterZone ? "pointer" : "default" }}
                       >
                         <path
                           d={p.pathD}
                           fill={fillColor}
                           fillOpacity={fillOpacity}
-                          stroke="#ffffff"
-                          strokeWidth={isSelected ? 3.2 : p.isDisasterZone ? 2 : 1.2}
+                          stroke={isSelected ? "#013220" : isHovered && p.isDisasterZone ? "#047857" : "#ffffff"}
+                          strokeWidth={isSelected ? 3.5 : isHovered && p.isDisasterZone ? 2.5 : p.isDisasterZone ? 2 : 1.2}
                           strokeLinejoin="round"
                           strokeLinecap="round"
                           filter={isSelected ? "url(#indonesia-glow)" : undefined}
-                          style={{
-                            transition: "all 0.15s ease",
-                          }}
+                          style={{ transition: "all 0.15s ease" }}
                         >
                           <title>
                             {p.nama} (
                             {isBpbd
-                              ? "Dominan BPBD (" +
-                                stats.bpbdPct +
-                                "% vs Mitra " +
-                                stats.mitraPct +
-                                "%)"
+                              ? "Dominan BPBD (" + stats.bpbdPct + "% vs Mitra " + stats.mitraPct + "%)"
                               : isMitra
-                              ? "Dominan Mitra (" +
-                                stats.mitraPct +
-                                "% vs BPBD " +
-                                stats.bpbdPct +
-                                "%)"
+                              ? "Dominan Mitra (" + stats.mitraPct + "% vs BPBD " + stats.bpbdPct + "%)"
                               : "Kondisi Terkendali"}
+                            {hasReceivedAid ? ` — ${completedCount} Bantuan Sudah Diterima` : ""}
                             )
                           </title>
                         </path>
@@ -1263,42 +1274,43 @@ export function PetaSebaranPenanganan({
                             <circle
                               cx={p.svgCenter[0]}
                               cy={p.svgCenter[1]}
-                              r={isSelected ? 6.5 : 5}
+                              r={isSelected ? 7 : isHovered ? 6.5 : 5}
                               fill={isBpbd ? "#013220" : "#10b981"}
                               stroke="#ffffff"
                               strokeWidth={isSelected ? 2.5 : 1.8}
+                              style={{ transition: "r 0.15s ease" }}
                             />
                             {/* Province Label */}
                             <text
                               x={p.svgCenter[0]}
-                              y={p.svgCenter[1] - 8}
+                              y={p.svgCenter[1] - 9}
                               textAnchor="middle"
                               fill="#013220"
                               fontSize={isSelected ? "10.5px" : "9px"}
                               fontWeight="800"
-                              style={{
-                                textShadow:
-                                  "0 1px 3px rgba(255,255,255,0.95), 0 0 2px rgba(255,255,255,0.9)",
-                                letterSpacing: "0.01em",
-                              }}
+                              style={{ textShadow: "0 1px 3px rgba(255,255,255,0.95)", letterSpacing: "0.01em" }}
                             >
                               {p.nama.replace("Provinsi ", "")}
                             </text>
                             {/* Dominant Percentage */}
                             <text
                               x={p.svgCenter[0]}
-                              y={p.svgCenter[1] + 14}
+                              y={p.svgCenter[1] + 15}
                               textAnchor="middle"
                               fill={isBpbd ? "#013220" : "#047857"}
-                              fontSize="8px"
+                              fontSize="7.5px"
                               fontWeight="800"
-                              style={{
-                                textShadow:
-                                  "0 1px 2px rgba(255,255,255,0.9)",
-                              }}
+                              style={{ textShadow: "0 1px 2px rgba(255,255,255,0.9)" }}
                             >
                               {isBpbd ? `BPBD ${stats.bpbdPct}%` : `Mitra ${stats.mitraPct}%`}
                             </text>
+                            {/* Checkmark badge if aid was received */}
+                            {hasReceivedAid && (
+                              <g transform={`translate(${p.svgCenter[0] + 5}, ${p.svgCenter[1] - 9})`}>
+                                <circle r="5" fill="#16a34a" stroke="#ffffff" strokeWidth="1.5" />
+                                <text textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontSize="6px" fontWeight="900">✓</text>
+                              </g>
+                            )}
                           </g>
                         )}
                       </g>
@@ -1336,96 +1348,30 @@ export function PetaSebaranPenanganan({
                 maxWidth: "285px",
               }}
             >
-              <span
-                style={{
-                  fontWeight: 800,
-                  color: "#013220",
-                  display: "block",
-                  marginBottom: "5px",
-                  fontSize: "0.76rem",
-                  letterSpacing: "0.03em",
-                }}
-              >
+              <span style={{ fontWeight: 800, color: "#013220", display: "block", marginBottom: "5px", fontSize: "0.76rem", letterSpacing: "0.03em" }}>
                 LEGENDA RESPON BANTUAN
               </span>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  marginBottom: "4px",
-                }}
-              >
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#013220",
-                    border: "1.5px solid #ffffff",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                  }}
-                />
-                <span style={{ color: "#013220", fontWeight: 700 }}>
-                  Hijau Tua: Dominan BPBD (&gt;50%)
-                </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                <span style={{ width: "14px", height: "14px", background: "#013220", border: "1.5px solid #ffffff", borderRadius: "3px", display: "inline-block", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
+                <span style={{ color: "#013220", fontWeight: 700 }}>Hijau Tua: Dominan BPBD (&gt;50%)</span>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  marginBottom: "4px",
-                }}
-              >
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#10b981",
-                    border: "1.5px solid #ffffff",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                  }}
-                />
-                <span style={{ color: "#047857", fontWeight: 700 }}>
-                  Hijau Emerald: Dominan Mitra (&gt;50%)
-                </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                <span style={{ width: "14px", height: "14px", background: "#10b981", border: "1.5px solid #ffffff", borderRadius: "3px", display: "inline-block", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
+                <span style={{ color: "#047857", fontWeight: 700 }}>Hijau Emerald: Dominan Mitra (&gt;50%)</span>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#e2e8f0",
-                    border: "1.5px solid #cbd5e1",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                  }}
-                />
-                <span style={{ color: "#64748b", fontWeight: 600 }}>
-                  Abu-abu: Terkendali / Pemantauan Rutin
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                <span style={{ position: "relative", width: "14px", height: "14px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ width: "14px", height: "14px", background: "#013220", border: "1.5px solid #ffffff", borderRadius: "3px", display: "inline-block" }} />
+                  <span style={{ position: "absolute", top: "-3px", right: "-3px", width: "9px", height: "9px", background: "#16a34a", borderRadius: "50%", border: "1px solid #ffffff", fontSize: "6px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900 }}>✓</span>
                 </span>
+                <span style={{ color: "#16a34a", fontWeight: 700 }}>Tanda ✓: Ada Bantuan Diterima</span>
               </div>
-              <small
-                style={{
-                  display: "block",
-                  color: "#64748b",
-                  marginTop: "5px",
-                  fontSize: "9.5px",
-                  borderTop: "1px dashed #e2e8f0",
-                  paddingTop: "3px",
-                }}
-              >
-                *Perbandingan volume paket respon bantuan BPBD vs Mitra
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ width: "14px", height: "14px", background: "#e2e8f0", border: "1.5px solid #cbd5e1", borderRadius: "3px", display: "inline-block" }} />
+                <span style={{ color: "#64748b", fontWeight: 600 }}>Abu-abu: Terkendali / Pemantauan Rutin</span>
+              </div>
+              <small style={{ display: "block", color: "#94a3b8", marginTop: "5px", fontSize: "9.5px", borderTop: "1px dashed #e2e8f0", paddingTop: "3px" }}>
+                Klik wilayah berwarna untuk detail bantuan
               </small>
             </div>
           </div>
@@ -1435,6 +1381,10 @@ export function PetaSebaranPenanganan({
             const stats = getProvinceBpbdMitraStats(selectedProvinsi);
             const isBpbd = stats.dominant === "bpbd";
             const isMitra = stats.dominant === "mitra";
+            const pd = selectedProvinsi as any;
+            const completedCases: CaseRecord[] = pd._completedCases || [];
+            const inProgressCases: CaseRecord[] = pd._inProgressCases || [];
+            const hasReceivedAid = pd.hasReceivedAid === true;
 
             return (
               <div
@@ -1444,255 +1394,136 @@ export function PetaSebaranPenanganan({
                   borderRadius: "14px",
                   padding: "18px 20px",
                   display: "flex",
-                  flexDirection: "column",
+                  flexDirection: "column" as const,
                   justifyContent: "space-between",
                   boxShadow: "0 4px 14px rgba(1, 50, 32, 0.05)",
+                  overflowY: "auto" as const,
+                  maxHeight: "490px",
                 }}
               >
                 <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                    }}
-                  >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
                     <div>
-                      <span
-                        style={{
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          color: "#64748b",
-                        }}
-                      >
-                        Wilayah {selectedProvinsi.pulau}
-                      </span>
-                      <h3
-                        style={{
-                          margin: "2px 0 6px",
-                          fontSize: "1.25rem",
-                          fontWeight: 800,
-                          color: "#013220",
-                        }}
-                      >
-                        {selectedProvinsi.nama}
-                      </h3>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em", color: "#64748b" }}>Wilayah {selectedProvinsi.pulau}</span>
+                      <h3 style={{ margin: "2px 0 6px", fontSize: "1.25rem", fontWeight: 800, color: "#013220" }}>{selectedProvinsi.nama}</h3>
                     </div>
-
                     <span
                       style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 800,
-                        padding: "4px 10px",
-                        borderRadius: "999px",
+                        fontSize: "0.75rem", fontWeight: 800, padding: "4px 10px", borderRadius: "999px",
                         background: isBpbd ? "#013220" : isMitra ? "#10b981" : "#f1f5f9",
                         color: isBpbd || isMitra ? "#ffffff" : "#475569",
                         border: isBpbd ? "1px solid #013220" : isMitra ? "1px solid #059669" : "1px solid #cbd5e1",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        boxShadow: "0 2px 4px rgba(1, 50, 32, 0.15)",
+                        display: "inline-flex", alignItems: "center", gap: "5px", boxShadow: "0 2px 4px rgba(1, 50, 32, 0.15)",
+                        flexShrink: 0,
                       }}
                     >
-                      <span>
-                        <span style={monoEmojiStyle}>{isBpbd ? "🏢" : isMitra ? "🤝" : "⚪"}</span>{" "}
-                        {isBpbd
-                          ? "Dominan BPBD"
-                          : isMitra
-                          ? "Dominan Mitra"
-                          : "Kondisi Kondusif"}
-                      </span>
+                      <span><span style={monoEmojiStyle}>{isBpbd ? "🏢" : isMitra ? "🤝" : "⚪"}</span>{" "}{isBpbd ? "Dominan BPBD" : isMitra ? "Dominan Mitra" : "Kondisi Kondusif"}</span>
                     </span>
                   </div>
 
                   {/* Dual Bar or Kondusif Banner */}
                   {selectedProvinsi.isDisasterZone && stats.totalRespon > 0 ? (
-                    <div style={{ margin: "14px 0 16px" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          fontSize: "0.78rem",
-                          fontWeight: 700,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        <span style={{ color: "#013220" }}>
-                          Banyaknya Respon: BPBD ({stats.bpbdPct}%)
-                        </span>
-                        <span style={{ color: "#047857" }}>
-                          Mitra ({stats.mitraPct}%)
-                        </span>
+                    <div style={{ margin: "14px 0 14px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", fontWeight: 700, marginBottom: "6px" }}>
+                        <span style={{ color: "#013220" }}>Banyaknya Respon: BPBD ({stats.bpbdPct}%)</span>
+                        <span style={{ color: "#047857" }}>Mitra ({stats.mitraPct}%)</span>
                       </div>
-
-                      {/* Dual Progress Bar */}
-                      <div
-                        style={{
-                          height: "10px",
-                          background: "#e2e8f0",
-                          borderRadius: "999px",
-                          overflow: "hidden",
-                          display: "flex",
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${stats.bpbdPct}%`,
-                            background: "#013220",
-                            transition: "width 0.3s ease",
-                          }}
-                          title={`BPBD: ${stats.bpbdPct}%`}
-                        />
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${stats.mitraPct}%`,
-                            background: "#10b981",
-                            transition: "width 0.3s ease",
-                          }}
-                          title={`Mitra: ${stats.mitraPct}%`}
-                        />
+                      <div style={{ height: "10px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden", display: "flex" }}>
+                        <div style={{ height: "100%", width: `${stats.bpbdPct}%`, background: "#013220", transition: "width 0.3s ease" }} title={`BPBD: ${stats.bpbdPct}%`} />
+                        <div style={{ height: "100%", width: `${stats.mitraPct}%`, background: "#10b981", transition: "width 0.3s ease" }} title={`Mitra: ${stats.mitraPct}%`} />
                       </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          fontSize: "0.72rem",
-                          color: "#64748b",
-                          marginTop: "5px",
-                        }}
-                      >
-                        <span>
-                          <span style={monoEmojiStyle}>🏢</span> BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b> ({stats.bpbdRespon} Respon)
-                        </span>
-                        <span>
-                          <span style={monoEmojiStyle}>🤝</span> Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b> ({stats.mitraRespon} Respon)
-                        </span>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", color: "#64748b", marginTop: "5px" }}>
+                        <span><span style={monoEmojiStyle}>🏢</span> BPBD: <b>{stats.bpbdPaket.toLocaleString("id-ID")} Paket</b> ({stats.bpbdRespon} Respon)</span>
+                        <span><span style={monoEmojiStyle}>🤝</span> Mitra: <b>{stats.mitraPaket.toLocaleString("id-ID")} Paket</b> ({stats.mitraRespon} Respon)</span>
                       </div>
                     </div>
                   ) : (
-                    <div
-                      style={{
-                        margin: "12px 0 14px",
-                        padding: "10px 14px",
-                        borderRadius: "10px",
-                        background: "#f8fafc",
-                        border: "1px dashed #cbd5e1",
-                        fontSize: "0.78rem",
-                        color: "#475569",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
+                    <div style={{ margin: "12px 0 14px", padding: "10px 14px", borderRadius: "10px", background: "#f8fafc", border: "1px dashed #cbd5e1", fontSize: "0.78rem", color: "#475569", display: "flex", alignItems: "center", gap: "8px" }}>
                       <span style={{ fontSize: "16px" }}>🛡️</span>
-                      <span>
-                        Wilayah aman &amp; nihil laporan kedaruratan aktif. Posko BPBD dan mitra kemanusiaan berada dalam kesiapsiagaan pemantauan rutin.
-                      </span>
+                      <span>Wilayah aman &amp; nihil laporan kedaruratan aktif. Posko BPBD dan mitra kemanusiaan berada dalam kesiapsiagaan pemantauan rutin.</span>
                     </div>
                   )}
 
-                  {/* Logistics & Beneficiary Info - Clean 2-Card Layout */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                      fontSize: "0.82rem",
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: "#ffffff",
-                        padding: "10px 14px",
-                        borderRadius: "10px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
+                  {/* Logistics & Beneficiary Info */}
+                  <div style={{ display: "flex", flexDirection: "column" as const, gap: "8px", fontSize: "0.82rem" }}>
+                    <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>
-                          Status Wilayah &amp; Kedaruratan
-                        </span>
-                        <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>
-                          {selectedProvinsi.jiwaTerbantu > 0
-                            ? `${selectedProvinsi.jiwaTerbantu.toLocaleString("id-ID")} Jiwa Terbantu`
-                            : "Nihil Korban Terdampak"}
-                        </span>
+                        <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" as const }}>Status Wilayah &amp; Kedaruratan</span>
+                        <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>{selectedProvinsi.jiwaTerbantu > 0 ? `${selectedProvinsi.jiwaTerbantu.toLocaleString("id-ID")} Jiwa Terbantu` : "Nihil Korban Terdampak"}</span>
                       </div>
-                      <strong style={{ color: "#013220", fontSize: "0.90rem", display: "block", marginTop: "2px" }}>
-                        {selectedProvinsi.kejadianBencana}
-                      </strong>
+                      <strong style={{ color: "#013220", fontSize: "0.90rem", display: "block", marginTop: "2px" }}>{selectedProvinsi.kejadianBencana}</strong>
                       {selectedProvinsi.totalKasus > 0 && (
-                        <span style={{ fontSize: "0.74rem", color: "#64748b", display: "block", marginTop: "2px" }}>
-                          {selectedProvinsi.totalKasus} Laporan Kebutuhan Aktif · {selectedProvinsi.kkTerlayani} KK
-                        </span>
+                        <span style={{ fontSize: "0.74rem", color: "#64748b", display: "block", marginTop: "2px" }}>{selectedProvinsi.totalKasus} Laporan Kebutuhan Aktif · {selectedProvinsi.kkTerlayani} KK</span>
                       )}
                     </div>
 
-                    <div
-                      style={{
-                        background: "#ffffff",
-                        padding: "10px 14px",
-                        borderRadius: "10px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", display: "block" }}>
-                        Penyaluran &amp; Mitra Terlibat
-                      </span>
-                      <div style={{ color: "#013220", fontWeight: 700, fontSize: "0.84rem", marginTop: "2px" }}>
-                        {selectedProvinsi.jumlahBantuan}
-                      </div>
-                      <div style={{ color: "#475569", fontSize: "0.74rem", marginTop: "3px" }}>
-                        Respon Terlibat: {selectedProvinsi.mitraBpbdAktif}
-                      </div>
+                    <div style={{ background: "#ffffff", padding: "10px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
+                      <span style={{ color: "#64748b", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" as const, display: "block" }}>Penyaluran &amp; Mitra Terlibat</span>
+                      <div style={{ color: "#013220", fontWeight: 700, fontSize: "0.84rem", marginTop: "2px" }}>{selectedProvinsi.jumlahBantuan}</div>
+                      <div style={{ color: "#475569", fontSize: "0.74rem", marginTop: "3px" }}>Respon Terlibat: {selectedProvinsi.mitraBpbdAktif}</div>
                       {selectedProvinsi.komoditasUtama && selectedProvinsi.isDisasterZone && (
-                        <div style={{ color: "#64748b", fontSize: "0.72rem", marginTop: "2px" }}>
-                          Komoditas Utama: {selectedProvinsi.komoditasUtama}
-                        </div>
+                        <div style={{ color: "#64748b", fontSize: "0.72rem", marginTop: "2px" }}>Komoditas Utama: {selectedProvinsi.komoditasUtama}</div>
                       )}
                     </div>
 
-                    <div
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        background: "rgba(0,0,0,0.02)",
-                        borderLeft: `3px solid ${
-                          isBpbd ? "#013220" : isMitra ? "#10b981" : "#94a3b8"
-                        }`,
-                      }}
-                    >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: "0.78rem",
-                          color: "#334155",
-                          fontStyle: "italic",
-                          lineHeight: 1.45,
-                        }}
-                      >
+                    {/* ── BANTUAN SUDAH DITERIMA (detail per kasus) ── */}
+                    {hasReceivedAid && completedCases.length > 0 && (
+                      <div style={{ background: "#f0fdf4", border: "1.5px solid #86efac", borderRadius: "10px", overflow: "hidden" }}>
+                        <div style={{ padding: "8px 14px", background: "#dcfce7", borderBottom: "1px solid #86efac", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <strong style={{ fontSize: "0.78rem", color: "#15803d" }}>✅ Bantuan Sudah Diterima ({completedCases.length} laporan)</strong>
+                          <span style={{ fontSize: "0.7rem", color: "#16a34a", fontWeight: 600 }}>Terverifikasi &amp; Distribusi Selesai</span>
+                        </div>
+                        <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column" as const, gap: "6px" }}>
+                          {completedCases.slice(0, 4).map((c) => (
+                            <div key={c.id} style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "6px 8px", background: "#ffffff", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
+                              <span style={{ marginTop: "1px", fontSize: "12px", flexShrink: 0 }}>🎁</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ display: "block", fontSize: "0.78rem", color: "#013220", whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>{c.item}</strong>
+                                <span style={{ fontSize: "0.69rem", color: "#64748b" }}>{c.id} · {c.kk || "1"} KK{c.totalDiterimaResmi ? ` · ${c.totalDiterimaResmi}` : ""}</span>
+                              </div>
+                              <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#16a34a", background: "#dcfce7", border: "1px solid #86efac", padding: "1px 6px", borderRadius: "4px", flexShrink: 0 }}>Diterima</span>
+                            </div>
+                          ))}
+                          {completedCases.length > 4 && (
+                            <p style={{ margin: 0, fontSize: "0.72rem", color: "#16a34a", textAlign: "center" as const, fontWeight: 600 }}>+{completedCases.length - 4} laporan lain sudah diterima</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── BANTUAN SEDANG DIPROSES ── */}
+                    {inProgressCases.length > 0 && (
+                      <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "10px", overflow: "hidden" }}>
+                        <div style={{ padding: "8px 14px", background: "#fef9c3", borderBottom: "1px solid #fde68a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <strong style={{ fontSize: "0.78rem", color: "#b45309" }}>⏳ Sedang Diproses ({inProgressCases.length} laporan)</strong>
+                        </div>
+                        <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column" as const, gap: "5px" }}>
+                          {inProgressCases.slice(0, 3).map((c) => (
+                            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 8px", background: "#ffffff", borderRadius: "7px", border: "1px solid #fde68a" }}>
+                              <span style={{ fontSize: "11px", flexShrink: 0 }}>📋</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ display: "block", fontSize: "0.77rem", color: "#1e293b", whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>{c.item}</strong>
+                                <span style={{ fontSize: "0.68rem", color: "#64748b" }}>{c.id} · {c.kk || "1"} KK</span>
+                              </div>
+                              <span style={{ fontSize: "0.67rem", fontWeight: 700, color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", padding: "1px 6px", borderRadius: "4px", flexShrink: 0, whiteSpace: "nowrap" as const }}>{c.status}</span>
+                            </div>
+                          ))}
+                          {inProgressCases.length > 3 && (
+                            <p style={{ margin: 0, fontSize: "0.72rem", color: "#b45309", textAlign: "center" as const, fontWeight: 600 }}>+{inProgressCases.length - 3} laporan lain masih dalam proses</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(0,0,0,0.02)", borderLeft: `3px solid ${isBpbd ? "#013220" : isMitra ? "#10b981" : "#94a3b8"}` }}>
+                      <p style={{ margin: 0, fontSize: "0.78rem", color: "#334155", fontStyle: "italic", lineHeight: 1.45 }}>
                         "{selectedProvinsi.catatanKewilayahan}"
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    marginTop: "14px",
-                    paddingTop: "10px",
-                    borderTop: "1px solid #e2e8f0",
-                    fontSize: "0.72rem",
-                    color: "#94a3b8",
-                    textAlign: "right",
-                  }}
-                >
+                <div style={{ marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #e2e8f0", fontSize: "0.72rem", color: "#94a3b8", textAlign: "right" as const }}>
                   ✓ Data real-time tersinkronisasi dari Laporan Kebutuhan Warga &amp; Misi Penyaluran Lapangan
                 </div>
               </div>
