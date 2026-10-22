@@ -169,6 +169,7 @@ export function PetaSebaranPenanganan({
   const [selectedPulau, setSelectedPulau] = useState<string>("Semua Pulau");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProvinsiId, setSelectedProvinsiId] = useState<string>("PROV-35"); // Default Jawa Timur
+  const [pressedProvinsiId, setPressedProvinsiId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"vector" | "map" | "table">("vector");
   const [showAllDaerahModal, setShowAllDaerahModal] = useState(false);
   const [daerahSearchQuery, setDaerahSearchQuery] = useState("");
@@ -1451,7 +1452,10 @@ export function PetaSebaranPenanganan({
                     return (
                       <g
                         key={p.id}
-                        onClick={() => setSelectedProvinsiId(p.id)}
+                        onClick={() => {
+                          setSelectedProvinsiId(p.id);
+                          setPressedProvinsiId((prev) => (prev === p.id ? null : p.id));
+                        }}
                         style={{ cursor: "pointer" }}
                       >
                         <path
@@ -1530,29 +1534,44 @@ export function PetaSebaranPenanganan({
                               {isBpbd ? `BPBD ${stats.bpbdPct}%` : `Mitra ${stats.mitraPct}%`}
                             </text>
 
-                            {/* Clickable Daerah Indicator Badge on Map */}
-                            {p.daerahPenerimaList && p.daerahPenerimaList.length > 0 && (
-                              <g>
+                            {/* Popover Daerah Penerima Bantuan: HANYA MUNCUL SAAT DITEKAN/DIKLIK */}
+                            {pressedProvinsiId === p.id && p.daerahPenerimaList && p.daerahPenerimaList.length > 0 && (
+                              <g style={{ pointerEvents: "none" }}>
                                 <rect
-                                  x={p.svgCenter[0] - (isSelected ? 66 : 58)}
-                                  y={p.svgCenter[1] + 19}
-                                  width={isSelected ? 132 : 116}
-                                  height={17}
-                                  rx={8.5}
-                                  fill={isSelected ? "#013220" : "rgba(255,255,255,0.95)"}
-                                  stroke={isSelected ? "#10b981" : "#cbd5e1"}
-                                  strokeWidth={1.2}
-                                  filter="drop-shadow(0 2px 4px rgba(0,0,0,0.12))"
+                                  x={p.svgCenter[0] - 70}
+                                  y={p.svgCenter[1] - 46}
+                                  width={140}
+                                  height={28}
+                                  rx={14}
+                                  fill="#013220"
+                                  stroke="#10b981"
+                                  strokeWidth={1.8}
+                                  filter="drop-shadow(0 4px 10px rgba(0,0,0,0.30))"
+                                />
+                                <polygon
+                                  points={`${p.svgCenter[0] - 6},${p.svgCenter[1] - 18} ${p.svgCenter[0] + 6},${p.svgCenter[1] - 18} ${p.svgCenter[0]},${p.svgCenter[1] - 12}`}
+                                  fill="#013220"
                                 />
                                 <text
                                   x={p.svgCenter[0]}
-                                  y={p.svgCenter[1] + 30.5}
+                                  y={p.svgCenter[1] - 32}
                                   textAnchor="middle"
-                                  fill={isSelected ? "#ffffff" : "#0f172a"}
-                                  fontSize="8px"
+                                  fill="#ffffff"
+                                  fontSize="9.5px"
                                   fontWeight="800"
+                                  style={{ letterSpacing: "0.02em" }}
                                 >
                                   📍 {p.daerahPenerimaList[0].namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")}
+                                </text>
+                                <text
+                                  x={p.svgCenter[0]}
+                                  y={p.svgCenter[1] - 21}
+                                  textAnchor="middle"
+                                  fill="#6ee7b7"
+                                  fontSize="7.5px"
+                                  fontWeight="700"
+                                >
+                                  {p.daerahPenerimaList[0].komoditas} · {p.daerahPenerimaList[0].statusKategori === "selesai" ? "Diterima" : "Dalam Penyaluran"}
                                 </text>
                               </g>
                             )}
