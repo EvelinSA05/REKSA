@@ -15,7 +15,7 @@
       "dest": "/public/dist/$1"
     },
     {
-      "src": "/(assets/.*|images/.*|favicon\\.ico|robots\\.txt)",
+      "src": "/(assets/.*|images/.*|favicon\\..*|apple-touch-icon.*|robots\\.txt|.*\\.svg|.*\\.png|.*\\.ico|.*\\.jpg|.*\\.json)",
       "dest": "/public/$1"
     },
     {

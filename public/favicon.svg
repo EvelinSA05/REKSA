@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="reksaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#012417" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <filter id="reksaShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Modern squircle app icon container -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#reksaGrad)" stroke="#10b981" stroke-width="1.8" />
+
+  <!-- REKSA Iconic Logo Emblem -->
+  <g transform="translate(11, 11)" filter="url(#reksaShadow)">
+    <!-- R Loop and Spine -->
+    <path d="M7 7h16c7 0 12 4 12 10s-5 10-12 10H7V7Z" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Leg and Crossbar -->
+    <path d="M18 27 L35 38 M7 20h17" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Collaboration & Recovery Node Circles -->
+    <circle cx="8" cy="7" r="4.2" fill="url(#emeraldGrad)" stroke="#ffffff" stroke-width="2" />
+    <circle cx="35" cy="38" r="4.2" fill="url(#emeraldGrad)" stroke="#ffffff" stroke-width="2" />
+    <circle cx="23" cy="7" r="2.2" fill="#34d399" />
+    <circle cx="35" cy="17" r="2.2" fill="#34d399" />
+  </g>
+</svg>
