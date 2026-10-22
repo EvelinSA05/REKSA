@@ -175,6 +175,28 @@ export function PetaSebaranPenanganan({
   const [daerahSearchQuery, setDaerahSearchQuery] = useState("");
   const [daerahFilterStatus, setDaerahFilterStatus] = useState<"semua" | "selesai" | "dalam_pengiriman" | "bpbd" | "mitra">("semua");
 
+  // Zoom & Pan state for Vector Map
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const hasDraggedRef = useRef<boolean>(false);
+  const svgWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const handleZoomIn = () => {
+    setZoomLevel((prev) => Math.min(Math.round((prev + 0.3) * 10) / 10, 4));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel((prev) => Math.max(Math.round((prev - 0.3) * 10) / 10, 0.7));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
   // REAL DATA DYNAMIC AGGREGATION: Derived entirely from database cases and misiList
   const realProvincesData: DynamicProvinsiData[] = useMemo(() => {
     // 1. Group cases by normalized province name
@@ -757,6 +779,83 @@ export function PetaSebaranPenanganan({
       map.invalidateSize();
     }, 200);
   }, [viewMode, selectedProvinsi, realProvincesData]);
+
+  // Mouse wheel zoom on vector map container
+  useEffect(() => {
+    const el = svgWrapperRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.88;
+      setZoomLevel((prev) => {
+        const next = Math.min(Math.max(prev * zoomFactor, 0.7), 4);
+        return Math.round(next * 100) / 100;
+      });
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    hasDraggedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    panStartRef.current = { ...panOffset };
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const clientDx = e.clientX - dragStartRef.current.x;
+    const clientDy = e.clientY - dragStartRef.current.y;
+    if (Math.abs(clientDx) > 4 || Math.abs(clientDy) > 4) {
+      hasDraggedRef.current = true;
+    }
+    const rect = svgWrapperRef.current?.getBoundingClientRect();
+    const ratioX = rect ? 960 / rect.width : 1;
+    const ratioY = rect ? 380 / rect.height : 1;
+    setPanOffset({
+      x: panStartRef.current.x + clientDx * ratioX,
+      y: panStartRef.current.y + clientDy * ratioY,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      hasDraggedRef.current = false;
+      dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      panStartRef.current = { ...panOffset };
+      setIsDragging(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const clientDx = e.touches[0].clientX - dragStartRef.current.x;
+    const clientDy = e.touches[0].clientY - dragStartRef.current.y;
+    if (Math.abs(clientDx) > 4 || Math.abs(clientDy) > 4) {
+      hasDraggedRef.current = true;
+    }
+    const rect = svgWrapperRef.current?.getBoundingClientRect();
+    const ratioX = rect ? 960 / rect.width : 1;
+    const ratioY = rect ? 380 / rect.height : 1;
+    setPanOffset({
+      x: panStartRef.current.x + clientDx * ratioX,
+      y: panStartRef.current.y + clientDy * ratioY,
+    });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   return (
     <section
@@ -1374,7 +1473,7 @@ export function PetaSebaranPenanganan({
             alignItems: "start",
           }}
         >
-          {/* MAP CANVAS */}
+          {/* MAP CONTAINER (CANVAS + HORIZONTAL BOTTOM LEGEND) */}
           <div
             style={{
               position: "relative",
@@ -1383,329 +1482,471 @@ export function PetaSebaranPenanganan({
               border: "1px solid #cbd5e1",
               background: viewMode === "vector" ? "#fbfcf8" : "#ffffff",
               height: "440px",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            {viewMode === "vector" ? (
-              /* =========================================================================
-                 MODE VEKTOR TEMATIK INTERLOCKING INDONESIA
-                 Menampilkan seluruh peta Indonesia (Sabang-Merauke) di atas grid canvas
-                 dengan pewarnaan heatmap dua warna (Hijau & Kuning) pada daerah bencana.
-                 ========================================================================= */
-              <div
-                style={{
-                  width: "100%",
-                  height: "440px",
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundImage:
-                    "linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px)",
-                  backgroundSize: "22px 22px",
-                }}
-              >
-                <svg
-                  viewBox="0 0 960 380"
+            {/* CANVAS WRAPPER */}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                position: "relative",
+                overflow: "hidden",
+                width: "100%",
+              }}
+            >
+              {viewMode === "vector" ? (
+                /* =========================================================================
+                   MODE VEKTOR TEMATIK INTERLOCKING INDONESIA
+                   Menampilkan seluruh peta Indonesia (Sabang-Merauke) di atas grid canvas
+                   dengan zoom dan pan interaktif.
+                   ========================================================================= */
+                <div
+                  ref={svgWrapperRef}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
                   style={{
                     width: "100%",
                     height: "100%",
-                    maxHeight: "430px",
-                    filter: "drop-shadow(0 10px 24px rgba(0,0,0,0.08))",
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundImage:
+                      "linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px)",
+                    backgroundSize: "22px 22px",
+                    cursor: isDragging ? "grabbing" : zoomLevel > 1 ? "grab" : "default",
+                    userSelect: "none",
                   }}
                 >
-                  <defs>
-                    <filter
-                      id="indonesia-glow"
-                      x="-20%"
-                      y="-20%"
-                      width="140%"
-                      height="140%"
-                    >
-                      <feDropShadow
-                        dx="0"
-                        dy="3"
-                        stdDeviation="5"
-                        floodColor="#013220"
-                        floodOpacity="0.35"
-                      />
-                    </filter>
-                  </defs>
-
-                  {/* Render All 32 Provinces of Indonesia */}
-                  {realProvincesData.map((p) => {
-                    const stats = getProvinceBpbdMitraStats(p);
-                    const isBpbd = stats.dominant === "bpbd";
-                    const isMitra = stats.dominant === "mitra";
-                    const isSelected = selectedProvinsi?.id === p.id;
-
-                    let fillColor = "#e2e8f0"; // Neutral soft slate
-                    let fillOpacity = 0.55;
-
-                    if (isBpbd) {
-                      fillColor = "#013220"; // Forest Green (BPBD)
-                      fillOpacity = isSelected ? 0.98 : 0.88;
-                    } else if (isMitra) {
-                      fillColor = "#10b981"; // Emerald Green (Mitra)
-                      fillOpacity = isSelected ? 0.98 : 0.88;
-                    } else if (isSelected) {
-                      fillColor = "#cbd5e1";
-                      fillOpacity = 0.9;
-                    }
-
-                    return (
-                      <g
-                        key={p.id}
-                        onClick={() => {
-                          setSelectedProvinsiId(p.id);
-                          setPressedProvinsiId((prev) => (prev === p.id ? null : p.id));
-                        }}
-                        style={{ cursor: "pointer" }}
+                  <svg
+                    viewBox="0 0 960 380"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      filter: "drop-shadow(0 10px 24px rgba(0,0,0,0.08))",
+                      pointerEvents: isDragging ? "none" : "auto",
+                    }}
+                  >
+                    <defs>
+                      <filter
+                        id="indonesia-glow"
+                        x="-20%"
+                        y="-20%"
+                        width="140%"
+                        height="140%"
                       >
-                        <path
-                          d={p.pathD}
-                          fill={fillColor}
-                          fillOpacity={fillOpacity}
-                          stroke="#ffffff"
-                          strokeWidth={isSelected ? 3.2 : p.isDisasterZone ? 2 : 1.2}
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                          filter={isSelected ? "url(#indonesia-glow)" : undefined}
-                          style={{
-                            transition: "all 0.15s ease",
-                          }}
-                        >
-                          <title>
-                            {p.nama} (
-                            {isBpbd
-                              ? "Dominan BPBD (" +
-                                stats.bpbdPct +
-                                "% vs Mitra " +
-                                stats.mitraPct +
-                                "%)"
-                              : isMitra
-                              ? "Dominan Mitra (" +
-                                stats.mitraPct +
-                                "% vs BPBD " +
-                                stats.bpbdPct +
-                                "%)"
-                              : "Kondisi Terkendali"}
-                            )
-                          </title>
-                        </path>
+                        <feDropShadow
+                          dx="0"
+                          dy="3"
+                          stdDeviation="5"
+                          floodColor="#013220"
+                          floodOpacity="0.35"
+                        />
+                      </filter>
+                    </defs>
 
-                        {/* Highlight Badge for Disaster Affected Areas */}
-                        {p.isDisasterZone && (
-                          <g style={{ pointerEvents: "none" }}>
-                            {/* Circle Pin Marker */}
-                            <circle
-                              cx={p.svgCenter[0]}
-                              cy={p.svgCenter[1]}
-                              r={isSelected ? 6.5 : 5}
-                              fill={isBpbd ? "#013220" : "#10b981"}
+                    <g
+                      transform={`translate(${panOffset.x}, ${panOffset.y}) scale(${zoomLevel})`}
+                      style={{
+                        transformOrigin: "480px 190px",
+                        transition: isDragging ? "none" : "transform 0.15s ease-out",
+                      }}
+                    >
+                      {/* Render All 32 Provinces of Indonesia */}
+                      {realProvincesData.map((p) => {
+                        const stats = getProvinceBpbdMitraStats(p);
+                        const isBpbd = stats.dominant === "bpbd";
+                        const isMitra = stats.dominant === "mitra";
+                        const isSelected = selectedProvinsi?.id === p.id;
+
+                        let fillColor = "#e2e8f0"; // Neutral soft slate
+                        let fillOpacity = 0.55;
+
+                        if (isBpbd) {
+                          fillColor = "#013220"; // Forest Green (BPBD)
+                          fillOpacity = isSelected ? 0.98 : 0.88;
+                        } else if (isMitra) {
+                          fillColor = "#10b981"; // Emerald Green (Mitra)
+                          fillOpacity = isSelected ? 0.98 : 0.88;
+                        } else if (isSelected) {
+                          fillColor = "#cbd5e1";
+                          fillOpacity = 0.9;
+                        }
+
+                        return (
+                          <g
+                            key={p.id}
+                            onClick={() => {
+                              if (hasDraggedRef.current) return;
+                              setSelectedProvinsiId(p.id);
+                              setPressedProvinsiId((prev) => (prev === p.id ? null : p.id));
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <path
+                              d={p.pathD}
+                              fill={fillColor}
+                              fillOpacity={fillOpacity}
                               stroke="#ffffff"
-                              strokeWidth={isSelected ? 2.5 : 1.8}
-                            />
-                            {/* Province Label */}
-                            <text
-                              x={p.svgCenter[0]}
-                              y={p.svgCenter[1] - 8}
-                              textAnchor="middle"
-                              fill="#013220"
-                              fontSize={isSelected ? "10.5px" : "9px"}
-                              fontWeight="800"
+                              strokeWidth={isSelected ? 3.2 : p.isDisasterZone ? 2 : 1.2}
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
+                              filter={isSelected ? "url(#indonesia-glow)" : undefined}
                               style={{
-                                textShadow:
-                                  "0 1px 3px rgba(255,255,255,0.95), 0 0 2px rgba(255,255,255,0.9)",
-                                letterSpacing: "0.01em",
+                                transition: "all 0.15s ease",
                               }}
                             >
-                              {p.nama.replace("Provinsi ", "")}
-                            </text>
-                            {/* Dominant Percentage */}
-                            <text
-                              x={p.svgCenter[0]}
-                              y={p.svgCenter[1] + 13}
-                              textAnchor="middle"
-                              fill={isBpbd ? "#013220" : "#047857"}
-                              fontSize="8px"
-                              fontWeight="800"
-                              style={{
-                                textShadow:
-                                  "0 1px 2px rgba(255,255,255,0.9)",
-                              }}
-                            >
-                              {isBpbd ? `BPBD ${stats.bpbdPct}%` : `Mitra ${stats.mitraPct}%`}
-                            </text>
+                              <title>
+                                {p.nama} (
+                                {isBpbd
+                                  ? "Dominan BPBD (" +
+                                    stats.bpbdPct +
+                                    "% vs Mitra " +
+                                    stats.mitraPct +
+                                    "%)"
+                                  : isMitra
+                                  ? "Dominan Mitra (" +
+                                    stats.mitraPct +
+                                    "% vs BPBD " +
+                                    stats.bpbdPct +
+                                    "%)"
+                                  : "Kondisi Terkendali"}
+                                )
+                              </title>
+                            </path>
 
-                            {/* Popover Daerah Penerima Bantuan: HANYA MUNCUL SAAT DITEKAN/DIKLIK */}
-                            {pressedProvinsiId === p.id && p.daerahPenerimaList && p.daerahPenerimaList.length > 0 && (
+                            {/* Highlight Badge for Disaster Affected Areas */}
+                            {p.isDisasterZone && (
                               <g style={{ pointerEvents: "none" }}>
-                                <rect
-                                  x={p.svgCenter[0] - 70}
-                                  y={p.svgCenter[1] - 46}
-                                  width={140}
-                                  height={28}
-                                  rx={14}
-                                  fill="#013220"
-                                  stroke="#10b981"
-                                  strokeWidth={1.8}
-                                  filter="drop-shadow(0 4px 10px rgba(0,0,0,0.30))"
+                                {/* Circle Pin Marker */}
+                                <circle
+                                  cx={p.svgCenter[0]}
+                                  cy={p.svgCenter[1]}
+                                  r={isSelected ? 6.5 : 5}
+                                  fill={isBpbd ? "#013220" : "#10b981"}
+                                  stroke="#ffffff"
+                                  strokeWidth={isSelected ? 2.5 : 1.8}
                                 />
-                                <polygon
-                                  points={`${p.svgCenter[0] - 6},${p.svgCenter[1] - 18} ${p.svgCenter[0] + 6},${p.svgCenter[1] - 18} ${p.svgCenter[0]},${p.svgCenter[1] - 12}`}
-                                  fill="#013220"
-                                />
+                                {/* Province Label */}
                                 <text
                                   x={p.svgCenter[0]}
-                                  y={p.svgCenter[1] - 32}
+                                  y={p.svgCenter[1] - 8}
                                   textAnchor="middle"
-                                  fill="#ffffff"
-                                  fontSize="9.5px"
+                                  fill="#013220"
+                                  fontSize={isSelected ? "10.5px" : "9px"}
                                   fontWeight="800"
-                                  style={{ letterSpacing: "0.02em" }}
+                                  style={{
+                                    textShadow:
+                                      "0 1px 3px rgba(255,255,255,0.95), 0 0 2px rgba(255,255,255,0.9)",
+                                    letterSpacing: "0.01em",
+                                  }}
                                 >
-                                  📍 {p.daerahPenerimaList[0].namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")}
+                                  {p.nama.replace("Provinsi ", "")}
                                 </text>
+                                {/* Dominant Percentage */}
                                 <text
                                   x={p.svgCenter[0]}
-                                  y={p.svgCenter[1] - 21}
+                                  y={p.svgCenter[1] + 13}
                                   textAnchor="middle"
-                                  fill="#6ee7b7"
-                                  fontSize="7.5px"
-                                  fontWeight="700"
+                                  fill={isBpbd ? "#013220" : "#047857"}
+                                  fontSize="8px"
+                                  fontWeight="800"
+                                  style={{
+                                    textShadow:
+                                      "0 1px 2px rgba(255,255,255,0.9)",
+                                  }}
                                 >
-                                  {p.daerahPenerimaList[0].komoditas} · {p.daerahPenerimaList[0].statusKategori === "selesai" ? "Diterima" : "Dalam Penyaluran"}
+                                  {isBpbd ? `BPBD ${stats.bpbdPct}%` : `Mitra ${stats.mitraPct}%`}
                                 </text>
+
+                                {/* Popover Daerah Penerima Bantuan: HANYA MUNCUL SAAT DITEKAN/DIKLIK */}
+                                {pressedProvinsiId === p.id && p.daerahPenerimaList && p.daerahPenerimaList.length > 0 && (
+                                  <g style={{ pointerEvents: "none" }}>
+                                    <rect
+                                      x={p.svgCenter[0] - 70}
+                                      y={p.svgCenter[1] - 46}
+                                      width={140}
+                                      height={28}
+                                      rx={14}
+                                      fill="#013220"
+                                      stroke="#10b981"
+                                      strokeWidth={1.8}
+                                      filter="drop-shadow(0 4px 10px rgba(0,0,0,0.30))"
+                                    />
+                                    <polygon
+                                      points={`${p.svgCenter[0] - 6},${p.svgCenter[1] - 18} ${p.svgCenter[0] + 6},${p.svgCenter[1] - 18} ${p.svgCenter[0]},${p.svgCenter[1] - 12}`}
+                                      fill="#013220"
+                                    />
+                                    <text
+                                      x={p.svgCenter[0]}
+                                      y={p.svgCenter[1] - 32}
+                                      textAnchor="middle"
+                                      fill="#ffffff"
+                                      fontSize="9.5px"
+                                      fontWeight="800"
+                                      style={{ letterSpacing: "0.02em" }}
+                                    >
+                                      📍 {p.daerahPenerimaList[0].namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")}
+                                    </text>
+                                    <text
+                                      x={p.svgCenter[0]}
+                                      y={p.svgCenter[1] - 21}
+                                      textAnchor="middle"
+                                      fill="#6ee7b7"
+                                      fontSize="7.5px"
+                                      fontWeight="700"
+                                    >
+                                      {p.daerahPenerimaList[0].komoditas} · {p.daerahPenerimaList[0].statusKategori === "selesai" ? "Diterima" : "Dalam Penyaluran"}
+                                    </text>
+                                  </g>
+                                )}
                               </g>
                             )}
                           </g>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-            ) : (
-              /* LEAFLET GEOGRAPHIC MAP OVER INDONESIA */
-              <div
-                ref={mapContainerRef}
-                style={{
-                  width: "100%",
-                  height: "440px",
-                  background: "#f8fafc",
-                  zIndex: 1,
-                }}
-              />
-            )}
+                        );
+                      })}
+                    </g>
+                  </svg>
+                </div>
+              ) : (
+                /* LEAFLET GEOGRAPHIC MAP OVER INDONESIA */
+                <div
+                  ref={mapContainerRef}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    background: "#f8fafc",
+                    zIndex: 1,
+                  }}
+                />
+              )}
 
-            {/* LEGENDA RESPON BANTUAN (BOTTOM LEFT OVERLAY) */}
+              {/* FLOATING ZOOM CONTROLS (TOP RIGHT CORNER) */}
+              {viewMode === "vector" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "12px",
+                    right: "12px",
+                    zIndex: 300,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "4px",
+                    background: "rgba(255, 255, 255, 0.94)",
+                    backdropFilter: "blur(8px)",
+                    padding: "4px",
+                    borderRadius: "10px",
+                    border: "1px solid #cbd5e1",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleZoomIn();
+                    }}
+                    title="Perbesar Peta (+)"
+                    style={{
+                      width: "28px",
+                      height: "28px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: "#f1f5f9",
+                      color: "#013220",
+                      fontWeight: 800,
+                      fontSize: "16px",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#e2e8f0")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#f1f5f9")}
+                  >
+                    +
+                  </button>
+                  <div
+                    style={{
+                      fontSize: "8.5px",
+                      fontWeight: 800,
+                      color: "#475569",
+                      userSelect: "none",
+                      padding: "1px 0",
+                    }}
+                  >
+                    {Math.round(zoomLevel * 100)}%
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleZoomOut();
+                    }}
+                    title="Perkecil Peta (-)"
+                    style={{
+                      width: "28px",
+                      height: "28px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: "#f1f5f9",
+                      color: "#013220",
+                      fontWeight: 800,
+                      fontSize: "16px",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#e2e8f0")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#f1f5f9")}
+                  >
+                    −
+                  </button>
+                  {(zoomLevel !== 1 || panOffset.x !== 0 || panOffset.y !== 0) && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleResetZoom();
+                      }}
+                      title="Reset Zoom & Posisi Peta"
+                      style={{
+                        width: "28px",
+                        height: "24px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "6px",
+                        border: "1px solid #cbd5e1",
+                        background: "#ffffff",
+                        color: "#047857",
+                        fontWeight: 800,
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        marginTop: "2px",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#ecfdf5")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+                    >
+                      ↺
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* DEDICATED HORIZONTAL BOTTOM LEGENDA BAR */}
             <div
               style={{
-                position: "absolute",
-                bottom: "14px",
-                left: "14px",
-                background: "rgba(255, 255, 255, 0.96)",
-                backdropFilter: "blur(8px)",
-                padding: "8px 12px",
-                borderRadius: "10px",
-                border: "1px solid #cbd5e1",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.10)",
-                zIndex: 400,
-                fontSize: "0.75rem",
-                maxWidth: "285px",
+                flexShrink: 0,
+                background: "#f8fafc",
+                borderTop: "1px solid #e2e8f0",
+                padding: "7px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "8px",
+                fontSize: "0.73rem",
+                zIndex: 10,
               }}
             >
-              <span
-                style={{
-                  fontWeight: 800,
-                  color: "#013220",
-                  display: "block",
-                  marginBottom: "5px",
-                  fontSize: "0.76rem",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                LEGENDA RESPON BANTUAN
-              </span>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px",
-                  marginBottom: "4px",
+                  flexWrap: "wrap",
+                  gap: "12px",
                 }}
               >
                 <span
                   style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#013220",
-                    border: "1.5px solid #ffffff",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                    fontWeight: 800,
+                    color: "#013220",
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.03em",
                   }}
-                />
-                <span style={{ color: "#013220", fontWeight: 700 }}>
-                  Hijau Tua: Dominan BPBD (&gt;50%)
+                >
+                  LEGENDA RESPON:
                 </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      background: "#013220",
+                      border: "1px solid #ffffff",
+                      borderRadius: "3px",
+                      display: "inline-block",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+                    }}
+                  />
+                  <span style={{ color: "#013220", fontWeight: 700 }}>
+                    Hijau Tua: Dominan BPBD (&gt;50%)
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      background: "#10b981",
+                      border: "1px solid #ffffff",
+                      borderRadius: "3px",
+                      display: "inline-block",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+                    }}
+                  />
+                  <span style={{ color: "#047857", fontWeight: 700 }}>
+                    Hijau Emerald: Dominan Mitra (&gt;50%)
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      background: "#e2e8f0",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "3px",
+                      display: "inline-block",
+                    }}
+                  />
+                  <span style={{ color: "#64748b", fontWeight: 600 }}>
+                    Abu-abu: Terkendali / Rutin
+                  </span>
+                </div>
               </div>
+
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px",
-                  marginBottom: "4px",
-                }}
-              >
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#10b981",
-                    border: "1.5px solid #ffffff",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                  }}
-                />
-                <span style={{ color: "#047857", fontWeight: 700 }}>
-                  Hijau Emerald: Dominan Mitra (&gt;50%)
-                </span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <span
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    background: "#e2e8f0",
-                    border: "1.5px solid #cbd5e1",
-                    borderRadius: "3px",
-                    display: "inline-block",
-                  }}
-                />
-                <span style={{ color: "#64748b", fontWeight: 600 }}>
-                  Abu-abu: Terkendali / Pemantauan Rutin
-                </span>
-              </div>
-              <small
-                style={{
-                  display: "block",
+                  gap: "8px",
                   color: "#64748b",
-                  marginTop: "5px",
-                  fontSize: "9.5px",
-                  borderTop: "1px dashed #e2e8f0",
-                  paddingTop: "3px",
+                  fontSize: "9px",
                 }}
               >
-                *Perbandingan volume paket respon bantuan BPBD vs Mitra
-              </small>
+                <span style={{ fontStyle: "italic" }}>
+                  *Volume paket respon BPBD vs Mitra
+                </span>
+                <span style={{ color: "#cbd5e1" }}>•</span>
+                <span style={{ color: "#047857", fontWeight: 600 }}>
+                  💡 Scroll mouse atau seret untuk zoom & geser
+                </span>
+              </div>
             </div>
           </div>
 
