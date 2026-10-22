@@ -14,11 +14,11 @@ function pctBar(pct: number, color: string, track = "#f1f5f9") {
   return (
     <div
       style={{
-        height: "6px",
+        height: "4px",
         background: track,
         borderRadius: "999px",
         overflow: "hidden",
-        flex: 1,
+        marginTop: "4px",
       }}
     >
       <div
@@ -36,89 +36,77 @@ function pctBar(pct: number, color: string, track = "#f1f5f9") {
 
 const STATUS_STYLES: Record<
   string,
-  { label: string; color: string; dot: string; bg: string; border: string }
+  { label: string; color: string; bg: string; border: string }
 > = {
   "Menunggu Verifikasi": {
     label: "Menunggu Verifikasi",
     color: "#b45309",
-    dot: "#f59e0b",
     bg: "#fffbeb",
     border: "#fde68a",
   },
   "Dalam Verifikasi": {
     label: "Dalam Verifikasi",
     color: "#b45309",
-    dot: "#f59e0b",
     bg: "#fffbeb",
     border: "#fde68a",
   },
   "Perlu Klarifikasi": {
     label: "Perlu Klarifikasi",
     color: "#7c3aed",
-    dot: "#a855f7",
     bg: "#f5f3ff",
     border: "#ddd6fe",
   },
   Terverifikasi: {
     label: "Terverifikasi",
     color: "#0369a1",
-    dot: "#0ea5e9",
     bg: "#f0f9ff",
     border: "#bae6fd",
   },
   "Kebutuhan Terbuka": {
     label: "Kebutuhan Terbuka",
     color: "#0284c7",
-    dot: "#38bdf8",
     bg: "#f0f9ff",
     border: "#bae6fd",
   },
   "Klaim Diajukan": {
     label: "Klaim Diajukan",
     color: "#6d28d9",
-    dot: "#8b5cf6",
     bg: "#f5f3ff",
     border: "#ddd6fe",
   },
   "Dalam Pengiriman": {
     label: "Dalam Pengiriman",
     color: "#0284c7",
-    dot: "#0ea5e9",
     bg: "#f0f9ff",
     border: "#bae6fd",
   },
   "Dalam Distribusi": {
     label: "Dalam Distribusi",
     color: "#0284c7",
-    dot: "#0ea5e9",
     bg: "#f0f9ff",
     border: "#bae6fd",
   },
   "Menunggu Konfirmasi Penerimaan": {
     label: "Menunggu Konfirmasi",
     color: "#d97706",
-    dot: "#f59e0b",
     bg: "#fffbeb",
     border: "#fde68a",
   },
   "Bantuan Diterima": {
     label: "Bantuan Diterima",
     color: "#013220",
-    dot: "#10b981",
     bg: "#ecfdf5",
     border: "#a7f3d0",
   },
   Selesai: {
     label: "Selesai",
     color: "#013220",
-    dot: "#10b981",
     bg: "#ecfdf5",
     border: "#a7f3d0",
   },
   Ditolak: {
     label: "Ditolak",
     color: "#b91c1c",
-    dot: "#ef4444",
     bg: "#fef2f2",
     border: "#fecaca",
   },
@@ -129,7 +117,6 @@ function getStatusStyle(status: string) {
   return {
     label: status || "Belum Ditentukan",
     color: "#475569",
-    dot: "#94a3b8",
     bg: "#f8fafc",
     border: "#e2e8f0",
   };
@@ -366,12 +353,12 @@ export function PersBaranResponBantuan({
     <section
       style={{
         background: "#ffffff",
-        borderRadius: "16px",
+        borderRadius: "14px",
         border: "1px solid #e2e8f0",
-        padding: "24px 24px 20px",
-        marginTop: "32px",
-        marginBottom: "32px",
-        boxShadow: "0 2px 12px rgba(0, 0, 0, 0.03)",
+        padding: "18px 20px 16px",
+        marginTop: "20px",
+        marginBottom: "20px",
+        boxShadow: "0 1px 6px rgba(0, 0, 0, 0.03)",
       }}
     >
       {/* HEADER SECTION */}
@@ -379,108 +366,44 @@ export function PersBaranResponBantuan({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "center",
           flexWrap: "wrap",
-          gap: "14px",
-          marginBottom: "20px",
+          gap: "12px",
+          marginBottom: "16px",
           borderBottom: "1px solid #f1f5f9",
-          paddingBottom: "16px",
+          paddingBottom: "12px",
         }}
       >
         <div>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "0.70rem",
-              fontWeight: 700,
-              color: "#047857",
-              background: "#f0fdf4",
-              border: "1px solid #bbf7d0",
-              padding: "3px 10px",
-              borderRadius: "999px",
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-              marginBottom: "8px",
-            }}
-          >
-            <span
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "#10b981",
-                display: "inline-block",
-              }}
-            />
-            Persebaran &amp; Respon Bantuan
-          </span>
           <h2
             style={{
-              margin: "0 0 4px",
-              fontSize: "1.25rem",
+              margin: 0,
+              fontSize: "1.2rem",
               fontWeight: 800,
               color: "#013220",
               letterSpacing: "-0.01em",
-              lineHeight: 1.3,
             }}
           >
-            Ringkasan Alur &amp; Sebaran Penanganan Kebutuhan
+            Ringkasan Alur &amp; Sebaran Penanganan
           </h2>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "0.84rem",
-              color: "#64748b",
-              lineHeight: 1.5,
-            }}
-          >
-            Data riil basis data REKSA — distribusi status laporan, kategori kebutuhan, dan kinerja respon bantuan.
+          <p style={{ margin: "3px 0 0", fontSize: "0.80rem", color: "#64748b" }}>
+            Distribusi status laporan, kategori kebutuhan, dan respon penanganan terkini.
           </p>
         </div>
 
         <div
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "7px",
             background: "#f8fafc",
             border: "1px solid #e2e8f0",
-            borderRadius: "10px",
-            padding: "8px 14px",
-            textAlign: "right",
-            minWidth: "120px",
+            borderRadius: "8px",
+            padding: "5px 12px",
           }}
         >
-          <small
-            style={{
-              display: "block",
-              fontSize: "0.68rem",
-              color: "#64748b",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Total Laporan
-          </small>
-          <strong
-            style={{
-              fontSize: "1.45rem",
-              color: "#013220",
-              fontWeight: 800,
-              lineHeight: 1.1,
-            }}
-          >
-            {total}
-          </strong>
-          <small
-            style={{
-              display: "block",
-              fontSize: "0.70rem",
-              color: "#94a3b8",
-            }}
-          >
-            Tercatat di Sistem
-          </small>
+          <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>Total Laporan:</span>
+          <strong style={{ fontSize: "1.05rem", color: "#013220", fontWeight: 800 }}>{total}</strong>
         </div>
       </div>
 
@@ -488,9 +411,9 @@ export function PersBaranResponBantuan({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-          gap: "12px",
-          marginBottom: "20px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: "10px",
+          marginBottom: "16px",
         }}
       >
         {kpiCards.map((k) => (
@@ -499,9 +422,9 @@ export function PersBaranResponBantuan({
             style={{
               background: "#ffffff",
               border: "1px solid #e2e8f0",
-              borderRadius: "12px",
-              padding: "12px 14px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+              borderRadius: "10px",
+              padding: "10px 12px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "space-between",
@@ -512,12 +435,12 @@ export function PersBaranResponBantuan({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "8px",
+                marginBottom: "6px",
               }}
             >
               <span
                 style={{
-                  fontSize: "0.72rem",
+                  fontSize: "0.70rem",
                   fontWeight: 700,
                   color: "#64748b",
                 }}
@@ -526,9 +449,9 @@ export function PersBaranResponBantuan({
               </span>
               <div
                 style={{
-                  width: "26px",
-                  height: "26px",
-                  borderRadius: "7px",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
                   background: k.iconBg,
                   color: k.color,
                   display: "flex",
@@ -536,14 +459,14 @@ export function PersBaranResponBantuan({
                   justifyContent: "center",
                 }}
               >
-                <AppIcon name={k.iconName} size={14} />
+                <AppIcon name={k.iconName} size={13} />
               </div>
             </div>
             <div>
               <strong
                 style={{
                   display: "block",
-                  fontSize: "1.45rem",
+                  fontSize: "1.25rem",
                   fontWeight: 800,
                   color: "#0f172a",
                   lineHeight: 1.1,
@@ -556,9 +479,9 @@ export function PersBaranResponBantuan({
               <small
                 style={{
                   display: "block",
-                  fontSize: "0.70rem",
+                  fontSize: "0.68rem",
                   color: "#94a3b8",
-                  marginTop: "3px",
+                  marginTop: "2px",
                 }}
               >
                 {k.sub}
@@ -573,8 +496,8 @@ export function PersBaranResponBantuan({
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "16px",
-          marginBottom: "20px",
+          gap: "14px",
+          marginBottom: "16px",
         }}
       >
         {/* Sebaran Status Laporan */}
@@ -582,8 +505,8 @@ export function PersBaranResponBantuan({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "16px",
+            borderRadius: "10px",
+            padding: "14px 16px",
           }}
         >
           <div
@@ -591,7 +514,7 @@ export function PersBaranResponBantuan({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              marginBottom: "14px",
+              marginBottom: "12px",
             }}
           >
             <span
@@ -604,11 +527,11 @@ export function PersBaranResponBantuan({
             />
             <strong
               style={{
-                fontSize: "0.78rem",
+                fontSize: "0.76rem",
                 color: "#013220",
                 fontWeight: 800,
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.04em",
               }}
             >
               Sebaran Status Laporan
@@ -619,9 +542,9 @@ export function PersBaranResponBantuan({
             <p
               style={{
                 color: "#94a3b8",
-                fontSize: "0.82rem",
+                fontSize: "0.80rem",
                 textAlign: "center",
-                padding: "20px 0",
+                padding: "16px 0",
               }}
             >
               Belum ada laporan di database.
@@ -631,7 +554,7 @@ export function PersBaranResponBantuan({
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "11px",
+                gap: "9px",
               }}
             >
               {statusStats.map(({ status, count, pct }) => {
@@ -643,20 +566,20 @@ export function PersBaranResponBantuan({
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        marginBottom: "5px",
+                        marginBottom: "3px",
                       }}
                     >
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "8px",
+                          gap: "7px",
                         }}
                       >
                         <span
                           style={{
-                            width: "7px",
-                            height: "7px",
+                            width: "6px",
+                            height: "6px",
                             borderRadius: "50%",
                             background: style.dot,
                             flexShrink: 0,
@@ -664,7 +587,7 @@ export function PersBaranResponBantuan({
                         />
                         <span
                           style={{
-                            fontSize: "0.80rem",
+                            fontSize: "0.78rem",
                             fontWeight: 600,
                             color: "#334155",
                           }}
@@ -672,36 +595,12 @@ export function PersBaranResponBantuan({
                           {style.label}
                         </span>
                       </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "0.74rem",
-                            fontWeight: 600,
-                            color: "#64748b",
-                          }}
-                        >
-                          {count} laporan
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1e293b" }}>
+                          {count}
                         </span>
-                        <span
-                          style={{
-                            fontSize: "0.70rem",
-                            fontWeight: 800,
-                            color: style.color,
-                            background: style.bg,
-                            border: `1px solid ${style.border}`,
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            minWidth: "32px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {pct}%
+                        <span style={{ fontSize: "0.70rem", color: "#94a3b8", fontWeight: 500 }}>
+                          ({pct}%)
                         </span>
                       </div>
                     </div>
@@ -718,8 +617,8 @@ export function PersBaranResponBantuan({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "16px",
+            borderRadius: "10px",
+            padding: "14px 16px",
           }}
         >
           <div
@@ -727,7 +626,7 @@ export function PersBaranResponBantuan({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              marginBottom: "14px",
+              marginBottom: "12px",
             }}
           >
             <span
@@ -740,11 +639,11 @@ export function PersBaranResponBantuan({
             />
             <strong
               style={{
-                fontSize: "0.78rem",
+                fontSize: "0.76rem",
                 color: "#013220",
                 fontWeight: 800,
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.04em",
               }}
             >
               Kategori Kebutuhan Terbanyak
@@ -755,9 +654,9 @@ export function PersBaranResponBantuan({
             <p
               style={{
                 color: "#94a3b8",
-                fontSize: "0.82rem",
+                fontSize: "0.80rem",
                 textAlign: "center",
-                padding: "20px 0",
+                padding: "16px 0",
               }}
             >
               Belum ada data kebutuhan.
@@ -767,7 +666,7 @@ export function PersBaranResponBantuan({
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "11px",
+                gap: "9px",
               }}
             >
               {kategoriStats.map(({ key, label, count, pct }, idx) => {
@@ -787,20 +686,20 @@ export function PersBaranResponBantuan({
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        marginBottom: "5px",
+                        marginBottom: "3px",
                       }}
                     >
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "8px",
+                          gap: "7px",
                         }}
                       >
                         <span
                           style={{
-                            width: "7px",
-                            height: "7px",
+                            width: "6px",
+                            height: "6px",
                             borderRadius: "2px",
                             background: color,
                             flexShrink: 0,
@@ -808,59 +707,20 @@ export function PersBaranResponBantuan({
                         />
                         <span
                           style={{
-                            fontSize: "0.80rem",
+                            fontSize: "0.78rem",
                             fontWeight: 600,
                             color: "#1e293b",
                           }}
                         >
                           {label}
                         </span>
-                        {idx === 0 && (
-                          <span
-                            style={{
-                              fontSize: "0.64rem",
-                              fontWeight: 700,
-                              color: "#047857",
-                              background: "#ecfdf5",
-                              border: "1px solid #a7f3d0",
-                              padding: "1px 6px",
-                              borderRadius: "4px",
-                            }}
-                          >
-                            Terbanyak
-                          </span>
-                        )}
                       </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "0.74rem",
-                            fontWeight: 600,
-                            color: "#64748b",
-                          }}
-                        >
-                          {count} laporan
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
+                        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1e293b" }}>
+                          {count}
                         </span>
-                        <span
-                          style={{
-                            fontSize: "0.70rem",
-                            fontWeight: 800,
-                            color: "#013220",
-                            background: "#f0fdf4",
-                            border: "1px solid #bbf7d0",
-                            padding: "1px 6px",
-                            borderRadius: "4px",
-                            minWidth: "32px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {pct}%
+                        <span style={{ fontSize: "0.70rem", color: "#94a3b8", fontWeight: 500 }}>
+                          ({pct}%)
                         </span>
                       </div>
                     </div>
@@ -879,13 +739,13 @@ export function PersBaranResponBantuan({
           style={{
             background: "#ffffff",
             border: "1px solid #e2e8f0",
-            borderRadius: "12px",
+            borderRadius: "10px",
             overflow: "hidden",
           }}
         >
           <div
             style={{
-              padding: "10px 16px",
+              padding: "8px 14px",
               background: "#f8fafc",
               borderBottom: "1px solid #e2e8f0",
               display: "flex",
@@ -895,31 +755,17 @@ export function PersBaranResponBantuan({
           >
             <strong
               style={{
-                fontSize: "0.80rem",
+                fontSize: "0.76rem",
                 color: "#013220",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
               }}
             >
-              <span
-                style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  background: "#10b981",
-                }}
-              />
-              Laporan Terbaru yang Masuk
+              Laporan Terbaru Masuk
             </strong>
-            <span
-              style={{
-                fontSize: "0.72rem",
-                color: "#64748b",
-                fontWeight: 600,
-              }}
-            >
-              5 Terkini Berdasarkan Waktu Submit
+            <span style={{ fontSize: "0.70rem", color: "#94a3b8" }}>
+              5 Terkini
             </span>
           </div>
 
@@ -928,7 +774,7 @@ export function PersBaranResponBantuan({
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                fontSize: "0.80rem",
+                fontSize: "0.78rem",
               }}
             >
               <thead>
@@ -937,106 +783,85 @@ export function PersBaranResponBantuan({
                     background: "#f8fafc",
                     textAlign: "left",
                     color: "#64748b",
-                    fontSize: "0.72rem",
+                    fontSize: "0.70rem",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.04em",
                     borderBottom: "1px solid #e2e8f0",
                   }}
                 >
-                  <th style={{ padding: "8px 14px", minWidth: "100px" }}>
-                    Kode
-                  </th>
-                  <th style={{ padding: "8px 14px" }}>Kebutuhan</th>
-                  <th style={{ padding: "8px 14px" }}>Lokasi</th>
-                  <th style={{ padding: "8px 14px", minWidth: "70px" }}>
-                    KK
-                  </th>
-                  <th
-                    style={{
-                      padding: "8px 14px",
-                      textAlign: "right",
-                      minWidth: "140px",
-                    }}
-                  >
-                    Status
-                  </th>
+                  <th style={{ padding: "7px 12px", minWidth: "90px" }}>Kode</th>
+                  <th style={{ padding: "7px 12px" }}>Kebutuhan</th>
+                  <th style={{ padding: "7px 12px" }}>Lokasi</th>
+                  <th style={{ padding: "7px 12px", minWidth: "60px" }}>KK</th>
+                  <th style={{ padding: "7px 14px", textAlign: "right", minWidth: "130px" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {recentCases.map((c, idx) => {
                   const style = getStatusStyle(c.status || "");
+                  const rawKk = c.kk ? String(c.kk).replace(/\s*KK\s*$/i, "").trim() : "";
+                  const displayKk = rawKk ? `${rawKk} KK` : "-";
                   return (
                     <tr
                       key={c.id}
                       style={{
-                        borderBottom:
-                          idx < recentCases.length - 1
-                            ? "1px solid #f1f5f9"
-                            : "none",
-                        background: idx % 2 === 0 ? "#ffffff" : "#fbfcf8",
+                        borderBottom: idx < recentCases.length - 1 ? "1px solid #f1f5f9" : "none",
+                        background: idx % 2 === 0 ? "#ffffff" : "#fafafa",
                       }}
                     >
-                      <td style={{ padding: "8px 14px" }}>
+                      <td style={{ padding: "7px 12px" }}>
                         <span
                           style={{
-                            padding: "2px 7px",
+                            padding: "1.5px 6px",
                             background: "#f1f5f9",
                             color: "#013220",
                             border: "1px solid #cbd5e1",
-                            borderRadius: "5px",
+                            borderRadius: "4px",
                             fontWeight: 700,
-                            fontSize: "0.73rem",
+                            fontSize: "0.70rem",
                           }}
                         >
                           {c.id}
                         </span>
                       </td>
-                      <td style={{ padding: "8px 14px" }}>
-                        <strong
-                          style={{ color: "#1e293b", display: "block" }}
-                        >
+                      <td style={{ padding: "7px 12px" }}>
+                        <strong style={{ color: "#1e293b", fontSize: "0.78rem" }}>
                           {c.item}
                         </strong>
-                        {c.urgency && (
-                          <small style={{ color: "#94a3b8" }}>
-                            Urgensi: {c.urgency}
-                          </small>
-                        )}
                       </td>
                       <td
                         style={{
-                          padding: "8px 14px",
+                          padding: "7px 12px",
                           color: "#475569",
-                          fontSize: "0.78rem",
+                          fontSize: "0.74rem",
                         }}
                       >
-                        {[c.regency, c.province].filter(Boolean).join(", ") ||
-                          c.location ||
-                          "-"}
+                        {[c.regency, c.province].filter(Boolean).join(", ") || c.location || "-"}
                       </td>
                       <td
                         style={{
-                          padding: "8px 14px",
+                          padding: "7px 12px",
                           color: "#013220",
                           fontWeight: 700,
+                          fontSize: "0.74rem",
                         }}
                       >
-                        {c.kk || "-"} KK
+                        {displayKk}
                       </td>
-                      <td style={{ padding: "8px 14px", textAlign: "right" }}>
+                      <td style={{ padding: "7px 14px", textAlign: "right" }}>
                         <span
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
-                            padding: "2px 8px",
+                            gap: "4.5px",
+                            padding: "1.5px 7px",
                             borderRadius: "999px",
                             background: style.bg,
                             color: style.color,
                             border: `1px solid ${style.border}`,
                             fontWeight: 700,
-                            fontSize: "0.72rem",
+                            fontSize: "0.70rem",
                             whiteSpace: "nowrap",
                           }}
                         >
@@ -1048,7 +873,7 @@ export function PersBaranResponBantuan({
                               background: style.dot,
                             }}
                           />
-                          {style.label}
+                          <span>{style.label}</span>
                         </span>
                       </td>
                     </tr>

@@ -879,26 +879,7 @@ export function PetaSebaranPenanganan({
         }}
       >
         <div>
-          <span
-            className="eyebrow"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              color: "#013220",
-              background: "#ecfdf5",
-              border: "1px solid #a7f3d0",
-              padding: "4px 12px",
-              borderRadius: "999px",
-              fontWeight: 700,
-              fontSize: "0.74rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              marginBottom: "8px",
-            }}
-          >
-  
-          </span>
+          
           <h2
             style={{
               margin: 0,
@@ -910,17 +891,7 @@ export function PetaSebaranPenanganan({
           >
             Persebaran Respon Bantuan: BPBD vs Mitra Kemanusiaan
           </h2>
-          <p
-            style={{
-              margin: "6px 0 0",
-              color: "#64748b",
-              fontSize: "0.85rem",
-              maxWidth: "760px",
-              lineHeight: 1.5,
-            }}
-          >
-            Komparasi volume penanganan bantuan darurat langsung oleh posko <strong style={{ color: "#013220" }}>BPBD (Hijau Tua)</strong> vs jejaring relawan <strong style={{ color: "#047857" }}>Mitra Siaga (Hijau Terang)</strong>.
-          </p>
+         
         </div>
 
         {/* VIEW MODE SWITCHER */}
