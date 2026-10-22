@@ -277,51 +277,6 @@ export function ChatKoordinasi({
 
   return (
     <div className="chat-koordinasi-container mono-theme">
-      {/* Top Header */}
-      <div className="chat-top-header mono-header">
-        <div className="chat-top-title-area">
-          <div className="chat-title-row">
-            <h2>Ruang Komunikasi</h2>
-            <span className="mono-badge-pill">Sinkron 3 Role</span>
-          </div>
-        </div>
-
-        {/* Sender Profile Card */}
-        <div className="chat-sender-profile-card mono-profile-card">
-          <div className="sender-avatar-pill">
-            <div className={`mono-avatar-circle role-${senderRole}`}>
-              {senderRole === "citizen" ? (
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              ) : senderRole === "posko" ? (
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
-                  <circle cx="7" cy="18" r="2" />
-                  <circle cx="17" cy="18" r="2" />
-                  <path d="M14 9h4l3 4v4h-2M9 18h6" />
-                </svg>
-              )}
-            </div>
-            <div className="sender-meta-info">
-              <span className="sender-name-text">{senderName}</span>
-              <span className="sender-role-pill">
-                {senderRole === "citizen"
-                  ? "Masyarakat Terdampak"
-                  : senderRole === "posko"
-                  ? "Posko BPBD"
-                  : "Mitra Satgas"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Grid */}
       <div className="chat-main-grid mono-grid">
         {/* Left Sidebar: Channels */}
