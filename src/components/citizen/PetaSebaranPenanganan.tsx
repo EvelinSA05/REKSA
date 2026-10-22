@@ -1017,7 +1017,6 @@ export function PetaSebaranPenanganan({
         </div>
 
         <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }} />
           {disasterProvinces.length} Daerah Terpantau Aktif
         </div>
       </div>

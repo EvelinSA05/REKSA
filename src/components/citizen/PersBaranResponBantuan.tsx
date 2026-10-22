@@ -906,14 +906,7 @@ export function PersBaranResponBantuan({
             borderRadius: "10px",
           }}
         >
-          <span
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: "#10b981",
-            }}
-          />
+          
           <span
             style={{
               fontSize: "0.80rem",
