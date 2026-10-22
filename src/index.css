@@ -10206,13 +10206,13 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  padding-right: 175px; /* Safe clearance so Send button is never covered by floating Tanya REKSA AI */
 }
 
-@media (max-width: 1024px) {
-  .compose-bottom-toolbar {
-    padding-right: 0;
-  }
+/* Ensure Tanya REKSA AI is completely hidden inside Ruang Komunikasi */
+.chat-koordinasi-container ~ .reksa-ai-widget-container,
+.portal-content:has(.chat-koordinasi-container) ~ .reksa-ai-widget-container,
+body:has(.chat-koordinasi-container) .reksa-ai-widget-container {
+  display: none !important;
 }
 
 .compose-toolbar-left {

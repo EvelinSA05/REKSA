@@ -1772,16 +1772,22 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   onRefresh?: () => Promise<void> | void;
 }) {
   const [page, setPage] = useState<PortalPage>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes("ruang-komunikasi") || path.includes("chat")) {
+        return "chat";
+      }
+    }
     const saved = localStorage.getItem("reksa_portal_page") as PortalPage;
     const validPages: PortalPage[] = [
       "dashboard", "cases", "case", "report", "notifications", "history", 
       "profile", "help", "settings", "map", "resources", "assignments", 
-      "activity", "tasks", "active", "offers", "bursa", "my-offers"
+      "activity", "tasks", "active", "offers", "bursa", "my-offers", "chat"
     ];
     if (saved && validPages.includes(saved)) {
       return saved;
     }
-    return "report";
+    return "dashboard";
   });
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
@@ -2046,7 +2052,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
     )}
     {logoutOpen && <Modal icon="logout" title="Keluar dari akun?" close={() => setLogoutOpen(false)}><p>Sesi Anda akan diakhiri. Anda dapat masuk kembali kapan saja.</p><div className="modal-actions"><Button variant="secondary" onClick={() => setLogoutOpen(false)}>Batal</Button><Button onClick={logout}>Keluar</Button></div></Modal>}
     {toast && <div className="toast"><Icon name="check" /> {toast}</div>}
-    <ReksaAiChatbot state={state} update={update} setPage={setPage} />
+    {page !== "chat" && <ReksaAiChatbot state={state} update={update} setPage={setPage} />}
   </div>;
 }
 

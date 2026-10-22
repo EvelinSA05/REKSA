@@ -22,6 +22,20 @@ interface ChatMessage {
 }
 
 export function ReksaAiChatbot({ state, update, setPage }: ReksaAiChatbotProps) {
+  // Hide Tanya REKSA AI specifically when inside Ruang Komunikasi (chat)
+  if (typeof window !== "undefined") {
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (
+      path.includes("ruang-komunikasi") ||
+      path.includes("chat") ||
+      hash.includes("chat") ||
+      Boolean(document.querySelector(".chat-koordinasi-container"))
+    ) {
+      return null;
+    }
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -159,6 +173,7 @@ export function ReksaAiChatbot({ state, update, setPage }: ReksaAiChatbotProps) 
       {/* 1. FLOATING LAUNCHER BUTTON */}
       {!isOpen && (
         <div
+          className="reksa-ai-widget-container"
           style={{
             position: "fixed",
             bottom: "24px",
