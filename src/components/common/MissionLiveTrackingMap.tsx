@@ -503,29 +503,33 @@ export function MissionLiveTrackingMap({
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: #013220;
-        border: 2.5px solid #ffffff;
+        border: 2px solid #ffffff;
         color: #ffffff;
-        box-shadow: 0 4px 14px rgba(1, 50, 32, 0.4);
+        box-shadow: 0 3px 10px rgba(1, 50, 32, 0.4);
       ">
-        <span style="font-size: 16px;">🏢</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
         <div style="
           position: absolute;
-          top: -24px;
+          top: -20px;
           background: #013220;
           color: #ffffff;
-          font-size: 10px;
-          font-weight: 800;
-          padding: 2px 7px;
-          border-radius: 6px;
+          font-size: 9px;
+          font-weight: 700;
+          padding: 1.5px 6px;
+          border-radius: 4px;
           white-space: nowrap;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-          letter-spacing: 0.03em;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+          letter-spacing: 0.02em;
+          pointer-events: none;
         ">
-          POSKO ASAL
+          Posko
         </div>
       </div>
     `;
@@ -533,8 +537,8 @@ export function MissionLiveTrackingMap({
     const poskoIcon = L.divIcon({
       className: 'tracking-posko-icon',
       html: poskoIconHtml,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
 
     if (!layersRef.current.poskoMarker) {
@@ -559,29 +563,33 @@ export function MissionLiveTrackingMap({
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 38px;
-        height: 38px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        background: #b91c1c;
-        border: 2.5px solid #ffffff;
+        background: #dc2626;
+        border: 2px solid #ffffff;
         color: #ffffff;
-        box-shadow: 0 4px 14px rgba(185, 28, 28, 0.45);
+        box-shadow: 0 3px 10px rgba(220, 38, 38, 0.45);
       ">
-        <span style="font-size: 18px;">📍</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
         <div style="
           position: absolute;
-          top: -24px;
-          background: #b91c1c;
+          top: -20px;
+          background: #dc2626;
           color: #ffffff;
-          font-size: 10px;
-          font-weight: 800;
-          padding: 2px 7px;
-          border-radius: 6px;
+          font-size: 9px;
+          font-weight: 700;
+          padding: 1.5px 6px;
+          border-radius: 4px;
           white-space: nowrap;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-          letter-spacing: 0.03em;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+          letter-spacing: 0.02em;
+          pointer-events: none;
         ">
-          TITIK PENERIMA
+          Tujuan
         </div>
       </div>
     `;
@@ -589,8 +597,8 @@ export function MissionLiveTrackingMap({
     const destIcon = L.divIcon({
       className: 'tracking-dest-icon',
       html: destIconHtml,
-      iconSize: [38, 38],
-      iconAnchor: [19, 19],
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
 
     if (!layersRef.current.destMarker) {
@@ -701,17 +709,18 @@ export function MissionLiveTrackingMap({
 
     // 4. Moving Fleet Marker with Radar Pulsing Ring & Heading Orientation
     const isMoving = currentSpeed > 0 || isSimRunning;
+    const shortPlate = (mission.kode_misi || 'Armada').replace(/^MISI-ASG-?/i, 'Misi ');
     const truckIconHtml = `
-      <div style="position: relative; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
         <!-- Pulsing Radar Halo Ring (Aktif saat armada bergerak) -->
         ${
           isMoving
             ? `<div style="
                 position: absolute;
-                width: 52px;
-                height: 52px;
+                width: 44px;
+                height: 44px;
                 border-radius: 50%;
-                background: rgba(22, 163, 74, 0.28);
+                background: rgba(22, 163, 74, 0.22);
                 border: 1.5px solid #16a34a;
                 animation: fleet-pulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
               "></div>`
@@ -722,42 +731,48 @@ export function MissionLiveTrackingMap({
         <div style="
           position: relative;
           z-index: 2;
-          width: 38px;
-          height: 38px;
-          border-radius: 12px;
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
           background: #013220;
           border: 2px solid #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 16px rgba(1, 50, 32, 0.5);
+          box-shadow: 0 3px 12px rgba(1, 50, 32, 0.45);
           transform: rotate(${isMoving ? Math.round(fleetBearing - 90) : 0}deg);
           transition: transform 0.4s ease;
         ">
-          <span style="font-size: 20px;">🚚</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+            <path d="M15 18H9"/>
+            <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14v10"/>
+            <circle cx="17" cy="18.5" r="2.5"/>
+            <circle cx="6.5" cy="18.5" r="2.5"/>
+          </svg>
         </div>
 
         <!-- Floating Live Plate Tag -->
         <div style="
           position: absolute;
-          bottom: -22px;
+          bottom: -18px;
           background: #0f172a;
           color: #ffffff;
-          font-size: 9.5px;
-          font-weight: 800;
-          font-family: monospace;
-          padding: 2px 7px;
-          border-radius: 6px;
+          font-size: 8.5px;
+          font-weight: 700;
+          padding: 1.5px 5px;
+          border-radius: 4px;
           white-space: nowrap;
           border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 3.5px;
           z-index: 3;
+          pointer-events: none;
         ">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: ${isMoving ? '#22c55e' : '#94a3b8'}; display: inline-block;"></span>
-          <span>${mission.kode_misi}</span>
+          <span style="width: 5px; height: 5px; border-radius: 50%; background: ${isMoving ? '#22c55e' : '#94a3b8'}; display: inline-block;"></span>
+          <span>${shortPlate}</span>
         </div>
       </div>
     `;
@@ -765,8 +780,8 @@ export function MissionLiveTrackingMap({
     const truckIcon = L.divIcon({
       className: 'tracking-fleet-icon',
       html: truckIconHtml,
-      iconSize: [48, 48],
-      iconAnchor: [24, 24],
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
     });
 
     const popupHtml = `
@@ -999,42 +1014,42 @@ export function MissionLiveTrackingMap({
               gap: '6px',
               background: trackingSource === 'device_gps' ? 'rgba(59, 130, 246, 0.25)' : isStandby ? 'rgba(148, 163, 184, 0.25)' : 'rgba(34, 197, 94, 0.22)',
               border: `1px solid ${trackingSource === 'device_gps' ? '#60a5fa' : isStandby ? '#94a3b8' : '#4ade80'}`,
-              padding: '3px 10px',
+              padding: '2.5px 9px',
               borderRadius: '9999px',
-              fontSize: '0.74rem',
-              fontWeight: 800,
-              letterSpacing: '0.04em',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
               color: trackingSource === 'device_gps' ? '#93c5fd' : isStandby ? '#e2e8f0' : '#4ade80',
             }}
           >
             <span
               style={{
-                width: '7px',
-                height: '7px',
+                width: '6px',
+                height: '6px',
                 borderRadius: '50%',
                 background: trackingSource === 'device_gps' ? '#3b82f6' : isStandby ? '#94a3b8' : '#22c55e',
-                boxShadow: isStandby ? 'none' : `0 0 8px ${trackingSource === 'device_gps' ? '#3b82f6' : '#22c55e'}`,
+                boxShadow: isStandby ? 'none' : `0 0 6px ${trackingSource === 'device_gps' ? '#3b82f6' : '#22c55e'}`,
                 animation: isStandby ? 'none' : 'blink-dot 1.4s ease-in-out infinite',
               }}
             />
             <span>
               {trackingSource === 'device_gps'
-                ? 'GPS PERANGKAT SAYA (LIVE)'
+                ? 'GPS HP Aktif'
                 : isStandby
-                ? 'STANDBY DI POSKO (0 km/jam)'
+                ? 'Standby di Posko'
                 : isReady
-                ? 'SIAP BERANGKAT'
-                : 'DALAM PERJALANAN'}
+                ? 'Siap Berangkat'
+                : 'Dalam Perjalanan'}
             </span>
           </div>
 
-          <span style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
-            Armada: <strong style={{ color: '#ffffff' }}>{mission.armada_info || 'Armada Logistik'}</strong>
+          <span style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+            Armada: <strong style={{ color: '#ffffff' }}>{(mission.armada_info || 'Armada Logistik').replace(/ - Kapasitas.*/i, '')}</strong>
           </span>
         </div>
 
         {/* Map Quick Action Buttons */}
-        <div className="mission-hud-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="mission-hud-actions" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Button: Use My Phone GPS */}
           <button
             type="button"
@@ -1043,24 +1058,24 @@ export function MissionLiveTrackingMap({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               background: trackingSource === 'device_gps' ? '#2563eb' : 'rgba(255, 255, 255, 0.12)',
               border: `1px solid ${trackingSource === 'device_gps' ? '#93c5fd' : 'rgba(255, 255, 255, 0.25)'}`,
               color: '#ffffff',
-              fontSize: '0.78rem',
+              fontSize: '0.74rem',
               fontWeight: 700,
-              padding: '5px 12px',
-              borderRadius: '8px',
+              padding: '4.5px 10px',
+              borderRadius: '7px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
-            <AppIcon name="pin" size={13} />
+            <AppIcon name="pin" size={12} />
             <span>
               {isLocatingDevice
-                ? 'Mendeteksi GPS...'
+                ? 'Mendeteksi...'
                 : trackingSource === 'device_gps'
-                ? '✓ GPS HP Aktif'
+                ? 'GPS HP Aktif'
                 : 'Gunakan GPS HP'}
             </span>
           </button>
@@ -1072,17 +1087,18 @@ export function MissionLiveTrackingMap({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               background: 'rgba(255, 255, 255, 0.12)',
               border: '1px solid rgba(255, 255, 255, 0.25)',
               color: '#ffffff',
-              fontSize: '0.78rem',
+              fontSize: '0.74rem',
               fontWeight: 700,
-              padding: '5px 12px',
-              borderRadius: '8px',
+              padding: '4.5px 10px',
+              borderRadius: '7px',
               cursor: 'pointer',
             }}
           >
+            <AppIcon name="truck" size={12} />
             <span>Fokus Armada</span>
           </button>
 
@@ -1093,18 +1109,18 @@ export function MissionLiveTrackingMap({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               background: 'rgba(255, 255, 255, 0.12)',
               border: '1px solid rgba(255, 255, 255, 0.25)',
               color: '#ffffff',
-              fontSize: '0.78rem',
+              fontSize: '0.74rem',
               fontWeight: 700,
-              padding: '5px 12px',
-              borderRadius: '8px',
+              padding: '4.5px 10px',
+              borderRadius: '7px',
               cursor: 'pointer',
             }}
           >
-            <AppIcon name="map" size={13} />
+            <AppIcon name="map" size={12} />
             <span>Rute Penuh</span>
           </button>
 
@@ -1115,19 +1131,19 @@ export function MissionLiveTrackingMap({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               background: tileMode === 'satellite' ? '#15803d' : 'rgba(255, 255, 255, 0.12)',
               border: `1px solid ${tileMode === 'satellite' ? '#86efac' : 'rgba(255, 255, 255, 0.25)'}`,
               color: '#ffffff',
-              fontSize: '0.78rem',
+              fontSize: '0.74rem',
               fontWeight: 700,
-              padding: '5px 12px',
-              borderRadius: '8px',
+              padding: '4.5px 10px',
+              borderRadius: '7px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
-            <AppIcon name="layers" size={13} />
+            <AppIcon name="layers" size={12} />
             <span>{tileMode === 'streets' ? 'Citra Satelit' : 'Peta Jalan'}</span>
           </button>
         </div>
@@ -1135,9 +1151,12 @@ export function MissionLiveTrackingMap({
 
       {/* GPS Error Alert if any */}
       {deviceGpsError && (
-        <div style={{ background: '#fef2f2', borderBottom: '1px solid #fecaca', padding: '8px 18px', color: '#b91c1c', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>⚠️ {deviceGpsError}</span>
-          <button type="button" onClick={() => setDeviceGpsError(null)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer' }}>×</button>
+        <div style={{ background: '#fef2f2', borderBottom: '1px solid #fecaca', padding: '7px 16px', color: '#b91c1c', fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <AppIcon name="alert-triangle" size={13} style={{ color: '#b91c1c' }} />
+            <span>{deviceGpsError}</span>
+          </div>
+          <button type="button" onClick={() => setDeviceGpsError(null)} style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer', fontWeight: 700 }}>×</button>
         </div>
       )}
 
@@ -1157,9 +1176,9 @@ export function MissionLiveTrackingMap({
         className="mission-telemetry-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
           gap: '12px',
-          padding: '14px 18px',
+          padding: '12px 18px',
           background: '#f8fafc',
           borderTop: '1px solid #e2e8f0',
         }}
@@ -1168,9 +1187,9 @@ export function MissionLiveTrackingMap({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '9px',
               background: 'rgba(1, 50, 32, 0.08)',
               color: '#013220',
               display: 'grid',
@@ -1178,13 +1197,13 @@ export function MissionLiveTrackingMap({
               flexShrink: 0,
             }}
           >
-            <AppIcon name="truck" size={18} />
+            <AppIcon name="truck" size={16} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-              Kecepatan Bergerak
+            <span style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block', letterSpacing: '0.02em' }}>
+              Kecepatan
             </span>
-            <strong style={{ fontSize: '1.05rem', color: '#013220', fontWeight: 800 }}>
+            <strong style={{ fontSize: '0.98rem', color: '#013220', fontWeight: 800 }}>
               {currentSpeed} km/jam
             </strong>
           </div>
@@ -1194,9 +1213,9 @@ export function MissionLiveTrackingMap({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '9px',
               background: 'rgba(21, 128, 61, 0.1)',
               color: '#15803d',
               display: 'grid',
@@ -1204,13 +1223,13 @@ export function MissionLiveTrackingMap({
               flexShrink: 0,
             }}
           >
-            <AppIcon name="clock" size={18} />
+            <AppIcon name="clock" size={16} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-              Estimasi Tiba (ETA)
+            <span style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block', letterSpacing: '0.02em' }}>
+              Estimasi Tiba
             </span>
-            <strong style={{ fontSize: '1.05rem', color: isArrived ? '#15803d' : '#013220', fontWeight: 800 }}>
+            <strong style={{ fontSize: '0.98rem', color: isArrived ? '#15803d' : '#013220', fontWeight: 800 }}>
               {etaMinutes}
             </strong>
           </div>
@@ -1220,9 +1239,9 @@ export function MissionLiveTrackingMap({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '9px',
               background: 'rgba(1, 50, 32, 0.08)',
               color: '#013220',
               display: 'grid',
@@ -1230,25 +1249,25 @@ export function MissionLiveTrackingMap({
               flexShrink: 0,
             }}
           >
-            <AppIcon name="pin" size={18} />
+            <AppIcon name="pin" size={16} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-              Sisa Jarak / Total
+            <span style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block', letterSpacing: '0.02em' }}>
+              Sisa Jarak
             </span>
-            <strong style={{ fontSize: '1.05rem', color: '#013220', fontWeight: 800 }}>
-              {remainingDistanceKm} km <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>/ {totalDistanceKm.toFixed(1)} km</span>
+            <strong style={{ fontSize: '0.98rem', color: '#013220', fontWeight: 800 }}>
+              {remainingDistanceKm} km <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>/ {totalDistanceKm.toFixed(1)} km</span>
             </strong>
           </div>
         </div>
 
-        {/* Metric 4: Status Posisi / Sumber */}
+        {/* Metric 4: Status Jalur */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '9px',
               background: mission.status_kendala ? 'rgba(239, 68, 68, 0.12)' : 'rgba(22, 163, 74, 0.1)',
               color: mission.status_kendala ? '#dc2626' : '#16a34a',
               display: 'grid',
@@ -1256,11 +1275,11 @@ export function MissionLiveTrackingMap({
               flexShrink: 0,
             }}
           >
-            <AppIcon name={mission.status_kendala ? 'alert-triangle' : 'shield'} size={18} />
+            <AppIcon name={mission.status_kendala ? 'alert-triangle' : 'shield'} size={16} />
           </div>
           <div>
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>
-              Sumber &amp; Kondisi Rute
+            <span style={{ fontSize: '0.70rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', display: 'block', letterSpacing: '0.02em' }}>
+              Status Jalur
             </span>
             <strong
               style={{
@@ -1275,10 +1294,12 @@ export function MissionLiveTrackingMap({
               {mission.status_kendala
                 ? `Kendala: ${mission.status_kendala}`
                 : trackingSource === 'device_gps'
-                ? 'GPS Ponsel Aktif'
+                ? 'GPS Aktif'
                 : isStandby
-                ? 'Parkir di Posko BPBD'
-                : 'Jalur Terbuka & Lancar'}
+                ? 'Standby di Posko'
+                : isArrived
+                ? 'Tiba di Lokasi'
+                : 'Jalur Lancar'}
             </strong>
           </div>
         </div>

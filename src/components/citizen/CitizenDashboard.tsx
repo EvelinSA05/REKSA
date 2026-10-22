@@ -16,6 +16,7 @@ import { CitizenClarificationModal } from "./CitizenClarificationModal";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 import { PetaSebaranPenanganan } from "./PetaSebaranPenanganan";
 import { PersBaranResponBantuan } from "./PersBaranResponBantuan";
+import { AppIcon } from "../common/Icons";
 import { MisiItem, apiService } from "../../services/api";
 
 interface CitizenDashboardProps {
@@ -324,8 +325,8 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                   </span>
                 )}
               </h2>
-              <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.88rem" }}>
-                Memantau pergerakan armada secara langsung dari Posko BPBD ke lokasi warga
+              <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.85rem" }}>
+                Pemantauan pergerakan armada secara langsung dari posko ke titik warga.
               </p>
             </div>
 
@@ -342,20 +343,25 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                   WebkitOverflowScrolling: "touch"
                 }}
               >
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", alignSelf: "center", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", alignSelf: "center", whiteSpace: "nowrap" }}>
                   Misi:
                 </span>
                 {displayMissions.map((m) => {
                   const isSel = m.id === currentMission.id;
+                  const shortCode = (m.kode_misi || "Misi").replace(/^MISI-ASG-?/i, "Misi ");
+                  let shortCategory = m.kebutuhan?.kategori_kebutuhan || m.muatan || "Bantuan";
+                  if (shortCategory.includes("&")) {
+                    shortCategory = shortCategory.split("&")[0].trim();
+                  }
                   return (
                     <button
                       key={m.id}
                       type="button"
                       onClick={() => setSelectedMisiId(m.id)}
                       style={{
-                        padding: "5px 12px",
+                        padding: "4px 10px",
                         borderRadius: "8px",
-                        fontSize: "0.78rem",
+                        fontSize: "0.75rem",
                         fontWeight: 700,
                         cursor: "pointer",
                         border: isSel ? "1.5px solid #013220" : "1px solid #cbd5e1",
@@ -366,7 +372,7 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                         transition: "all 0.15s ease",
                       }}
                     >
-                      {m.kode_misi} ({m.kebutuhan?.kategori_kebutuhan || m.muatan || "Bantuan"})
+                      {shortCode}: {shortCategory}
                     </button>
                   );
                 })}
@@ -378,35 +384,50 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
           <div className="mission-route-meta-card">
             <div className="mission-meta-route-group">
               <div className="mission-meta-item">
-                <small>Posko Asal Logistik</small>
+                <small>Posko Asal</small>
                 <strong>
-                  <span>🏢</span> {currentMission.posko?.nama_posko || "Posko Induk BPBD Sidoarjo"}
+                  <AppIcon name="shield" size={14} style={{ color: "#013220", flexShrink: 0 }} />
+                  <span>
+                    {(currentMission.posko?.nama_posko || "Posko BPBD")
+                      .replace(/\s*\(Komando Wilayah\)/gi, "")
+                      .replace(/Provinsi\s*/gi, "")
+                      .trim()}
+                  </span>
                 </strong>
               </div>
 
-              <span className="mission-meta-arrow">➔</span>
+              <span className="mission-meta-arrow" style={{ display: "inline-flex", alignItems: "center" }}>
+                <AppIcon name="arrow-right" size={13} style={{ color: "#94a3b8" }} />
+              </span>
 
               <div className="mission-meta-item">
-                <small>Titik Lokasi Warga</small>
+                <small>Tujuan Warga</small>
                 <strong>
-                  <span>📍</span> {currentMission.kebutuhan?.desa ? `${currentMission.kebutuhan.desa}, ${currentMission.kebutuhan.kecamatan || ""}` : "Lokasi Pemohon"}
+                  <AppIcon name="pin" size={14} style={{ color: "#b91c1c", flexShrink: 0 }} />
+                  <span>
+                    {currentMission.kebutuhan?.desa
+                      ? `${currentMission.kebutuhan.desa}${currentMission.kebutuhan.kecamatan ? `, ${currentMission.kebutuhan.kecamatan}` : ""}`
+                      : "Lokasi Pemohon"}
+                  </span>
                 </strong>
               </div>
 
-              <span className="mission-meta-pipe">|</span>
+              <span className="mission-meta-pipe" style={{ color: "#cbd5e1" }}>|</span>
 
               <div className="mission-meta-item">
-                <small>Muatan Paket</small>
+                <small>Muatan</small>
                 <strong>
-                  <span>📦</span> {currentMission.muatan || currentMission.kebutuhan?.kategori_kebutuhan || "Paket Bantuan"}
+                  <AppIcon name="box" size={14} style={{ color: "#047857", flexShrink: 0 }} />
+                  <span>{currentMission.muatan || currentMission.kebutuhan?.kategori_kebutuhan || "Paket Bantuan"}</span>
                 </strong>
               </div>
             </div>
 
             <div className="mission-meta-driver">
               <small>Pengemudi / Satgas</small>
-              <strong>
-                {currentMission.responder_name || currentMission.organisasi || "Relawan Satgas Penyalur"}
+              <strong style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <AppIcon name="user" size={14} style={{ color: "#475569", flexShrink: 0 }} />
+                <span>{currentMission.responder_name || currentMission.organisasi || "Relawan Satgas Penyalur"}</span>
               </strong>
             </div>
           </div>
@@ -599,7 +620,7 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         misiList={localMisiList}
       />
 
-      {/* 5. RINGKASAN PERSEBARAN & RESPON BANTUAN (REAL DATA) */}
+      {/* 5. RINGKASAN  (REAL DATA) */}
       <PersBaranResponBantuan
         cases={state.casesList}
         misiList={localMisiList}
