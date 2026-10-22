@@ -10,22 +10,25 @@ interface PersBaranResponBantuanProps {
 
 // ── Helpers & Styling Tokens ──────────────────────────────────────────────────
 
-function pctBar(pct: number, color: string, track = "#f1f5f9") {
+function pctBar(pct: number, color: string, track = "rgba(0, 0, 0, 0.06)") {
+  const safePct = Math.min(100, Math.max(0, isNaN(pct) ? 0 : pct));
+  const safeColor = color || "#047857";
   return (
     <div
       style={{
-        height: "4px",
+        height: "6px",
         background: track,
         borderRadius: "999px",
         overflow: "hidden",
-        marginTop: "4px",
+        marginTop: "5px",
+        width: "100%",
       }}
     >
       <div
         style={{
-          width: `${Math.min(100, Math.max(0, pct))}%`,
+          width: `${safePct}%`,
           height: "100%",
-          background: color,
+          background: safeColor,
           borderRadius: "999px",
           transition: "width 0.4s cubic-bezier(.4,0,.2,1)",
         }}
@@ -46,7 +49,7 @@ const STATUS_STYLES: Record<
   },
   "Dalam Verifikasi": {
     label: "Dalam Verifikasi",
-    color: "#b45309",
+    color: "#d97706",
     bg: "#fffbeb",
     border: "#fde68a",
   },
@@ -76,15 +79,15 @@ const STATUS_STYLES: Record<
   },
   "Dalam Pengiriman": {
     label: "Dalam Pengiriman",
-    color: "#0284c7",
-    bg: "#f0f9ff",
-    border: "#bae6fd",
+    color: "#2563eb",
+    bg: "#eff6ff",
+    border: "#bfdbfe",
   },
   "Dalam Distribusi": {
     label: "Dalam Distribusi",
-    color: "#0284c7",
-    bg: "#f0f9ff",
-    border: "#bae6fd",
+    color: "#2563eb",
+    bg: "#eff6ff",
+    border: "#bfdbfe",
   },
   "Menunggu Konfirmasi Penerimaan": {
     label: "Menunggu Konfirmasi",
@@ -94,13 +97,13 @@ const STATUS_STYLES: Record<
   },
   "Bantuan Diterima": {
     label: "Bantuan Diterima",
-    color: "#013220",
+    color: "#047857",
     bg: "#ecfdf5",
     border: "#a7f3d0",
   },
   Selesai: {
     label: "Selesai",
-    color: "#013220",
+    color: "#047857",
     bg: "#ecfdf5",
     border: "#a7f3d0",
   },
@@ -113,12 +116,15 @@ const STATUS_STYLES: Record<
 };
 
 function getStatusStyle(status: string) {
-  if (STATUS_STYLES[status]) return STATUS_STYLES[status];
-  return {
+  const s = STATUS_STYLES[status] || {
     label: status || "Belum Ditentukan",
     color: "#475569",
     bg: "#f8fafc",
     border: "#e2e8f0",
+  };
+  return {
+    ...s,
+    dot: s.color,
   };
 }
 

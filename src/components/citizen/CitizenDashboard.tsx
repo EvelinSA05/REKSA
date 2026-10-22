@@ -124,7 +124,6 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         eyebrow="Layanan masyarakat" 
         title={`Halo, ${name.split(" ")[0]}. Pantau perjalanan bantuanmu.`} 
         copy="Setiap laporan memiliki langkah berikutnya yang jelas hingga bantuan diterima." 
-        action={<div className="trust-badge"><Icon name="check" /> Terhubung ke Posko BPBD</div>} 
       />
 
       {/* CALLOUT KLARIFIKASI MENDESAK DARI BPBD */}
