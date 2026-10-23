@@ -579,16 +579,16 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
               <Button variant="text" onClick={() => navigate("login")}>Masuk ke Akun <Icon name="arrow" /></Button>
             </article>
             <article className="feat-card">
-              <div className="feat-card-img"><img src="/role-posko.jpg" alt="Posko" /><div className="feat-card-tint" /><span className="feat-card-label">Posko</span></div>
-              <h3>Untuk Posko</h3>
+              <div className="feat-card-img"><img src="/role-bpbd.jpg" alt="Posko BPBD" /><div className="feat-card-tint" /><span className="feat-card-label">Posko BPBD</span></div>
+              <h3>Untuk Posko BPBD</h3>
               <p>Verifikasi kebutuhan dan kelola bantuan dalam satu alur layanan.</p>
-              <Button variant="text" onClick={() => navigate("login")}>Masuk sebagai Posko <Icon name="arrow" /></Button>
+              <Button variant="text" onClick={() => navigate("login")}>Masuk sebagai Posko BPBD <Icon name="arrow" /></Button>
             </article>
             <article className="feat-card">
-              <div className="feat-card-img"><img src="/role-responder.jpg" alt="Responder" /><div className="feat-card-tint" /><span className="feat-card-label">Responder</span></div>
-              <h3>Untuk Responder</h3>
+              <div className="feat-card-img"><img src="/role-mitra.jpg" alt="Mitra Bantuan" /><div className="feat-card-tint" /><span className="feat-card-label">Mitra Bantuan</span></div>
+              <h3>Untuk Mitra Bantuan</h3>
               <p>Terima tugas yang jelas dan perbarui progres langsung dari lapangan.</p>
-              <Button variant="text" onClick={() => navigate("login")}>Masuk sebagai Responder <Icon name="arrow" /></Button>
+              <Button variant="text" onClick={() => navigate("login")}>Masuk sebagai Mitra <Icon name="arrow" /></Button>
             </article>
           </div>
         </section>
@@ -596,11 +596,11 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
         {/* PETA PERSEBARAN RESPON BANTUAN: BPBD VS MITRA KEMANUSIAAN */}
         <section className="shell" id="peta" style={{ margin: "50px auto 70px" }}>
           <div className="section-header" style={{ textAlign: "center", maxWidth: 720, margin: "0 auto 28px" }}>
-            <span className="eyebrow"><Icon name="pin" /> Pemantauan Sebaran Wilayah</span>
-            <h2>Persebaran Respon Bantuan: BPBD vs Mitra Kemanusiaan</h2>
-            <p className="section-lead" style={{ color: "#4b5563", margin: "8px auto 0", fontSize: "0.95rem" }}>
-              Pantau sebaran penanganan darurat dan keterlibatan posko BPBD bersama mitra kemanusiaan secara real-time di seluruh wilayah Indonesia.
-            </p>
+
+            <h2>Persebaran Respon Bantuan</h2>
+
+
+
           </div>
           <PetaSebaranPenanganan
             cases={state?.casesList}
