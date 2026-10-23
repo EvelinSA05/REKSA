@@ -607,9 +607,6 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
             <div className="empty-icon-box"><Icon name="file" /></div>
             <h3>Belum Ada Laporan Aktif</h3>
             <p>Saat Anda menyampaikan kebutuhan mendesak, perjalanan bantuan dari posko hingga mitra responder akan terpantau lengkap di sini.</p>
-            <Button onClick={() => setPage("report")} className="btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 24px", fontSize: "0.92rem", fontWeight: 600 }}>
-              <Icon name="plus" /> Buat Laporan Kebutuhan Sekarang
-            </Button>
           </div>
         )}
       </section>
