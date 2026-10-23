@@ -2355,7 +2355,99 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   box-shadow: 0 24px 60px rgba(1, 50, 32, 0.28);
   border: 1px solid rgba(193, 195, 172, 0.22);
 }
+
+/* Background decorative motifs */
+.cta-motifs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.cta-motif-topo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.88;
+  transition: opacity 0.5s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta-final-card:hover .cta-motif-topo {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.cta-motif-dots {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;
+  height: 75%;
+  background-image: radial-gradient(circle, rgba(193, 195, 172, 0.26) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+  mask-image: radial-gradient(ellipse at 15% 15%, black 25%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 15% 15%, black 25%, transparent 75%);
+  pointer-events: none;
+}
+
+.cta-motif-radar {
+  position: absolute;
+  right: 8%;
+  bottom: -5%;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(62, 189, 130, 0.24) 0%, rgba(3, 82, 53, 0.12) 42%, transparent 70%);
+  filter: blur(32px);
+  pointer-events: none;
+  animation: cta-pulse-beacon 7s ease-in-out infinite alternate;
+}
+
+@keyframes cta-pulse-beacon {
+  0% { transform: scale(0.92); opacity: 0.65; }
+  100% { transform: scale(1.10); opacity: 0.95; }
+}
+
+.cta-motif-coords {
+  position: absolute;
+  top: 22px;
+  right: 32px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: rgba(193, 195, 172, 0.45);
+  text-transform: uppercase;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2;
+}
+
+.cta-motif-coords::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #3ebd82;
+  box-shadow: 0 0 10px #3ebd82;
+  animation: cta-radar-dot 2.2s infinite ease-in-out;
+}
+
+@keyframes cta-radar-dot {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+
 .cta-final-content {
+  position: relative;
+  z-index: 2;
   padding-top: 12px;
   padding-bottom: 48px;
 }
@@ -2434,6 +2526,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 }
 .cta-final-hero {
   position: relative;
+  z-index: 2;
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -2468,6 +2561,16 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
     height: 340px;
     max-height: 360px;
     margin: 0 auto;
+  }
+  .cta-motif-coords {
+    top: 16px;
+    right: 20px;
+    font-size: 8.5px;
+    letter-spacing: 0.1em;
+  }
+  .cta-motif-dots {
+    width: 100%;
+    height: 45%;
   }
 }
 
