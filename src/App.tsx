@@ -1856,7 +1856,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
 
     const fetchLogs = async () => {
       if (isFetching || (typeof document !== "undefined" && document.hidden)) {
-        if (isMounted) timer = setTimeout(fetchLogs, 15000);
+        if (isMounted) timer = setTimeout(fetchLogs, 35000);
         return;
       }
       isFetching = true;
@@ -1892,7 +1892,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       } finally {
         isFetching = false;
         if (isMounted) {
-          timer = setTimeout(fetchLogs, 15000);
+          timer = setTimeout(fetchLogs, 35000);
         }
       }
     };
@@ -6726,7 +6726,7 @@ export default function App() {
 
     const runSync = async () => {
       if (isFetching || (typeof document !== "undefined" && document.hidden)) {
-        if (isMounted) timer = setTimeout(runSync, 10000);
+        if (isMounted) timer = setTimeout(runSync, 35000);
         return;
       }
       isFetching = true;
@@ -6735,7 +6735,7 @@ export default function App() {
       } finally {
         isFetching = false;
         if (isMounted) {
-          timer = setTimeout(runSync, 10000);
+          timer = setTimeout(runSync, 35000);
         }
       }
     };

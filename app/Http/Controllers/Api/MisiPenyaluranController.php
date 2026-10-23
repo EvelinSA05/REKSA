@@ -21,19 +21,16 @@ class MisiPenyaluranController extends Controller
             'responder',
         ]);
 
-        if ($request->has('responder_id')) {
-            $query->where('responder_id', $request->responder_id);
+        if ($request->hasAny(['responder_id', 'posko_id', 'status'])) {
+            if ($request->has('responder_id')) $query->where('responder_id', $request->responder_id);
+            if ($request->has('posko_id')) $query->where('posko_id', $request->posko_id);
+            if ($request->has('status')) $query->where('status_tahapan', $request->status);
+            $missions = $query->latest()->get();
+        } else {
+            $missions = \Illuminate\Support\Facades\Cache::remember('api_misi_index', 30, function () use ($query) {
+                return $query->latest()->get();
+            });
         }
-
-        if ($request->has('posko_id')) {
-            $query->where('posko_id', $request->posko_id);
-        }
-
-        if ($request->has('status')) {
-            $query->where('status_tahapan', $request->status);
-        }
-
-        $missions = $query->latest()->get();
 
         return response()->json([
             'success' => true,

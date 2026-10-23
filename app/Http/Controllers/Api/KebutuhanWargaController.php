@@ -54,7 +54,13 @@ class KebutuhanWargaController extends Controller
             });
         }
 
-        $cases = $query->latest()->get();
+        if ($request->hasAny(['posko_id', 'status', 'urgensi', 'citizen_id', 'provinsi', 'search'])) {
+            $cases = $query->latest()->get();
+        } else {
+            $cases = \Illuminate\Support\Facades\Cache::remember('api_kebutuhan_index', 30, function () use ($query) {
+                return $query->latest()->get();
+            });
+        }
 
         return response()->json([
             'success' => true,

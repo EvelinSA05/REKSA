@@ -28,9 +28,12 @@ class BursaBantuanController extends Controller
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
+            $items = $query->latest()->get();
+        } else {
+            $items = \Illuminate\Support\Facades\Cache::remember('api_bursa_index', 30, function () use ($query) {
+                return $query->latest()->get();
+            });
         }
-
-        $items = $query->latest()->get();
 
         return response()->json([
             'success' => true,

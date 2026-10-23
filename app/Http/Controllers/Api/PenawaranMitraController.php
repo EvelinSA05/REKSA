@@ -28,31 +28,19 @@ class PenawaranMitraController extends Controller
             'misi' => fn($q) => $q->select('id', 'penawaran_id', 'kode_misi', 'status_tahapan', 'responder_name', 'organisasi', 'armada_info', 'estimasi_waktu'),
         ]);
 
-        if ($request->has('posko_id')) {
-            $query->where('posko_id', $request->posko_id);
+        if ($request->hasAny(['posko_id', 'mitra_id', 'organisasi', 'status', 'kebutuhan_id', 'bursa_id'])) {
+            if ($request->has('posko_id')) $query->where('posko_id', $request->posko_id);
+            if ($request->has('mitra_id')) $query->where('mitra_id', $request->mitra_id);
+            if ($request->has('organisasi')) $query->where('organisasi', 'ilike', "%{$request->organisasi}%");
+            if ($request->has('status')) $query->where('status', $request->status);
+            if ($request->has('kebutuhan_id')) $query->where('kebutuhan_id', $request->kebutuhan_id);
+            if ($request->has('bursa_id')) $query->where('bursa_id', $request->bursa_id);
+            $items = $query->latest()->get();
+        } else {
+            $items = \Illuminate\Support\Facades\Cache::remember('api_penawaran_index', 30, function () use ($query) {
+                return $query->latest()->get();
+            });
         }
-
-        if ($request->has('mitra_id')) {
-            $query->where('mitra_id', $request->mitra_id);
-        }
-
-        if ($request->has('organisasi')) {
-            $query->where('organisasi', 'ilike', "%{$request->organisasi}%");
-        }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('kebutuhan_id')) {
-            $query->where('kebutuhan_id', $request->kebutuhan_id);
-        }
-
-        if ($request->has('bursa_id')) {
-            $query->where('bursa_id', $request->bursa_id);
-        }
-
-        $items = $query->latest()->get();
 
         return response()->json([
             'success' => true,
