@@ -1030,6 +1030,7 @@ export function PetaSebaranPenanganan({
       {/* SINGLE STREAMLINED TOOLBAR */}
       {!mapOnly && (
       <div
+        className="peta-sebaran-toolbar"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -1040,7 +1041,7 @@ export function PetaSebaranPenanganan({
         }}
       >
         {/* Quick Filter Pills */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+        <div className="peta-sebaran-filter-pills" style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={() => setActiveStatusFilter("all_disaster")}
@@ -1151,7 +1152,7 @@ export function PetaSebaranPenanganan({
         </div>
 
         {/* Island filter & Search */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="peta-sebaran-search-row" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <select
             value={selectedPulau}
             onChange={(e) => setSelectedPulau(e.target.value)}
@@ -1442,6 +1443,7 @@ export function PetaSebaranPenanganan({
       ) : (
         /* MAP CONTAINER (DUAL VIEW: SVG VECTOR CANVAS OR LEAFLET) */
         <div
+          className="peta-sebaran-main-grid"
           style={{
             display: "grid",
             gridTemplateColumns: !mapOnly && selectedProvinsi ? "1.8fr 1.1fr" : "1fr",
@@ -1456,6 +1458,7 @@ export function PetaSebaranPenanganan({
         >
           {/* MAP CONTAINER (CANVAS + HORIZONTAL BOTTOM LEGEND) */}
           <div
+            className="peta-sebaran-map-box"
             style={{
               position: "relative",
               borderRadius: "16px",
@@ -1928,6 +1931,7 @@ export function PetaSebaranPenanganan({
 
             return (
               <div
+                className="peta-sebaran-detail-panel"
                 style={{
                   background: isBpbd ? "#f0fdf4" : isMitra ? "#ecfdf5" : "#fafafa",
                   border: isBpbd ? "1.5px solid #10b981" : isMitra ? "1.5px solid #6ee7b7" : "1.5px solid #e2e8f0",
