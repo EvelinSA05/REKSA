@@ -42,16 +42,25 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
   }) + " WIB";
 
   // Pihak Pertama (Penyalur)
+  const isPoskoNameRaw =
+    !misi?.responder_name &&
+    (!caseRecord?.posko ||
+      caseRecord.posko.toLowerCase().includes("posko") ||
+      caseRecord.posko.toLowerCase().includes("bpbd"));
+
   const penyalurName =
     misi?.responder_name ||
-    caseRecord?.posko?.split(" - ")[0] ||
+    (isPoskoNameRaw ? "Satgas Reaksi Cepat (TRC BPBD)" : caseRecord?.posko?.split(" - ")[0]) ||
     "Satgas Reaksi Cepat BPBD Wilayah";
+
   const penyalurOrg =
     misi?.organisasi ||
     caseRecord?.posko ||
     "Satgas Penanggulangan Bencana BPBD Provinsi Jawa Timur";
+
   const penyalurArmada =
     misi?.armada_info || "Armada Angkut Logistik Siaga Bencana";
+
   const penyalurPhone =
     misi?.responder_phone || "0812-3456-7890 (Posko Komando)";
 
@@ -61,20 +70,24 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
     misi?.kebutuhan?.citizen_name ||
     misi?.kebutuhan?.nama_pemohon ||
     "Andi Pratama";
+
   const penerimaNik =
     caseRecord?.applicantNik ||
     misi?.kebutuhan?.nik ||
     "3202110482910002";
+
   const penerimaPhone =
     caseRecord?.applicantPhone ||
     misi?.kebutuhan?.citizen_phone ||
     misi?.kebutuhan?.telepon ||
     "0812-9876-5432";
+
   const penerimaLokasi =
     caseRecord?.location ||
     (misi?.kebutuhan
       ? `${misi.kebutuhan.desa || ""}, Kec. ${misi.kebutuhan.kecamatan || ""}, Kab. ${misi.kebutuhan.kabupaten || ""}`
       : "Dusun Karanganyar, RT 03/RW 02");
+
   const penerimaKk = caseRecord?.kk || "1 KK";
   const penerimaJiwa = caseRecord?.affectedPeople ? `${caseRecord.affectedPeople} Jiwa` : "4 Jiwa";
 
@@ -83,16 +96,20 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
     misi?.muatan ||
     caseRecord?.item ||
     "Paket Sembako & Logistik Pangan Darurat";
+
   const allocatedQty =
     misi?.muatan ||
     caseRecord?.qty ||
     "50 Paket";
+
   const receivedQty =
     misi?.jumlah_diterima ||
     caseRecord?.totalDiterimaResmi ||
     allocatedQty;
+
   const selisihQty =
     misi?.selisih || "0 (Nihil / Sesuai 100%)";
+
   const notes =
     misi?.catatan_lapangan ||
     caseRecord?.notes ||
@@ -108,6 +125,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
   const poskoName =
     misi?.posko?.nama_posko ||
     "Posko Komando Terpadu BPBD Wilayah";
+
   const poskoPic =
     misi?.posko?.penanggung_jawab_nama ||
     "Siti Rahma (Koordinator Wilayah)";
@@ -158,7 +176,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
         <style>
           @page {
             size: A4 portrait;
-            margin: 10mm 14mm 10mm 14mm;
+            margin: 12mm 14mm 12mm 14mm;
           }
           *, *::before, *::after {
             box-sizing: border-box;
@@ -171,7 +189,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
             background: #ffffff !important;
             color: #0f172a !important;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            font-size: 9.8pt;
+            font-size: 9.5pt;
             line-height: 1.45;
           }
           .bast-doc-sheet {
@@ -190,7 +208,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
             margin-bottom: 14px;
           }
           .bast-doc-title-block h2 {
-            font-size: 13.5pt;
+            font-size: 13pt;
             font-weight: 800;
             color: #013220;
             margin: 2px 0 0;
@@ -201,6 +219,12 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
             font-size: 8.5pt;
             color: #64748b;
             margin: 2px 0 0;
+          }
+          .bast-intro-lead {
+            font-size: 9pt;
+            line-height: 1.5;
+            color: #334155;
+            margin-bottom: 12px;
           }
           .bast-meta-grid {
             display: grid;
@@ -214,42 +238,117 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
             padding: 10px 12px;
             background: #f8fafc;
           }
-          .bast-meta-cell span {
-            display: block;
-            font-size: 7.5pt;
-            font-weight: 700;
-            margin-bottom: 2px;
+          .bast-meta-tag {
+            display: inline-block;
+            font-size: 7pt;
+            font-weight: 800;
+            margin-bottom: 4px;
             text-transform: uppercase;
+            color: #065f46;
           }
-          .bast-meta-cell strong {
+          .bast-meta-name {
+            display: block;
             font-size: 9.5pt;
+            font-weight: 800;
             color: #0f172a;
+            margin-bottom: 6px;
+          }
+          .bast-meta-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 8pt;
+            color: #475569;
+          }
+          .bast-meta-row {
+            display: flex;
+            gap: 4px;
+          }
+          .bast-meta-label {
+            color: #64748b;
+            min-width: 95px;
+            font-weight: 600;
+          }
+          .bast-meta-val {
+            color: #0f172a;
+            font-weight: 600;
+          }
+          .bast-section-heading {
+            font-size: 8pt;
+            font-weight: 800;
+            color: #013220;
+            text-transform: uppercase;
+            margin-bottom: 6px;
           }
           .bast-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0 12px;
-            font-size: 9pt;
+            margin: 8px 0 12px;
+            font-size: 8.5pt;
           }
           .bast-table th {
             background: #f1f5f9;
             color: #013220;
             font-weight: 700;
             border: 1pt solid #94a3b8;
-            padding: 7px 10px;
-            font-size: 8pt;
+            padding: 6px 8px;
+            font-size: 7.5pt;
             text-transform: uppercase;
           }
           .bast-table td {
             border: 1pt solid #cbd5e1;
-            padding: 7px 10px;
+            padding: 6px 8px;
+            vertical-align: middle;
+          }
+          .bast-badge-condition {
+            background: #f0fdf4;
+            color: #166534;
+            border: 0.5pt solid #bbf7d0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 7pt;
+            font-weight: 700;
+            display: inline-block;
+          }
+          .bast-evidence-card {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1pt solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 12px;
+            align-items: center;
+          }
+          .bast-evidence-thumb {
+            width: 100px;
+            height: 70px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #e2e8f0;
+          }
+          .bast-evidence-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          .bast-accountability-box {
+            font-size: 7.8pt;
+            line-height: 1.45;
+            color: #475569;
+            background: #fafaf9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1pt dashed #cbd5e1;
+            margin-bottom: 12px;
           }
           .bast-signatures-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 12px;
-            padding-top: 12px;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
             border-top: 1pt dashed #cbd5e1;
             page-break-inside: avoid;
           }
@@ -258,19 +357,94 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
             border-radius: 8px;
             padding: 10px 8px;
             text-align: center;
-            background: #fafaf9;
+            background: #ffffff;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+          }
+          .bast-sign-box.bpbd {
+            background: #f0fdf4;
+            border-color: #86efac;
+          }
+          .bast-sign-title {
+            font-size: 7.2pt;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            display: block;
+          }
+          .bast-sign-title.bpbd {
+            color: #065f46;
+          }
+          .bast-sign-stamp-area {
+            min-height: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            margin: 4px 0;
+          }
+          .bast-sign-e-stamp {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 0.5pt solid #bfdbfe;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 6.8pt;
+            font-weight: 700;
+          }
+          .bast-sign-e-stamp.penerima {
+            background: #f0fdf4;
+            color: #15803d;
+            border-color: #bbf7d0;
           }
           .bast-seal-badge {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             background: #ecfdf5;
             color: #047857;
-            border: 1pt solid #059669;
-            padding: 3px 8px;
+            border: 0.5pt solid #059669;
+            padding: 2px 7px;
             border-radius: 999px;
-            font-size: 8pt;
-            font-weight: 700;
+            font-size: 7pt;
+            font-weight: 800;
+          }
+          .bast-sign-code {
+            font-size: 6.5pt;
+            color: #94a3b8;
+            font-family: monospace;
+          }
+          .bast-sign-name {
+            display: block;
+            font-size: 8.5pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: auto;
+          }
+          .bast-sign-name.bpbd {
+            color: #065f46;
+          }
+          .bast-sign-role {
+            display: block;
+            font-size: 7pt;
+            color: #64748b;
+            margin-top: 2px;
+          }
+          .bast-doc-footer-meta {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 0.5pt solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7pt;
+            color: #94a3b8;
           }
           ::-webkit-scrollbar {
             display: none !important;
@@ -308,6 +482,24 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
         aria-modal="true"
         aria-label="Berita Acara Serah Terima Digital"
       >
+        {/* TOP MODAL BAR DENGAN TOMBOL TUTUP RESMI */}
+        <div className="bast-modal-top-bar">
+          <div className="bast-modal-top-title">
+            <AppIcon name="file" size={18} />
+            <span>Dokumen Berita Acara Serah Terima (BAST)</span>
+            <span className="bast-top-badge-valid">RESMI &amp; TERVERIFIKASI</span>
+          </div>
+          <button
+            type="button"
+            className="bast-modal-close-btn"
+            onClick={onClose}
+            title="Tutup Pratinjau (Esc)"
+            aria-label="Tutup"
+          >
+            ✕
+          </button>
+        </div>
+
         {/* PRINTABLE BAST DOCUMENT SHEET */}
         <div ref={sheetRef} className="bast-doc-sheet" id="bast-printable-doc">
           {/* HEADER RESMI / KOP SURAT */}
@@ -365,7 +557,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
                 <small style={{ fontSize: "10.5px", color: "#64748b", fontWeight: 700, display: "block" }}>
                   NOMOR BAST
                 </small>
-                <strong style={{ fontSize: "12.5px", color: "#013220", fontFamily: "monospace" }}>
+                <strong style={{ fontSize: "12px", color: "#013220", fontFamily: "monospace" }}>
                   {docNumber}
                 </strong>
               </div>
@@ -373,38 +565,56 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
           </div>
 
           {/* DOKUMEN PENGANTAR */}
-          <div style={{ fontSize: "0.86rem", lineHeight: 1.6, color: "#334155", marginBottom: "16px" }}>
+          <div className="bast-intro-lead">
             Pada hari ini, <strong>{currentDate}</strong> pukul <strong>{currentTime}</strong>, bertempat di{" "}
             <strong>{penerimaLokasi}</strong>, telah dilaksanakan serah terima bantuan logistik pascabencana terkoordinasi
             melalui Sistem Kolaborasi Pascabencana REKSA oleh dan antara para pihak di bawah ini:
           </div>
 
           {/* DUA PIHAK: PENYALUR & PENERIMA */}
-          <div className="bast-meta-grid" style={{ marginBottom: "16px" }}>
-            <div className="bast-meta-cell" style={{ background: "#ffffff", padding: "12px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              <span style={{ color: "#047857" }}>PIHAK PERTAMA (PENYALUR):</span>
-              <strong style={{ fontSize: "0.95rem" }}>{penyalurName}</strong>
-              <div style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "4px", lineHeight: 1.4 }}>
-                Instansi: <strong>{penyalurOrg}</strong><br />
-                Armada: <strong>{penyalurArmada}</strong><br />
-                Kontak: <strong>{penyalurPhone}</strong>
+          <div className="bast-meta-grid">
+            <div className="bast-meta-cell">
+              <span className="bast-meta-tag tag-penyalur">PIHAK PERTAMA (PENYALUR)</span>
+              <strong className="bast-meta-name">{penyalurName}</strong>
+              <div className="bast-meta-details">
+                <div className="bast-meta-row">
+                  <span className="bast-meta-label">Instansi / Posko:</span>
+                  <span className="bast-meta-val">{penyalurOrg}</span>
+                </div>
+                <div className="bast-meta-row">
+                  <span className="bast-meta-label">Armada:</span>
+                  <span className="bast-meta-val">{penyalurArmada}</span>
+                </div>
+                <div className="bast-meta-row">
+                  <span className="bast-meta-label">Kontak Resmi:</span>
+                  <span className="bast-meta-val">{penyalurPhone}</span>
+                </div>
               </div>
             </div>
 
-            <div className="bast-meta-cell" style={{ background: "#ffffff", padding: "12px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              <span style={{ color: "#0f766e" }}>PIHAK KEDUA (PENERIMA MANFAAT):</span>
-              <strong style={{ fontSize: "0.95rem" }}>{penerimaName}</strong>
-              <div style={{ fontSize: "0.78rem", color: "#64748b", marginTop: "4px", lineHeight: 1.4 }}>
-                NIK: <strong style={{ fontFamily: "monospace" }}>{penerimaNik}</strong> ({penerimaKk} / {penerimaJiwa})<br />
-                Lokasi: <strong>{penerimaLokasi}</strong><br />
-                Kontak: <strong>{penerimaPhone}</strong>
+            <div className="bast-meta-cell">
+              <span className="bast-meta-tag tag-penerima">PIHAK KEDUA (PENERIMA MANFAAT)</span>
+              <strong className="bast-meta-name">{penerimaName}</strong>
+              <div className="bast-meta-details">
+                <div className="bast-meta-row">
+                  <span className="bast-meta-label">NIK / Identitas:</span>
+                  <span className="bast-meta-val mono">{penerimaNik} ({penerimaKk} / {penerimaJiwa})</span>
+                </div>
+                <div className="bast-meta-row">
+                  <span className="bast-meta-label">Titik Lokasi:</span>
+                  <span className="bast-meta-val">{penerimaLokasi}</span>
+                </div>
+                <div className="bast-meta-row">
+                  <span className="bast-meta-label">Kontak Warga:</span>
+                  <span className="bast-meta-val">{penerimaPhone}</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* TABEL RINCIAN LOGISTIK */}
-          <div style={{ marginBottom: "16px" }}>
-            <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#013220", textTransform: "uppercase", marginBottom: "6px" }}>
+          <div className="bast-table-wrapper">
+            <div className="bast-section-heading">
               Rincian Barang Bantuan Logistik yang Diserah-terimakan:
             </div>
             <table className="bast-table">
@@ -422,8 +632,8 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
                 <tr>
                   <td style={{ textAlign: "center", fontWeight: 600 }}>1</td>
                   <td>
-                    <strong style={{ color: "#013220" }}>{itemName}</strong>
-                    <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "2px" }}>
+                    <strong style={{ color: "#013220", display: "block" }}>{itemName}</strong>
+                    <div className="bast-item-sub">
                       Sesuai kebutuhan kasus <strong>{rawCode}</strong> • Titik Serah: {penerimaLokasi}
                     </div>
                   </td>
@@ -433,18 +643,7 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
                     {selisihQty}
                   </td>
                   <td style={{ textAlign: "center" }}>
-                    <span
-                      style={{
-                        background: "#f0fdf4",
-                        color: "#166534",
-                        border: "1px solid #bbf7d0",
-                        padding: "3px 8px",
-                        borderRadius: "6px",
-                        fontSize: "0.74rem",
-                        fontWeight: 700,
-                        display: "inline-block",
-                      }}
-                    >
+                    <span className="bast-badge-condition">
                       Baik &amp; Utuh
                     </span>
                   </td>
@@ -454,24 +653,11 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
           </div>
 
           {/* FOTO BUKTI SERAH TERIMA & CATATAN LAPANGAN */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "130px 1fr",
-              gap: "14px",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: "12px",
-              padding: "12px 14px",
-              marginBottom: "18px",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ width: "130px", height: "90px", borderRadius: "8px", overflow: "hidden", background: "#e2e8f0", flexShrink: 0 }}>
+          <div className="bast-evidence-card">
+            <div className="bast-evidence-thumb">
               <img
                 src={evidencePhoto}
                 alt="Dokumentasi Serah Terima Lapangan"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 crossOrigin="anonymous"
               />
             </div>
@@ -489,85 +675,61 @@ export function BastPrintModal({ misi, caseRecord, onClose }: BastPrintModalProp
           </div>
 
           {/* PERNYATAAN AKUNTABILITAS */}
-          <div
-            style={{
-              fontSize: "0.78rem",
-              lineHeight: 1.5,
-              color: "#475569",
-              background: "#fafaf9",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              border: "1px dashed #d6d3d1",
-              marginBottom: "18px",
-            }}
-          >
+          <div className="bast-accountability-box">
             <strong>Pernyataan Akuntabilitas:</strong> Pihak Kedua menyatakan telah menerima seluruh barang bantuan dalam kondisi baik, jumlah sesuai permohonan, dan <strong>tanpa dipungut biaya apapun (GRATIS)</strong>. Berita Acara ini sah dan diterbitkan secara elektronik melalui platform tanggap darurat REKSA untuk keperluan akuntabilitas penanganan bencana daerah.
           </div>
 
-          {/* TANDA TANGAN 3 PIHAK */}
-          <div className="bast-signatures-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: "14px", marginTop: "14px", paddingTop: "14px" }}>
+          {/* TANDA TANGAN 3 PIHAK TANPA OVERLAPPING TEXT */}
+          <div className="bast-signatures-grid">
             {/* PIHAK PERTAMA */}
             <div className="bast-sign-box">
-              <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                Pihak Pertama (Penyalur)
-              </span>
-              <div style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontFamily: "cursive", fontSize: "1.2rem", color: "#013220" }}>
-                  {penyalurName}
-                </span>
+              <span className="bast-sign-title">Pihak Pertama (Penyalur)</span>
+              <div className="bast-sign-stamp-area">
+                <div className="bast-sign-e-stamp">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>TERVERIFIKASI SATGAS</span>
+                </div>
+                <small className="bast-sign-code">E-Sign: {rawCode.replace(/[^A-Za-z0-9]/g, "")}-P1</small>
               </div>
-              <strong style={{ display: "block", fontSize: "0.84rem", color: "#013220" }}>
-                {penyalurName}
-              </strong>
-              <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Tim Satgas Penyalur</small>
+              <strong className="bast-sign-name">{penyalurName}</strong>
+              <small className="bast-sign-role">{penyalurOrg}</small>
             </div>
 
             {/* PIHAK KEDUA */}
             <div className="bast-sign-box">
-              <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                Pihak Kedua (Penerima)
-              </span>
-              <div style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontFamily: "cursive", fontSize: "1.2rem", color: "#013220" }}>
-                  {penerimaName}
-                </span>
+              <span className="bast-sign-title">Pihak Kedua (Penerima)</span>
+              <div className="bast-sign-stamp-area">
+                <div className="bast-sign-e-stamp penerima">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>KONFIRMASI PENERIMA</span>
+                </div>
+                <small className="bast-sign-code">NIK: {penerimaNik.slice(0, 6)}******{penerimaNik.slice(-4)}</small>
               </div>
-              <strong style={{ display: "block", fontSize: "0.84rem", color: "#013220" }}>
-                {penerimaName}
-              </strong>
-              <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Warga Penerima Manfaat</small>
+              <strong className="bast-sign-name">{penerimaName}</strong>
+              <small className="bast-sign-role">Warga Penerima Manfaat</small>
             </div>
 
             {/* MENGETAHUI POSKO BPBD */}
-            <div className="bast-sign-box" style={{ background: "#f0fdf4", borderColor: "#a7f3d0" }}>
-              <span style={{ fontSize: "0.7rem", color: "#065f46", fontWeight: 700, textTransform: "uppercase" }}>
-                Mengetahui (Posko BPBD)
-              </span>
-              <div style={{ height: "46px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span className="bast-seal-badge" style={{ margin: 0 }}>
-                  <AppIcon name="check" size={12} /> BAST SAH RESMI
-                </span>
+            <div className="bast-sign-box bpbd">
+              <span className="bast-sign-title bpbd">Mengetahui (Posko BPBD)</span>
+              <div className="bast-sign-stamp-area">
+                <div className="bast-seal-badge">
+                  <AppIcon name="check" size={13} />
+                  <span>BAST SAH RESMI</span>
+                </div>
+                <small className="bast-sign-code bpbd">TEREGISTRASI PUSDALOPS PB</small>
               </div>
-              <strong style={{ display: "block", fontSize: "0.84rem", color: "#013220" }}>
-                {poskoPic}
-              </strong>
-              <small style={{ color: "#64748b", fontSize: "0.72rem" }}>{poskoName}</small>
+              <strong className="bast-sign-name bpbd">{poskoPic}</strong>
+              <small className="bast-sign-role">{poskoName}</small>
             </div>
           </div>
 
           {/* DOKUMEN FOOTER / QR CODE VERIFIKASI */}
-          <div
-            style={{
-              marginTop: "16px",
-              paddingTop: "10px",
-              borderTop: "1px solid #e2e8f0",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: "0.72rem",
-              color: "#94a3b8",
-            }}
-          >
+          <div className="bast-doc-footer-meta">
             <div>
               ID Dokumen: <strong style={{ color: "#475569" }}>{docNumber}</strong> • Waktu Cetak: {currentDate}, {currentTime}
             </div>
