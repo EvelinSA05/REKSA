@@ -10,7 +10,7 @@ import {
   addUserReportedId,
 } from "../../App";
 import { apiService } from "../../services/api";
-import { analyzeReportTriage } from "../../utils/reksaAiEngine";
+import { analyzeReportTriage, generateAiConditionDescription } from "../../utils/reksaAiEngine";
 
 interface CitizenReportProps {
   complete: () => void;
@@ -158,8 +158,68 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const aiTriage = useMemo(() => {
     const combined = `${conditionDescription} ${notes}`.trim();
     if (!combined || combined.length < 5) return null;
-    return analyzeReportTriage(combined, category, vulnerableList);
-  }, [conditionDescription, notes, category, vulnerableList]);
+    return analyzeReportTriage(combined, category, vulnerableList, {
+      affectedPeople,
+      familyCount,
+      availabilityCondition,
+      kategoriKerusakanRumah,
+      village,
+      district,
+      regency,
+      amount,
+      customUnit,
+    });
+  }, [
+    conditionDescription,
+    notes,
+    category,
+    vulnerableList,
+    affectedPeople,
+    familyCount,
+    availabilityCondition,
+    kategoriKerusakanRumah,
+    village,
+    district,
+    regency,
+    amount,
+    customUnit,
+  ]);
+
+  const handleDraftConditionWithAi = () => {
+    const draft = generateAiConditionDescription({
+      category,
+      customCategory,
+      amount,
+      customUnit,
+      notes,
+      village,
+      district,
+      regency,
+      affectedPeople,
+      familyCount,
+      vulnerableList,
+      availabilityCondition,
+      kategoriKerusakanRumah,
+      currentDescription: conditionDescription,
+    });
+    setConditionDescription(draft);
+
+    // Auto set citizenUrgency if not already selected
+    if (!citizenUrgency) {
+      const isHigh =
+        vulnerableList.filter((v) => v !== "Tidak ada").length > 0 ||
+        kategoriKerusakanRumah === "Rusak Berat" ||
+        (availabilityCondition &&
+          (availabilityCondition.includes("Habis") ||
+            availabilityCondition.includes("Roboh") ||
+            availabilityCondition.includes("Kritis") ||
+            availabilityCondition.includes("Luka")));
+      setCitizenUrgency(isHigh ? "Sangat mendesak" : "Perlu segera");
+    }
+
+    setAiAppliedFeedback("Draf narasi kondisi darurat berhasil disusun oleh REKSA AI!");
+    setTimeout(() => setAiAppliedFeedback(null), 4000);
+  };
 
   // Step 4: Bukti Unggahan
   const [fileName, setFileName] = useState<string>(() => initialDraft?.fileName || "");
@@ -1432,21 +1492,48 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
                 {/* 5. DESKRIPSI KONDISI */}
                 <div className="form-group">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
                     <label className="form-label" style={{ margin: 0 }}>Jelaskan kondisi yang Anda alami</label>
-                    <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                      </svg>
-                      <span>REKSA AI Smart Triage Aktif</span>
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={handleDraftConditionWithAi}
+                        style={{
+                          background: "#f0fdf4",
+                          color: "#166534",
+                          border: "1px solid #86efac",
+                          borderRadius: "8px",
+                          padding: "5px 12px",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                          transition: "all 0.15s ease",
+                        }}
+                        title="Susun draf deskripsi kondisi darurat otomatis berbasis data formulir menggunakan REKSA AI"
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        <span>Buat Draf Kondisi dengan AI</span>
+                      </button>
+                      <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                        <span>Smart Triage Aktif</span>
+                      </span>
+                    </div>
                   </div>
                   <textarea 
                     className="form-control textarea" 
-                    rows={3}
+                    rows={4}
                     value={conditionDescription} 
                     onChange={(e) => setConditionDescription(e.target.value)} 
-                    placeholder="Contoh: Terjebak banjir 1.5 meter, ada 2 lansia dan 1 bayi membutuhkan evakuasi, air bersih dan susu darurat segera..."
+                    placeholder="Contoh: Terjebak banjir 1.5 meter, ada 2 lansia dan 1 bayi membutuhkan evakuasi, air bersih dan susu darurat segera... Atau klik tombol 'Buat Draf Kondisi dengan AI' di atas."
                   />
 
                   {/* AI SMART TRIAGE CARD */}
@@ -1506,11 +1593,38 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       <button
                         type="button"
                         onClick={() => {
+                          // Tentukan urgensi rekomendasi AI: untuk bencana, prioritaskan "Sangat mendesak" atau "Perlu segera" (tidak pernah "Bisa menunggu")
                           let targetUrgency = "Perlu segera";
-                          if (aiTriage.urgency === "Kritis") targetUrgency = "Sangat mendesak";
-                          else if (aiTriage.urgency === "Tinggi") targetUrgency = "Perlu segera";
-                          else targetUrgency = "Bisa menunggu";
+                          if (aiTriage.urgency === "Kritis" || aiTriage.score >= 75 || aiTriage.recommendedUrgency === "Sangat mendesak") {
+                            targetUrgency = "Sangat mendesak";
+                          } else if (aiTriage.urgency === "Tinggi" || aiTriage.score >= 60) {
+                            targetUrgency = "Sangat mendesak";
+                          } else {
+                            targetUrgency = "Perlu segera";
+                          }
                           setCitizenUrgency(targetUrgency);
+
+                          // Jika deskripsi kondisi masih kosong atau sangat singkat (< 25 karakter), lengkapi otomatis dengan AI
+                          let descriptionAdded = false;
+                          if (!conditionDescription || conditionDescription.trim().length < 25) {
+                            const autoDesc = generateAiConditionDescription({
+                              category,
+                              customCategory,
+                              amount,
+                              customUnit,
+                              notes,
+                              village,
+                              district,
+                              regency,
+                              affectedPeople,
+                              familyCount,
+                              vulnerableList,
+                              availabilityCondition,
+                              kategoriKerusakanRumah,
+                            });
+                            setConditionDescription(autoDesc);
+                            descriptionAdded = true;
+                          }
 
                           // Normalize any vulnerable group names to exact form checkbox IDs
                           const validOptions = ["Balita", "Anak-anak", "Lansia", "Ibu hamil", "Penyandang disabilitas"];
@@ -1545,15 +1659,13 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                           if (!availabilityCondition && category) {
                             const availCfg = getAvailabilityConfig(category);
                             if (availCfg.options && availCfg.options.length > 0) {
-                              if (aiTriage.urgency === "Kritis" || aiTriage.urgency === "Tinggi") {
-                                setAvailabilityCondition(availCfg.options[0]);
-                              }
+                              setAvailabilityCondition(availCfg.options[0]);
                             }
                           }
 
-                          const feedbackText = `Rekomendasi AI Diterapkan: Urgensi diset "${targetUrgency}"${mergedVulns.length > 0 ? ` & ${mergedVulns.length} kelompok rentan (${mergedVulns.join(', ')}) dicentang` : ''}`;
+                          const feedbackText = `Rekomendasi AI Diterapkan: Urgensi diset "${targetUrgency}"${descriptionAdded ? ', deskripsi kondisi dilengkapi' : ''}${mergedVulns.length > 0 ? ` & kelompok rentan (${mergedVulns.join(', ')}) dicentang` : ''}`;
                           setAiAppliedFeedback(feedbackText);
-                          setTimeout(() => setAiAppliedFeedback(null), 4000);
+                          setTimeout(() => setAiAppliedFeedback(null), 4500);
                         }}
                         style={{
                           background: aiAppliedFeedback ? "#166534" : "#013220",

@@ -8,6 +8,18 @@
  * 3. Asisten Cerdas Kebencanaan (Conversational Agent dengan NLP contextual engine)
  */
 
+export interface ExtraReportContext {
+  affectedPeople?: number | string;
+  familyCount?: number | string;
+  availabilityCondition?: string;
+  kategoriKerusakanRumah?: string;
+  village?: string;
+  district?: string;
+  regency?: string;
+  amount?: number | string;
+  customUnit?: string;
+}
+
 export interface AiTriageResult {
   score: number; // 0 - 100
   urgency: "Kritis" | "Tinggi" | "Sedang";
@@ -16,106 +28,250 @@ export interface AiTriageResult {
   rationale: string;
   actionRecommendation: string;
   confidence: number; // e.g. 96
+  recommendedUrgency: "Sangat mendesak" | "Perlu segera";
 }
 
-export interface AiMatchResult {
-  matchScore: number; // 0 - 100
-  badgeTone: "exceptional" | "high" | "moderate";
-  rationale: string;
-  recommendedRole: string;
+export interface GenerateConditionParams {
+  category?: string;
+  customCategory?: string;
+  amount?: string | number;
+  customUnit?: string;
+  notes?: string;
+  village?: string;
+  district?: string;
+  regency?: string;
+  affectedPeople?: number | string;
+  familyCount?: number | string;
+  vulnerableList?: string[];
+  availabilityCondition?: string;
+  kategoriKerusakanRumah?: string;
+  currentDescription?: string;
+}
+
+/**
+ * GENERATE AI CONDITION DESCRIPTION
+ * Asisten cerdas untuk menyusun draf narasi kondisi darurat yang lengkap, formal,
+ * dan sesuai standar pelaporan kaji cepat bencana BNPB.
+ */
+export function generateAiConditionDescription(params: GenerateConditionParams): string {
+  const {
+    category = "",
+    customCategory = "",
+    amount,
+    customUnit,
+    notes = "",
+    village = "",
+    district = "",
+    regency = "",
+    affectedPeople,
+    familyCount,
+    vulnerableList = [],
+    availabilityCondition = "",
+    kategoriKerusakanRumah = "",
+    currentDescription = "",
+  } = params;
+
+  const cat = (customCategory || category || "Kebutuhan Darurat Pascabencana").trim();
+  const locParts = [village ? `Desa/Kel. ${village}` : "", district ? `Kec. ${district}` : "", regency ? regency : ""].filter(Boolean);
+  const location = locParts.length > 0 ? locParts.join(", ") : "wilayah terdampak bencana";
+
+  const numPeople = affectedPeople && Number(affectedPeople) > 0 ? `${affectedPeople} jiwa` : "";
+  const numFamilies = familyCount && Number(familyCount) > 0 ? `${familyCount} KK` : "";
+  const victimsCount = [numPeople, numFamilies].filter(Boolean).join(" / ") || "sejumlah warga terdampak";
+
+  const activeVulns = (vulnerableList || []).filter((v) => v !== "Tidak ada");
+  const vulnText = activeVulns.length > 0 ? ` (termasuk kelompok rentan: ${activeVulns.join(", ")})` : "";
+  const requestedAmount = amount ? ` sebanyak ${amount} ${customUnit || "paket/unit"}` : "";
+
+  // Jika warga sudah menulis deskripsi sendiri dengan panjang wajar, sempurnakan dengan ringkasan terstruktur
+  if (currentDescription && currentDescription.trim().length > 35) {
+    const trimmed = currentDescription.trim();
+    if (trimmed.includes("[Ringkasan Situasi REKSA AI]")) {
+      return trimmed;
+    }
+    return `${trimmed}\n\n[Ringkasan Situasi REKSA AI]: Lokasi di ${location}. Kebutuhan prioritas ${cat}${requestedAmount}, menyangkut ${victimsCount}${vulnText}. Status ketersediaan logistik saat ini: ${availabilityCondition || "Sangat mendesak"}.`;
+  }
+
+  // Bangun narasi darurat spesifik berdasarkan jenis kategori bencana
+  if (
+    cat.includes("Hunian") ||
+    cat.includes("Tenda") ||
+    cat.includes("Tempat Tinggal") ||
+    cat.includes("Stimulan") ||
+    cat.includes("Rumah")
+  ) {
+    const damageDesc = kategoriKerusakanRumah || availabilityCondition || "rusak berat akibat bencana";
+    return `Kondisi pemukiman di ${location} mengalami kerusakan fisik dengan tingkat ${damageDesc}. Sebanyak ${victimsCount}${vulnText} saat ini kehilangan tempat tinggal yang aman dan terpaksa mengungsi di tempat penampungan darurat dengan perlindungan cuaca yang sangat minim. Kami sangat membutuhkan bantuan ${cat}${requestedAmount} (tenda keluarga layak huni, terpal, matras tidur, dan bantuan stimulan perbaikan rumah) sesegera mungkin demi keselamatan warga.`;
+  }
+
+  if (cat.includes("Pangan") || cat.includes("Makanan")) {
+    const foodStatus = availabilityCondition || "persediaan bahan pangan habis total dan dapur umum posko belum menjangkau";
+    return `Kondisi ketahanan pangan di ${location} berada dalam status darurat pascabencana. Sebanyak ${victimsCount}${vulnText} saat ini mengalami kekurangan bahan makanan pokok dan makanan siap santap karena ${foodStatus}. Sangat mendesak membutuhkan pasokan ${cat}${requestedAmount} berupa beras, makanan siap saji bernutrisi, biskuit balita, dan air minum higienis untuk mencegah kelaparan dan penurunan daya tahan tubuh warga pengungsian.`;
+  }
+
+  if (cat.includes("Air Bersih") || cat.includes("Sanitasi") || cat.includes("Air Minum")) {
+    const waterStatus = availabilityCondition || "sumber air warga tercemar lumpur dan jaringan pipa air terputus total";
+    return `Krisis air bersih darurat pascabencana melanda warga di ${location}. Sebanyak ${victimsCount}${vulnText} tidak memiliki akses air bersih layak minum dan sanitasi karena ${waterStatus}. Sangat mendesak membutuhkan bantuan ${cat}${requestedAmount} (air minum galon kemasan, armada truk tangki air bersih, tandon penampung darurat, dan fasilitas MCK) untuk memenuhi kebutuhan harian dan mencegah penyebaran wabah penyakit menular.`;
+  }
+
+  if (cat.includes("Kesehatan") || cat.includes("Medis") || cat.includes("Obat")) {
+    const medStatus = availabilityCondition || "terdapat warga luka-luka, demam tinggi, dan stok obat pengungsian habis total";
+    return `Situasi kedaruratan medis di ${location} memerlukan penanganan cepat. Terdapat ${victimsCount}${vulnText} yang kesehatannya terancam karena ${medStatus}. Fasilitas kesehatan terdekat mengalami kendala operasional sehingga sangat mendesak membutuhkan bantuan ${cat}${requestedAmount} (tim tenaga medis reaksi cepat, ambulans darurat, obat esensial, paket P3K, dan vitamin balita/lansia).`;
+  }
+
+  if (cat.includes("Sandang") || cat.includes("Pakaian") || cat.includes("Paket Non-Pangan")) {
+    const clothesStatus = availabilityCondition || "pakaian warga basah/tertimbun reruntuhan dan kekurangan selimut hangat";
+    return `Kondisi warga pengungsi di ${location} sangat membutuhkan bantuan perlengkapan sandang dan kebutuhan keluarga. Sebanyak ${victimsCount}${vulnText} saat ini berada di tempat pengungsian dalam kondisi kedinginan karena ${clothesStatus}. Sangat mendesak membutuhkan bantuan ${cat}${requestedAmount} berupa pakaian bersih layak pakai, selimut hangat, matras tidur, serta hygiene kit dan paket kebutuhan khusus anak (kidware).`;
+  }
+
+  if (cat.includes("Sarana") || cat.includes("Vital") || cat.includes("Energi")) {
+    const vitalStatus = availabilityCondition || "jalur jalan terputus, jembatan rusak, dan aliran listrik padam total";
+    return `Kondisi prasarana dan fasilitas vital di ${location} lumpuh pascabencana. Akses mobilitas warga dan logistik terhambat karena ${vitalStatus}. Sebanyak ${victimsCount} saat ini terisolasi dan memerlukan penanganan cepat berupa ${cat}${requestedAmount} (genset darurat, penerangan malam, dan peralatan perbaikan akses vital) agar jalur evakuasi dan suplai bantuan terbuka.`;
+  }
+
+  const noteSuffix = notes ? ` Catatan tambahan pelapor: "${notes}".` : "";
+  return `Kondisi darurat pascabencana dialami oleh ${victimsCount}${vulnText} di ${location}. Status kebutuhan saat ini: ${availabilityCondition || "Sangat mendesak dan persediaan lokal tidak mencukupi"}. Warga membutuhkan intervensi bantuan ${cat}${requestedAmount} sesegera mungkin dari posko BPBD dan mitra responder.${noteSuffix}`;
 }
 
 /**
  * 1. AI SMART TRIAGE & PRIORITIZATION
- * Menganalisa teks deskripsi laporan warga secara real-time
+ * Menganalisa teks deskripsi laporan warga secara real-time dengan NLP Kebencanaan Terpadu
  */
 export function analyzeReportTriage(
   description: string,
   categoryHint?: string,
-  existingVulnerables: string[] = []
+  existingVulnerables: string[] = [],
+  context?: ExtraReportContext
 ): AiTriageResult {
   const text = (description || "").toLowerCase();
-  let score = 45;
   const detectedCommodities: string[] = [];
   const detectedVulnerables: string[] = [...existingVulnerables];
 
-  // A. Deteksi Kritis (Kata kunci kedaruratan tinggi)
+  // A. Kata Kunci Kedaruratan Akut & Ancaman Keselamatan Jiwa (Score weight: +15 to +25)
   const criticalKeywords = [
+    // Bencana Akut & Fisik
     "darurat", "kritis", "nyawa", "pingsan", "terjebak", "hanyut", "tenggelam", 
-    "luka parah", "pendarahan", "sesak napas", "stroke", "bayi lemas", "terisolasi", 
-    "longsor susulan", "banjir 2 meter", "atap ambruk", "tidak ada makanan sama sekali",
-    "kehabisan oksigen", "demam tinggi", "diare massal", "infeksi"
+    "terisolasi", "terisolir", "terkepung", "tertimbun", "longsor", "tanah longsor",
+    "banjir bandang", "banjir", "tsunami", "gempa", "gempa bumi", "ambruk", "runtuh", "roboh", 
+    "hancur", "kebakaran", "puting beliung", "angin kencang", "badai", "arus deras",
+    "sepinggang", "sedada", "seatap", "tanggul jebol", "jembatan putus",
+    "jalan putus", "akses terputus", "listrik padam total", "gelap gulita",
+    // Medis & Fisik Kritis
+    "luka parah", "luka berat", "pendarahan", "patah tulang", "sesak napas", "sesak nafas", 
+    "stroke", "bayi lemas", "bayi kejang", "kejang", "demam tinggi", "diare massal", 
+    "infeksi", "sekarat", "meninggal", "korban jiwa", "kehabisan oksigen", "kontraksi",
+    "melahirkan", "butuh ambulans", "hipotermia",
+    // Ketiadaan Mutlak Kebutuhan Dasar
+    "kelaparan", "tidak ada makanan", "belum makan", "habis total", "kehabisan makanan", 
+    "tidak ada air", "kehabisan air", "krisis air", "air tercemar", "kedinginan parah",
+    "tenda bocor", "tanpa atap", "rumah hancur", "rumah roboh"
   ];
+
+  // B. Kata Kunci Kebutuhan Mendesak & Situasi Lapangan (Score weight: +8 to +12)
   const highKeywords = [
-    "habis", "butuh segera", "tergenang", "rusak berat", "mengungsi", "bayi", 
-    "balita", "lansia", "ibu hamil", "sakit", "obat habis", "air kotor", 
-    "tidak bisa jalan", "tenda bocor", "kedinginan", "anak kecil"
+    "tergenang", "terendam", "kebanjiran", "lumpur", "rusak berat", "rusak parah",
+    "rusak sedang", "mengungsi", "pengungsian", "tenda darurat", "posko", "terpal",
+    "butuh segera", "mendesak", "tolong", "mohon bantuan", "habis", "menipis", "kekurangan",
+    "belum ada bantuan", "belum tersentuh", "air kotor", "air keruh", "air bersih",
+    "susu", "popok", "pampers", "selimut", "matras", "pakaian", "sembako", "beras",
+    "dapur umum", "sakit", "obat habis", "obat-obatan", "p3k", "kedinginan",
+    "tidak bisa jalan", "difabel", "genset", "lampu darurat"
   ];
 
   let criticalMatches = 0;
+  let highMatches = 0;
+
   criticalKeywords.forEach((kw) => {
     if (text.includes(kw)) {
-      score += 18;
       criticalMatches++;
     }
   });
 
   highKeywords.forEach((kw) => {
     if (text.includes(kw)) {
-      score += 9;
+      highMatches++;
     }
   });
 
+  // Hitung Skor Awal Berdasarkan Deteksi Bencana
+  // Jika terdeteksi kondisi darurat bencana, skor awal minimal 72-80 (bukan 45!)
+  let score = 50;
+  if (criticalMatches > 0) {
+    score = 72 + Math.min(20, criticalMatches * 6);
+  } else if (highMatches > 0) {
+    score = 62 + Math.min(16, highMatches * 4);
+  }
+
   // B. Deteksi Kelompok Rentan Otomatis dari Teks (Sesuai ID Checkbox Formulir)
-  if ((text.includes("bayi") || text.includes("balita") || text.includes("batita") || text.includes("popok") || text.includes("asi") || text.includes("susu")) && !detectedVulnerables.includes("Balita")) {
+  if ((text.includes("bayi") || text.includes("balita") || text.includes("batita") || text.includes("popok") || text.includes("pampers") || text.includes("asi") || text.includes("susu")) && !detectedVulnerables.includes("Balita")) {
     detectedVulnerables.push("Balita");
-    score += 15;
+    score += 12;
   }
   if ((text.includes("anak") || text.includes("bocah") || text.includes("sekolah")) && !detectedVulnerables.includes("Anak-anak")) {
     detectedVulnerables.push("Anak-anak");
-    score += 12;
+    score += 8;
   }
   if ((text.includes("hamil") || text.includes("menyusui") || text.includes("bumil") || text.includes("melahirkan") || text.includes("kandungan")) && !detectedVulnerables.includes("Ibu hamil")) {
     detectedVulnerables.push("Ibu hamil");
-    score += 15;
+    score += 12;
   }
   if ((text.includes("lansia") || text.includes("kakek") || text.includes("nenek") || text.includes("tua") || text.includes("jompo") || text.includes("manula")) && !detectedVulnerables.includes("Lansia")) {
     detectedVulnerables.push("Lansia");
-    score += 12;
+    score += 10;
   }
   if ((text.includes("disabilitas") || text.includes("difabel") || text.includes("lumpuh") || text.includes("kursi roda") || text.includes("tuna")) && !detectedVulnerables.includes("Penyandang disabilitas")) {
     detectedVulnerables.push("Penyandang disabilitas");
-    score += 14;
+    score += 12;
   }
 
-  // C. Deteksi Komoditas & Bantuan Pasca-Bencana Berdasarkan Regulasi BNPB
-  if (text.includes("makan") || text.includes("beras") || text.includes("sembako") || text.includes("mie") || text.includes("lauk") || text.includes("dapur") || text.includes("pangan")) {
+  // Jika warga sudah mencentang kelompok rentan pada form, tambahkan bobot kedaruratan
+  if (existingVulnerables.filter((v) => v !== "Tidak ada").length > 0) {
+    score += 8 * Math.min(3, existingVulnerables.length);
+  }
+
+  // C. Evaluasi Konteks Tambahan Form (Jiwa terdampak, ketersediaan, kerusakan rumah)
+  if (context) {
+    const peopleNum = Number(context.affectedPeople) || 0;
+    if (peopleNum >= 50) score += 15;
+    else if (peopleNum >= 20) score += 10;
+    else if (peopleNum >= 5) score += 5;
+
+    const avail = (context.availabilityCondition || "").toLowerCase();
+    if (avail.includes("habis total") || avail.includes("terputus total") || avail.includes("lumpuh") || avail.includes("roboh") || avail.includes("kritis") || avail.includes("luka berat")) {
+      score += 15;
+    } else if (avail.includes("sangat menipis") || avail.includes("terbatas") || avail.includes("rusak sedang") || avail.includes("tidak aman")) {
+      score += 8;
+    }
+
+    const damage = context.kategoriKerusakanRumah || "";
+    if (damage.includes("Rusak Berat")) score += 15;
+    else if (damage.includes("Rusak Sedang")) score += 8;
+  }
+
+  // D. Deteksi Komoditas & Bantuan Pasca-Bencana Berdasarkan Regulasi BNPB
+  if (text.includes("makan") || text.includes("beras") || text.includes("sembako") || text.includes("mie") || text.includes("lauk") || text.includes("dapur") || text.includes("pangan") || text.includes("lapar")) {
     detectedCommodities.push("Pangan & Makanan Siap Saji");
   }
-  if (text.includes("air") || text.includes("minum") || text.includes("galon") || text.includes("sanitasi") || text.includes("toilet") || text.includes("mandi") || text.includes("mck")) {
+  if (text.includes("air") || text.includes("minum") || text.includes("galon") || text.includes("sanitasi") || text.includes("toilet") || text.includes("mandi") || text.includes("mck") || text.includes("tangki")) {
     detectedCommodities.push("Air Bersih & Sanitasi");
   }
-  if (text.includes("obat") || text.includes("dokter") || text.includes("medis") || text.includes("perban") || text.includes("luka") || text.includes("vitamin") || text.includes("p3k") || text.includes("kesehatan")) {
+  if (text.includes("obat") || text.includes("dokter") || text.includes("medis") || text.includes("perban") || text.includes("luka") || text.includes("vitamin") || text.includes("p3k") || text.includes("kesehatan") || text.includes("ambulans")) {
     detectedCommodities.push("Pelayanan Kesehatan & Medis");
   }
-  if (text.includes("tenda") || text.includes("terpal") || text.includes("huntara") || text.includes("hunian") || text.includes("barak") || text.includes("posko pengungsian")) {
+  if (text.includes("tenda") || text.includes("terpal") || text.includes("huntara") || text.includes("hunian") || text.includes("barak") || text.includes("posko pengungsian") || text.includes("mengungsi")) {
     detectedCommodities.push("Hunian Sementara (Huntara / Tenda)");
   }
   if (text.includes("pakaian") || text.includes("baju") || text.includes("selimut") || text.includes("matras") || text.includes("kidware") || text.includes("family kit") || text.includes("sandang")) {
     detectedCommodities.push("Sandang & Paket Non-Pangan");
   }
-  if (text.includes("rumah roboh") || text.includes("rusak berat") || text.includes("hancur total") || text.includes("tembok retak") || text.includes("atap ambruk") || text.includes("stimulan") || text.includes("rekonstruksi") || text.includes("perbaikan rumah")) {
+  if (text.includes("rumah roboh") || text.includes("rusak berat") || text.includes("hancur total") || text.includes("tembok retak") || text.includes("atap ambruk") || text.includes("stimulan") || text.includes("rekonstruksi") || text.includes("perbaikan rumah") || text.includes("roboh")) {
     detectedCommodities.push("Bantuan Stimulan Rumah (Pasca-Bencana)");
-    if (text.includes("roboh") || text.includes("hancur total") || text.includes("rusak berat")) {
-      score += 20;
-    } else if (text.includes("retak parah") || text.includes("rusak sedang")) {
-      score += 12;
-    }
+    score += 10;
   }
   if (text.includes("listrik") || text.includes("genset") || text.includes("jembatan putus") || text.includes("jalan tertutup") || text.includes("pipa air") || text.includes("sarana vital") || text.includes("infrastruktur")) {
     detectedCommodities.push("Pemulihan Sarana & Fasilitas Vital");
   }
-  if (text.includes("evakuasi") || text.includes("perahu") || text.includes("tali") || text.includes("pelampung") || text.includes("terkepung")) {
+  if (text.includes("evakuasi") || text.includes("perahu") || text.includes("tali") || text.includes("pelampung") || text.includes("terkepung") || text.includes("terjebak")) {
     detectedCommodities.push("Evakuasi & Penyelamatan");
   }
 
@@ -123,24 +279,32 @@ export function analyzeReportTriage(
     detectedCommodities.unshift(categoryHint);
   }
 
-  // Cap score
-  score = Math.min(99, Math.max(30, score));
+  // Cap score antara 40 - 99
+  score = Math.min(99, Math.max(40, score));
 
+  // Klasifikasi Tingkat Urgensi
   let urgency: "Kritis" | "Tinggi" | "Sedang" = "Sedang";
-  if (score >= 80 || criticalMatches >= 2) {
+  let recommendedUrgency: "Sangat mendesak" | "Perlu segera" = "Perlu segera";
+
+  if (score >= 78 || criticalMatches >= 2 || (criticalMatches >= 1 && detectedVulnerables.length >= 1)) {
     urgency = "Kritis";
-  } else if (score >= 60 || detectedVulnerables.length >= 1) {
+    recommendedUrgency = "Sangat mendesak";
+  } else if (score >= 60 || criticalMatches >= 1 || detectedVulnerables.length >= 1) {
     urgency = "Tinggi";
+    recommendedUrgency = "Sangat mendesak";
+  } else {
+    urgency = "Sedang";
+    recommendedUrgency = "Perlu segera";
   }
 
   // Generate AI Rationale
   let rationale = "";
   if (urgency === "Kritis") {
-    rationale = `Terdeteksi ${criticalMatches > 0 ? `${criticalMatches} indikator kedaruratan tinggi` : "kondisi gawat darurat"} dengan resiko keselamatan jiwa. Direkomendasikan SLA verifikasi 1 jam serta aktivasi alokasi kilat ke Mitra Siaga.`;
+    rationale = `Terdeteksi ${criticalMatches > 0 ? `${criticalMatches} indikator bencana/darurat akut` : "kondisi gawat darurat"} dengan ancaman keselamatan jiwa dan pemenuhan kebutuhan dasar korban. Direkomendasikan SLA verifikasi 1 jam serta aktivasi alokasi kilat ke Mitra Siaga.`;
   } else if (urgency === "Tinggi") {
-    rationale = `Teridentifikasi kebutuhan mendesak yang melibatkan ${detectedVulnerables.length > 0 ? detectedVulnerables.join(", ") : "kondisi rentan pascabencana"}. Batas SLA verifikasi disarankan maksimal 2 jam.`;
+    rationale = `Teridentifikasi kebutuhan mendesak pascabencana yang melibatkan ${detectedVulnerables.length > 0 ? detectedVulnerables.join(", ") : "warga terdampak"}. Batas SLA verifikasi disarankan maksimal 2 jam.`;
   } else {
-    rationale = `Kondisi logistik darurat standar pascabencana. Kebutuhan dapat diverifikasi secara berjenjang oleh posko wilayah dalam kurun SLA 3 jam.`;
+    rationale = `Kondisi logistik pascabencana terverifikasi. Kebutuhan logistik diverifikasi dan dialokasikan berjenjang oleh posko wilayah dalam kurun SLA 3 jam.`;
   }
 
   const actionRecommendation = urgency === "Kritis"
@@ -156,7 +320,8 @@ export function analyzeReportTriage(
     detectedVulnerables,
     rationale,
     actionRecommendation,
-    confidence: Math.min(99, 82 + Math.floor(Math.random() * 15)),
+    confidence: Math.min(99, 88 + Math.floor(Math.random() * 9)),
+    recommendedUrgency,
   };
 }
 
