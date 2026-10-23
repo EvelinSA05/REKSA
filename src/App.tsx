@@ -3921,80 +3921,49 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
         }
       />
 
-      {/* JURISDICTION & ACCOUNT TIER BANNER */}
-      <div
-        style={{
-          background: isNasional
-            ? "linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, rgba(1, 50, 32, 0.05) 100%)"
-            : "linear-gradient(135deg, rgba(15, 118, 110, 0.08) 0%, rgba(1, 50, 32, 0.05) 100%)",
-          border: isNasional ? "1px solid rgba(180, 83, 9, 0.25)" : "1px solid rgba(15, 118, 110, 0.25)",
-          borderRadius: "14px",
-          padding: "16px 20px",
-          marginBottom: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "14px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <div
-            style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "12px",
-              background: isNasional ? "#b45309" : "#013220",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "20px",
-              flexShrink: 0,
-            }}
-          >
-            {isNasional ? "🌐" : "📍"}
+      {/* JURISDICTION & ACCOUNT TIER COMMAND BANNER */}
+      <div className="posko-command-banner">
+        <div className="posko-banner-left">
+          <div className={`posko-banner-icon ${isNasional ? "national" : ""}`}>
+            {isNasional ? "🌐" : "🏛️"}
           </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: isNasional ? "#b45309" : "#0f766e",
-                }}
-              >
-                {isNasional ? "Pusat Komando & Supervisi Nasional" : `Yurisdiksi Daerah: BPBD Provinsi ${activeProvince || "Jawa Timur"}`}
+          <div className="posko-banner-content">
+            <h4>
+              <span>{isNasional ? "Pusat Komando & Supervisi Logistik Nasional" : `Pusat Komando BPBD Provinsi ${activeProvince || "Jawa Timur"}`}</span>
+              <span className={`posko-banner-badge ${isNasional ? "national" : ""}`}>
+                {isNasional ? "⭐ Akun BPBD Nasional" : "🏛️ Akun BPBD Terverifikasi"}
               </span>
-              <span
-                className="pill"
-                style={{
-                  fontSize: "11px",
-                  padding: "2px 8px",
-                  background: isNasional ? "#fef3c7" : "#ecfdf5",
-                  color: isNasional ? "#92400e" : "#047857",
-                  border: isNasional ? "1px solid #fde68a" : "1px solid #a7f3d0",
-                  fontWeight: 700,
-                }}
-              >
-                {isNasional ? "⭐ Akun BPBD Nasional" : "🏛️ Akun BPBD Daerah"}
-              </span>
-            </div>
-            <p style={{ margin: "3px 0 0", fontSize: "0.88rem", color: "#1f2937", fontWeight: 500 }}>
+            </h4>
+            <p className="posko-banner-desc">
               {isNasional
-                ? "Memantau, mensupervisi, dan mengoordinasikan logistik penanggulangan bencana di seluruh 32+ provinsi secara agregat nasional."
-                : `Menangani verifikasi laporan kebutuhan, penetapan alokasi, dan penugasan mitra secara spesifik untuk permohonan di wilayah ${activeProvince || "daerah ini"}.`}
+                ? "Memantau, mensupervisi bottleneck penanganan, dan mengoordinasikan logistik penanggulangan bencana di seluruh provinsi."
+                : `Menangani verifikasi laporan kebutuhan warga, kurasi bursa bantuan terbuka, dan koordinasi distribusi armada mitra di wilayah ${activeProvince || "Jawa Timur"}.`}
             </p>
           </div>
         </div>
 
-        {/* Quick Regional Stats Pill */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "8px 14px", textAlign: "right" }}>
-            <span style={{ fontSize: "11px", color: "#6b7280", display: "block" }}>Laporan dalam Yurisdiksi</span>
-            <strong style={{ fontSize: "1.1rem", color: "#013220" }}>{allCases.length} Kasus</strong>
+        {/* Quick Regional Stats Cluster */}
+        <div className="posko-banner-stats-cluster">
+          <div className="posko-stat-pill" onClick={() => setPage("cases")} style={{ cursor: "pointer" }} title="Lihat semua laporan dalam yurisdiksi">
+            <span className="posko-stat-icon">📋</span>
+            <div className="posko-stat-info">
+              <span className="posko-stat-val">{allCases.length}</span>
+              <span className="posko-stat-lbl">Kasus Wilayah</span>
+            </div>
+          </div>
+          <div className="posko-stat-pill" onClick={() => setPage("cases")} style={{ cursor: "pointer" }} title="Lihat kasus prioritas tinggi/kritis">
+            <span className="posko-stat-icon">⚡</span>
+            <div className="posko-stat-info">
+              <span className="posko-stat-val" style={{ color: prioritasKritis > 0 ? "#e11d48" : "#013220" }}>{prioritasKritis}</span>
+              <span className="posko-stat-lbl">Kritis / Mendesak</span>
+            </div>
+          </div>
+          <div className="posko-stat-pill" onClick={() => setPage("assignments")} style={{ cursor: "pointer" }} title="Lihat armada misi lapangan">
+            <span className="posko-stat-icon">🚚</span>
+            <div className="posko-stat-info">
+              <span className="posko-stat-val" style={{ color: disalurkan > 0 ? "#7c3aed" : "#013220" }}>{disalurkan}</span>
+              <span className="posko-stat-lbl">Misi Lapangan</span>
+            </div>
           </div>
         </div>
       </div>
@@ -4061,59 +4030,83 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
       )}
 
       {/* 6 WORKLOAD SUMMARY METRICS CARDS PER PRD Bab 5.1 & Bab 12 */}
-      <div className="posko-workload-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
-        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
+      <div className="posko-workload-grid">
+        <div className="posko-workload-card card-verification" onClick={() => setPage("cases")} title="Klik untuk verifikasi laporan warga baru">
           <div className="workload-card-top">
-            <span className="workload-tag">Menunggu Verifikasi</span>
+            <span className="workload-tag">Verifikasi</span>
             <div className="workload-icon"><Icon name="file" /></div>
           </div>
           <strong className="workload-number">{masukKK}</strong>
           <small className="workload-sub">Laporan Masuk Baru</small>
+          <div className="workload-footer-arrow">
+            <span>Verifikasi Sekarang</span>
+            <Icon name="next" />
+          </div>
         </div>
 
-        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("cases")}>
+        <div className="posko-workload-card card-priority" onClick={() => setPage("cases")} title="Klik untuk melihat kasus prioritas kritis/tinggi">
           <div className="workload-card-top">
-            <span className="workload-tag">Kebutuhan Prioritas</span>
+            <span className="workload-tag">Prioritas</span>
             <div className="workload-icon"><Icon name="bolt" /></div>
           </div>
           <strong className="workload-number">{prioritasKritis}</strong>
           <small className="workload-sub">Kritis &amp; Mendesak</small>
+          <div className="workload-footer-arrow">
+            <span>Tinjau Prioritas</span>
+            <Icon name="next" />
+          </div>
         </div>
 
-        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("resources")}>
+        <div className="posko-workload-card card-open" onClick={() => setPage("resources")} title="Klik untuk membuka bursa bantuan terbuka">
           <div className="workload-card-top">
-            <span className="workload-tag">Kekurangan Terbuka</span>
+            <span className="workload-tag">Bursa Terbuka</span>
             <div className="workload-icon"><Icon name="pin" /></div>
           </div>
           <strong className="workload-number">{terbuka}</strong>
           <small className="workload-sub">Siap Didanai Mitra</small>
+          <div className="workload-footer-arrow">
+            <span>Lihat Bursa</span>
+            <Icon name="next" />
+          </div>
         </div>
 
-        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("offers")}>
+        <div className="posko-workload-card card-offers" onClick={() => setPage("offers")} title="Klik untuk meninjau penawaran komitmen dari mitra">
           <div className="workload-card-top">
-            <span className="workload-tag">Penawaran Mitra</span>
+            <span className="workload-tag">Tawaran Mitra</span>
             <div className="workload-icon"><Icon name="handshake" /></div>
           </div>
           <strong className="workload-number">{penawaranMenunggu}</strong>
           <small className="workload-sub">Menunggu Keputusan</small>
+          <div className="workload-footer-arrow">
+            <span>Keputusan Alokasi</span>
+            <Icon name="next" />
+          </div>
         </div>
 
-        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
+        <div className="posko-workload-card card-missions" onClick={() => setPage("assignments")} title="Klik untuk memantau pergerakan armada satgas di lapangan">
           <div className="workload-card-top">
             <span className="workload-tag">Misi Aktif</span>
             <div className="workload-icon"><Icon name="task" /></div>
           </div>
           <strong className="workload-number">{disalurkan}</strong>
           <small className="workload-sub">Armada Berjalan</small>
+          <div className="workload-footer-arrow">
+            <span>Pantau Perjalanan</span>
+            <Icon name="next" />
+          </div>
         </div>
 
-        <div className="posko-workload-card" style={{ cursor: "pointer" }} onClick={() => setPage("assignments")}>
+        <div className="posko-workload-card card-confirm" onClick={() => setPage("assignments")} title="Klik untuk konfirmasi serah terima dan terbitkan BAST">
           <div className="workload-card-top">
-            <span className="workload-tag">Perlu Konfirmasi</span>
+            <span className="workload-tag">Konfirmasi</span>
             <div className="workload-icon"><Icon name="check" /></div>
           </div>
           <strong className="workload-number">{perluKonfirmasi}</strong>
           <small className="workload-sub">Tiba di Titik Serah</small>
+          <div className="workload-footer-arrow">
+            <span>Terbitkan BAST</span>
+            <Icon name="next" />
+          </div>
         </div>
       </div>
 
@@ -4124,10 +4117,10 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
           <div className="ops-panel-header">
             <div>
               <h3>Daftar Kebutuhan Terbuka Posko Ini</h3>
-              <p>Kebutuhan KK yang telah diverifikasi dan siap disalurkan mitra</p>
+              <p>Kebutuhan KK yang telah diverifikasi dan siap disalurkan oleh mitra satgas</p>
             </div>
             <button type="button" className="btn-ops-all" onClick={() => setPage(openNeedsCases.length > 0 ? "resources" : "cases")}>
-              {openNeedsCases.length > 0 ? "Lihat Bursa" : "Verifikasi Kasus"} <Icon name="next" />
+              {openNeedsCases.length > 0 ? "Buka Bursa Bantuan" : "Verifikasi Kasus"} <Icon name="next" />
             </button>
           </div>
 

@@ -5924,100 +5924,330 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   flex-shrink: 0;
 }
 
-/* Workload Grid */
-.posko-workload-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin: 24px 0 28px;
+/* Executive Regional Command Banner */
+.posko-command-banner {
+  background: linear-gradient(135deg, rgba(1, 50, 32, 0.05) 0%, rgba(15, 118, 110, 0.08) 50%, rgba(255, 255, 255, 0.95) 100%);
+  border: 1px solid rgba(1, 50, 32, 0.15);
+  border-radius: 16px;
+  padding: 18px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(1, 50, 32, 0.03);
 }
 
-.posko-workload-card {
-  background: var(--white);
-  border: 1px solid rgba(1, 50, 32, 0.1);
-  border-radius: 20px;
-  padding: 22px 24px;
-  box-shadow: 0 4px 18px rgba(1, 50, 32, 0.03);
+.posko-banner-left {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.posko-banner-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #013220 0%, #065f46 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(1, 50, 32, 0.2);
+}
+
+.posko-banner-icon.national {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.25);
+}
+
+.posko-banner-content h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #013220;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.posko-banner-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.posko-banner-badge.national {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.posko-banner-desc {
+  margin: 4px 0 0;
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.posko-banner-stats-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.posko-stat-pill {
+  background: #ffffff;
+  border: 1px solid rgba(1, 50, 32, 0.12);
+  border-radius: 12px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
 }
 
+.posko-stat-pill:hover {
+  border-color: #013220;
+  transform: translateY(-1px);
+}
+
+.posko-stat-icon {
+  font-size: 17px;
+}
+
+.posko-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.posko-stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #013220;
+  line-height: 1.1;
+}
+
+.posko-stat-lbl {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Upgraded 6 Workload KPI Cards */
+.posko-workload-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin: 0 0 26px;
+}
+
+@media (max-width: 1280px) {
+  .posko-workload-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .posko-workload-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .posko-workload-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.posko-workload-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  border-top-width: 4px;
+}
+
 .posko-workload-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(1, 50, 32, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Card Variations with Specific Accents */
+.posko-workload-card.card-verification {
+  border-top-color: #f59e0b;
+}
+.posko-workload-card.card-verification:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.16);
+}
+.posko-workload-card.card-verification .workload-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.posko-workload-card.card-priority {
+  border-top-color: #e11d48;
+}
+.posko-workload-card.card-priority:hover {
+  border-color: #e11d48;
+  box-shadow: 0 12px 28px rgba(225, 29, 72, 0.16);
+}
+.posko-workload-card.card-priority .workload-icon {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+.posko-workload-card.card-open {
+  border-top-color: #059669;
+}
+.posko-workload-card.card-open:hover {
+  border-color: #059669;
+  box-shadow: 0 12px 28px rgba(5, 150, 105, 0.16);
+}
+.posko-workload-card.card-open .workload-icon {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.posko-workload-card.card-offers {
+  border-top-color: #2563eb;
+}
+.posko-workload-card.card-offers:hover {
+  border-color: #2563eb;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.16);
+}
+.posko-workload-card.card-offers .workload-icon {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.posko-workload-card.card-missions {
+  border-top-color: #7c3aed;
+}
+.posko-workload-card.card-missions:hover {
+  border-color: #7c3aed;
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.16);
+}
+.posko-workload-card.card-missions .workload-icon {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.posko-workload-card.card-confirm {
+  border-top-color: #0d9488;
+}
+.posko-workload-card.card-confirm:hover {
+  border-color: #0d9488;
+  box-shadow: 0 12px 28px rgba(13, 148, 136, 0.16);
+}
+.posko-workload-card.card-confirm .workload-icon {
+  background: #f0fdfa;
+  color: #0f766e;
 }
 
 .workload-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .workload-tag {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--forest);
+  letter-spacing: 0.04em;
+  color: #475569;
 }
 
 .workload-icon {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: rgba(1, 50, 32, 0.06);
-  color: var(--forest);
-  border: 1px solid rgba(1, 50, 32, 0.08);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
   transition: all 0.2s ease;
 }
 
 .workload-icon .icon {
   width: 15px;
   height: 15px;
-  color: var(--forest);
-}
-
-.posko-workload-card:hover .workload-icon {
-  background: var(--forest);
-  color: #ffffff;
-}
-
-.posko-workload-card:hover .workload-icon .icon {
-  color: #ffffff;
-}
-
-.posko-workload-card .workload-tag {
-  color: var(--forest);
 }
 
 .workload-number {
-  font-size: 34px;
+  font-size: 2.15rem;
   font-weight: 800;
-  color: var(--forest);
+  color: #0f172a;
   line-height: 1.1;
+  margin: 4px 0 2px;
 }
 
 .workload-sub {
   font-size: 12px;
-  color: var(--muted);
-  margin-top: 4px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.workload-footer-arrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.posko-workload-card:hover .workload-footer-arrow {
+  opacity: 1;
+  transform: translateX(2px);
 }
 
 /* Split Command Grid */
 .posko-ops-grid {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1.15fr 0.85fr;
   gap: 22px;
   margin-bottom: 24px;
 }
 
+@media (max-width: 1024px) {
+  .posko-ops-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ops-card-panel {
   background: var(--white);
-  border: 1px solid rgba(1, 50, 32, 0.1);
+  border: 1px solid rgba(1, 50, 32, 0.12);
   border-radius: 20px;
   padding: 24px 26px;
   box-shadow: 0 4px 18px rgba(1, 50, 32, 0.03);
@@ -6033,35 +6263,41 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 }
 
 .ops-panel-header h3 {
-  font-size: 16px;
+  font-size: 16.5px;
   color: var(--forest);
-  margin: 0 0 2px;
-  font-weight: 700;
+  margin: 0 0 3px;
+  font-weight: 800;
 }
 
 .ops-panel-header p {
   font-size: 12px;
   color: var(--muted);
   margin: 0;
+  line-height: 1.4;
 }
 
 .btn-ops-all {
-  border: 0;
-  background: transparent;
+  border: 1px solid rgba(1, 50, 32, 0.18);
+  background: #ffffff;
   color: var(--forest);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-ops-all:hover {
-  background: rgba(1, 50, 32, 0.06);
+  background: var(--forest);
+  color: #ffffff;
+  border-color: var(--forest);
+  box-shadow: 0 3px 10px rgba(1, 50, 32, 0.15);
 }
 
 .ops-attention-list {
@@ -6074,7 +6310,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 14px;
   background: #fbfbf8;
   border: 1px solid rgba(1, 50, 32, 0.08);
@@ -6087,8 +6323,12 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 .ops-attention-item:hover {
   background: var(--white);
   border-color: var(--forest);
-  transform: translateX(3px);
-  box-shadow: 0 4px 14px rgba(1, 50, 32, 0.06);
+  transform: translateX(4px);
+  box-shadow: 0 6px 18px rgba(1, 50, 32, 0.08);
+}
+
+.ops-item-badge {
+  flex-shrink: 0;
 }
 
 .ops-item-info {
@@ -6097,29 +6337,34 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 
 .ops-item-info strong {
   display: block;
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--forest);
+  line-height: 1.3;
 }
 
 .ops-item-info small {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--muted);
+  display: block;
+  margin-top: 2px;
 }
 
 .ops-item-action {
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--forest);
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .ops-map-wrapper {
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(1, 50, 32, 0.1);
-  height: 360px;
+  border: 1px solid rgba(1, 50, 32, 0.12);
+  height: 380px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .ops-map-wrapper .map {
