@@ -211,7 +211,7 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 detik untuk koneksi Supabase remote
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
