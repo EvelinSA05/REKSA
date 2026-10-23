@@ -651,6 +651,67 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
         <section className="cta-final-wrapper" id="akses">
           <div className="shell">
             <div className="cta-final-card">
+              {/* Background decorative motifs */}
+              <div className="cta-motifs" aria-hidden="true">
+                <svg className="cta-motif-topo" viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="cta-topo-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#c1c3ac" stopOpacity="0.28" />
+                      <stop offset="45%" stopColor="#3ebd82" stopOpacity="0.22" />
+                      <stop offset="85%" stopColor="#c1c3ac" stopOpacity="0.12" />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity="0.04" />
+                    </linearGradient>
+                    <linearGradient id="cta-line-soft" x1="0%" y1="50%" x2="100%" y2="50%">
+                      <stop offset="0%" stopColor="#c1c3ac" stopOpacity="0.06" />
+                      <stop offset="50%" stopColor="#3ebd82" stopOpacity="0.26" />
+                      <stop offset="100%" stopColor="#c1c3ac" stopOpacity="0.08" />
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Topographic Contour Lines */}
+                  <path d="M-50,140 C180,60 380,220 620,110 C860,0 1020,160 1250,80" stroke="url(#cta-topo-glow)" strokeWidth="1.5" />
+                  <path d="M-50,200 C200,120 400,280 650,170 C900,60 1040,220 1250,140" stroke="url(#cta-topo-glow)" strokeWidth="1.2" strokeDasharray="6 4" />
+                  <path d="M-50,260 C220,180 420,340 680,230 C930,120 1060,280 1250,200" stroke="url(#cta-topo-glow)" strokeWidth="1.5" />
+                  <path d="M-50,320 C240,240 440,400 710,290 C960,180 1080,340 1250,260" stroke="url(#cta-topo-glow)" strokeWidth="1.2" />
+                  <path d="M-50,380 C260,300 460,460 740,350 C990,240 1100,400 1250,320" stroke="url(#cta-topo-glow)" strokeWidth="1.5" />
+                  <path d="M-50,440 C280,360 480,520 770,410 C1020,300 1120,460 1250,380" stroke="url(#cta-line-soft)" strokeWidth="1.2" strokeDasharray="4 4" />
+                  
+                  {/* Contour Relief Elevation Nested Loops on Right behind hero */}
+                  <ellipse cx="940" cy="220" rx="320" ry="170" stroke="url(#cta-topo-glow)" strokeWidth="1" />
+                  <ellipse cx="950" cy="210" rx="260" ry="135" stroke="url(#cta-topo-glow)" strokeWidth="1.2" />
+                  <ellipse cx="960" cy="200" rx="200" ry="100" stroke="url(#cta-topo-glow)" strokeWidth="1.4" strokeDasharray="5 3" />
+                  <ellipse cx="970" cy="190" rx="140" ry="68" stroke="url(#cta-topo-glow)" strokeWidth="1.2" />
+                  <ellipse cx="980" cy="180" rx="80" ry="38" stroke="url(#cta-topo-glow)" strokeWidth="1.5" />
+                  <ellipse cx="985" cy="175" rx="30" ry="15" stroke="url(#cta-topo-glow)" strokeWidth="1.2" />
+
+                  {/* Geometric Crosshairs & Nav Accents */}
+                  <g opacity="0.35" transform="translate(180, 70)">
+                    <line x1="-12" y1="0" x2="12" y2="0" stroke="#c1c3ac" strokeWidth="1.5" />
+                    <line x1="0" y1="-12" x2="0" y2="12" stroke="#c1c3ac" strokeWidth="1.5" />
+                    <circle cx="0" cy="0" r="18" stroke="#c1c3ac" strokeWidth="1" strokeDasharray="2 2" fill="none" />
+                  </g>
+                  <g opacity="0.3" transform="translate(620, 480)">
+                    <line x1="-10" y1="0" x2="10" y2="0" stroke="#c1c3ac" strokeWidth="1.5" />
+                    <line x1="0" y1="-10" x2="0" y2="10" stroke="#c1c3ac" strokeWidth="1.5" />
+                  </g>
+                  <g opacity="0.25" transform="translate(1080, 80)">
+                    <line x1="-10" y1="0" x2="10" y2="0" stroke="#c1c3ac" strokeWidth="1.5" />
+                    <line x1="0" y1="-10" x2="0" y2="10" stroke="#c1c3ac" strokeWidth="1.5" />
+                  </g>
+                </svg>
+
+                {/* Dot Matrix Pattern Layer */}
+                <div className="cta-motif-dots" />
+
+                {/* Glowing Concentric Radar / Beacon Aura */}
+                <div className="cta-motif-radar" />
+
+                {/* Technical Coordinates Watermark */}
+                <div className="cta-motif-coords">
+                  <span>REKSA GRID SYS · 06°12′S 106°49′E · ELEV 14M</span>
+                </div>
+              </div>
+
               <div className="cta-final-content">
                 <span className="eyebrow light"><Icon name="check" /> Akses publik &amp; Institusi</span>
                 <h2>Sudah siap memulai bersama REKSA?</h2>
