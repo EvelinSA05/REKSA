@@ -2019,7 +2019,6 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       {role === "citizen" && <CitizenRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "posko" && <PoskoRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
       {role === "responder" && <ResponderRouter page={page} setPage={go} state={state} update={update} notify={notify} name={name} setName={setName} onRefresh={onRefresh} setRole={setRole} />}
-      <MobileNav role={role} page={page} go={go} notifCount={unreadCount} />
     </div>
     {liveToastNotif && (
       <div className="live-toast-banner" role="alert">
@@ -2074,25 +2073,8 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   </div>;
 }
 
-function MobileNav({ role, page, go, notifCount = 0 }: { role: Role; page: PortalPage; go: (p: PortalPage) => void; notifCount?: number }) {
-  const items = roleNavigation[role].main.slice(0, 4);
-  const badgeText = notifCount > 99 ? "99+" : notifCount > 0 ? String(notifCount) : null;
-  return (
-    <nav className="mobile-bottom">
-      {items.map((x) => {
-        const isNotif = x.label === "Notifikasi" || x.page === "notifications";
-        return (
-          <button className={page === x.page ? "active" : ""} onClick={() => go(x.page as PortalPage)} key={x.label} style={{ position: "relative" }}>
-            <span style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <Icon name={x.icon} />
-              {isNotif && badgeText && <span className="mobile-bottom-notif-badge">{badgeText}</span>}
-            </span>
-            <span>{x.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
+function MobileNav(_props: { role?: Role; page?: PortalPage; go?: (p: PortalPage) => void; notifCount?: number }) {
+  return null;
 }
 
 export function PageHead({ eyebrow, title, copy, action }: { eyebrow: string; title: string; copy: string; action?: React.ReactNode }) {
