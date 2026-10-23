@@ -271,6 +271,8 @@ const icons: Record<string, React.ReactNode> = {
   alert: <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
   chat: <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
   shield: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
+  shieldCheck: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></svg>,
+  circleCheck: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.5 2.5 4.5-4.5" /></svg>,
 };
 
 export function Icon({ name }: { name: string }) {
@@ -630,9 +632,9 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
               <div className="steps-illustrated">
                 {[
                   { n: "01", title: "Laporkan", desc: "Masyarakat menyampaikan kebutuhan pascabencana.", icon: "file" },
-                  { n: "02", title: "Verifikasi", desc: "Petugas Posko memeriksa dan memvalidasi kebutuhan.", icon: "check" },
+                  { n: "02", title: "Verifikasi", desc: "Petugas Posko memeriksa dan memvalidasi kebutuhan.", icon: "search" },
                   { n: "03", title: "Tangani", desc: "Sumber daya dialokasikan dan responder ditugaskan.", icon: "box" },
-                  { n: "04", title: "Selesai", desc: "Bantuan diterima dan laporan diselesaikan.", icon: "check" },
+                  { n: "04", title: "Selesai", desc: "Bantuan diterima dan laporan diselesaikan.", icon: "circleCheck" },
                 ].map(({ n, title, desc, icon }) => (
                   <div className="step-ill" key={n}>
                     <div className="step-ill-icon"><Icon name={icon} /></div>
