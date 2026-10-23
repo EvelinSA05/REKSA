@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { CaseRecord } from "../../App";
 import { MisiItem } from "../../services/api";
-import { AppIcon } from "./Icons";
 import { computeComparativeResponseMetrics } from "../../utils/slaEscalationEngine";
 
 interface PerbandinganKecepatanResponProps {
@@ -34,66 +33,46 @@ export function PerbandinganKecepatanRespon({
       className={`comparative-response-section ${className}`}
       style={{
         background: "#ffffff",
-        borderRadius: "18px",
+        borderRadius: "14px",
         border: "1px solid #e2e8f0",
-        padding: "24px",
-        marginBottom: "32px",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+        padding: "20px 22px",
+        marginBottom: "28px",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
       }}
     >
-      {/* SECTION HEADER */}
+      {/* SECTION HEADER & COMPACT TABS */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "center",
           flexWrap: "wrap",
-          gap: "14px",
-          marginBottom: "20px",
+          gap: "12px",
+          marginBottom: "16px",
+          paddingBottom: "12px",
+          borderBottom: "1px solid #f1f5f9",
         }}
       >
         <div>
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              color: "#334155",
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              padding: "4px 10px",
-              borderRadius: "6px",
-              fontWeight: 700,
-              fontSize: "0.72rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              marginBottom: "8px",
-            }}
-          >
-            Akuntabilitas Kemitraan &amp; SLA Respon Bencana
-          </span>
           <h2
             style={{
               margin: 0,
-              fontSize: "1.35rem",
-              fontWeight: 800,
+              fontSize: "1.15rem",
+              fontWeight: 700,
               color: "#0f172a",
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.01em",
             }}
           >
-            Perbandingan Kecepatan Respon: BPBD vs Mitra Kemanusiaan
+            Perbandingan Kecepatan Respon &amp; Kepatuhan SLA
           </h2>
           <p
             style={{
-              margin: "6px 0 0",
+              margin: "3px 0 0",
               color: "#64748b",
-              fontSize: "0.85rem",
-              maxWidth: "840px",
-              lineHeight: 1.5,
+              fontSize: "0.82rem",
             }}
           >
-            Sistem dilengkapi <strong>Trigger Eskalasi Otomatis (Fail-Safe)</strong>: jika posko BPBD
-            mengalami kendala verifikasi dalam batas SLA, alur dialihkan langsung ke jaringan <strong>Mitra Siaga</strong> (PMI, BAZNAS, Tagana, MDMC) agar seluruh laporan warga tertangani.
+            Monitoring waktu verifikasi posko BPBD dan efektivitas eskalasi otomatis ke mitra siaga kemanusiaan.
           </p>
         </div>
 
@@ -102,19 +81,19 @@ export function PerbandinganKecepatanRespon({
           style={{
             display: "inline-flex",
             background: "#f1f5f9",
-            padding: "4px",
-            borderRadius: "8px",
+            padding: "3px",
+            borderRadius: "6px",
             border: "1px solid #e2e8f0",
-            gap: "4px",
+            gap: "2px",
           }}
         >
           <button
             type="button"
             onClick={() => setActiveTab("chart")}
             style={{
-              padding: "6px 14px",
-              borderRadius: "6px",
-              fontSize: "0.8rem",
+              padding: "5px 12px",
+              borderRadius: "4px",
+              fontSize: "0.78rem",
               fontWeight: 600,
               border: "none",
               cursor: "pointer",
@@ -123,16 +102,16 @@ export function PerbandinganKecepatanRespon({
               color: activeTab === "chart" ? "#ffffff" : "#475569",
             }}
           >
-            Grafik Kecepatan Respon
+            Grafik Komparasi
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("audit")}
             style={{
-              padding: "6px 14px",
-              borderRadius: "6px",
-              fontSize: "0.8rem",
+              padding: "5px 12px",
+              borderRadius: "4px",
+              fontSize: "0.78rem",
               fontWeight: 600,
               border: "none",
               cursor: "pointer",
@@ -141,16 +120,16 @@ export function PerbandinganKecepatanRespon({
               color: activeTab === "audit" ? "#ffffff" : "#475569",
             }}
           >
-            Log Audit Pengalihan SLA ({metrics.recentEscalations.length})
+            Log Audit SLA ({metrics.recentEscalations.length})
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab("workflow")}
             style={{
-              padding: "6px 14px",
-              borderRadius: "6px",
-              fontSize: "0.8rem",
+              padding: "5px 12px",
+              borderRadius: "4px",
+              fontSize: "0.78rem",
               fontWeight: 600,
               border: "none",
               cursor: "pointer",
@@ -159,305 +138,214 @@ export function PerbandinganKecepatanRespon({
               color: activeTab === "workflow" ? "#ffffff" : "#475569",
             }}
           >
-            Alur Sistem Fail-Safe
+            Alur Fail-Safe
           </button>
         </div>
       </div>
 
-      {/* 4 TOP SUMMARY KPI CARDS (CLEAN MONOCHROME PALETTE) */}
+      {/* COMPACT UNIFIED METRICS STRIP */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          background: "#f8fafc",
+          border: "1px solid #e2e8f0",
+          borderRadius: "8px",
+          padding: "10px 16px",
           gap: "12px",
-          marginBottom: "20px",
+          marginBottom: "16px",
         }}
       >
-        {/* KPI 1: MTTV BPBD */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "16px 18px",
-          }}
-        >
-          <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: "6px" }}>
-            Rata-rata Verifikasi BPBD
+        <div>
+          <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", display: "block" }}>
+            Rata-rata BPBD
           </span>
-          <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1.1 }}>
-            {metrics.mttvBpbdMinutes}{" "}
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>Menit</span>
+          <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+            {metrics.mttvBpbdMinutes} <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#64748b" }}>Menit</span>
           </div>
-          <small style={{ color: "#64748b", fontWeight: 500, fontSize: "0.74rem", display: "block", marginTop: "4px" }}>
-            Target batas SLA: 60 Menit
-          </small>
+          <small style={{ color: "#64748b", fontSize: "0.72rem" }}>Target SLA: 60 Menit</small>
         </div>
 
-        {/* KPI 2: MTTV MITRA */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "16px 18px",
-          }}
-        >
-          <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: "6px" }}>
-            Waktu Respon Mitra
+        <div>
+          <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", display: "block" }}>
+            Respon Mitra
           </span>
-          <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1.1 }}>
-            {metrics.mttvMitraMinutes}{" "}
-            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>Menit</span>
+          <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+            {metrics.mttvMitraMinutes} <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#64748b" }}>Menit</span>
           </div>
-          <small style={{ color: "#013220", fontWeight: 700, fontSize: "0.74rem", display: "block", marginTop: "4px" }}>
-            48% lebih cepat menangani
-          </small>
+          <small style={{ color: "#013220", fontWeight: 600, fontSize: "0.72rem" }}>48% lebih cepat</small>
         </div>
 
-        {/* KPI 3: KEPATUHAN SLA BPBD */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "16px 18px",
-          }}
-        >
-          <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: "6px" }}>
+        <div>
+          <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", display: "block" }}>
             Kepatuhan SLA BPBD
           </span>
-          <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1.1 }}>
-            {metrics.slaComplianceBpbdPct}%{" "}
-            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748b" }}>Tepat Waktu</span>
+          <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+            {metrics.slaComplianceBpbdPct}%
           </div>
-          <small style={{ color: "#64748b", fontWeight: 500, fontSize: "0.74rem", display: "block", marginTop: "4px" }}>
-            {metrics.casesEscalatedToMitra} kasus terbantu mitra
-          </small>
+          <small style={{ color: "#64748b", fontSize: "0.72rem" }}>{metrics.casesEscalatedToMitra} kasus terbantu mitra</small>
         </div>
 
-        {/* KPI 4: MITRA TAKE-OVER RESOLUTION */}
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "16px 18px",
-          }}
-        >
-          <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: "6px" }}>
+        <div>
+          <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", display: "block" }}>
             Efektivitas Fail-Safe
           </span>
-          <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", lineHeight: 1.1 }}>
-            100%{" "}
-            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748b" }}>Tertangani</span>
+          <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+            100%
           </div>
-          <small style={{ color: "#013220", fontWeight: 700, fontSize: "0.74rem", display: "block", marginTop: "4px" }}>
-            0 laporan terbengkalai
-          </small>
+          <small style={{ color: "#013220", fontWeight: 600, fontSize: "0.72rem" }}>0 laporan terbengkalai</small>
         </div>
       </div>
 
-      {/* TAB CONTENT 1: VISUAL COMPARISON CHART */}
+      {/* TAB CONTENT 1: COMPACT COMPARATIVE TABLE WITH SLIM BARS */}
       {activeTab === "chart" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "20px",
-          }}
-        >
+        <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
+          {/* Header row & Legend */}
           <div
             style={{
+              padding: "10px 14px",
+              background: "#ffffff",
+              borderBottom: "1px solid #e2e8f0",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               flexWrap: "wrap",
-              gap: "10px",
-              marginBottom: "16px",
+              gap: "8px",
             }}
           >
-            <div>
-              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#0f172a" }}>
-                Komparasi Kecepatan Respon per Kategori Bantuan
-              </h3>
-              <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#64748b" }}>
-                Waktu rata-rata dari pengajuan warga hingga siap distribusi (dalam menit).
-              </p>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", fontSize: "0.8rem" }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: "12px", height: "12px", borderRadius: "3px", background: "#013220" }} />
-                <strong style={{ color: "#013220" }}>BPBD Wilayah</strong>
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#0f172a" }}>
+              Kecepatan Respon per Kategori Bantuan (Menit dari Laporan Submit)
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", fontSize: "0.78rem" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                <span style={{ width: "10px", height: "10px", borderRadius: "2px", background: "#013220" }} />
+                <span style={{ color: "#013220", fontWeight: 600 }}>BPBD</span>
               </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ width: "12px", height: "12px", borderRadius: "3px", background: "#64748b" }} />
-                <strong style={{ color: "#475569" }}>Mitra Kemanusiaan</strong>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                <span style={{ width: "10px", height: "10px", borderRadius: "2px", background: "#64748b" }} />
+                <span style={{ color: "#475569", fontWeight: 600 }}>Mitra</span>
               </span>
             </div>
           </div>
 
-          {/* Bar comparisons list */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {filteredCategories.map((item, idx) => {
-              const maxScale = 60; // 60 menit max scale
-              const bpbdPct = Math.min(100, Math.round((item.bpbdMinutes / maxScale) * 100));
-              const mitraPct = Math.min(100, Math.round((item.mitraMinutes / maxScale) * 100));
-              const deltaMinutes = item.bpbdMinutes - item.mitraMinutes;
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+              <thead>
+                <tr style={{ background: "#f8fafc", color: "#475569", textAlign: "left", borderBottom: "1px solid #e2e8f0", fontSize: "0.74rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  <th style={{ padding: "8px 14px", fontWeight: 600 }}>Kategori Bantuan</th>
+                  <th style={{ padding: "8px 14px", fontWeight: 600, width: "240px" }}>Waktu BPBD</th>
+                  <th style={{ padding: "8px 14px", fontWeight: 600, width: "240px" }}>Waktu Mitra</th>
+                  <th style={{ padding: "8px 14px", fontWeight: 600, textAlign: "right", width: "140px" }}>Selisih Respon</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCategories.map((item, idx) => {
+                  const maxScale = 60;
+                  const bpbdPct = Math.min(100, Math.round((item.bpbdMinutes / maxScale) * 100));
+                  const mitraPct = Math.min(100, Math.round((item.mitraMinutes / maxScale) * 100));
+                  const deltaMinutes = item.bpbdMinutes - item.mitraMinutes;
 
-              return (
-                <div
-                  key={item.category}
-                  style={{
-                    background: "#ffffff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "10px",
-                    padding: "12px 16px",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ width: "22px", height: "22px", borderRadius: "4px", background: "#f1f5f9", display: "grid", placeItems: "center", fontSize: "11px", fontWeight: 700, color: "#334155", border: "1px solid #e2e8f0" }}>
-                        {idx + 1}
-                      </span>
-                      <strong style={{ color: "#0f172a", fontSize: "0.88rem" }}>
-                        {item.category}
-                      </strong>
-                      <span style={{ fontSize: "0.74rem", color: "#64748b" }}>
-                        ({item.count} Laporan)
-                      </span>
-                    </div>
+                  return (
+                    <tr key={item.category} style={{ borderBottom: idx === filteredCategories.length - 1 ? "none" : "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600, width: "14px" }}>{idx + 1}.</span>
+                          <strong style={{ color: "#0f172a", fontSize: "0.84rem" }}>{item.category}</strong>
+                          <span style={{ fontSize: "0.74rem", color: "#94a3b8" }}>({item.count} laporan)</span>
+                        </div>
+                      </td>
 
-                    <span
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                        background: "#f8fafc",
-                        color: "#334155",
-                        fontSize: "0.74rem",
-                        fontWeight: 600,
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      Mitra {deltaMinutes}m lebih cepat
-                    </span>
-                  </div>
+                      {/* BPBD Bar & Time */}
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ flex: 1, height: "6px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
+                            <div style={{ width: `${bpbdPct}%`, height: "100%", background: "#013220", borderRadius: "999px" }} />
+                          </div>
+                          <span style={{ width: "55px", textAlign: "right", fontWeight: 700, color: "#013220", fontSize: "0.78rem" }}>
+                            {item.bpbdMinutes}m
+                          </span>
+                        </div>
+                      </td>
 
-                  {/* Dual comparative bar (Monochrome Dark Green & Slate) */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    {/* BPBD Bar (Forest Green) */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ width: "80px", fontSize: "0.75rem", fontWeight: 600, color: "#013220" }}>
-                        BPBD:
-                      </span>
-                      <div style={{ flex: 1, height: "8px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${bpbdPct}%`,
-                            background: "#013220",
-                            borderRadius: "999px",
-                            transition: "width 0.4s ease",
-                          }}
-                        />
-                      </div>
-                      <span style={{ width: "65px", textAlign: "right", fontSize: "0.78rem", fontWeight: 700, color: "#013220" }}>
-                        {item.bpbdMinutes} Menit
-                      </span>
-                    </div>
+                      {/* Mitra Bar & Time */}
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ flex: 1, height: "6px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
+                            <div style={{ width: `${mitraPct}%`, height: "100%", background: "#64748b", borderRadius: "999px" }} />
+                          </div>
+                          <span style={{ width: "55px", textAlign: "right", fontWeight: 700, color: "#475569", fontSize: "0.78rem" }}>
+                            {item.mitraMinutes}m
+                          </span>
+                        </div>
+                      </td>
 
-                    {/* Mitra Bar (Slate) */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ width: "80px", fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>
-                        Mitra:
-                      </span>
-                      <div style={{ flex: 1, height: "8px", background: "#f1f5f9", borderRadius: "999px", overflow: "hidden" }}>
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${mitraPct}%`,
-                            background: "#64748b",
-                            borderRadius: "999px",
-                            transition: "width 0.4s ease",
-                          }}
-                        />
-                      </div>
-                      <span style={{ width: "65px", textAlign: "right", fontSize: "0.78rem", fontWeight: 700, color: "#475569" }}>
-                        {item.mitraMinutes} Menit
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                      {/* Delta */}
+                      <td style={{ padding: "10px 14px", textAlign: "right" }}>
+                        <span style={{ padding: "2px 8px", borderRadius: "4px", background: "#f8fafc", color: "#0f172a", border: "1px solid #e2e8f0", fontSize: "0.74rem", fontWeight: 600 }}>
+                          Mitra -{deltaMinutes}m
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
       {/* TAB CONTENT 2: LIVE AUDIT LOG ESKALASI */}
       {activeTab === "audit" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ padding: "12px 16px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <strong style={{ fontSize: "0.86rem", color: "#0f172a" }}>
+        <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", overflow: "hidden" }}>
+          <div style={{ padding: "10px 14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <strong style={{ fontSize: "0.84rem", color: "#0f172a" }}>
               Riwayat Kasus Teralihkan Otomatis ke Mitra (SLA Timeout Fail-Safe)
             </strong>
-            <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>
-              Terverifikasi &amp; Terlindungi dari Penundaan
+            <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+              Terverifikasi &amp; Terlindungi
             </span>
           </div>
 
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
               <thead>
-                <tr style={{ background: "#f8fafc", textAlign: "left", color: "#475569", borderBottom: "1px solid #e2e8f0" }}>
-                  <th style={{ padding: "10px 14px", width: "120px" }}>Kode Kasus</th>
-                  <th style={{ padding: "10px 14px" }}>Kebutuhan &amp; Pelapor</th>
-                  <th style={{ padding: "10px 14px" }}>Lokasi Wilayah</th>
-                  <th style={{ padding: "10px 14px", width: "100px" }}>Batas SLA</th>
-                  <th style={{ padding: "10px 14px" }}>Waktu Eskalasi</th>
-                  <th style={{ padding: "10px 14px" }}>Mitra Penerima Eskalasi</th>
-                  <th style={{ padding: "10px 14px", width: "120px", textAlign: "right" }}>Kecepatan Respon</th>
+                <tr style={{ background: "#f8fafc", textAlign: "left", color: "#475569", borderBottom: "1px solid #e2e8f0", fontSize: "0.74rem", textTransform: "uppercase" }}>
+                  <th style={{ padding: "8px 12px", width: "110px" }}>Kode Kasus</th>
+                  <th style={{ padding: "8px 12px" }}>Kebutuhan &amp; Pelapor</th>
+                  <th style={{ padding: "8px 12px" }}>Lokasi Wilayah</th>
+                  <th style={{ padding: "8px 12px", width: "80px" }}>Batas SLA</th>
+                  <th style={{ padding: "8px 12px" }}>Waktu Eskalasi</th>
+                  <th style={{ padding: "8px 12px" }}>Mitra Penerima</th>
+                  <th style={{ padding: "8px 12px", width: "100px", textAlign: "right" }}>Waktu Respon</th>
                 </tr>
               </thead>
               <tbody>
-                {metrics.recentEscalations.map((log) => (
-                  <tr key={log.caseId} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span style={{ padding: "3px 8px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", borderRadius: "4px", fontWeight: 700, fontSize: "0.78rem" }}>
+                {metrics.recentEscalations.map((log, idx) => (
+                  <tr key={log.caseId} style={{ borderBottom: idx === metrics.recentEscalations.length - 1 ? "none" : "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "8px 12px" }}>
+                      <span style={{ padding: "2px 6px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", borderRadius: "4px", fontWeight: 700, fontSize: "0.75rem" }}>
                         {log.caseId}
                       </span>
                     </td>
-                    <td style={{ padding: "10px 14px" }}>
+                    <td style={{ padding: "8px 12px" }}>
                       <strong style={{ color: "#0f172a", display: "block" }}>{log.item}</strong>
-                      <span style={{ color: "#64748b", fontSize: "0.75rem" }}>Pelapor: {log.applicantName}</span>
+                      <span style={{ color: "#64748b", fontSize: "0.72rem" }}>Pelapor: {log.applicantName}</span>
                     </td>
-                    <td style={{ padding: "10px 14px", color: "#475569" }}>
+                    <td style={{ padding: "8px 12px", color: "#475569" }}>
                       {log.location}
                     </td>
-                    <td style={{ padding: "10px 14px", color: "#013220", fontWeight: 600 }}>
+                    <td style={{ padding: "8px 12px", color: "#013220", fontWeight: 600 }}>
                       {log.slaHours} Jam
                     </td>
-                    <td style={{ padding: "10px 14px", color: "#0f172a" }}>
+                    <td style={{ padding: "8px 12px", color: "#0f172a" }}>
                       {log.escalatedAt}
                     </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#013220" }} />
-                        <strong style={{ color: "#0f172a" }}>{log.mitraName}</strong>
-                      </div>
+                    <td style={{ padding: "8px 12px" }}>
+                      <strong style={{ color: "#0f172a" }}>{log.mitraName}</strong>
                     </td>
-                    <td style={{ padding: "10px 14px", textAlign: "right" }}>
-                      <span style={{ padding: "2px 8px", borderRadius: "4px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", fontWeight: 700, fontSize: "0.78rem" }}>
-                        {log.verifiedTimeMinutes} Menit
+                    <td style={{ padding: "8px 12px", textAlign: "right" }}>
+                      <span style={{ padding: "2px 6px", borderRadius: "4px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", fontWeight: 600, fontSize: "0.75rem" }}>
+                        {log.verifiedTimeMinutes}m
                       </span>
                     </td>
                   </tr>
@@ -470,74 +358,63 @@ export function PerbandinganKecepatanRespon({
 
       {/* TAB CONTENT 3: ALUR SISTEM FAIL-SAFE WORKFLOW */}
       {activeTab === "workflow" && (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            padding: "20px",
-          }}
-        >
-          <h3 style={{ margin: "0 0 12px", fontSize: "0.98rem", fontWeight: 700, color: "#0f172a" }}>
+        <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", background: "#ffffff" }}>
+          <h3 style={{ margin: "0 0 10px", fontSize: "0.92rem", fontWeight: 700, color: "#0f172a" }}>
             Mekanisme Operasional: Trigger SLA &amp; Pengalihan Otomatis ke Mitra
           </h3>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "10px",
             }}
           >
-            {/* Step 1 */}
-            <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              <div style={{ width: "26px", height: "26px", borderRadius: "6px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.85rem", marginBottom: "8px" }}>
+            <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <div style={{ width: "22px", height: "22px", borderRadius: "4px", background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.78rem", marginBottom: "6px" }}>
                 1
               </div>
-              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.88rem", marginBottom: "4px" }}>
+              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.82rem", marginBottom: "3px" }}>
                 Laporan Masuk &amp; Timer SLA
               </strong>
-              <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748b", lineHeight: 1.45 }}>
-                Saat warga submit laporan kebutuhan, sistem mengaktifkan timer SLA otomatis sesuai tingkat urgensi.
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b", lineHeight: 1.4 }}>
+                Sistem mengaktifkan timer SLA otomatis sesuai tingkat urgensi (1–3 jam).
               </p>
             </div>
 
-            {/* Step 2 */}
-            <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              <div style={{ width: "26px", height: "26px", borderRadius: "6px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.85rem", marginBottom: "8px" }}>
+            <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <div style={{ width: "22px", height: "22px", borderRadius: "4px", background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.78rem", marginBottom: "6px" }}>
                 2
               </div>
-              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.88rem", marginBottom: "4px" }}>
+              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.82rem", marginBottom: "3px" }}>
                 Peringatan Dini BPBD
               </strong>
-              <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748b", lineHeight: 1.45 }}>
-                Bila batas waktu verifikasi tersisa di bawah 30 menit, posko BPBD menerima penanda visual antrean prioritas.
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b", lineHeight: 1.4 }}>
+                Jika sisa waktu di bawah 30 menit, sistem memberi peringatan antrean prioritas.
               </p>
             </div>
 
-            {/* Step 3 */}
-            <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              <div style={{ width: "26px", height: "26px", borderRadius: "6px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.85rem", marginBottom: "8px" }}>
+            <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <div style={{ width: "22px", height: "22px", borderRadius: "4px", background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.78rem", marginBottom: "6px" }}>
                 3
               </div>
-              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.88rem", marginBottom: "4px" }}>
+              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.82rem", marginBottom: "3px" }}>
                 Trigger Auto-Eskalasi
               </strong>
-              <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748b", lineHeight: 1.45 }}>
-                Jika batas SLA terlampaui tanpa verifikasi posko, sistem otomatis mengalihkan verifikasi ke jaringan Mitra Siaga.
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b", lineHeight: 1.4 }}>
+                Saat batas waktu terlampaui, permohonan dialihkan otomatis ke Mitra Siaga.
               </p>
             </div>
 
-            {/* Step 4 */}
-            <div style={{ background: "#ffffff", padding: "16px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
-              <div style={{ width: "26px", height: "26px", borderRadius: "6px", background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.85rem", marginBottom: "8px" }}>
+            <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <div style={{ width: "22px", height: "22px", borderRadius: "4px", background: "#ffffff", color: "#0f172a", border: "1px solid #e2e8f0", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "0.78rem", marginBottom: "6px" }}>
                 4
               </div>
-              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.88rem", marginBottom: "4px" }}>
-                Verifikasi &amp; Alokasi Bantuan
+              <strong style={{ color: "#0f172a", display: "block", fontSize: "0.82rem", marginBottom: "3px" }}>
+                Verifikasi &amp; Alokasi
               </strong>
-              <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748b", lineHeight: 1.45 }}>
-                Mitra kemanusiaan (PMI, BAZNAS, Tagana, MDMC) memverifikasi data dan segera menyiapkan distribusi logistik.
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b", lineHeight: 1.4 }}>
+                Mitra memvalidasi data dan langsung merilis alokasi logistik ke warga.
               </p>
             </div>
           </div>
