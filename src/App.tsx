@@ -489,11 +489,14 @@ export function MapView({
 }
 
 function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const scrollTo = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
+    setMobileMenuOpen(false);
     const el = document.getElementById(id);
     if (el) {
-      const navOffset = 84;
+      const navOffset = 76;
       const elementPosition = el.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({
         top: Math.max(0, elementPosition - navOffset),
@@ -508,7 +511,7 @@ function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
     <header className="public-navbar">
       <div className="shell public-navbar-inner">
         <Logo light />
-        <nav>
+        <nav className="desktop-nav">
           <a href="#tentang" onClick={scrollTo("tentang")}>Tentang REKSA</a>
           <a href="#peta" onClick={scrollTo("peta")}>Peta Respon Bantuan</a>
           <a href="#cara" onClick={scrollTo("cara")}>Cara Kerja</a>
@@ -517,8 +520,28 @@ function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
           <button className="btn-nav-cta" onClick={() => navigate("login")}>
             Masuk Akun <span className="icon-circle"><Icon name="arrow" /></span>
           </button>
+          <button
+            type="button"
+            className={`btn-mobile-menu-toggle ${mobileMenuOpen ? "active" : ""}`}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu navigasi"
+            aria-expanded={mobileMenuOpen}
+          >
+            <Icon name={mobileMenuOpen ? "plus" : "menu"} />
+          </button>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="public-mobile-menu">
+          <a href="#tentang" onClick={scrollTo("tentang")}>Tentang REKSA</a>
+          <a href="#peta" onClick={scrollTo("peta")}>Peta Respon Bantuan</a>
+          <a href="#cara" onClick={scrollTo("cara")}>Cara Kerja</a>
+          <button className="btn-mobile-menu-cta" onClick={() => { setMobileMenuOpen(false); navigate("login"); }}>
+            Masuk ke Akun REKSA <Icon name="arrow" />
+          </button>
+        </div>
+      )}
     </header>
   );
 }
