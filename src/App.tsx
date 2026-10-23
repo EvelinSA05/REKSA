@@ -599,10 +599,7 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
         <section className="shell" id="peta" style={{ margin: "50px auto 70px" }}>
           <div className="section-header" style={{ textAlign: "center", maxWidth: 720, margin: "0 auto 28px" }}>
 
-            <h2>Persebaran Respon Bantuan</h2>
-
-
-
+            <h2>Persebaran Respon Bantuan: BPBD vs Mitra Kemanusiaan</h2>
           </div>
           <PetaSebaranPenanganan
             cases={state?.casesList}
