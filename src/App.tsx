@@ -270,6 +270,7 @@ const icons: Record<string, React.ReactNode> = {
   menu: <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
   alert: <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
   chat: <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
+  shield: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
 };
 
 export function Icon({ name }: { name: string }) {
@@ -386,6 +387,7 @@ import { MitraPenawaranSaya } from "./components/mitra/MitraPenawaranSaya";
 import { MitraMisiPenyaluran } from "./components/mitra/MitraMisiPenyaluran";
 import { MitraRiwayatPenyaluran } from "./components/mitra/MitraRiwayatPenyaluran";
 import { MitraDashboard } from "./components/mitra/MitraDashboard";
+import { MitraVerifikasiLaporan } from "./components/mitra/MitraVerifikasiLaporan";
 import { BastPrintModal } from "./components/common/BastPrintModal";
 import { PerbandinganKecepatanRespon } from "./components/common/PerbandinganKecepatanRespon";
 import { ReksaAiChatbot } from "./components/common/ReksaAiChatbot";
@@ -1202,7 +1204,7 @@ export type SharedState = {
   activeMisiId?: number;
 };
 
-export type PortalPage = "dashboard" | "cases" | "case" | "report" | "notifications" | "history" | "profile" | "help" | "settings" | "map" | "resources" | "assignments" | "activity" | "tasks" | "active" | "offers" | "bursa" | "my-offers" | "chat";
+export type PortalPage = "dashboard" | "cases" | "case" | "report" | "notifications" | "history" | "profile" | "help" | "settings" | "map" | "resources" | "assignments" | "activity" | "tasks" | "active" | "offers" | "bursa" | "my-offers" | "chat" | "verify-mitra";
 
 export type RouterProps = {
   page: PortalPage;
@@ -1495,6 +1497,7 @@ const roleNavigation: Record<Role, { main: NavItem[]; bottom: NavItem[] }> = {
     main: [
       { label: "Dashboard Mitra", page: "dashboard", icon: "grid" },
       { label: "Ruang Komunikasi", page: "chat", icon: "chat" },
+      { label: "Verifikasi Laporan", page: "verify-mitra", icon: "shield" },
       { label: "Bursa Bantuan", page: "bursa", icon: "box" },
       { label: "Penawaran Saya", page: "my-offers", icon: "file" },
       { label: "Misi Penyaluran", page: "tasks", icon: "task" },
@@ -3794,7 +3797,7 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
   if (page === "dashboard") return <PoskoDashboard state={state} update={update} setPage={setPage} onRefresh={onRefresh} />;
   if (page === "chat") return <ChatKoordinasi role="posko" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} posko onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
-  if (page === "cases") return <PoskoVerifikasiLaporan cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} selectedCaseId={state.activeCaseId} />;
+  if (page === "cases") return <PoskoVerifikasiLaporan cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} selectedCaseId={state.activeCaseId} update={update} />;
   if (page === "resources") return <PoskoKebutuhanBursa cases={scopedCases} bursaList={scopedBursa} penawaranList={scopedPenawaran} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
   if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={scopedPenawaran} bursaList={scopedBursa} cases={scopedCases} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} selectedCaseId={state.activeCaseId} />;
   if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={scopedMisi} cases={scopedCases} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} selectedCaseId={state.activeCaseId} />;
@@ -5439,7 +5442,8 @@ function Activity({
 function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nugroho", setName, onRefresh, setRole }: RouterProps) {
   if (page === "dashboard") return <MitraDashboard state={state} update={update} setPage={setPage} notify={notify} onRefresh={onRefresh} />;
   if (page === "chat") return <ChatKoordinasi role="responder" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
-  if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
+  if (page === "verify-mitra") return <MitraVerifikasiLaporan cases={state.casesList || []} onRefresh={onRefresh} notify={notify} update={update} />;
+  if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} cases={state.casesList || []} update={update} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} selectedCaseId={state.activeCaseId} />;
   if (page === "history") return <MitraRiwayatPenyaluran misiList={state.misiList || []} cases={state.casesList || []} onNavigateToTasks={() => setPage("tasks")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("tasks"); }} notify={notify} onRefresh={onRefresh} />;
@@ -6489,10 +6493,22 @@ export default function App() {
               !c.id.startsWith("RK-LOG-") &&
               !c.id.startsWith("RK-AUTH-")
             )
-            .map((c: any) => ({
-              ...c,
-              isOwn: Boolean(reportedIds.includes(c.id) || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))),
-            }));
+            .map((c: any) => {
+              const escIds: string[] = (() => {
+                try {
+                  return JSON.parse(localStorage.getItem("reksa_escalated_case_ids") || "[]");
+                } catch {
+                  return [];
+                }
+              })();
+              const isEsc = Boolean(c.escalatedToMitra || escIds.includes(c.id) || (c.status || "").toLowerCase().includes("dialihkan"));
+              return {
+                ...c,
+                escalatedToMitra: isEsc,
+                status: isEsc ? "Dialihkan ke Mitra" : c.status,
+                isOwn: Boolean(reportedIds.includes(c.id) || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))),
+              };
+            });
           localStorage.setItem("reksa_cases_db", JSON.stringify(savedList));
         }
       } catch (e) {}
@@ -6517,6 +6533,24 @@ export default function App() {
       } catch (e) {}
     }
 
+    let savedBursa: BursaItem[] = [];
+    try {
+      const bLocal = localStorage.getItem("reksa_bursa_db");
+      if (bLocal) savedBursa = JSON.parse(bLocal);
+    } catch {}
+
+    let savedMisi: MisiItem[] = [];
+    try {
+      const mLocal = localStorage.getItem("reksa_misi_db");
+      if (mLocal) savedMisi = JSON.parse(mLocal);
+    } catch {}
+
+    let savedPenawaran: PenawaranItem[] = [];
+    try {
+      const pLocal = localStorage.getItem("reksa_penawaran_db");
+      if (pLocal) savedPenawaran = JSON.parse(pLocal);
+    } catch {}
+
     return {
       status: "Dalam Verifikasi", 
       priority: "Kritis", 
@@ -6532,6 +6566,9 @@ export default function App() {
       bpbdProvince: localStorage.getItem("reksa_bpbd_province") || "Jawa Timur",
       userProfile: savedProfile,
       casesList: savedList,
+      bursaList: savedBursa,
+      misiList: savedMisi,
+      penawaranList: savedPenawaran,
       activeCaseId: savedList[0]?.id,
     };
   });
@@ -6695,6 +6732,12 @@ export default function App() {
         const nextBursa = bRes.success && Array.isArray(bRes.data) ? bRes.data : prev.bursaList || [];
         const nextMisi = mRes.success && Array.isArray(mRes.data) ? mRes.data : prev.misiList || [];
         const nextPenawaran = pRes.success && Array.isArray(pRes.data) ? pRes.data : prev.penawaranList || [];
+
+        try {
+          localStorage.setItem("reksa_bursa_db", JSON.stringify(nextBursa));
+          localStorage.setItem("reksa_misi_db", JSON.stringify(nextMisi));
+          localStorage.setItem("reksa_penawaran_db", JSON.stringify(nextPenawaran));
+        } catch {}
 
         const activeMission = nextMisi.find((m: MisiItem) => m.status_tahapan !== "Selesai");
         const asgStatus = activeMission ? activeMission.status_tahapan : prev.assignment;
