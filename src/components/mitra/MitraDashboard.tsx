@@ -21,6 +21,21 @@ export function MitraDashboard({
   const misiList = state.misiList || [];
   const penawaranList = state.penawaranList || [];
 
+  const escalatedIds: string[] = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("reksa_escalated_case_ids") || "[]");
+    } catch {
+      return [];
+    }
+  })();
+
+  const escalatedCases = (state.casesList || []).filter((c) => {
+    const s = (c.status || "").toLowerCase();
+    const isEsc = c.escalatedToMitra || escalatedIds.includes(c.id) || s.includes("dialihkan") || s.includes("verifikasi mitra");
+    const isProcessed = s.includes("terbuka") || s.includes("sebagian") || s.includes("selesai") || s.includes("tolak");
+    return isEsc && !isProcessed;
+  });
+
   const openNeeds = bursaList.filter(
     (b) => b.status === "Terbuka" || b.status === "Klaim Diajukan" || b.status === "Sebagian Terpenuhi"
   );
@@ -143,9 +158,6 @@ export function MitraDashboard({
           <h1 style={{ margin: "4px 0 6px", color: "#013220", fontSize: "1.75rem", fontWeight: 800 }}>
             Dashboard Mitra Bantuan
           </h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "0.92rem", maxWidth: "680px", lineHeight: 1.5 }}>
-            Pilih kebutuhan masyarakat terdampak bencana yang dirilis oleh Posko Wilayah untuk dibantu melalui pemenuhan logistik dan penyaluran organisasi Anda.
-          </p>
         </div>
         <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "8px 16px", borderRadius: "999px", background: "rgba(22, 163, 74, 0.1)", border: "1px solid rgba(22, 163, 74, 0.2)", fontSize: "0.82rem", fontWeight: 700, color: "#15803d" }}>
           <AppIcon name="shield" size={15} />
@@ -275,6 +287,125 @@ export function MitraDashboard({
           </small>
         </div>
       </div>
+
+      {/* INCOMING ESCALATED REPORTS BANNER / SECTION */}
+      {escalatedCases.length > 0 && (
+        <div
+          style={{
+            background: "#ffffff",
+            border: "1.5px solid #013220",
+            borderRadius: "16px",
+            padding: "22px 24px",
+            marginBottom: "28px",
+            boxShadow: "0 4px 16px rgba(1, 50, 32, 0.06)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "16px" }}>
+            <div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#f4f6f4", border: "1px solid #c2ddc6", padding: "4px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 700, color: "#013220", marginBottom: "6px" }}>
+                <AppIcon name="shield" size={13} />
+                <span>MANDAT VERIFIKASI MITRA ({escalatedCases.length} LAPORAN DIALIHKAN)</span>
+              </div>
+              <h3 style={{ margin: "2px 0 4px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
+                Laporan Dialihkan Menunggu Verifikasi Mitra
+              </h3>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b" }}>
+                Laporan permohonan berikut dialihkan dari BPBD ke Mitra. Lakukan verifikasi lapangan terlebih dahulu sebelum laporan dirilis ke Bursa Bantuan Terbuka.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPage("verify-mitra" as any)}
+              style={{
+                background: "#013220",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "8px 16px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <AppIcon name="shield" size={13} />
+              <span>Buka Halaman Verifikasi Laporan</span>
+              <AppIcon name="arrow-right" size={13} />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {escalatedCases.map((c) => (
+              <div
+                key={c.id}
+                style={{
+                  background: "#fcfdfc",
+                  border: "1px solid #d1dbd3",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "14px",
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: "monospace", fontWeight: 800, color: "#013220", fontSize: "0.88rem", background: "#f4f6f4", padding: "2px 8px", borderRadius: "6px", border: "1px solid #d1dbd3" }}>
+                      {c.id}
+                    </span>
+                    <span style={{ fontSize: "0.74rem", fontWeight: 700, padding: "2px 8px", borderRadius: "999px", background: "#013220", color: "#ffffff" }}>
+                      Prioritas {c.urgency || "Tinggi"}
+                    </span>
+                    <span style={{ fontSize: "0.74rem", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "#ffffff", color: "#013220", border: "1px solid #c2ddc6" }}>
+                      {c.province || "Jawa Timur"}
+                    </span>
+                    <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#475569" }}>
+                      Pelapor: <strong>{c.applicantName}</strong> {c.applicantPhone ? `(${c.applicantPhone})` : ""}
+                    </span>
+                  </div>
+                  <h4 style={{ margin: "0 0 4px", fontSize: "1.05rem", fontWeight: 800, color: "#013220" }}>
+                    Kebutuhan {c.item} · {c.qty}
+                  </h4>
+                  <div style={{ fontSize: "0.82rem", color: "#64748b", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <AppIcon name="pin" size={13} />
+                    <span>{c.location}</span>
+                    {c.notes && <span style={{ marginLeft: "8px" }}>· Catatan: "{c.notes}"</span>}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPage("verify-mitra" as any);
+                    }}
+                    style={{
+                      background: "#013220",
+                      color: "#ffffff",
+                      border: "1px solid #013220",
+                      borderRadius: "8px",
+                      padding: "8px 16px",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <AppIcon name="shield" size={13} />
+                    <span>Verifikasi Laporan</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ACTIVE MISSION HIGHLIGHT BANNER */}
       {activeMission ? (
