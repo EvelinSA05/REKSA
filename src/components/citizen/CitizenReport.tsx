@@ -1116,109 +1116,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   </small>
                 </div>
 
-                {/* 3. KATEGORI BERDASARKAN SKALA WILAYAH DAN KEWENANGAN PENANGANAN */}
-                <div className="form-group" style={{ marginTop: "14px", marginBottom: "16px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
-                    <label className="form-label" style={{ margin: 0 }}>Skala Wilayah &amp; Kewenangan Penanganan (BNPB / BPBD)</label>
-                    <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Tingkat Eskalasi Penanganan</span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
-                    {[
-                      {
-                        scale: "Kabupaten/Kota" as const,
-                        authority: "BPBD Kabupaten/Kota",
-                        desc: "Pilar utama penyalur bantuan jika dampak bencana masih dapat ditangani secara lokal di tingkat daerah.",
-                        icon: (
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1M14 10h1M9 14h1M14 14h1M9 18h1M14 18h1"/>
-                          </svg>
-                        ),
-                      },
-                      {
-                        scale: "Provinsi" as const,
-                        authority: "BPBD Provinsi",
-                        desc: "Intervensi logistik regional & personel tambahan jika kapasitas kabupaten/kota terlampaui.",
-                        icon: (
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 22V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v16M12 10h6a2 2 0 0 1 2 2v10M8 8v.01M8 12v.01M8 16v.01M16 14v.01M16 18v.01"/>
-                          </svg>
-                        ),
-                      },
-                      {
-                        scale: "Nasional" as const,
-                        authority: "BNPB Pusat (Aktivasi DSP)",
-                        desc: "Bencana berskala luas melampaui provinsi, BNPB mengaktifkan Dana Siap Pakai (DSP) & logistik nasional.",
-                        icon: (
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/>
-                            <path d="M12 8v8M8 12h8"/>
-                          </svg>
-                        ),
-                      },
-                    ].map((item) => {
-                      const isSelected = skalaWilayah === item.scale;
-                      return (
-                        <div
-                          key={item.scale}
-                          onClick={() => setSkalaWilayah(item.scale)}
-                          style={{
-                            border: isSelected ? "1.5px solid #013220" : "1px solid #e2e8f0",
-                            background: isSelected ? "#f4f8f5" : "#ffffff",
-                            boxShadow: isSelected ? "0 2px 8px rgba(1, 50, 32, 0.08)" : "none",
-                            padding: "14px",
-                            borderRadius: "12px",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "6px",
-                          }}
-                        >
-                          {/* Top Row: Icon on left, Radio indicator on right */}
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                            <span style={{ 
-                              width: "28px", 
-                              height: "28px", 
-                              borderRadius: "8px", 
-                              background: isSelected ? "#013220" : "#f1f5f9", 
-                              color: isSelected ? "#ffffff" : "#475569", 
-                              display: "inline-flex", 
-                              alignItems: "center", 
-                              justifyContent: "center",
-                              flexShrink: 0
-                            }}>
-                              {item.icon}
-                            </span>
-                            <div 
-                              style={{
-                                width: "16px",
-                                height: "16px",
-                                borderRadius: "50%",
-                                border: isSelected ? "5px solid #013220" : "2px solid #cbd5e1",
-                                background: "#ffffff",
-                                flexShrink: 0,
-                                transition: "all 0.15s ease",
-                              }} 
-                            />
-                          </div>
 
-                          <div>
-                            <strong style={{ fontSize: "0.88rem", color: isSelected ? "#013220" : "#0f172a", display: "block" }}>
-                              Skala {item.scale}
-                            </strong>
-                            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: isSelected ? "#166534" : "#475569", display: "block", marginTop: "2px" }}>
-                              {item.authority}
-                            </span>
-                          </div>
-
-                          <p style={{ margin: 0, fontSize: "0.73rem", color: "#64748b", lineHeight: 1.45 }}>
-                            {item.desc}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
 
                 <div className="form-group">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
@@ -1954,10 +1852,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       <span className="review-label">Perkiraan Jumlah Kebutuhan</span>
                       <strong>{amount ? `${amount} ${getUnit()}` : "-"}</strong>
                     </div>
-                    <div className="review-item">
-                      <span className="review-label">Skala Kewenangan Wilayah</span>
-                      <strong>Skala {skalaWilayah} (BPBD / BNPB)</strong>
-                    </div>
+
                     <div className="review-item wide">
                       <span className="review-label">Pedoman Standar Regulasi BNPB</span>
                       <p style={{ margin: 0, fontSize: "0.80rem", color: "#2d4a36" }}>
