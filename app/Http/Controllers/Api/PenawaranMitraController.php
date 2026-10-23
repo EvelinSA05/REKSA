@@ -21,11 +21,11 @@ class PenawaranMitraController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = PenawaranMitra::with([
-            'posko',
+            'posko' => fn($q) => $q->select('id', 'kode_posko', 'nama_posko', 'telepon', 'kecamatan', 'kabupaten'),
             'mitra' => fn($q) => $q->select('id', 'name', 'email', 'organization'),
             'kebutuhan' => fn($q) => $q->select('id', 'kode_kasus', 'posko_id', 'kategori_kebutuhan', 'volume_permintaan', 'total_alokasi_resmi', 'total_diterima_resmi', 'jumlah_kk', 'status', 'desa', 'kecamatan', 'kabupaten'),
-            'bursa',
-            'misi',
+            'bursa' => fn($q) => $q->select('id', 'kebutuhan_id', 'posko_id', 'item_bantuan', 'target_volume', 'volume_terpenuhi', 'urgensi', 'status'),
+            'misi' => fn($q) => $q->select('id', 'penawaran_id', 'kode_misi', 'status_tahapan', 'responder_name', 'organisasi', 'armada_info', 'estimasi_waktu'),
         ]);
 
         if ($request->has('posko_id')) {
