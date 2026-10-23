@@ -375,6 +375,7 @@ export function Progress({ value = 70 }: { value?: number }) {
 
 import { LeafletMap } from "./components/LeafletMap";
 import { CitizenDashboard } from "./components/citizen/CitizenDashboard";
+import { PetaSebaranPenanganan } from "./components/citizen/PetaSebaranPenanganan";
 import { CitizenReport } from "./components/citizen/CitizenReport";
 import { CitizenCaseList } from "./components/citizen/CitizenCaseList";
 import { apiService, BursaItem, MisiItem, PenawaranItem } from "./services/api";
@@ -507,7 +508,7 @@ function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
         <Logo light />
         <nav>
           <a href="#tentang" onClick={scrollTo("tentang")}>Tentang REKSA</a>
-          <a href="#peta" onClick={scrollTo("peta")}>Peta Posko</a>
+          <a href="#peta" onClick={scrollTo("peta")}>Peta Respon Bantuan</a>
           <a href="#cara" onClick={scrollTo("cara")}>Cara Kerja</a>
         </nav>
         <div className="nav-actions">
@@ -520,7 +521,7 @@ function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
   );
 }
 
-function Home({ navigate }: { navigate: (s: Screen) => void }) {
+function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: SharedState }) {
   return (
     <div className="public-site">
       <Navbar navigate={navigate} />
@@ -592,89 +593,12 @@ function Home({ navigate }: { navigate: (s: Screen) => void }) {
           </div>
         </section>
 
-        {/* INTERACTIVE OPERATIONAL MAP SHOWCASE */}
-        <section className="map-showcase-section shell" id="peta" style={{ margin: "50px auto 70px" }}>
-          <div className="section-header" style={{ textAlign: "center", maxWidth: 680, margin: "0 auto 28px" }}>
-            <span className="eyebrow"><Icon name="pin" /> Pemantauan Sebaran Wilayah</span>
-            <h2>Sebaran Posko BPBD &amp; Titik Logistik Terpadu</h2>
-            <p className="section-lead" style={{ color: "#4b5563" }}>
-              Pantau kesiapan posko koordinasi BPBD, kapasitas tampung, serta titik komando tanggap darurat secara real-time di seluruh wilayah operasional.
-            </p>
-          </div>
-
-          <div
-            className="map-showcase-container"
-            style={{
-              background: "#ffffff",
-              borderRadius: "24px",
-              boxShadow: "0 20px 40px -15px rgba(1, 50, 32, 0.12)",
-              border: "1px solid #e2ded4",
-              overflow: "hidden",
-            }}
-          >
-            {/* MAP HEADER STATS BAR */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "14px",
-                padding: "18px 24px",
-                background: "#fbfcfb",
-                borderBottom: "1px solid #ebe8de",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 0 4px rgba(16, 185, 129, 0.2)" }} />
-                <strong style={{ color: "#013220", fontSize: "0.95rem" }}>Status Operasional: Siaga Penuh 24 Jam</strong>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", fontSize: "0.85rem" }}>
-                <span style={{ color: "#4b5563" }}>
-                  📍 <strong>3</strong> Posko Induk Wilayah
-                </span>
-                <span style={{ color: "#4b5563" }}>
-                  🏠 <strong>750+ KK</strong> Kapasitas Terdata
-                </span>
-                <span style={{ background: "#e8f3ea", color: "#013220", padding: "4px 12px", borderRadius: "20px", fontWeight: 700 }}>
-                  OpenStreetMap Interaktif
-                </span>
-              </div>
-            </div>
-
-            {/* EMBEDDED LEAFLET MAP VIEW */}
-            <div style={{ position: "relative", height: "460px", width: "100%", background: "#f5f4ef" }}>
-              <MapView operational />
-            </div>
-
-            {/* MAP FOOTER HINT */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "10px",
-                padding: "14px 24px",
-                background: "#faf9f5",
-                borderTop: "1px solid #ebe8de",
-                fontSize: "0.82rem",
-                color: "#6b7280",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Icon name="check" />
-                <span>Klik ikon marker pada peta untuk melihat detail posko, kontak darurat, dan daya tampung pengungsi.</span>
-              </div>
-              <Button
-                variant="text"
-                onClick={() => navigate("login")}
-                style={{ fontSize: "0.84rem", fontWeight: 700, color: "#013220", padding: 0 }}
-              >
-                Buka Peta Lengkap Petugas <Icon name="arrow" />
-              </Button>
-            </div>
-          </div>
+        {/* PETA PERSEBARAN RESPON BANTUAN: BPBD VS MITRA KEMANUSIAAN */}
+        <section className="shell" id="peta" style={{ margin: "40px auto 70px" }}>
+          <PetaSebaranPenanganan
+            cases={state?.casesList}
+            misiList={state?.misiList}
+          />
         </section>
 
         <section className="journey-banner" id="cara">
@@ -758,7 +682,7 @@ function Home({ navigate }: { navigate: (s: Screen) => void }) {
               e.preventDefault();
               const el = document.getElementById("peta");
               if (el) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 84), behavior: "smooth" });
-            }}>Peta Posko</a>
+            }}>Peta Respon Bantuan</a>
             <a href="#cara" onClick={(e) => {
               e.preventDefault();
               const el = document.getElementById("cara");
@@ -6956,7 +6880,7 @@ export default function App() {
           onRefresh={fetchDatabaseAll} 
         />
       )}
-      {screen === "home" && <Home navigate={navigate} />}
+      {screen === "home" && <Home navigate={navigate} state={state} />}
     </>
   );
 }

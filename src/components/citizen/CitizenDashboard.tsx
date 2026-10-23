@@ -11,7 +11,6 @@ import {
   Progress,
   getCaseProgress,
   getFieldEvidencePhoto,
-  MapView,
 } from "../../App";
 import { CitizenClarificationModal } from "./CitizenClarificationModal";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
@@ -264,37 +263,6 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         </div>
       </section>
 
-      {/* 2. PETA SEBARAN POSKO BPBD & TITIK LOGISTIK */}
-      <section style={{ marginBottom: "32px" }}>
-        <div className="section-title" style={{ marginBottom: "16px" }}>
-          <div>
-            <span className="eyebrow" style={{ color: "var(--forest, #013220)", fontWeight: 700, letterSpacing: "0.06em" }}>
-              PEMANTAUAN SEBARAN WILAYAH
-            </span>
-            <h2 style={{ fontSize: "1.45rem", fontWeight: 800, color: "var(--forest, #013220)", margin: "4px 0 0" }}>
-              Sebaran Posko BPBD &amp; Titik Logistik Terpadu
-            </h2>
-          </div>
-        </div>
-        <div style={{ background: "#ffffff", borderRadius: "16px", border: "1px solid #e2ded4", overflow: "hidden", boxShadow: "0 4px 20px rgba(1,50,32,0.06)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", padding: "14px 20px", background: "#fbfcfb", borderBottom: "1px solid #ebe8de" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 0 3px rgba(16,185,129,0.2)", display: "inline-block" }} />
-              <strong style={{ color: "#013220", fontSize: "0.9rem" }}>Status Operasional: Siaga Penuh 24 Jam</strong>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#4b5563" }}>
-              <span>📍 <strong>3</strong> Posko Induk Wilayah</span>
-              <span>🏠 <strong>750+ KK</strong> Kapasitas Terdata</span>
-            </div>
-          </div>
-          <div style={{ height: "420px", width: "100%" }}>
-            <MapView operational hideCard />
-          </div>
-          <div style={{ padding: "12px 20px", background: "#faf9f5", borderTop: "1px solid #ebe8de", fontSize: "0.8rem", color: "#6b7280" }}>
-            <Icon name="check" /> Klik ikon pada peta untuk melihat detail posko, kontak darurat, dan kapasitas.
-          </div>
-        </div>
-      </section>
 
       {/* 3. REAL-TIME LOGISTICS FLEET TRACKING MAP FOR CITIZEN */}
       {currentMission && (
