@@ -186,6 +186,26 @@ const INITIAL_SEED_MESSAGES_BY_CHANNEL: Record<string, ChatMessageItem[]> = {
   ],
 };
 
+const getInitialMessagesByChannel = (): Record<string, ChatMessageItem[]> => {
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem("reksa_chat_messages_cache");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === "object" && Array.isArray(parsed.umum)) {
+          return {
+            ...INITIAL_SEED_MESSAGES_BY_CHANNEL,
+            ...parsed,
+          };
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return INITIAL_SEED_MESSAGES_BY_CHANNEL;
+};
+
 export function ChatKoordinasi({
   role,
   name,
@@ -194,9 +214,18 @@ export function ChatKoordinasi({
   onRefresh,
   setPage,
 }: ChatKoordinasiProps) {
-  const [selectedChannel, setSelectedChannel] = useState<string>("umum");
+  const [selectedChannel, setSelectedChannel] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("reksa_chat_selected_channel");
+      if (saved && (saved === "umum" || saved === "posko_mitra" || saved === "bantuan_warga")) {
+        if (role === "citizen" && saved === "posko_mitra") return "umum";
+        return saved;
+      }
+    }
+    return "umum";
+  });
   const [channels, setChannels] = useState<ChatChannelItem[]>(DEFAULT_CHANNELS);
-  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, ChatMessageItem[]>>(INITIAL_SEED_MESSAGES_BY_CHANNEL);
+  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, ChatMessageItem[]>>(getInitialMessagesByChannel);
   const [loading, setLoading] = useState<boolean>(false);
   const [sending, setSending] = useState<boolean>(false);
   const [inputText, setInputText] = useState<string>("");
@@ -313,6 +342,24 @@ export function ChatKoordinasi({
     }
   };
 
+  // Persist messages cache to localStorage for instant reload on refresh
+  useEffect(() => {
+    try {
+      localStorage.setItem("reksa_chat_messages_cache", JSON.stringify(messagesByChannel));
+    } catch {
+      // ignore quota limits
+    }
+  }, [messagesByChannel]);
+
+  // Persist selected channel across page refreshes
+  useEffect(() => {
+    try {
+      localStorage.setItem("reksa_chat_selected_channel", selectedChannel);
+    } catch {
+      // ignore
+    }
+  }, [selectedChannel]);
+
   useEffect(() => {
     loadChannels();
   }, [senderRole]);
@@ -355,10 +402,13 @@ export function ChatKoordinasi({
 
   // Auto-scroll on new message inside chat box only (does not scroll window)
   useEffect(() => {
-    if (autoScroll && chatScrollContainerRef.current) {
-      chatScrollContainerRef.current.scrollTop = chatScrollContainerRef.current.scrollHeight;
-    }
-  }, [filteredMessages, autoScroll]);
+    const timer = setTimeout(() => {
+      if (chatScrollContainerRef.current) {
+        chatScrollContainerRef.current.scrollTop = chatScrollContainerRef.current.scrollHeight;
+      }
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [filteredMessages.length, selectedChannel]);
 
   const handleScroll = () => {
     if (!chatScrollContainerRef.current) return;
