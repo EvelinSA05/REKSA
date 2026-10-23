@@ -10,6 +10,7 @@ interface PoskoVerifikasiLaporanProps {
   onRefresh?: () => Promise<void> | void;
   notify?: (msg: string) => void;
   selectedCaseId?: string;
+  update?: (changes: any, log?: string) => void;
 }
 
 export function PoskoVerifikasiLaporan({
@@ -18,6 +19,7 @@ export function PoskoVerifikasiLaporan({
   onRefresh,
   notify,
   selectedCaseId,
+  update,
 }: PoskoVerifikasiLaporanProps) {
   const [tab, setTab] = useState<"all" | "pending" | "escalated" | "clarify" | "verified" | "rejected">("pending");
   const [search, setSearch] = useState("");
@@ -39,7 +41,22 @@ export function PoskoVerifikasiLaporan({
     const next = Array.from(new Set([...localEscalatedIds, c.id]));
     setLocalEscalatedIds(next);
     localStorage.setItem("reksa_escalated_case_ids", JSON.stringify(next));
-    notify?.(`Laporan ${c.id} dialihkan otomatis ke ${partner} karena batas waktu SLA verifikasi BPBD terlampaui!`);
+
+    const updated = cases.map((item) => {
+      if (item.id === c.id) {
+        return {
+          ...item,
+          escalatedToMitra: true,
+          status: "Menunggu Verifikasi Mitra",
+          mitraHandler: partner,
+        };
+      }
+      return item;
+    });
+    update?.({ casesList: updated });
+    localStorage.setItem("reksa_cases_db", JSON.stringify(updated));
+
+    notify?.(`Laporan ${c.id} dialihkan ke ${partner} untuk diverifikasi langsung oleh Mitra sebelum masuk Bursa.`);
   };
 
   useEffect(() => {
@@ -119,15 +136,61 @@ export function PoskoVerifikasiLaporan({
 
   const handleExecuteAction = async () => {
     if (!selectedCase) return;
+    setIsSubmitting(true);
+
+    // ─── OPTIMISTIC UPDATE ─────────────────────────────────────────────────
+    // Update state lokal LANGSUNG agar UI tidak perlu menunggu server
+    const optimisticStatus =
+      modalAction === "verify"
+        ? "Kebutuhan Terbuka"
+        : modalAction === "clarify"
+        ? "Menunggu Klarifikasi Warga"
+        : modalAction === "reject"
+        ? "Ditolak Posko"
+        : "Menunggu Verifikasi Lapangan";
+
+    const notifMsg =
+      modalAction === "verify"
+        ? `Laporan ${selectedCase.id} diverifikasi & diterbitkan ke Bursa Bantuan Terbuka!`
+        : modalAction === "clarify"
+        ? `Permintaan klarifikasi untuk laporan ${selectedCase.id} berhasil dikirim!`
+        : modalAction === "reject"
+        ? `Laporan ${selectedCase.id} ditolak dengan alasan tersimpan.`
+        : `Laporan ${selectedCase.id} ditandai untuk pemeriksaan lanjutan.`;
+
+    // Update state React secara optimistik
+    const updatedCases = cases.map((c) =>
+      c.id === selectedCase.id
+        ? {
+            ...c,
+            status: optimisticStatus,
+            urgency: modalAction === "verify" ? priorityChoice : c.urgency,
+            catatanVerifikasiPosko:
+              notesInput || c.catatanVerifikasiPosko,
+          }
+        : c
+    );
+    update?.({ casesList: updatedCases });
+    // Simpan ke localStorage agar persistent saat refresh
     try {
-      setIsSubmitting(true);
+      localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCases));
+    } catch (_) {}
+
+    // Tampilkan notifikasi & tutup modal SEGERA (sebelum server response)
+    notify?.(notifMsg);
+    setModalAction(null);
+    setSelectedCase(null);
+    setIsSubmitting(false);
+
+    // ─── REQUEST SERVER DI BACKGROUND ─────────────────────────────────────
+    // Kirim ke server tanpa memblokir UI
+    try {
       if (modalAction === "verify") {
         await apiService.verifyKebutuhan(selectedCase.id, {
           action: "verify_and_publish",
           priority: priorityChoice,
           catatan: notesInput || "Data terverifikasi sah oleh Koordinator Posko dan dirilis ke Bursa Bantuan.",
         });
-        notify?.(`Laporan ${selectedCase.id} diverifikasi & diterbitkan ke Bursa Bantuan Terbuka!`);
       } else if (modalAction === "clarify") {
         await apiService.verifyKebutuhan(selectedCase.id, {
           action: "clarify",
@@ -136,28 +199,23 @@ export function PoskoVerifikasiLaporan({
           meminta_lampiran: requestAttachment,
           catatan: notesInput,
         });
-        notify?.(`Permintaan klarifikasi untuk laporan ${selectedCase.id} berhasil dikirim ke masyarakat!`);
       } else if (modalAction === "reject") {
         await apiService.verifyKebutuhan(selectedCase.id, {
           action: "reject",
           alasan: notesInput || "Laporan tidak sesuai fakta lapangan posko.",
           tindak_lanjut: rejectionFollowUp,
         });
-        notify?.(`Laporan ${selectedCase.id} ditolak dengan alasan & saran tindak lanjut tersimpan.`);
       } else if (modalAction === "further") {
         await apiService.verifyKebutuhan(selectedCase.id, {
           action: "review_further",
           catatan: notesInput || "Menunggu verifikasi lapangan tim assessment.",
         });
-        notify?.(`Laporan ${selectedCase.id} ditandai untuk pemeriksaan lanjutan.`);
       }
-      setModalAction(null);
-      setSelectedCase(null);
-      await onRefresh?.();
+      // Refresh data di background (silent) tanpa notifikasi tambahan
+      onRefresh?.().catch(() => {});
     } catch (err: any) {
-      notify?.(err?.message || "Gagal memproses tindakan verifikasi.");
-    } finally {
-      setIsSubmitting(false);
+      // Jika server gagal, beri tahu pengguna tapi state lokal tetap tersimpan
+      notify?.(`Catatan: sinkronisasi server tertunda (${err?.message || "timeout"}). Data sudah tersimpan lokal.`);
     }
   };
 
@@ -182,9 +240,9 @@ export function PoskoVerifikasiLaporan({
           <h1 style={{ margin: "4px 0 6px", color: "#013220", fontSize: "1.75rem", fontWeight: 800 }}>
             Verifikasi &amp; Validasi Laporan Warga
           </h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "0.92rem", maxWidth: "680px", lineHeight: 1.5 }}>
+          {/* <p style={{ margin: 0, color: "#64748b", fontSize: "0.92rem", maxWidth: "680px", lineHeight: 1.5 }}>
             Periksa keabsahan permohonan warga, tetapkan prioritas kedaruratan, minta klarifikasi foto atau data fisik, dan rilis kuota sah ke Bursa Kemitraan.
-          </p>
+          </p> */}
         </div>
         <div style={{ background: "#ffffff", border: "1px solid rgba(1, 50, 32, 0.12)", padding: "8px 14px", borderRadius: "10px", fontSize: "0.84rem", fontWeight: 700, color: "#013220", display: "inline-flex", alignItems: "center", gap: "8px" }}>
           <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#15803d" }} />
@@ -657,29 +715,6 @@ export function PoskoVerifikasiLaporan({
                   <div className="posko-case-actions-cluster">
                     {isPending && !isEscalated && (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => handleSimulateEscalate(c)}
-                          className="btn-case-escalate"
-                          style={{
-                            background: "#ffffff",
-                            color: "#013220",
-                            border: "1px solid #c2ddc6",
-                            padding: "7px 14px",
-                            borderRadius: "8px",
-                            fontSize: "0.80rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
-                          title="Alihkan verifikasi langsung ke Mitra responder"
-                        >
-                          <AppIcon name="bolt" size={13} />
-                          <span>Alihkan ke Mitra</span>
-                        </button>
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "clarify")}
