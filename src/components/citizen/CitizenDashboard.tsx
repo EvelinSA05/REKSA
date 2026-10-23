@@ -604,9 +604,55 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
           </div>
         ) : (
           <div className="empty-overview-card">
-            <div className="empty-icon-box"><Icon name="file" /></div>
-            <h3>Belum Ada Laporan Aktif</h3>
-            <p>Saat Anda menyampaikan kebutuhan mendesak, perjalanan bantuan dari posko hingga mitra responder akan terpantau lengkap di sini.</p>
+            <div className="empty-overview-badge">
+              <span className="empty-badge-dot" /> Status Pelaporan Bersih
+            </div>
+
+            <div className="empty-icon-box">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="empty-svg-ill" aria-hidden="true">
+                <rect x="8" y="6" width="32" height="36" rx="6" fill="#F4F6F0" stroke="#013220" strokeWidth="2.2" />
+                <path d="M16 16H32" stroke="#80866E" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M16 23H28" stroke="#80866E" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M16 30H23" stroke="#80866E" strokeWidth="2.2" strokeLinecap="round" />
+                <circle cx="34" cy="34" r="8.5" fill="#013220" />
+                <path d="M30.5 34L33 36.5L37.5 31.5" stroke="#EDEAE1" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+
+            <h3 className="empty-overview-title">Belum Ada Laporan Aktif</h3>
+            <p className="empty-overview-desc">
+              Saat Anda atau keluarga menyampaikan kebutuhan darurat pascabencana, seluruh tahapan verifikasi posko BPBD dan alokasi responder lapangan akan terpantau real-time di sini.
+            </p>
+
+            <div className="empty-flow-steps">
+              <div className="flow-step-item">
+                <div className="flow-step-num">1</div>
+                <div className="flow-step-text">
+                  <strong>Kirim Kebutuhan</strong>
+                  <span>Gunakan tombol "+ Buat Laporan Baru" di atas</span>
+                </div>
+              </div>
+              <div className="flow-step-divider">
+                <Icon name="arrow" />
+              </div>
+              <div className="flow-step-item">
+                <div className="flow-step-num">2</div>
+                <div className="flow-step-text">
+                  <strong>Validasi Posko</strong>
+                  <span>Petugas Posko BPBD memverifikasi data lapangan</span>
+                </div>
+              </div>
+              <div className="flow-step-divider">
+                <Icon name="arrow" />
+              </div>
+              <div className="flow-step-item">
+                <div className="flow-step-num">3</div>
+                <div className="flow-step-text">
+                  <strong>Penyaluran Tuntas</strong>
+                  <span>Pantau perjalanan logistik hingga diterima</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </section>
