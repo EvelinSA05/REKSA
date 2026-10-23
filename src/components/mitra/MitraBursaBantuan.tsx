@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { BursaItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { getAiMatchScore } from "../../utils/reksaAiEngine";
+import { CaseRecord } from "../../App";
 
 interface MitraBursaBantuanProps {
   bursaList: BursaItem[];
@@ -10,6 +11,8 @@ interface MitraBursaBantuanProps {
   onRefresh?: () => Promise<void> | void;
   notify?: (msg: string) => void;
   onNavigateToMyOffers: () => void;
+  cases?: CaseRecord[];
+  update?: (callback: (prev: any) => any) => void;
 }
 
 export function MitraBursaBantuan({
@@ -19,6 +22,8 @@ export function MitraBursaBantuan({
   onRefresh,
   notify,
   onNavigateToMyOffers,
+  cases,
+  update,
 }: MitraBursaBantuanProps) {
   // Search & Filter state
   const [filterUrgency, setFilterUrgency] = useState<"Semua" | "Kritis" | "Tinggi" | "Sedang">("Semua");
@@ -37,7 +42,7 @@ export function MitraBursaBantuan({
   const [notesInput, setNotesInput] = useState("Mitra siap menyerahkan pasokan barang kebutuhan ke Posko BPBD.");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter open needs in bursa
+  // Open needs in bursa murni yang telah diverifikasi sah (oleh BPBD atau Mitra)
   const openItems = useMemo(() => {
     return (bursaList || []).filter(
       (b) => b.status === "Terbuka" || b.status === "Klaim Diajukan" || b.status === "Sebagian Terpenuhi"
@@ -172,9 +177,6 @@ export function MitraBursaBantuan({
           <h1 style={{ margin: "4px 0 6px", color: "#013220", fontSize: "1.75rem", fontWeight: 800 }}>
             Bursa Bantuan Kemanusiaan
           </h1>
-          <p style={{ margin: 0, color: "#64748b", fontSize: "0.92rem", maxWidth: "680px", lineHeight: 1.5 }}>
-            Daftar kebutuhan logistik warga terdampak yang telah divalidasi resmi oleh Posko. Silakan ajukan komitmen pemenuhan logistik atau kesiapan armada penyalur organisasi Anda.
-          </p>
         </div>
 
         <button
