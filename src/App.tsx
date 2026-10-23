@@ -594,7 +594,14 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
         </section>
 
         {/* PETA PERSEBARAN RESPON BANTUAN: BPBD VS MITRA KEMANUSIAAN */}
-        <section className="shell" id="peta" style={{ margin: "40px auto 70px" }}>
+        <section className="shell" id="peta" style={{ margin: "50px auto 70px" }}>
+          <div className="section-header" style={{ textAlign: "center", maxWidth: 720, margin: "0 auto 28px" }}>
+            <span className="eyebrow"><Icon name="pin" /> Pemantauan Sebaran Wilayah</span>
+            <h2>Persebaran Respon Bantuan: BPBD vs Mitra Kemanusiaan</h2>
+            <p className="section-lead" style={{ color: "#4b5563", margin: "8px auto 0", fontSize: "0.95rem" }}>
+              Pantau sebaran penanganan darurat dan keterlibatan posko BPBD bersama mitra kemanusiaan secara real-time di seluruh wilayah Indonesia.
+            </p>
+          </div>
           <PetaSebaranPenanganan
             cases={state?.casesList}
             misiList={state?.misiList}
