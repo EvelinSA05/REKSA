@@ -210,17 +210,31 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan pada server' }));
-    throw new Error(errorData.message || `HTTP Error ${response.status}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan pada server' }));
+      throw new Error(errorData.message || `HTTP Error ${response.status}`);
+    }
+
+    return response.json();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Permintaan ke server melebihi batas waktu (timeout). Beralih ke sinkronisasi lokal.');
+    }
+    throw err;
   }
-
-  return response.json();
 }
 
 export const apiService = {

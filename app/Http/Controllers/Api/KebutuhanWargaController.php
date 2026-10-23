@@ -157,6 +157,32 @@ class KebutuhanWargaController extends Controller
             $rationale = "Rekomendasi Sistem: TINGGI — Kebutuhan logistik mendesak untuk {$kkCount} KK.";
         }
 
+        $fotoBuktiPath = $validated['foto_bukti'] ?? null;
+        if (!empty($fotoBuktiPath) && str_starts_with($fotoBuktiPath, 'data:image')) {
+            try {
+                $dir = public_path('uploads/reports');
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+
+                if (preg_match('/^data:image\/(\w+);base64,/', $fotoBuktiPath, $typeMatches)) {
+                    $imageData = substr($fotoBuktiPath, strpos($fotoBuktiPath, ',') + 1);
+                    $ext = strtolower($typeMatches[1]);
+                    if ($ext === 'jpeg') $ext = 'jpg';
+                    $decoded = base64_decode($imageData);
+                    if ($decoded !== false) {
+                        $filename = 'bukti_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                        $fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
+                        if (file_put_contents($fullPath, $decoded) !== false) {
+                            $fotoBuktiPath = '/uploads/reports/' . $filename;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Gagal simpan foto bukti ke disk: ' . $e->getMessage());
+            }
+        }
+
         $case = KebutuhanWarga::create([
             'kode_kasus' => $randomCode,
             'citizen_id' => $request->user()?->id ?? null,
@@ -172,7 +198,7 @@ class KebutuhanWargaController extends Controller
             'priority_rationale' => $rationale,
             'status' => $validated['status'] ?? 'Diajukan',
             'deskripsi' => $validated['deskripsi'] ?? null,
-            'foto_bukti' => $validated['foto_bukti'] ?? null,
+            'foto_bukti' => $fotoBuktiPath,
             'desa' => $validated['desa'] ?? null,
             'kecamatan' => $validated['kecamatan'] ?? null,
             'kabupaten' => $validated['kabupaten'] ?? null,

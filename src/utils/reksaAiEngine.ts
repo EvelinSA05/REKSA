@@ -66,20 +66,24 @@ export function analyzeReportTriage(
     }
   });
 
-  // B. Deteksi Kelompok Rentan Otomatis dari Teks
-  if ((text.includes("bayi") || text.includes("balita") || text.includes("popok") || text.includes("asi") || text.includes("susu")) && !detectedVulnerables.includes("Bayi / Balita")) {
-    detectedVulnerables.push("Bayi / Balita");
+  // B. Deteksi Kelompok Rentan Otomatis dari Teks (Sesuai ID Checkbox Formulir)
+  if ((text.includes("bayi") || text.includes("balita") || text.includes("batita") || text.includes("popok") || text.includes("asi") || text.includes("susu")) && !detectedVulnerables.includes("Balita")) {
+    detectedVulnerables.push("Balita");
     score += 15;
   }
-  if ((text.includes("hamil") || text.includes("menyusui") || text.includes("kandungan")) && !detectedVulnerables.includes("Ibu Hamil / Menyusui")) {
-    detectedVulnerables.push("Ibu Hamil / Menyusui");
-    score += 15;
-  }
-  if ((text.includes("lansia") || text.includes("kakek") || text.includes("nenek") || text.includes("tua") || text.includes("jompo")) && !detectedVulnerables.includes("Lansia (>60 Thn)")) {
-    detectedVulnerables.push("Lansia (>60 Thn)");
+  if ((text.includes("anak") || text.includes("bocah") || text.includes("sekolah")) && !detectedVulnerables.includes("Anak-anak")) {
+    detectedVulnerables.push("Anak-anak");
     score += 12;
   }
-  if ((text.includes("disabilitas") || text.includes("lumpuh") || text.includes("kursi roda") || text.includes("tuna")) && !detectedVulnerables.includes("Penyandang disabilitas")) {
+  if ((text.includes("hamil") || text.includes("menyusui") || text.includes("bumil") || text.includes("melahirkan") || text.includes("kandungan")) && !detectedVulnerables.includes("Ibu hamil")) {
+    detectedVulnerables.push("Ibu hamil");
+    score += 15;
+  }
+  if ((text.includes("lansia") || text.includes("kakek") || text.includes("nenek") || text.includes("tua") || text.includes("jompo") || text.includes("manula")) && !detectedVulnerables.includes("Lansia")) {
+    detectedVulnerables.push("Lansia");
+    score += 12;
+  }
+  if ((text.includes("disabilitas") || text.includes("difabel") || text.includes("lumpuh") || text.includes("kursi roda") || text.includes("tuna")) && !detectedVulnerables.includes("Penyandang disabilitas")) {
     detectedVulnerables.push("Penyandang disabilitas");
     score += 14;
   }

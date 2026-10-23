@@ -154,6 +154,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [conditionDescription, setConditionDescription] = useState<string>(() => initialDraft?.conditionDescription || "");
 
   // AI Smart Triage & Prioritization calculation
+  const [aiAppliedFeedback, setAiAppliedFeedback] = useState<string | null>(null);
   const aiTriage = useMemo(() => {
     const combined = `${conditionDescription} ${notes}`.trim();
     if (!combined || combined.length < 5) return null;
@@ -1505,32 +1506,81 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       <button
                         type="button"
                         onClick={() => {
-                          if (aiTriage.urgency === "Kritis") setCitizenUrgency("Sangat mendesak");
-                          else if (aiTriage.urgency === "Tinggi") setCitizenUrgency("Perlu segera");
-                          else setCitizenUrgency("Bisa menunggu");
+                          let targetUrgency = "Perlu segera";
+                          if (aiTriage.urgency === "Kritis") targetUrgency = "Sangat mendesak";
+                          else if (aiTriage.urgency === "Tinggi") targetUrgency = "Perlu segera";
+                          else targetUrgency = "Bisa menunggu";
+                          setCitizenUrgency(targetUrgency);
 
-                          // Auto-check vulnerable groups
-                          const nextVulns = Array.from(new Set([...vulnerableList.filter((x) => x !== "Tidak ada"), ...aiTriage.detectedVulnerables]));
-                          if (nextVulns.length > 0) setVulnerableList(nextVulns);
+                          // Normalize any vulnerable group names to exact form checkbox IDs
+                          const validOptions = ["Balita", "Anak-anak", "Lansia", "Ibu hamil", "Penyandang disabilitas"];
+                          const normalizeMap: Record<string, string> = {
+                            "bayi": "Balita",
+                            "balita": "Balita",
+                            "anak": "Anak-anak",
+                            "anak-anak": "Anak-anak",
+                            "lansia": "Lansia",
+                            "ibu hamil": "Ibu hamil",
+                            "hamil": "Ibu hamil",
+                            "disabilitas": "Penyandang disabilitas",
+                            "penyandang disabilitas": "Penyandang disabilitas",
+                          };
+
+                          const mappedDetected = (aiTriage.detectedVulnerables || []).map((v: string) => {
+                            const lower = v.toLowerCase();
+                            for (const [k, mapped] of Object.entries(normalizeMap)) {
+                              if (lower.includes(k)) return mapped;
+                            }
+                            return v;
+                          }).filter((x: string) => validOptions.includes(x));
+
+                          const currentActive = vulnerableList.filter((x) => x !== "Tidak ada" && validOptions.includes(x));
+                          const mergedVulns = Array.from(new Set([...currentActive, ...mappedDetected]));
+
+                          if (mergedVulns.length > 0) {
+                            setVulnerableList(mergedVulns);
+                          }
+
+                          // Auto-select availability condition if still empty
+                          if (!availabilityCondition && category) {
+                            const availCfg = getAvailabilityConfig(category);
+                            if (availCfg.options && availCfg.options.length > 0) {
+                              if (aiTriage.urgency === "Kritis" || aiTriage.urgency === "Tinggi") {
+                                setAvailabilityCondition(availCfg.options[0]);
+                              }
+                            }
+                          }
+
+                          const feedbackText = `Rekomendasi AI Diterapkan: Urgensi diset "${targetUrgency}"${mergedVulns.length > 0 ? ` & ${mergedVulns.length} kelompok rentan (${mergedVulns.join(', ')}) dicentang` : ''}`;
+                          setAiAppliedFeedback(feedbackText);
+                          setTimeout(() => setAiAppliedFeedback(null), 4000);
                         }}
                         style={{
-                          background: "#013220",
+                          background: aiAppliedFeedback ? "#166534" : "#013220",
                           color: "#ffffff",
                           border: "none",
-                          padding: "8px 14px",
+                          padding: "8px 16px",
                           borderRadius: "8px",
-                          fontSize: "0.80rem",
+                          fontSize: "0.82rem",
                           fontWeight: 700,
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
                           boxShadow: "0 2px 6px rgba(1,50,32,0.2)",
+                          transition: "all 0.2s ease",
                         }}
                       >
                         <Icon name="check" />
-                        <span>Terapkan Rekomendasi AI ke Formulir</span>
+                        <span>{aiAppliedFeedback ? "✓ Rekomendasi AI Berhasil Diterapkan!" : "Terapkan Rekomendasi AI ke Formulir"}</span>
                       </button>
+
+                      {aiAppliedFeedback && (
+                        <div style={{ marginTop: "8px", fontSize: "0.78rem", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "6px 12px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                          <Icon name="check" />
+                          <span>{aiAppliedFeedback}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1584,7 +1634,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                                 img.onload = () => {
                                   try {
                                     const canvas = document.createElement("canvas");
-                                    const maxDim = 1280;
+                                    const maxDim = 800;
                                     let width = img.width;
                                     let height = img.height;
                                     if (width > maxDim || height > maxDim) {
@@ -1601,7 +1651,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                                     const ctx = canvas.getContext("2d");
                                     if (ctx) {
                                       ctx.drawImage(img, 0, 0, width, height);
-                                      const compressed = canvas.toDataURL("image/jpeg", 0.82);
+                                      const compressed = canvas.toDataURL("image/jpeg", 0.68);
                                       setFotoBukti(compressed);
                                     } else {
                                       setFotoBukti(rawResult);
@@ -1978,15 +2028,19 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     let finalCode = `RK-2026-00${Math.floor(100 + Math.random() * 899)}`;
                     let createdDbItem: any = null;
                     try {
-                      const res = await apiService.createKebutuhan(payload);
-                      if (res.success && res.data) {
+                      const apiCall = apiService.createKebutuhan(payload);
+                      const timeoutPromise = new Promise<never>((_, reject) =>
+                        setTimeout(() => reject(new Error("Timeout (network sync)")), 4000)
+                      );
+                      const res = await Promise.race([apiCall, timeoutPromise]);
+                      if (res && res.success && res.data) {
                         createdDbItem = res.data;
                         if (res.data.kode_kasus) {
                           finalCode = res.data.kode_kasus;
                         }
                       }
                     } catch (e) {
-                      console.log("API create fallback note:", e);
+                      console.warn("API create note (using instant local sync):", e);
                     }
 
                     const now = new Date();
@@ -2064,6 +2118,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     
                     localStorage.removeItem("reksa_report_draft");
                     setSubmittedCaseId(finalCode);
+                    setIsSubmitting(false);
+                    isSubmittingRef.current = false;
                     setSuccess(true);
                   };
 
