@@ -683,8 +683,12 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 800, color: "#065f46", fontSize: "0.88rem" }}>
-                        <span>🏠 Bantuan Stimulan Perbaikan Rumah (Kepka BNPB No. 296A/2023)</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, color: "#013220", fontSize: "0.88rem" }}>
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                          <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span>Bantuan Stimulan Perbaikan Rumah (Kepka BNPB No. 296A/2023)</span>
                       </div>
                       <span style={{ fontSize: "0.74rem", background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: "6px", fontWeight: 700 }}>
                         Bantuan Tunai Rekonstruksi
@@ -983,26 +987,26 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 </div>
 
                 <div className="form-group">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <label className="form-label" style={{ margin: 0 }}>Posko BPBD Wilayah Rujukan</label>
                     <span 
                       style={{ 
-                        fontSize: "0.78rem", 
-                        color: "#1c5a39", 
+                        fontSize: "0.75rem", 
+                        color: "#475569", 
                         fontWeight: 600,
-                        background: "#e8f3ea",
-                        padding: "3px 9px",
+                        background: "#f1f5f9",
+                        padding: "2px 8px",
                         borderRadius: "6px",
-                        border: "1px solid #c2dfc9",
+                        border: "1px solid #e2e8f0",
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "6px"
+                        gap: "5px"
                       }}
                     >
-                      <span style={{ display: "inline-flex", width: "13px", height: "13px", color: "#1c5a39" }}>
+                      <span style={{ display: "inline-flex", width: "12px", height: "12px", color: "#64748b" }}>
                         <Icon name="lock" />
                       </span>
-                      <span>Otomatis Sistem {province ? `• ${province}` : ""}</span>
+                      <span>Sistem Otomatis {province ? `• ${province}` : ""}</span>
                     </span>
                   </div>
                   <div style={{ position: "relative" }}>
@@ -1014,12 +1018,12 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       value={poskoTarget || (province ? getAssignedPosko(province, regency) : "")}
                       placeholder="Otomatis ditetapkan sistem sesuai Provinsi & Kabupaten..."
                       style={{
-                        backgroundColor: "#f4f7f5",
-                        color: (poskoTarget || province || regency) ? "#013220" : "#7c8880",
+                        backgroundColor: "#f8fafc",
+                        color: (poskoTarget || province || regency) ? "#0f172a" : "#94a3b8",
                         fontWeight: (poskoTarget || province || regency) ? 600 : 400,
                         cursor: "not-allowed",
-                        border: "1.5px solid #d2ded5",
-                        paddingRight: "42px",
+                        border: "1px solid #cbd5e1",
+                        paddingRight: "40px",
                         userSelect: "none",
                       }}
                       title="Posko BPBD rujukan ditetapkan secara otomatis oleh sistem dan tidak dapat diubah manual."
@@ -1032,7 +1036,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         transform: "translateY(-50%)",
                         width: "16px",
                         height: "16px",
-                        color: "#52755e",
+                        color: "#94a3b8",
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1043,39 +1047,52 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       <Icon name="lock" />
                     </span>
                   </div>
-                  <small style={{ color: "#4f6b58", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px", fontSize: "0.82rem" }}>
-                    <span style={{ display: "inline-flex", width: "15px", height: "15px", flexShrink: 0, color: "#2e774f" }}>
+                  <small style={{ color: "#64748b", marginTop: "5px", display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem" }}>
+                    <span style={{ display: "inline-flex", width: "14px", height: "14px", flexShrink: 0, color: "#64748b" }}>
                       <Icon name="info" />
                     </span>
-                    <span><b>Terkunci Otomatis:</b> Posko BPBD rujukan ditetapkan otomatis oleh sistem sesuai wilayah bencana Anda dan tidak dapat diubah manual.</span>
+                    <span>Posko BPBD rujukan ditetapkan otomatis oleh sistem sesuai wilayah bencana Anda.</span>
                   </small>
                 </div>
 
                 {/* 3. KATEGORI BERDASARKAN SKALA WILAYAH DAN KEWENANGAN PENANGANAN */}
-                <div className="form-group" style={{ marginTop: "12px", marginBottom: "14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                <div className="form-group" style={{ marginTop: "14px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
                     <label className="form-label" style={{ margin: 0 }}>Skala Wilayah &amp; Kewenangan Penanganan (BNPB / BPBD)</label>
-                    <span style={{ fontSize: "0.76rem", color: "#2e774f", fontWeight: 700 }}>Pengerahan Sumber Daya Wilayah</span>
+                    <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Tingkat Eskalasi Penanganan</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
                     {[
                       {
                         scale: "Kabupaten/Kota" as const,
                         authority: "BPBD Kabupaten/Kota",
                         desc: "Pilar utama penyalur bantuan jika dampak bencana masih dapat ditangani secara lokal di tingkat daerah.",
-                        icon: "🏛️",
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1M14 10h1M9 14h1M14 14h1M9 18h1M14 18h1"/>
+                          </svg>
+                        ),
                       },
                       {
                         scale: "Provinsi" as const,
                         authority: "BPBD Provinsi",
                         desc: "Intervensi logistik regional & personel tambahan jika kapasitas kabupaten/kota terlampaui.",
-                        icon: "🏢",
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 22V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v16M12 10h6a2 2 0 0 1 2 2v10M8 8v.01M8 12v.01M8 16v.01M16 14v.01M16 18v.01"/>
+                          </svg>
+                        ),
                       },
                       {
                         scale: "Nasional" as const,
                         authority: "BNPB Pusat (Aktivasi DSP)",
                         desc: "Bencana berskala luas melampaui provinsi, BNPB mengaktifkan Dana Siap Pakai (DSP) & logistik nasional.",
-                        icon: "🇮🇩",
+                        icon: (
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2l8 4v6c0 5.25-3.5 10-8 11-4.5-1-8-5.75-8-11V6l8-4z"/>
+                            <path d="M12 8v8M8 12h8"/>
+                          </svg>
+                        ),
                       },
                     ].map((item) => {
                       const isSelected = skalaWilayah === item.scale;
@@ -1084,27 +1101,56 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                           key={item.scale}
                           onClick={() => setSkalaWilayah(item.scale)}
                           style={{
-                            border: isSelected ? "2px solid #013220" : "1px solid #d4ded3",
-                            background: isSelected ? "#eef6f0" : "#ffffff",
-                            padding: "12px 14px",
+                            border: isSelected ? "1.5px solid #013220" : "1px solid #e2e8f0",
+                            background: isSelected ? "#f4f8f5" : "#ffffff",
+                            boxShadow: isSelected ? "0 2px 8px rgba(1, 50, 32, 0.08)" : "none",
+                            padding: "14px",
                             borderRadius: "12px",
                             cursor: "pointer",
                             transition: "all 0.15s ease",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
                           }}
                         >
+                          {/* Top Row: Icon on left, Radio indicator on right */}
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontSize: "1.1rem" }}>{item.icon}</span>
-                              <strong style={{ fontSize: "0.86rem", color: "#013220" }}>Skala {item.scale}</strong>
-                            </div>
-                            {isSelected && (
-                              <span style={{ color: "#166534", fontSize: "0.75rem", fontWeight: 800 }}>✓ Terpilih</span>
-                            )}
+                            <span style={{ 
+                              width: "28px", 
+                              height: "28px", 
+                              borderRadius: "8px", 
+                              background: isSelected ? "#013220" : "#f1f5f9", 
+                              color: isSelected ? "#ffffff" : "#475569", 
+                              display: "inline-flex", 
+                              alignItems: "center", 
+                              justifyContent: "center",
+                              flexShrink: 0
+                            }}>
+                              {item.icon}
+                            </span>
+                            <div 
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                borderRadius: "50%",
+                                border: isSelected ? "5px solid #013220" : "2px solid #cbd5e1",
+                                background: "#ffffff",
+                                flexShrink: 0,
+                                transition: "all 0.15s ease",
+                              }} 
+                            />
                           </div>
-                          <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1c5a39", marginBottom: "3px" }}>
-                            {item.authority}
+
+                          <div>
+                            <strong style={{ fontSize: "0.88rem", color: isSelected ? "#013220" : "#0f172a", display: "block" }}>
+                              Skala {item.scale}
+                            </strong>
+                            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: isSelected ? "#166534" : "#475569", display: "block", marginTop: "2px" }}>
+                              {item.authority}
+                            </span>
                           </div>
-                          <p style={{ margin: 0, fontSize: "0.74rem", color: "#607264", lineHeight: 1.4 }}>
+
+                          <p style={{ margin: 0, fontSize: "0.73rem", color: "#64748b", lineHeight: 1.45 }}>
                             {item.desc}
                           </p>
                         </div>
@@ -1114,12 +1160,16 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 </div>
 
                 <div className="form-group">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
                     <div>
-                      <label className="form-label" style={{ margin: 0 }}>Titik Lokasi Warga pada Peta</label>
-                      <small style={{ color: "#758378", display: "block", fontSize: "0.8rem" }}>
-                        Titik Terpilih: <b>{(Number(pickedLat) || -7.2654).toFixed(5)}, {(Number(pickedLng) || 112.7521).toFixed(5)}</b> (Klik peta atau gunakan tombol GPS)
-                      </small>
+                      <label className="form-label" style={{ display: "block", margin: "0 0 4px" }}>Titik Lokasi Warga pada Peta</label>
+                      <div style={{ color: "#64748b", display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem" }}>
+                        <span>Titik Terpilih:</span>
+                        <code style={{ background: "#f1f5f9", border: "1px solid #e2e8f0", padding: "1px 6px", borderRadius: "4px", fontSize: "0.76rem", color: "#0f172a", fontFamily: "monospace" }}>
+                          {(Number(pickedLat) || -7.2654).toFixed(5)}, {(Number(pickedLng) || 112.7521).toFixed(5)}
+                        </code>
+                        <span>(Klik peta atau gunakan tombol GPS)</span>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -1153,15 +1203,16 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "6px",
-                        background: "#e8f3ea",
+                        background: "#f1f5f9",
                         color: "#013220",
-                        border: "1px solid #b2d7bb",
-                        padding: "5px 12px",
+                        border: "1px solid #cbd5e1",
+                        padding: "6px 12px",
                         borderRadius: "8px",
-                        fontSize: "0.82rem",
+                        fontSize: "0.80rem",
                         fontWeight: 600,
                         cursor: isDetectingGPS ? "wait" : "pointer",
-                        opacity: isDetectingGPS ? 0.75 : 1
+                        opacity: isDetectingGPS ? 0.75 : 1,
+                        transition: "all 0.15s ease"
                       }}
                     >
                       <Icon name="pin" /> {isDetectingGPS ? "Mendeteksi Posisi..." : "Gunakan Posisi Saya"}
@@ -1382,8 +1433,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 <div className="form-group">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                     <label className="form-label" style={{ margin: 0 }}>Jelaskan kondisi yang Anda alami</label>
-                    <span style={{ fontSize: "0.75rem", color: "#047857", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                      <span>✨ REKSA AI Smart Triage Aktif</span>
+                    <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
+                      <span>REKSA AI Smart Triage Aktif</span>
                     </span>
                   </div>
                   <textarea 
@@ -1398,28 +1452,31 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   {aiTriage && (
                     <div
                       style={{
-                        background: "linear-gradient(135deg, rgba(240, 253, 244, 0.95) 0%, rgba(236, 253, 245, 0.95) 100%)",
-                        border: "1.5px solid #10b981",
+                        background: "#f8fafc",
+                        border: "1px solid #cbd5e1",
                         borderRadius: "14px",
                         padding: "16px 18px",
                         marginTop: "12px",
-                        boxShadow: "0 4px 16px rgba(16, 185, 129, 0.12)",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "7px", color: "#065f46", fontWeight: 800, fontSize: "0.88rem" }}>
-                          <span>✨ REKSA AI Smart Triage</span>
-                          <span style={{ background: "#10b981", color: "#ffffff", fontSize: "0.68rem", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "7px", color: "#0f172a", fontWeight: 700, fontSize: "0.86rem" }}>
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#013220" }}>
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                          </svg>
+                          <span>REKSA AI Smart Triage</span>
+                          <span style={{ background: "#e2e8f0", color: "#334155", fontSize: "0.68rem", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
                             {aiTriage.confidence}% Akurasi
                           </span>
                         </div>
                         <span
                           style={{
-                            background: aiTriage.urgency === "Kritis" ? "#fee2e2" : aiTriage.urgency === "Tinggi" ? "#ffedd5" : "#f0fdf4",
-                            color: aiTriage.urgency === "Kritis" ? "#991b1b" : aiTriage.urgency === "Tinggi" ? "#9a3412" : "#166534",
-                            border: `1px solid ${aiTriage.urgency === "Kritis" ? "#fca5a5" : aiTriage.urgency === "Tinggi" ? "#fdba74" : "#bbf7d0"}`,
+                            background: aiTriage.urgency === "Kritis" ? "#fee2e2" : aiTriage.urgency === "Tinggi" ? "#ffedd5" : "#f1f5f9",
+                            color: aiTriage.urgency === "Kritis" ? "#991b1b" : aiTriage.urgency === "Tinggi" ? "#9a3412" : "#334155",
+                            border: `1px solid ${aiTriage.urgency === "Kritis" ? "#fca5a5" : aiTriage.urgency === "Tinggi" ? "#fdba74" : "#cbd5e1"}`,
                             fontSize: "0.78rem",
-                            fontWeight: 800,
+                            fontWeight: 700,
                             padding: "3px 10px",
                             borderRadius: "999px",
                           }}
@@ -1428,16 +1485,16 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         </span>
                       </div>
 
-                      <p style={{ margin: "0 0 10px", fontSize: "0.83rem", color: "#064e3b", lineHeight: 1.5 }}>
+                      <p style={{ margin: "0 0 10px", fontSize: "0.82rem", color: "#334155", lineHeight: 1.5 }}>
                         {aiTriage.rationale}
                       </p>
 
                       {/* Detected vulnerable groups chip */}
                       {aiTriage.detectedVulnerables.length > 0 && (
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
-                          <span style={{ fontSize: "0.76rem", color: "#047857", fontWeight: 700 }}>Kelompok Rentan Terdeteksi:</span>
+                          <span style={{ fontSize: "0.76rem", color: "#475569", fontWeight: 700 }}>Kelompok Rentan Terdeteksi:</span>
                           {aiTriage.detectedVulnerables.map((vuln, vIdx) => (
-                            <span key={vIdx} style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.74rem", padding: "2px 8px", borderRadius: "6px", fontWeight: 600 }}>
+                            <span key={vIdx} style={{ background: "#f1f5f9", color: "#334155", border: "1px solid #e2e8f0", fontSize: "0.74rem", padding: "2px 8px", borderRadius: "6px", fontWeight: 600 }}>
                               ✓ {vuln}
                             </span>
                           ))}
@@ -1471,18 +1528,19 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                           boxShadow: "0 2px 6px rgba(1,50,32,0.2)",
                         }}
                       >
-                        <span>✨ Terapkan Rekomendasi AI ke Formulir</span>
+                        <Icon name="check" />
+                        <span>Terapkan Rekomendasi AI ke Formulir</span>
                       </button>
                     </div>
                   )}
                 </div>
 
                 {/* CATATAN PANDUAN PENGISIAN KONDISI */}
-                <div style={{ background: "#f6ffed", border: "1px solid #b7eb8f", padding: "14px 18px", borderRadius: "12px", marginTop: "6px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#135200", fontWeight: 700, fontSize: "0.86rem" }}>
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "14px 18px", borderRadius: "12px", marginTop: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#0f172a", fontWeight: 700, fontSize: "0.84rem" }}>
                     <Icon name="check" /> Fakta Kondisi untuk Analisis REKSA
                   </div>
-                  <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#386134", lineHeight: 1.5 }}>
+                  <p style={{ margin: "4px 0 0", fontSize: "0.80rem", color: "#64748b", lineHeight: 1.5 }}>
                     Data kondisi dan tingkat urgensi yang Anda laporkan akan diproses dalam sistem koordinasi pascabencana untuk verifikasi dan validasi kebutuhan riil warga terdampak.
                   </p>
                 </div>
@@ -2085,30 +2143,37 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
             <div className="guidance-footer-note">
               <Icon name="help" />
-              <span>Butuh bantuan kedaruratan segera? Hubungi Call Center 112 atau Posko BPBD Sukabumi.</span>
+              <span>Butuh bantuan kedaruratan segera? Hubungi Call Center 112 atau Posko BPBD Wilayah Setempat.</span>
             </div>
 
             {/* KARTU REFERENSI REGULASI BNPB & BPBD */}
-            <div style={{ background: "#f0fdf4", border: "1px solid #a7f3d0", borderRadius: "12px", padding: "14px", marginTop: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, fontSize: "0.82rem", color: "#065f46", marginBottom: "8px" }}>
-                <span>📜 Pedoman Regulasi BNPB &amp; BPBD</span>
+            <div style={{ background: "rgba(255, 255, 255, 0.07)", border: "1px solid rgba(255, 255, 255, 0.14)", borderRadius: "14px", padding: "16px", marginTop: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 700, fontSize: "0.82rem", color: "#ffffff", marginBottom: "10px" }}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#a7f3d0" }}>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <span>Pedoman Regulasi BNPB &amp; BPBD</span>
               </div>
-              <div style={{ fontSize: "0.76rem", color: "#166534", lineHeight: 1.45, display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div style={{ fontSize: "0.76rem", color: "rgba(255, 255, 255, 0.88)", lineHeight: 1.45, display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div>
-                  <strong>Perka BNPB No. 7/2008</strong>
-                  <p style={{ margin: "2px 0 0", color: "#2d4a36" }}>
+                  <strong style={{ color: "#ffffff", display: "block" }}>Perka BNPB No. 7/2008</strong>
+                  <p style={{ margin: "2px 0 0", color: "rgba(255, 255, 255, 0.72)" }}>
                     Standar minimal kebutuhan dasar: Pangan 400g beras/2.100 kkal, Air Minum 2.5L, Sanitasi 7-15L, &amp; Huntara min 3 m²/jiwa.
                   </p>
                 </div>
                 <div>
-                  <strong>Kepka BNPB No. 296A/2023</strong>
-                  <p style={{ margin: "2px 0 0", color: "#2d4a36" }}>
+                  <strong style={{ color: "#ffffff", display: "block" }}>Kepka BNPB No. 296A/2023</strong>
+                  <p style={{ margin: "2px 0 0", color: "rgba(255, 255, 255, 0.72)" }}>
                     Stimulan perbaikan rumah korban: Rusak Berat (Rp60 Jt), Rusak Sedang (Rp30 Jt), Rusak Ringan (Rp15 Jt).
                   </p>
                 </div>
                 <div>
-                  <strong>3 Skala Wilayah Kewenangan</strong>
-                  <p style={{ margin: "2px 0 0", color: "#2d4a36" }}>
+                  <strong style={{ color: "#ffffff", display: "block" }}>3 Skala Wilayah Kewenangan</strong>
+                  <p style={{ margin: "2px 0 0", color: "rgba(255, 255, 255, 0.72)" }}>
                     Tingkat Kab/Kota (BPBD Kab/Kota) → Provinsi (BPBD Prov) → Nasional (BNPB Pusat &amp; Dana Siap Pakai / DSP).
                   </p>
                 </div>
