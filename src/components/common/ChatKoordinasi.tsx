@@ -53,61 +53,138 @@ const DEFAULT_CHANNELS: ChatChannelItem[] = [
   },
 ];
 
-const INITIAL_SEED_MESSAGES: ChatMessageItem[] = [
-  {
-    id: 1,
-    channel: "umum",
-    sender_name: "Siti Rahma",
-    sender_role: "posko",
-    sender_org: "Posko BPBD Buduran (Posko Induk)",
-    message: "Halo semua rekan Posko, Mitra Relawan, dan Warga. Saluran koordinasi terpadu resmi dibuka untuk mempercepat respon distribusi logistik pascabencana di wilayah Buduran & sekitarnya.",
-    tag: "INFO",
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 2,
-    channel: "umum",
-    sender_name: "Andi Pratama",
-    sender_role: "citizen",
-    sender_org: "Masyarakat Terdampak (RT 03 Buduran)",
-    message: "Selamat siang Bu Siti dan tim BPBD. Kami warga di sekitar jalan utama dekat Balai Desa saat ini air sudah mulai surut, namun persediaan air minum dan paket sembako keluarga kami menipis.",
-    tag: "URGENT",
-    kebutuhan_id: 317,
-    created_at: new Date(Date.now() - 2700000).toISOString(),
-  },
-  {
-    id: 3,
-    channel: "umum",
-    sender_name: "Siti Rahma",
-    sender_role: "posko",
-    sender_org: "Posko BPBD Buduran",
-    message: "Baik Pak Andi Pratama, laporan kebutuhan Anda (Kasus #317) sudah kami validasi prioritas TINGGI dan telah dialokasikan ke armada distribusi cepat.",
-    tag: "KONFIRMASI",
-    kebutuhan_id: 317,
-    created_at: new Date(Date.now() - 1800000).toISOString(),
-  },
-  {
-    id: 4,
-    channel: "umum",
-    sender_name: "Arif Nugroho",
-    sender_role: "responder",
-    sender_org: "Mitra Satgas Penyalur Cepat",
-    message: "Siap Bu Siti & Pak Andi. Armada Distribusi Cepat kami sedang memuat 23 Paket Sandang & Pangan di Posko Induk. GPS ponsel pengemudi aktif dan jalur rute menuju Buduran terpantau lancar.",
-    tag: "LOGISTIK",
-    kebutuhan_id: 317,
-    created_at: new Date(Date.now() - 900000).toISOString(),
-  },
-  {
-    id: 5,
-    channel: "umum",
-    sender_name: "Andi Pratama",
-    sender_role: "citizen",
-    sender_org: "Masyarakat Terdampak (RT 03 Buduran)",
-    message: "Terima kasih banyak atas respon cepatnya Pak Arif & Bu Siti! Kami menunggu di pos titik kumpul warga RT 03.",
-    tag: "INFO",
-    created_at: new Date(Date.now() - 300000).toISOString(),
-  },
-];
+const INITIAL_SEED_MESSAGES_BY_CHANNEL: Record<string, ChatMessageItem[]> = {
+  umum: [
+    {
+      id: 1,
+      channel: "umum",
+      sender_name: "Siti Rahma",
+      sender_role: "posko",
+      sender_org: "Posko BPBD Buduran (Posko Induk)",
+      message: "Halo semua rekan Posko, Mitra Relawan, dan Warga. Saluran koordinasi terpadu resmi dibuka untuk mempercepat respon distribusi logistik pascabencana di wilayah Buduran & sekitarnya.",
+      tag: "INFO",
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 2,
+      channel: "umum",
+      sender_name: "Andi Pratama",
+      sender_role: "citizen",
+      sender_org: "Masyarakat Terdampak (RT 03 Buduran)",
+      message: "Selamat siang Bu Siti dan tim BPBD. Kami warga di sekitar jalan utama dekat Balai Desa saat ini air sudah mulai surut, namun persediaan air minum dan paket sembako keluarga kami menipis.",
+      tag: "URGENT",
+      kebutuhan_id: 317,
+      created_at: new Date(Date.now() - 2700000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 3,
+      channel: "umum",
+      sender_name: "Siti Rahma",
+      sender_role: "posko",
+      sender_org: "Posko BPBD Buduran",
+      message: "Baik Pak Andi Pratama, laporan kebutuhan Anda (Kasus #317) sudah kami validasi prioritas TINGGI dan telah dialokasikan ke armada distribusi cepat.",
+      tag: "KONFIRMASI",
+      kebutuhan_id: 317,
+      created_at: new Date(Date.now() - 1800000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 4,
+      channel: "umum",
+      sender_name: "Arif Nugroho",
+      sender_role: "responder",
+      sender_org: "Mitra Satgas Penyalur Cepat",
+      message: "Siap Bu Siti & Pak Andi. Armada Distribusi Cepat kami sedang memuat 23 Paket Sandang & Pangan di Posko Induk. GPS ponsel pengemudi aktif dan jalur rute menuju Buduran terpantau lancar.",
+      tag: "LOGISTIK",
+      kebutuhan_id: 317,
+      created_at: new Date(Date.now() - 900000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 5,
+      channel: "umum",
+      sender_name: "Andi Pratama",
+      sender_role: "citizen",
+      sender_org: "Masyarakat Terdampak (RT 03 Buduran)",
+      message: "Terima kasih banyak atas respon cepatnya Pak Arif & Bu Siti! Kami menunggu di pos titik kumpul warga RT 03.",
+      tag: "INFO",
+      created_at: new Date(Date.now() - 300000).toISOString(),
+      status: "sent",
+    },
+  ],
+  posko_mitra: [
+    {
+      id: 6,
+      channel: "posko_mitra",
+      sender_name: "Siti Rahma",
+      sender_role: "posko",
+      sender_org: "Koordinator BPBD Buduran",
+      message: "Panggilan untuk seluruh Mitra Kemanusiaan: Stok selimut dan hygiene kit di Posko Induk tersisa 40 paket. Bagi mitra yang memiliki kesiapan pasokan tambahan, silakan ajukan komitmen melalui Bursa Bantuan.",
+      tag: "LOGISTIK",
+      created_at: new Date(Date.now() - 21600000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 7,
+      channel: "posko_mitra",
+      sender_name: "Arif Nugroho",
+      sender_role: "responder",
+      sender_org: "Satgas Reaksi Cepat BPBD",
+      message: "Lapor Posko, penawaran 12 Paket Sandang dari Satgas SRC sudah diverifikasi dan siap digabungkan dengan muatan distribusi sore ini.",
+      tag: "KONFIRMASI",
+      created_at: new Date(Date.now() - 10800000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 8,
+      channel: "posko_mitra",
+      sender_name: "Siti Rahma",
+      sender_role: "posko",
+      sender_org: "Koordinator BPBD Buduran",
+      message: "Diterima Pak Arif. Pastikan pengemudi mengaktifkan fitur GPS ponsel di aplikasi agar posisi live armada dapat dipantau oleh Posko dan warga penerima.",
+      tag: "INFO",
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      status: "sent",
+    },
+  ],
+  bantuan_warga: [
+    {
+      id: 9,
+      channel: "bantuan_warga",
+      sender_name: "Andi Pratama",
+      sender_role: "citizen",
+      sender_org: "Warga Terdampak",
+      message: "Izin bertanya kepada petugas, apakah bagi warga lansia yang tidak bisa berjalan jauh sembako bisa diantar langsung ke rumah tinggal?",
+      tag: "INFO",
+      created_at: new Date(Date.now() - 10000000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 10,
+      channel: "bantuan_warga",
+      sender_name: "Siti Rahma",
+      sender_role: "posko",
+      sender_org: "Petugas Layanan Posko",
+      message: "Bisa sekali Pak Andi. Sistem REKSA memprioritaskan kelompok rentan (lansia, balita, disabilitas). Tim armada relawan diinstruksikan menyerahkan langsung door-to-door ke titik rumah warga yang bersangkutan.",
+      tag: "KONFIRMASI",
+      created_at: new Date(Date.now() - 8400000).toISOString(),
+      status: "sent",
+    },
+    {
+      id: 11,
+      channel: "bantuan_warga",
+      sender_name: "Arif Nugroho",
+      sender_role: "responder",
+      sender_org: "Relawan Lapangan BPBD",
+      message: "Betul Pak Andi, kami membawa sepeda motor operasional cadangan jika gang pemukiman sempit tidak bisa dilewati mobil box. Kami pastikan bantuan sampai ke tangan penerima.",
+      tag: "AKSES",
+      created_at: new Date(Date.now() - 7000000).toISOString(),
+      status: "sent",
+    },
+  ],
+};
 
 export function ChatKoordinasi({
   role,
@@ -119,7 +196,7 @@ export function ChatKoordinasi({
 }: ChatKoordinasiProps) {
   const [selectedChannel, setSelectedChannel] = useState<string>("umum");
   const [channels, setChannels] = useState<ChatChannelItem[]>(DEFAULT_CHANNELS);
-  const [messages, setMessages] = useState<ChatMessageItem[]>(INITIAL_SEED_MESSAGES);
+  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, ChatMessageItem[]>>(INITIAL_SEED_MESSAGES_BY_CHANNEL);
   const [loading, setLoading] = useState<boolean>(false);
   const [sending, setSending] = useState<boolean>(false);
   const [inputText, setInputText] = useState<string>("");
@@ -132,7 +209,7 @@ export function ChatKoordinasi({
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const isPollingRef = useRef<boolean>(false);
+  const activeReqRef = useRef<string>("");
 
   // Sender info resolution
   const senderRole: "citizen" | "posko" | "responder" =
@@ -191,35 +268,48 @@ export function ChatKoordinasi({
     }
   };
 
-  // Load Messages with Concurrency Lock & Pending Merge
-  const loadMessages = async (isInitial = false) => {
-    if (isPollingRef.current) return;
-    if (isInitial && messages.length === 0) setLoading(true);
-    isPollingRef.current = true;
+  // Load Messages for a specific channel
+  const loadMessages = async (targetChannel?: string, isInitial = false) => {
+    const channelToLoad = typeof targetChannel === "string" && targetChannel ? targetChannel : selectedChannel;
+    if (isInitial && (!messagesByChannel[channelToLoad] || messagesByChannel[channelToLoad].length === 0)) {
+      setLoading(true);
+    }
     try {
-      const res = await apiService.getChatMessages(selectedChannel, undefined, senderRole);
-      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-        setMessages((prev) => {
-          // Preserve any local optimistic messages that are still sending
-          const pending = prev.filter((m) => m.status === "sending");
-          const merged = [...res.data];
+      const res = await apiService.getChatMessages(channelToLoad, undefined, senderRole);
+      if (res && res.success && Array.isArray(res.data)) {
+        setMessagesByChannel((prev) => {
+          const currentList = prev[channelToLoad] || [];
+          const pending = currentList.filter(
+            (m) => m.status === "sending" && (m.channel || channelToLoad) === channelToLoad
+          );
+
+          const serverList: ChatMessageItem[] = res.data.map((m) => ({
+            ...m,
+            channel: m.channel || channelToLoad,
+            status: "sent",
+          }));
+
+          const merged = [...serverList];
           for (const p of pending) {
-            const alreadyInServer = merged.some(
-              (m) => m.message === p.message && m.sender_name === p.sender_name
+            const exists = merged.some(
+              (m) => m.id === p.id || (m.message === p.message && m.sender_name === p.sender_name)
             );
-            if (!alreadyInServer) {
+            if (!exists) {
               merged.push(p);
             }
           }
-          return merged;
+
+          return {
+            ...prev,
+            [channelToLoad]: merged,
+          };
         });
         setLastUpdated(new Date());
       }
     } catch (err) {
-      console.warn("Gagal memuat pesan live:", err);
+      console.warn("Gagal memuat pesan live untuk channel", channelToLoad, err);
     } finally {
       setLoading(false);
-      isPollingRef.current = false;
     }
   };
 
@@ -228,25 +318,47 @@ export function ChatKoordinasi({
   }, [senderRole]);
 
   useEffect(() => {
-    loadMessages(true);
+    loadMessages(selectedChannel, false);
   }, [selectedChannel, senderRole]);
 
-  // Silent background polling (active tab only, 10s interval to prevent dev server queue congestion)
+  // Silent background polling (active channel only, 8s interval)
   useEffect(() => {
     const timer = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
-        loadMessages(false);
+        loadMessages(selectedChannel, false);
       }
-    }, 10000);
+    }, 8000);
     return () => clearInterval(timer);
   }, [selectedChannel, senderRole]);
+
+  // Messages of the active channel
+  const currentChannelMessages = useMemo(() => {
+    return messagesByChannel[selectedChannel] || [];
+  }, [messagesByChannel, selectedChannel]);
+
+  // Filter messages for currently selected channel
+  const filteredMessages = useMemo(() => {
+    return currentChannelMessages.filter((m) => {
+      // Hard guarantee: message channel MUST match selected channel
+      if ((m.channel || "umum") !== selectedChannel) return false;
+      if (filterTag !== "ALL" && m.tag !== filterTag) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesMsg = (m.message || "").toLowerCase().includes(q);
+        const matchesSender = (m.sender_name || "").toLowerCase().includes(q);
+        const matchesOrg = (m.sender_org || "").toLowerCase().includes(q);
+        return matchesMsg || matchesSender || matchesOrg;
+      }
+      return true;
+    });
+  }, [currentChannelMessages, selectedChannel, filterTag, searchQuery]);
 
   // Auto-scroll on new message inside chat box only (does not scroll window)
   useEffect(() => {
     if (autoScroll && chatScrollContainerRef.current) {
       chatScrollContainerRef.current.scrollTop = chatScrollContainerRef.current.scrollHeight;
     }
-  }, [messages, autoScroll]);
+  }, [filteredMessages, autoScroll]);
 
   const handleScroll = () => {
     if (!chatScrollContainerRef.current) return;
@@ -261,10 +373,11 @@ export function ChatKoordinasi({
     const cleanText = inputText.trim();
     if (!cleanText) return;
 
+    const currentChan = selectedChannel;
     const tempId = Date.now();
     const optimisticMsg: ChatMessageItem = {
       id: tempId,
-      channel: selectedChannel,
+      channel: currentChan,
       sender_name: senderName,
       sender_role: senderRole,
       sender_org: senderOrg,
@@ -276,14 +389,17 @@ export function ChatKoordinasi({
       status: "sending",
     };
 
-    // Immediately clear input & display bubble with sending checkmark
+    // Immediately clear input & display bubble with sending checkmark in the active channel
     setInputText("");
-    setMessages((prev) => [...prev, optimisticMsg]);
+    setMessagesByChannel((prev) => ({
+      ...prev,
+      [currentChan]: [...(prev[currentChan] || []), optimisticMsg],
+    }));
     setAutoScroll(true);
 
     try {
       const res = await apiService.sendChatMessage({
-        channel: selectedChannel,
+        channel: currentChan,
         sender_name: senderName,
         sender_role: senderRole,
         sender_org: senderOrg,
@@ -294,10 +410,23 @@ export function ChatKoordinasi({
       });
 
       if (res && res.success && res.data) {
-        // Upgrade optimistic message to confirmed server message
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...res.data, status: "sent" } : m))
-        );
+        const serverMsg: ChatMessageItem = {
+          ...res.data,
+          channel: res.data.channel || currentChan,
+          status: "sent",
+        };
+
+        // Upgrade optimistic message to confirmed server message with double checkmark
+        setMessagesByChannel((prev) => ({
+          ...prev,
+          [currentChan]: (prev[currentChan] || []).map((m) =>
+            m.id === tempId ? serverMsg : m
+          ),
+        }));
+
+        // Refresh channel badge counts
+        loadChannels();
+
         if (notify) {
           notify(
             selectedTag === "URGENT"
@@ -314,29 +443,17 @@ export function ChatKoordinasi({
     } catch (err) {
       console.error("Gagal mengirim pesan chat:", err);
       // Mark bubble as failed
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, status: "error" } : m))
-      );
+      setMessagesByChannel((prev) => ({
+        ...prev,
+        [currentChan]: (prev[currentChan] || []).map((m) =>
+          m.id === tempId ? { ...m, status: "error" } : m
+        ),
+      }));
       if (notify) {
         notify("Pesan belum tersinkronisasi ke server. Silakan coba kembali.");
       }
     }
   };
-
-  // Filter messages
-  const filteredMessages = useMemo(() => {
-    return messages.filter((m) => {
-      if (filterTag !== "ALL" && m.tag !== filterTag) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesMsg = m.message.toLowerCase().includes(q);
-        const matchesSender = m.sender_name.toLowerCase().includes(q);
-        const matchesOrg = (m.sender_org || "").toLowerCase().includes(q);
-        return matchesMsg || matchesSender || matchesOrg;
-      }
-      return true;
-    });
-  }, [messages, filterTag, searchQuery]);
 
   const currentChannelInfo =
     channels.find((c) => c.id === selectedChannel) || DEFAULT_CHANNELS[0];
@@ -449,7 +566,7 @@ export function ChatKoordinasi({
               </div>
               <button
                 className="manual-refresh-btn mono-btn-subtle"
-                onClick={() => loadMessages(false)}
+                onClick={() => loadMessages(selectedChannel, false)}
                 title="Muat ulang pesan sekarang"
                 type="button"
               >
@@ -490,11 +607,11 @@ export function ChatKoordinasi({
                 className={`tag-filter-chip mono-chip ${filterTag === "ALL" ? "active" : ""}`}
                 onClick={() => setFilterTag("ALL")}
               >
-                Semua ({messages.length})
+                Semua ({currentChannelMessages.length})
               </button>
               {Object.keys(TAG_CONFIG).map((k) => {
                 const cfg = TAG_CONFIG[k];
-                const count = messages.filter((m) => m.tag === k).length;
+                const count = currentChannelMessages.filter((m) => m.tag === k).length;
                 return (
                   <button
                     key={k}
@@ -515,7 +632,7 @@ export function ChatKoordinasi({
             ref={chatScrollContainerRef}
             onScroll={handleScroll}
           >
-            {loading && messages.length === 0 ? (
+            {loading && currentChannelMessages.length === 0 ? (
               <div className="chat-loading-state mono-loading">
                 <div className="mono-spinner-circle"></div>
                 <p>Memuat riwayat komunikasi...</p>
