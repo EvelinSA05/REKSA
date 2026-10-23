@@ -12,6 +12,7 @@ interface PetaSebaranPenangananProps {
   cases?: CaseRecord[];
   misiList?: MisiItem[];
   className?: string;
+  mapOnly?: boolean;
 }
 
 export interface ProvinceBpbdMitraStats {
@@ -152,6 +153,7 @@ export function PetaSebaranPenanganan({
   cases = [],
   misiList = [],
   className = "",
+  mapOnly = false,
 }: PetaSebaranPenangananProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -861,12 +863,13 @@ export function PetaSebaranPenanganan({
     <section
       className={`choropleth-thematic-section ${className}`}
       style={{
-        marginTop: "56px",
-        marginBottom: "48px",
-        paddingTop: "4px",
+        marginTop: mapOnly ? "0" : "56px",
+        marginBottom: mapOnly ? "0" : "48px",
+        paddingTop: mapOnly ? "0" : "4px",
       }}
     >
       {/* SECTION HEADER */}
+      {!mapOnly && (
       <div
         className="section-title"
         style={{
@@ -972,8 +975,10 @@ export function PetaSebaranPenanganan({
           </button>
         </div>
       </div>
+      )}
 
       {/* COMPACT CLEAN STATS SUMMARY RIBBON */}
+      {!mapOnly && (
       <div
         style={{
           display: "flex",
@@ -1020,8 +1025,10 @@ export function PetaSebaranPenanganan({
           {disasterProvinces.length} Daerah Terpantau Aktif
         </div>
       </div>
+      )}
 
       {/* SINGLE STREAMLINED TOOLBAR */}
+      {!mapOnly && (
       <div
         style={{
           display: "flex",
@@ -1195,6 +1202,7 @@ export function PetaSebaranPenanganan({
           </div>
         </div>
       </div>
+      )}
 
       {/* MAIN DISPLAY CONTENT */}
       {viewMode === "table" ? (
@@ -1436,13 +1444,13 @@ export function PetaSebaranPenanganan({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: selectedProvinsi ? "1.8fr 1.1fr" : "1fr",
+            gridTemplateColumns: !mapOnly && selectedProvinsi ? "1.8fr 1.1fr" : "1fr",
             gap: "16px",
             background: "#ffffff",
-            padding: "16px",
+            padding: mapOnly ? "0" : "16px",
             borderRadius: "16px",
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+            border: mapOnly ? "none" : "1px solid #e2e8f0",
+            boxShadow: mapOnly ? "none" : "0 4px 16px rgba(0,0,0,0.04)",
             alignItems: "start",
           }}
         >
@@ -1450,13 +1458,14 @@ export function PetaSebaranPenanganan({
           <div
             style={{
               position: "relative",
-              borderRadius: "14px",
+              borderRadius: "16px",
               overflow: "hidden",
               border: "1px solid #cbd5e1",
               background: viewMode === "vector" ? "#fbfcf8" : "#ffffff",
-              height: "440px",
+              height: mapOnly ? "480px" : "440px",
               display: "flex",
               flexDirection: "column",
+              boxShadow: mapOnly ? "0 4px 20px rgba(1, 50, 32, 0.06)" : undefined,
             }}
           >
             {/* CANVAS WRAPPER */}
@@ -1912,7 +1921,7 @@ export function PetaSebaranPenanganan({
           </div>
 
           {/* DETAIL PANEL OF SELECTED PROVINSI */}
-          {selectedProvinsi && (() => {
+          {!mapOnly && selectedProvinsi && (() => {
             const stats = getProvinceBpbdMitraStats(selectedProvinsi);
             const isBpbd = stats.dominant === "bpbd";
             const isMitra = stats.dominant === "mitra";

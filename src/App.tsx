@@ -598,6 +598,7 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
           <PetaSebaranPenanganan
             cases={state?.casesList}
             misiList={state?.misiList}
+            mapOnly={true}
           />
         </section>
 
