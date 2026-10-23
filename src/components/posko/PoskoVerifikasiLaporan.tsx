@@ -20,7 +20,7 @@ export function PoskoVerifikasiLaporan({
   selectedCaseId,
 }: PoskoVerifikasiLaporanProps) {
   const [tab, setTab] = useState<"all" | "pending" | "escalated" | "clarify" | "verified" | "rejected">("pending");
-  const [search, setSearch] = useState(selectedCaseId || "");
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
@@ -39,12 +39,11 @@ export function PoskoVerifikasiLaporan({
     const next = Array.from(new Set([...localEscalatedIds, c.id]));
     setLocalEscalatedIds(next);
     localStorage.setItem("reksa_escalated_case_ids", JSON.stringify(next));
-    notify?.(`⚡ Laporan ${c.id} dialihkan otomatis ke ${partner} karena batas waktu SLA verifikasi BPBD terlampaui!`);
+    notify?.(`Laporan ${c.id} dialihkan otomatis ke ${partner} karena batas waktu SLA verifikasi BPBD terlampaui!`);
   };
 
   useEffect(() => {
     if (selectedCaseId) {
-      setSearch(selectedCaseId);
       const found = cases.find((c) => c.id.toLowerCase() === selectedCaseId.toLowerCase());
       if (found) {
         const isEscalated = found.escalatedToMitra || localEscalatedIds.includes(found.id);
@@ -199,7 +198,7 @@ export function PoskoVerifikasiLaporan({
         <div className="posko-toolbar-tabs">
           {[
             { id: "pending", label: "Menunggu Verifikasi", count: pendingCount },
-            { id: "escalated", label: "⚡ Dialihkan ke Mitra (SLA Timeout)", count: escalatedCount },
+            { id: "escalated", label: "Dialihkan ke Mitra", count: escalatedCount, hasIcon: true },
             { id: "clarify", label: "Perlu Klarifikasi", count: clarifyCount },
             { id: "verified", label: "Terverifikasi / Terbuka", count: verifiedCount },
             { id: "rejected", label: "Ditolak", count: rejectedCount },
@@ -216,7 +215,10 @@ export function PoskoVerifikasiLaporan({
                 }}
                 className={`posko-tab-pill ${isActive ? "active" : ""}`}
               >
-                <span>{tabItem.label}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  {tabItem.hasIcon && <AppIcon name="bolt" size={13} />}
+                  <span>{tabItem.label}</span>
+                </span>
                 <span className={`tab-count-badge ${isActive ? "badge-active" : ""}`}>
                   {tabItem.count}
                 </span>
@@ -262,9 +264,31 @@ export function PoskoVerifikasiLaporan({
               {totalPages > 1 && ` (Halaman ${validPage}/${totalPages})`}
             </span>
             {search && (
-              <span className="posko-search-query-tag">
-                Filter: "{search}"
-              </span>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <span className="posko-search-query-tag">
+                  Filter: "{search}"
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    background: "#013220",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "3px 10px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                  title="Hapus filter dan tampilkan seluruh data"
+                >
+                  Tampilkan Semua
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -312,25 +336,47 @@ export function PoskoVerifikasiLaporan({
                 <div className="posko-case-header-row">
                   <div className="posko-case-badges">
                     <span className="posko-case-id-badge">{c.id}</span>
+                    {c.id === selectedCaseId && (
+                      <span
+                        style={{
+                          background: "#e8ede7",
+                          color: "#013220",
+                          border: "1px solid #c2ddc6",
+                          fontSize: "0.72rem",
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <AppIcon name="check" size={11} />
+                        <span>Laporan Terpilih</span>
+                      </span>
+                    )}
+
                     <span className={`posko-case-urgency-badge urgency-${urgencyClass}`}>
                       Prioritas {c.urgency}
                     </span>
+
                     {isEscalated ? (
                       <span
                         style={{
-                          background: "#fef3c7",
-                          color: "#92400e",
-                          border: "1px solid #fde68a",
+                          background: "#f4f6f4",
+                          color: "#013220",
+                          border: "1px solid #c2ddc6",
                           padding: "3px 10px",
                           borderRadius: "999px",
-                          fontSize: "0.76rem",
+                          fontSize: "0.74rem",
                           fontWeight: 700,
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "5px",
                         }}
                       >
-                        ⚡ Dialihkan ke Mitra
+                        <AppIcon name="bolt" size={12} />
+                        <span>Dialihkan ke Mitra</span>
                       </span>
                     ) : (
                       <span className={`posko-case-status-badge ${statusClass}`}>
@@ -342,12 +388,12 @@ export function PoskoVerifikasiLaporan({
                       <span
                         style={{
                           fontSize: "0.74rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           padding: "3px 9px",
                           borderRadius: "999px",
-                          background: c.faseDarurat === "Tanggap Darurat" ? "#fef2f2" : c.faseDarurat === "Siaga Darurat" ? "#fffbeb" : "#f0fdf4",
-                          color: c.faseDarurat === "Tanggap Darurat" ? "#991b1b" : c.faseDarurat === "Siaga Darurat" ? "#92400e" : "#065f46",
-                          border: `1px solid ${c.faseDarurat === "Tanggap Darurat" ? "#fca5a5" : c.faseDarurat === "Siaga Darurat" ? "#fde68a" : "#bbf7d0"}`,
+                          background: "#f4f6f4",
+                          color: "#013220",
+                          border: "1px solid #d1dbd3",
                         }}
                       >
                         {c.faseDarurat}
@@ -358,78 +404,62 @@ export function PoskoVerifikasiLaporan({
                       <span
                         style={{
                           fontSize: "0.74rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           padding: "3px 9px",
                           borderRadius: "999px",
-                          background: "#e0f2fe",
-                          color: "#0369a1",
-                          border: "1px solid #bae6fd",
+                          background: "#ffffff",
+                          color: "#013220",
+                          border: "1px solid #d1dbd3",
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "3px",
+                          gap: "4px",
                         }}
                       >
-                        📍 {c.province}
+                        <AppIcon name="pin" size={11} />
+                        <span>{c.province}</span>
                       </span>
                     )}
                     {c.kategoriKerusakanRumah && (
                       <span
                         style={{
                           fontSize: "0.74rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           padding: "3px 9px",
                           borderRadius: "999px",
-                          background: "#ecfdf5",
-                          color: "#065f46",
-                          border: "1px solid #a7f3d0",
+                          background: "#ffffff",
+                          color: "#013220",
+                          border: "1px solid #d1dbd3",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                         title="Stimulan Perbaikan Rumah Kepka BNPB No. 296A/2023"
                       >
-                        🏠 {c.kategoriKerusakanRumah}
+                        <AppIcon name="grid" size={11} />
+                        <span>{c.kategoriKerusakanRumah}</span>
                       </span>
                     )}
 
                     {/* Live SLA Countdown / Status Badge */}
                     {isPending && !isEscalated && (
-                      sla.status === "warning" ? (
-                        <span
-                          style={{
-                            background: "#fff7ed",
-                            color: "#c2410c",
-                            border: "1px solid #fdba74",
-                            padding: "3px 9px",
-                            borderRadius: "999px",
-                            fontSize: "0.74rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                          title="SLA verifikasi BPBD segera habis! Jika terlampaui, laporan otomatis dialihkan ke Mitra."
-                        >
-                          <AppIcon name="clock" size={12} />
-                          SLA: {sla.minutesRemaining}m (Kritis)
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            background: "#f0fdf4",
-                            color: "#166534",
-                            border: "1px solid #bbf7d0",
-                            padding: "3px 9px",
-                            borderRadius: "999px",
-                            fontSize: "0.74rem",
-                            fontWeight: 600,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                          title="SLA batas verifikasi BPBD"
-                        >
-                          <AppIcon name="clock" size={12} />
-                          SLA: {sla.minutesRemaining}m tersisa
-                        </span>
-                      )
+                      <span
+                        style={{
+                          background: sla.status === "warning" ? "#013220" : "#ffffff",
+                          color: sla.status === "warning" ? "#ffffff" : "#013220",
+                          border: "1px solid #013220",
+                          padding: "3px 9px",
+                          borderRadius: "999px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                        title="SLA batas verifikasi BPBD"
+                      >
+                        <AppIcon name="clock" size={11} />
+                        <span>SLA: {sla.minutesRemaining}m tersisa</span>
+                      </span>
                     )}
                   </div>
 
@@ -447,15 +477,15 @@ export function PoskoVerifikasiLaporan({
                 {/* 3. Metadata Row (Location, KK, Reporter) */}
                 <div className="posko-case-meta-row">
                   <span className="posko-case-meta-item">
-                    <AppIcon name="pin" size={14} style={{ color: "#80866e" }} />
+                    <AppIcon name="pin" size={14} style={{ color: "#013220" }} />
                     <span>{c.location || "Wilayah Posko"}</span>
                   </span>
                   <span className="posko-case-meta-item">
-                    <AppIcon name="users" size={14} style={{ color: "#80866e" }} />
+                    <AppIcon name="users" size={14} style={{ color: "#013220" }} />
                     <span><strong>{c.kk}</strong></span>
                   </span>
                   <span className="posko-case-meta-item">
-                    <AppIcon name="user" size={14} style={{ color: "#80866e" }} />
+                    <AppIcon name="user" size={14} style={{ color: "#013220" }} />
                     <span>Pelapor: <strong>{c.applicantName || "Warga Terdampak"}</strong> {c.applicantPhone ? `(${c.applicantPhone})` : ""}</span>
                   </span>
                 </div>
@@ -466,23 +496,23 @@ export function PoskoVerifikasiLaporan({
                   {isEscalated && (
                     <div
                       style={{
-                        background: "#fffbeb",
-                        border: "1px solid #fde68a",
+                        background: "#fbfcfb",
+                        border: "1px solid #c2ddc6",
                         borderRadius: "10px",
                         padding: "12px 14px",
                         fontSize: "0.84rem",
-                        color: "#92400e",
+                        color: "#013220",
                         display: "flex",
                         flexDirection: "column",
                         gap: "4px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, color: "#b45309" }}>
-                        <AppIcon name="bolt" size={15} />
-                        <span>VERIFIKASI DIALIHKAN OTOMATIS KE MITRA (SLA TIMEOUT BPBD)</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700, color: "#013220" }}>
+                        <AppIcon name="bolt" size={14} />
+                        <span>VERIFIKASI DIALIHKAN OTOMATIS KE MITRA (SLA TIMEOUT)</span>
                       </div>
-                      <p style={{ margin: 0, color: "#78350f", lineHeight: 1.45 }}>
-                        Laporan telah melewati batas waktu respon BPBD ({sla.slaHours} Jam) dan langsung dialihkan ke <strong>{assignedMitra}</strong> untuk verifikasi lapangan &amp; pemenuhan bantuan tanpa menunggu birokrasi posko.
+                      <p style={{ margin: 0, color: "#2d3748", lineHeight: 1.45 }}>
+                        Laporan telah melewati batas waktu respon BPBD ({sla.slaHours} Jam) dan dialihkan ke <strong>{assignedMitra}</strong> untuk verifikasi lapangan &amp; pemenuhan bantuan.
                       </p>
                     </div>
                   )}
@@ -499,28 +529,30 @@ export function PoskoVerifikasiLaporan({
                   {(c.standarBnpbNote || c.kategoriKerusakanRumah) && (
                     <div
                       style={{
-                        background: "#f0fdf4",
-                        border: "1px solid #bbf7d0",
+                        background: "#fbfcfb",
+                        border: "1px solid rgba(1, 50, 32, 0.15)",
                         borderRadius: "10px",
                         padding: "10px 14px",
                         fontSize: "0.82rem",
-                        color: "#166534",
+                        color: "#013220",
                         display: "flex",
                         alignItems: "flex-start",
-                        gap: "8px",
+                        gap: "10px",
                       }}
                     >
-                      <span style={{ fontSize: "1rem", marginTop: "1px" }}>📜</span>
+                      <div style={{ marginTop: "2px", color: "#013220", flexShrink: 0 }}>
+                        <AppIcon name="file" size={14} />
+                      </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                          <strong>Pedoman Regulasi &amp; Standar Bantuan BNPB:</strong>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px", flexWrap: "wrap", gap: "6px" }}>
+                          <strong style={{ color: "#013220" }}>Pedoman Regulasi &amp; Standar Bantuan BNPB:</strong>
                           {c.skalaWilayah && (
-                            <span style={{ fontSize: "0.72rem", background: "#dcfce7", color: "#166534", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
+                            <span style={{ fontSize: "0.72rem", background: "#e8ede7", color: "#013220", border: "1px solid #c2ddc6", padding: "1px 6px", borderRadius: "4px", fontWeight: 700 }}>
                               Kewenangan: Skala {c.skalaWilayah}
                             </span>
                           )}
                         </div>
-                        <p style={{ margin: 0, color: "#14532d", lineHeight: 1.45 }}>
+                        <p style={{ margin: 0, color: "#2d3748", lineHeight: 1.45 }}>
                           {c.standarBnpbNote || (c.kategoriKerusakanRumah ? `Kepka BNPB No. 296A/2023: Stimulan Rumah ${c.kategoriKerusakanRumah} ${c.estimasiStimulanNominal ? `(Rp ${c.estimasiStimulanNominal.toLocaleString('id-ID')},-)` : ''}` : 'Standar Perka BNPB No. 7/2008')}
                         </p>
                       </div>
@@ -529,7 +561,7 @@ export function PoskoVerifikasiLaporan({
 
                   {c.notes && (
                     <div className="posko-notes-box">
-                      <div style={{ marginTop: "2px", color: "#80866e" }}><AppIcon name="file" size={14} /></div>
+                      <div style={{ marginTop: "2px", color: "#013220" }}><AppIcon name="file" size={14} /></div>
                       <div>
                         <strong>Catatan Pelapor:</strong> {c.notes}
                       </div>
@@ -540,30 +572,30 @@ export function PoskoVerifikasiLaporan({
                   {c.pertanyaanKlarifikasi && (
                     <div
                       style={{
-                        background: "#fffbeb",
-                        border: "1px solid #fde68a",
+                        background: "#fbfcfb",
+                        border: "1px solid #c2ddc6",
                         borderRadius: "10px",
                         padding: "12px 16px",
                         fontSize: "0.84rem",
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                        <span style={{ fontWeight: 700, fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "#b45309" }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "#013220" }}>
                           Klarifikasi Posko: {c.kategoriKlarifikasi || "Kelengkapan Informasi"}
                         </span>
                         {c.memintaLampiran && (
-                          <span style={{ fontSize: "0.72rem", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", padding: "2px 8px", borderRadius: "8px", fontWeight: 600 }}>
+                          <span style={{ fontSize: "0.72rem", background: "#e8ede7", color: "#013220", border: "1px solid #c2ddc6", padding: "2px 8px", borderRadius: "8px", fontWeight: 600 }}>
                             Wajib Lampiran Tambahan
                           </span>
                         )}
                       </div>
-                      <div style={{ color: "#78350f", marginBottom: c.jawabanKlarifikasi ? "8px" : 0 }}>
+                      <div style={{ color: "#2d3748", marginBottom: c.jawabanKlarifikasi ? "8px" : 0 }}>
                         <strong>Pertanyaan Posko:</strong> "{c.pertanyaanKlarifikasi}"
                       </div>
 
                       {c.jawabanKlarifikasi ? (
-                        <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #fde68a", background: "#ffffff", padding: "10px 12px", borderRadius: "8px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#15803d", fontWeight: 700, fontSize: "0.82rem", marginBottom: "4px" }}>
+                        <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px dashed #c2ddc6", background: "#ffffff", padding: "10px 12px", borderRadius: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#013220", fontWeight: 700, fontSize: "0.82rem", marginBottom: "4px" }}>
                             <AppIcon name="check" size={13} />
                             <span>Jawaban Warga Diterima (Siap Divalidasi Ulang):</span>
                           </div>
@@ -572,15 +604,15 @@ export function PoskoVerifikasiLaporan({
                           </div>
                           {c.fotoKlarifikasi && (
                             <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
-                              <span style={{ fontSize: "0.8rem", color: "#15803d", fontWeight: 600 }}>Lampiran Dokumen Baru:</span>
-                              <a href={c.fotoKlarifikasi} target="_blank" rel="noreferrer" style={{ fontSize: "0.8rem", color: "#0f766e", textDecoration: "underline", fontWeight: 600 }}>
+                              <span style={{ fontSize: "0.8rem", color: "#013220", fontWeight: 600 }}>Lampiran Dokumen Baru:</span>
+                              <a href={c.fotoKlarifikasi} target="_blank" rel="noreferrer" style={{ fontSize: "0.8rem", color: "#013220", textDecoration: "underline", fontWeight: 600 }}>
                                 Lihat Foto/Dokumen Klarifikasi
                               </a>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div style={{ marginTop: "6px", fontSize: "0.82rem", color: "#b45309", fontStyle: "italic", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <div style={{ marginTop: "6px", fontSize: "0.82rem", color: "#64748b", fontStyle: "italic", display: "flex", alignItems: "center", gap: "6px" }}>
                           <AppIcon name="clock" size={13} />
                           <span>Menunggu tanggapan &amp; kelengkapan data dari pelapor.</span>
                         </div>
@@ -592,17 +624,17 @@ export function PoskoVerifikasiLaporan({
                   {isRejected && c.alasanPenolakan && (
                     <div
                       style={{
-                        background: "#fef2f2",
-                        border: "1px solid #fecaca",
+                        background: "#fafafa",
+                        border: "1px solid #cbd5e1",
                         borderRadius: "10px",
                         padding: "10px 14px",
                         fontSize: "0.84rem",
-                        color: "#991b1b",
+                        color: "#334155",
                       }}
                     >
-                      <div style={{ fontWeight: 700, marginBottom: "4px" }}>Alasan Penolakan: {c.alasanPenolakan}</div>
+                      <div style={{ fontWeight: 700, marginBottom: "4px", color: "#0f172a" }}>Alasan Penolakan: {c.alasanPenolakan}</div>
                       {c.tindakLanjutPenolakan && (
-                        <div style={{ fontSize: "0.82rem", color: "#7f1d1d", marginTop: "4px" }}>
+                        <div style={{ fontSize: "0.82rem", color: "#475569", marginTop: "4px" }}>
                           <strong>Saran Tindak Lanjut:</strong> {c.tindakLanjutPenolakan}
                         </div>
                       )}
@@ -630,48 +662,92 @@ export function PoskoVerifikasiLaporan({
                           onClick={() => handleSimulateEscalate(c)}
                           className="btn-case-escalate"
                           style={{
-                            background: "#fffbeb",
-                            color: "#b45309",
-                            border: "1px solid #fde68a",
-                            padding: "6px 12px",
+                            background: "#ffffff",
+                            color: "#013220",
+                            border: "1px solid #c2ddc6",
+                            padding: "7px 14px",
                             borderRadius: "8px",
                             fontSize: "0.80rem",
                             fontWeight: 700,
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
+                            gap: "6px",
                             cursor: "pointer",
+                            transition: "all 0.15s ease",
                           }}
-                          title="Simulasikan trigger keterlambatan: Alihkan verifikasi langsung ke Mitra responder"
+                          title="Alihkan verifikasi langsung ke Mitra responder"
                         >
                           <AppIcon name="bolt" size={13} />
-                          <span>⚡ Alihkan ke Mitra (SLA Timeout)</span>
+                          <span>Alihkan ke Mitra</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "clarify")}
                           className="btn-case-clarify"
+                          style={{
+                            background: "#ffffff",
+                            color: "#013220",
+                            border: "1px solid #c2ddc6",
+                            padding: "7px 14px",
+                            borderRadius: "8px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
                           title="Minta klarifikasi tambahan dari pelapor"
                         >
-                          <AppIcon name="alert" size={14} />
+                          <AppIcon name="alert" size={13} />
                           <span>Minta Klarifikasi</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "reject")}
                           className="btn-case-reject"
+                          style={{
+                            background: "#ffffff",
+                            color: "#64748b",
+                            border: "1px solid #cbd5e1",
+                            padding: "7px 14px",
+                            borderRadius: "8px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
                           title="Tolak laporan jika tidak memenuhi syarat"
                         >
-                          <AppIcon name="x" size={14} />
+                          <AppIcon name="x" size={13} />
                           <span>Tolak</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "verify")}
                           className="btn-case-verify"
+                          style={{
+                            background: "#013220",
+                            color: "#ffffff",
+                            border: "1px solid #013220",
+                            padding: "7px 18px",
+                            borderRadius: "8px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(1, 50, 32, 0.15)",
+                            transition: "all 0.15s ease",
+                          }}
                           title="Verifikasi laporan dan rilis kuota ke Bursa Bantuan"
                         >
-                          <AppIcon name="check" size={14} />
+                          <AppIcon name="check" size={13} />
                           <span>Verifikasi &amp; Rilis</span>
                         </button>
                       </>
@@ -679,16 +755,29 @@ export function PoskoVerifikasiLaporan({
 
                     {isEscalated && (
                       <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "0.82rem", color: "#80866e", fontStyle: "italic" }}>
+                        <span style={{ fontSize: "0.82rem", color: "#64748b", fontStyle: "italic" }}>
                           Dialihkan ke: <strong>{assignedMitra}</strong>
                         </span>
                         <button
                           type="button"
                           onClick={() => openActionModal(c, "verify")}
                           className="btn-case-verify"
+                          style={{
+                            background: "#013220",
+                            color: "#ffffff",
+                            border: "1px solid #013220",
+                            padding: "7px 18px",
+                            borderRadius: "8px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                          }}
                           title="Validasi bersama Posko BPBD"
                         >
-                          <AppIcon name="check" size={14} />
+                          <AppIcon name="check" size={13} />
                           <span>Validasi Bersama Posko</span>
                         </button>
                       </div>
@@ -699,8 +788,21 @@ export function PoskoVerifikasiLaporan({
                         type="button"
                         onClick={() => openActionModal(c, "verify")}
                         className="btn-case-verify"
+                        style={{
+                          background: "#013220",
+                          color: "#ffffff",
+                          border: "1px solid #013220",
+                          padding: "7px 18px",
+                          borderRadius: "8px",
+                          fontSize: "0.80rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          cursor: "pointer",
+                        }}
                       >
-                        <AppIcon name="check" size={14} />
+                        <AppIcon name="check" size={13} />
                         <span>Selesai Klarifikasi &amp; Rilis</span>
                       </button>
                     )}
@@ -867,7 +969,7 @@ export function PoskoVerifikasiLaporan({
 
             {modalAction === "reject" && (
               <>
-                <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "10px", padding: "10px 14px", marginBottom: "14px", fontSize: "0.84rem", color: "#991b1b" }}>
+                <div style={{ background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: "10px", padding: "10px 14px", marginBottom: "14px", fontSize: "0.84rem", color: "#334155" }}>
                   <strong>Kebijakan Posko:</strong> Jika masalah data masih dapat diperbaiki oleh warga, gunakan opsi <strong>Minta Klarifikasi</strong> alih-alih menolak.
                 </div>
 
@@ -918,7 +1020,7 @@ export function PoskoVerifikasiLaporan({
                 disabled={isSubmitting || (modalAction === "reject" && !notesInput.trim()) || (modalAction === "clarify" && !notesInput.trim())}
                 onClick={handleExecuteAction}
                 style={{
-                  background: modalAction === "reject" ? "#991b1b" : "#013220",
+                  background: modalAction === "reject" ? "#334155" : "#013220",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "8px",
