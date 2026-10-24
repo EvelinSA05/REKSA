@@ -1,9 +1,23 @@
 import { useState, useEffect } from "react";
-import { CaseRecord } from "../../App";
+import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 import { BastPrintModal } from "../common/BastPrintModal";
+
+export const getFleetOrDeliveryPhoto = (armadaInfo?: string, commodityItem?: string, fotoBukti?: string) => {
+  if (fotoBukti && typeof fotoBukti === "string" && fotoBukti.trim() !== "" && fotoBukti !== "null") {
+    return fotoBukti;
+  }
+  const armada = (armadaInfo || "").toLowerCase();
+  if (armada.includes("ambulans") || armada.includes("ambulance")) {
+    return "https://images.unsplash.com/photo-1587745416684-47953f16f02f?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+  }
+  if (armada.includes("box") || armada.includes("truk") || armada.includes("truck") || armada.includes("pickup") || armada.includes("armada")) {
+    return "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+  }
+  return getFieldEvidencePhoto(commodityItem || armadaInfo);
+};
 
 interface PoskoDistribusiPenerimaanProps {
   misiList: MisiItem[];
@@ -26,6 +40,7 @@ export function PoskoDistribusiPenerimaan({
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
 
   useEffect(() => {
     if (selectedCaseId) {
@@ -457,27 +472,57 @@ export function PoskoDistribusiPenerimaan({
                   </div>
                 </div>
 
-                {/* 2. Title */}
-                <div>
-                  <h3 className="posko-case-title">
-                    Muatan: {m.muatan} · {m.organisasi}
-                  </h3>
-                </div>
+                {/* 2. Main Body with Visual Fleet / Logistics Thumbnail */}
+                <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
+                  <div
+                    className="posko-case-photo-thumb"
+                    onClick={() =>
+                      setPreviewImage({
+                        src: getFleetOrDeliveryPhoto(m.armada_info, m.kebutuhan?.item, m.foto_bukti || m.kebutuhan?.foto_bukti),
+                        title: `Misi ${m.kode_misi} · ${m.armada_info}`,
+                        location: `Muatan: ${m.muatan} · ${m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Lapangan'}`,
+                      })
+                    }
+                    title="Klik untuk memperbesar foto armada & muatan logistik"
+                  >
+                    <img
+                      src={getFleetOrDeliveryPhoto(m.armada_info, m.kebutuhan?.item, m.foto_bukti || m.kebutuhan?.foto_bukti)}
+                      alt={m.armada_info}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+                      }}
+                      className="posko-case-photo-img"
+                    />
+                    <div className="posko-case-photo-badge">
+                      <AppIcon name="truck" size={11} />
+                      <span>{m.armada_info ? "Armada & Muatan" : "Dokumentasi"}</span>
+                    </div>
+                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                    </div>
+                  </div>
 
-                {/* 3. Metadata Row */}
-                <div className="posko-case-meta-row">
-                  <span className="posko-case-meta-item">
-                    <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
-                    <span>Narahubung Armada: <strong>{m.responder_name}</strong></span>
-                  </span>
-                  <span className="posko-case-meta-item">
-                    <AppIcon name="truck" size={13} style={{ color: "#80866e" }} />
-                    <span>Armada: <strong>{m.armada_info}</strong></span>
-                  </span>
-                  <span className="posko-case-meta-item">
-                    <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
-                    <span>Tujuan: <strong>{m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Wilayah'}</strong></span>
-                  </span>
+                  <div className="posko-case-info-col">
+                    <h3 className="posko-case-title">
+                      Muatan: {m.muatan} · {m.organisasi}
+                    </h3>
+
+                    <div className="posko-case-meta-row">
+                      <span className="posko-case-meta-item">
+                        <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
+                        <span>Narahubung Armada: <strong>{m.responder_name}</strong></span>
+                      </span>
+                      <span className="posko-case-meta-item">
+                        <AppIcon name="truck" size={13} style={{ color: "#80866e" }} />
+                        <span>Armada: <strong>{m.armada_info}</strong></span>
+                      </span>
+                      <span className="posko-case-meta-item">
+                        <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
+                        <span>Tujuan: <strong>{m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Wilayah'}</strong></span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* 4. Obstacle Alert Callout */}
@@ -829,6 +874,113 @@ export function PoskoDistribusiPenerimaan({
           misi={selectedBastMisi}
           onClose={() => setSelectedBastMisi(null)}
         />
+      )}
+
+      {/* IMAGE PREVIEW LIGHTBOX MODAL */}
+      {previewImage && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setPreviewImage(null)}
+          style={{ zIndex: 99999, background: "rgba(0,0,0,0.75)" }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "600px",
+              width: "90%",
+              padding: 0,
+              overflow: "hidden",
+              borderRadius: "16px",
+              background: "#ffffff",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "16px 20px",
+                borderBottom: "1px solid #e2e8f0",
+                background: "#fdfbf7",
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1rem", color: "#013220", fontWeight: 700 }}>
+                  {previewImage.title}
+                </h3>
+                {previewImage.location && (
+                  <span style={{ fontSize: "0.8rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
+                    <AppIcon name="pin" size={12} /> {previewImage.location}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  color: "#64748b",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              style={{
+                background: "#0f172a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "260px",
+                maxHeight: "65vh",
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                style={{
+                  width: "100%",
+                  maxHeight: "65vh",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                padding: "12px 18px",
+                background: "#f8faf9",
+                borderTop: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: "0.82rem",
+                color: "#475569",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <AppIcon name="truck" size={13} style={{ color: "#16a34a" }} />
+                <span>Dokumentasi Resmi Armada Penyaluran</span>
+              </span>
+              <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                REKSA Logistics Fleet
+              </span>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

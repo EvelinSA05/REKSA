@@ -1,7 +1,24 @@
 import { useState, useEffect } from "react";
-import { CaseRecord } from "../../App";
+import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { BursaItem, PenawaranItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
+
+export const getOfferPhoto = (jenisBantuan?: string, armadaInfo?: string, fotoBukti?: string) => {
+  if (fotoBukti && typeof fotoBukti === "string" && fotoBukti.trim() !== "" && fotoBukti !== "null") {
+    return fotoBukti;
+  }
+  const armada = (armadaInfo || "").toLowerCase();
+  if (armada.includes("ambulans") || armada.includes("ambulance")) {
+    return "https://images.unsplash.com/photo-1587745416684-47953f16f02f?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+  }
+  if (armada.includes("box") || armada.includes("truk") || armada.includes("truck") || armada.includes("pickup") || armada.includes("armada")) {
+    const jenis = (jenisBantuan || "").toLowerCase();
+    if (!jenis || jenis.includes("semua")) {
+      return "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+    }
+  }
+  return getFieldEvidencePhoto(jenisBantuan);
+};
 
 interface PoskoPenawaranAlokasiProps {
   penawaranList: PenawaranItem[];
@@ -24,6 +41,7 @@ export function PoskoPenawaranAlokasi({
 }: PoskoPenawaranAlokasiProps) {
   const [tab, setTab] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const [caseFilter, setCaseFilter] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
 
   // Approval / Rejection modal
   const [activeOffer, setActiveOffer] = useState<PenawaranItem | null>(null);
@@ -366,55 +384,34 @@ export function PoskoPenawaranAlokasi({
                 }}
               >
                 {/* Header Row */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "6px" }}>
-                      <span
-                        style={{
-                          fontFamily: "monospace",
-                          fontWeight: 800,
-                          fontSize: "0.95rem",
-                          color: "#013220",
-                          background: "#f1f5f2",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                        }}
-                      >
-                        {o.kode_penawaran}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: "12px",
-                          background: isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#fffbeb",
-                          color: isApproved ? "#15803d" : isRejected ? "#991b1b" : "#b45309",
-                          border: `1px solid ${isApproved ? "#bbf7d0" : isRejected ? "#fecaca" : "#fde68a"}`,
-                        }}
-                      >
-                        {o.status}
-                      </span>
-                    </div>
-
-                    <h3 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
-                      {o.organisasi} · Penawaran: {o.jumlah_tawaran}
-                    </h3>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="box" size={13} style={{ color: "#80866e" }} />
-                        <span>Komoditas: <strong>{o.jenis_bantuan}</strong></span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
-                        <span>Narahubung: <strong>{o.mitra_name}</strong></span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
-                        <span>Diajukan: {new Date(o.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
-                      </span>
-                    </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", marginBottom: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <span
+                      style={{
+                        fontFamily: "monospace",
+                        fontWeight: 800,
+                        fontSize: "0.95rem",
+                        color: "#013220",
+                        background: "#f1f5f2",
+                        padding: "2px 8px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      {o.kode_penawaran}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: "12px",
+                        background: isApproved ? "#f0fdf4" : isRejected ? "#fef2f2" : "#fffbeb",
+                        color: isApproved ? "#15803d" : isRejected ? "#991b1b" : "#b45309",
+                        border: `1px solid ${isApproved ? "#bbf7d0" : isRejected ? "#fecaca" : "#fde68a"}`,
+                      }}
+                    >
+                      {o.status}
+                    </span>
                   </div>
 
                   {/* Actions */}
@@ -491,6 +488,63 @@ export function PoskoPenawaranAlokasi({
                         Ditolak Posko
                       </span>
                     )}
+                  </div>
+                </div>
+
+                {/* Main Body with Visual Supporting Photo */}
+                <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
+                  <div
+                    className="posko-case-photo-thumb"
+                    onClick={() =>
+                      setPreviewImage({
+                        src: getOfferPhoto(o.jenis_bantuan, o.armada_info, (o as any).foto_bukti),
+                        title: `Proposal Komitmen: ${o.organisasi}`,
+                        location: `Komoditas: ${o.jenis_bantuan} (${o.jumlah_tawaran}) · ${o.armada_info || "Armada Mitra"}`,
+                      })
+                    }
+                    title="Klik untuk memperbesar foto komoditas & armada mitra"
+                  >
+                    <img
+                      src={getOfferPhoto(o.jenis_bantuan, o.armada_info, (o as any).foto_bukti)}
+                      alt={o.jenis_bantuan}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+                      }}
+                      className="posko-case-photo-img"
+                    />
+                    <div className="posko-case-photo-badge">
+                      <AppIcon name="box" size={11} />
+                      <span>Dokumentasi Mitra</span>
+                    </div>
+                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                    </div>
+                  </div>
+
+                  <div className="posko-case-info-col">
+                    <h3 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
+                      {o.organisasi} · Penawaran: {o.jumlah_tawaran}
+                    </h3>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <AppIcon name="box" size={13} style={{ color: "#80866e" }} />
+                        <span>Komoditas: <strong>{o.jenis_bantuan}</strong></span>
+                      </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
+                        <span>Narahubung: <strong>{o.mitra_name}</strong></span>
+                      </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <AppIcon name="truck" size={13} style={{ color: "#80866e" }} />
+                        <span>Armada: <strong>{o.armada_info || "Armada Mitra"}</strong></span>
+                      </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
+                        <span>Diajukan: {new Date(o.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -663,6 +717,113 @@ export function PoskoPenawaranAlokasi({
               >
                 {isSubmitting ? "Memproses..." : modalType === "approvePartial" ? "Konfirmasi Persetujuan Sebagian" : "Simpan Penolakan"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* IMAGE PREVIEW LIGHTBOX MODAL */}
+      {previewImage && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setPreviewImage(null)}
+          style={{ zIndex: 99999, background: "rgba(0,0,0,0.75)" }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "600px",
+              width: "90%",
+              padding: 0,
+              overflow: "hidden",
+              borderRadius: "16px",
+              background: "#ffffff",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "16px 20px",
+                borderBottom: "1px solid #e2e8f0",
+                background: "#fdfbf7",
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: "1rem", color: "#013220", fontWeight: 700 }}>
+                  {previewImage.title}
+                </h3>
+                {previewImage.location && (
+                  <span style={{ fontSize: "0.8rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px", marginTop: "2px" }}>
+                    <AppIcon name="box" size={12} /> {previewImage.location}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  background: "#f1f5f9",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  color: "#64748b",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              style={{
+                background: "#0f172a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "260px",
+                maxHeight: "65vh",
+                overflow: "hidden",
+              }}
+            >
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                style={{
+                  width: "100%",
+                  maxHeight: "65vh",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </div>
+
+            <div
+              style={{
+                padding: "12px 18px",
+                background: "#f8faf9",
+                borderTop: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: "0.82rem",
+                color: "#475569",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <AppIcon name="check" size={13} style={{ color: "#16a34a" }} />
+                <span>Dokumentasi Resmi Komitmen Mitra</span>
+              </span>
+              <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                REKSA Logistics Network
+              </span>
             </div>
           </div>
         </div>
