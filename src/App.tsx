@@ -3079,26 +3079,37 @@ function CaseDetail({
             className="case-evidence-geo-grid"
             style={{ 
               display: "grid", 
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", 
-              gap: "20px", 
-              alignItems: "stretch" 
+              gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", 
+              gap: "16px", 
+              alignItems: "stretch",
+              width: "100%"
             }}
           >
             {/* GAMBAR 3 REVISION: FOTO BUKTI KONDISI LAPANGAN */}
-            <div className="case-section-card" style={{ display: "flex", flexDirection: "column", height: "100%", margin: 0 }}>
-              <div className="case-section-header">
-                <div className="section-icon-box"><Icon name="pin" /></div>
+            <div 
+              className="case-section-card case-evidence-card" 
+              style={{ 
+                display: "flex", 
+                flexDirection: "column", 
+                height: "100%", 
+                margin: 0, 
+                padding: "20px 20px", 
+                minWidth: 0 
+              }}
+            >
+              <div className="case-section-header" style={{ marginBottom: "16px", paddingBottom: "12px", gap: "12px" }}>
+                <div className="section-icon-box" style={{ width: "34px", height: "34px" }}><Icon name="pin" /></div>
                 <div className="case-section-header-text">
-                  <span className="eyebrow">Validasi Visual Lokasi</span>
-                  <h3>Foto Bukti Kondisi Lapangan</h3>
-                  <small>Dokumentasi visual terverifikasi di titik lokasi penanganan pemohon</small>
+                  <span className="eyebrow" style={{ fontSize: "10px" }}>Validasi Visual Lokasi</span>
+                  <h3 style={{ fontSize: "1rem", margin: "2px 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Foto Bukti Kondisi Lapangan</h3>
+                  <small style={{ fontSize: "0.75rem", display: "block", color: "#64748b" }}>Dokumentasi visual terverifikasi di titik lokasi penanganan</small>
                 </div>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "14px", flex: 1 }}>
                 {/* Foto Bukti Awal */}
-                <figure className="case-evidence-frame" style={{ margin: 0, display: "flex", flexDirection: "column", flex: 1 }}>
-                  <div style={{ padding: "8px 12px", background: "#f8fafc", borderBottom: "1px solid rgba(1,50,32,0.08)", fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>
+                <figure className="case-evidence-frame" style={{ margin: 0, display: "flex", flexDirection: "column", flex: 1, borderRadius: "12px", overflow: "hidden" }}>
+                  <div style={{ padding: "8px 12px", background: "#f8fafc", borderBottom: "1px solid rgba(1,50,32,0.08)", fontSize: "0.78rem", fontWeight: 700, color: "#334155" }}>
                     📷 1. Foto / Dokumentasi Awal Saat Pelaporan
                   </div>
                   <img 
@@ -3109,19 +3120,19 @@ function CaseDetail({
                     }}
                     style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }}
                   />
-                  <figcaption className="case-evidence-caption" style={{ marginTop: "auto" }}>
-                    <div className="evidence-caption-main">
-                      <span><Icon name="pin" /> Titik Lokasi: {activeCase.location}</span>
-                      <small>{activeCase.fotoBukti ? "Dokumentasi Lapangan Diunggah Langsung Oleh Pemohon" : `Validasi Geotag Terhubung ke ${activeCase.posko?.split(" - ")[0] || "Posko BPBD"}`}</small>
+                  <figcaption className="case-evidence-caption" style={{ marginTop: "auto", padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                    <div className="evidence-caption-main" style={{ minWidth: 0, flex: 1 }}>
+                      <span style={{ fontSize: "11px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}><Icon name="pin" /> Titik: {activeCase.location}</span>
+                      <small style={{ fontSize: "10px", display: "block" }}>{activeCase.fotoBukti ? "Diunggah Langsung Oleh Pemohon" : `Terhubung ke ${activeCase.posko?.split(" - ")[0] || "Posko BPBD"}`}</small>
                     </div>
-                    <span className="evidence-badge"><Icon name="check" /> Foto Awal Pelapor</span>
+                    <span className="evidence-badge" style={{ fontSize: "10.5px", padding: "3px 8px" }}><Icon name="check" /> Foto Awal Pelapor</span>
                   </figcaption>
                 </figure>
 
                 {/* Foto / Dokumen Klarifikasi Terbaru (Jika ada perbaikan) */}
                 {activeCase.fotoKlarifikasi && (
-                  <figure className="case-evidence-frame" style={{ margin: 0, border: "2px solid #10b981" }}>
-                    <div style={{ padding: "8px 12px", background: "#ecfdf5", borderBottom: "1px solid #a7f3d0", fontSize: "0.8rem", fontWeight: 700, color: "#065f46" }}>
+                  <figure className="case-evidence-frame" style={{ margin: 0, border: "2px solid #10b981", borderRadius: "12px", overflow: "hidden" }}>
+                    <div style={{ padding: "8px 12px", background: "#ecfdf5", borderBottom: "1px solid #a7f3d0", fontSize: "0.78rem", fontWeight: 700, color: "#065f46" }}>
                       ✨ 2. Berkas / Foto Lampiran Klarifikasi Terbaru
                     </div>
                     <img 
@@ -3132,12 +3143,12 @@ function CaseDetail({
                       }}
                       style={{ width: "100%", height: "220px", objectFit: "cover", display: "block" }}
                     />
-                    <figcaption className="case-evidence-caption" style={{ background: "#f0fdf4" }}>
-                      <div className="evidence-caption-main">
-                        <span style={{ color: "#065f46", fontWeight: 700 }}>Dokumen/Foto Tambahan Klarifikasi</span>
-                        <small style={{ color: "#047857" }}>Diunggah pelapor untuk melengkapi permintaan klarifikasi Posko BPBD</small>
+                    <figcaption className="case-evidence-caption" style={{ background: "#f0fdf4", padding: "10px 12px" }}>
+                      <div className="evidence-caption-main" style={{ minWidth: 0, flex: 1 }}>
+                        <span style={{ color: "#065f46", fontWeight: 700, fontSize: "11px" }}>Dokumen Tambahan Klarifikasi</span>
+                        <small style={{ color: "#047857", fontSize: "10px" }}>Melengkapi permintaan klarifikasi Posko</small>
                       </div>
-                      <span className="evidence-badge" style={{ background: "#10b981", color: "#fff" }}><Icon name="check" /> Revisi Terkini</span>
+                      <span className="evidence-badge" style={{ background: "#10b981", color: "#fff", fontSize: "10.5px", padding: "3px 8px" }}><Icon name="check" /> Revisi Terkini</span>
                     </figcaption>
                   </figure>
                 )}
@@ -3145,7 +3156,7 @@ function CaseDetail({
 
               {/* Riwayat Putaran Klarifikasi (Audit Trail) */}
               {Array.isArray(activeCase.riwayatKlarifikasi) && activeCase.riwayatKlarifikasi.length > 0 && (
-                <div style={{ marginTop: "16px", background: "#fbfbf8", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(1,50,32,0.1)" }}>
+                <div style={{ marginTop: "16px", background: "#fbfbf8", padding: "12px 14px", borderRadius: "12px", border: "1px solid rgba(1,50,32,0.1)" }}>
                   <span style={{ fontSize: "11px", color: "#758378", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: "8px" }}>
                     📜 Riwayat Klarifikasi BPBD &amp; Masyarakat
                   </span>
@@ -3176,27 +3187,46 @@ function CaseDetail({
             </div>
 
             {/* GAMBAR 3 REVISION: PETA TITIK LOKASI & WILAYAH KASUS (TITIK KOORDINAT PRESISI) */}
-            <div className="case-section-card" style={{ display: "flex", flexDirection: "column", height: "100%", margin: 0 }}>
-              <div className="case-section-header">
-                <div className="section-icon-box"><Icon name="map" /></div>
+            <div 
+              className="case-section-card case-geo-card" 
+              style={{ 
+                display: "flex", 
+                flexDirection: "column", 
+                height: "100%", 
+                margin: 0, 
+                padding: "20px 20px", 
+                minWidth: 0 
+              }}
+            >
+              <div className="case-section-header" style={{ marginBottom: "16px", paddingBottom: "12px", gap: "12px" }}>
+                <div className="section-icon-box" style={{ width: "34px", height: "34px" }}><Icon name="map" /></div>
                 <div className="case-section-header-text">
-                  <span className="eyebrow">Pemetaan Geografis</span>
-                  <h3>Peta Titik Lokasi &amp; Wilayah Kasus</h3>
-                  <small>Koordinat presisi ({caseLat.toFixed(5)}, {caseLng.toFixed(5)}) · {activeCase.location}</small>
+                  <span className="eyebrow" style={{ fontSize: "10px" }}>Pemetaan Geografis</span>
+                  <h3 style={{ fontSize: "1rem", margin: "2px 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Peta Titik Lokasi &amp; Wilayah</h3>
+                  <small style={{ fontSize: "0.75rem", display: "block", color: "#64748b" }}>Koordinat presisi ({caseLat.toFixed(5)}, {caseLng.toFixed(5)})</small>
                 </div>
               </div>
-              <div className="case-map-container" style={{ flex: 1, minHeight: "220px" }}>
-                <MapView 
-                  operational 
-                  hideCard 
-                  initialLat={caseLat} 
-                  initialLng={caseLng} 
-                  locationAddress={activeCase.location}
-                  caseTitle={activeCase.item}
-                  caseId={activeCase.id}
-                  caseKk={activeCase.kk}
-                  caseUrgency={activeCase.urgency}
-                />
+              <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+                <div className="case-map-container" style={{ flex: 1, minHeight: "220px", height: "220px", borderRadius: "12px" }}>
+                  <MapView 
+                    operational 
+                    hideCard 
+                    initialLat={caseLat} 
+                    initialLng={caseLng} 
+                    locationAddress={activeCase.location}
+                    caseTitle={activeCase.item}
+                    caseId={activeCase.id}
+                    caseKk={activeCase.kk}
+                    caseUrgency={activeCase.urgency}
+                  />
+                </div>
+                <div className="case-evidence-caption" style={{ marginTop: "auto", padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px", borderRadius: "0 0 12px 12px", border: "1px solid rgba(1,50,32,0.08)", borderTop: "none" }}>
+                  <div className="evidence-caption-main" style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: "11px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>📍 Wilayah: {activeCase.location}</span>
+                    <small style={{ fontSize: "10px", display: "block" }}>Presisi Titik Geospasial OpenStreetMap</small>
+                  </div>
+                  <span className="evidence-badge" style={{ fontSize: "10.5px", padding: "3px 8px", background: "rgba(16, 185, 129, 0.12)", color: "#065f46" }}><Icon name="check" /> Peta Presisi</span>
+                </div>
               </div>
             </div>
           </div>

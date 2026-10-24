@@ -5813,6 +5813,25 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   height: 100%;
 }
 
+/* Side-by-Side Visual Evidence & Geographic Map */
+.case-evidence-geo-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+}
+
+.case-evidence-geo-grid .case-section-card {
+  min-width: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .case-evidence-geo-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* Allocation Cards & Callout Review */
 .alloc-callout-card {
   border-radius: 14px;
