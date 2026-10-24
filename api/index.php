@@ -28,22 +28,6 @@ putenv("APP_SERVICES_CACHE={$storagePath}/framework/cache/services.php");
 putenv("APP_PACKAGES_CACHE={$storagePath}/framework/cache/packages.php");
 putenv("APP_ROUTES_CACHE={$storagePath}/framework/cache/routes.php");
 
-// 3. Fallback Supabase Cloud Environment Variables
-if (!getenv('DB_HOST')) {
-    putenv("DB_CONNECTION=pgsql");
-    putenv("DB_HOST=aws-0-ap-southeast-2.pooler.supabase.com");
-    putenv("DB_PORT=6543");
-    putenv("DB_DATABASE=postgres");
-    putenv("DB_USERNAME=postgres.hwrwsevzxqaqrjnxhnrg");
-    putenv("DB_PASSWORD=Tkq4elfhemR5ztMM");
-    putenv("DB_SSLMODE=require");
-}
-if (!getenv('APP_KEY')) {
-    putenv("APP_KEY=base64:jJcy4arwNxl3XEPDbrMjdIXpXX+7mKFXI9oGmnimmp4=");
-}
-if (!getenv('APP_ENV')) {
-    putenv("APP_ENV=production");
-}
 
 // 4. Normalize script name so Laravel correctly matches /api/* routes
 $_SERVER['SCRIPT_NAME'] = '/index.php';
