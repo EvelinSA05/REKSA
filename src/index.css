@@ -4436,7 +4436,7 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 
 .btn-notif-action {
   border: 1px solid rgba(1, 50, 32, 0.14);
-  background: transparent;
+  background: #f0fdf4;
   color: var(--forest);
   font-size: 12px;
   font-weight: 600;
@@ -4450,7 +4450,9 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   white-space: nowrap;
 }
 
-.notif-inbox-card:hover .btn-notif-action {
+.notif-inbox-card:hover .btn-notif-action,
+.btn-notif-action:hover,
+.btn-notif-action:active {
   background: var(--forest);
   color: var(--white);
   border-color: var(--forest);
@@ -11715,9 +11717,19 @@ img, svg, video, canvas {
     justify-content: center !important;
     padding: 9px 16px !important;
     font-size: 12.5px !important;
-    background: #f8fafc !important;
-    border: 1px solid rgba(1, 50, 32, 0.15) !important;
+    font-weight: 600 !important;
+    background: #f0fdf4 !important;
+    color: var(--forest) !important;
+    border: 1px solid rgba(1, 50, 32, 0.18) !important;
     border-radius: 10px !important;
+    transition: all 0.2s ease !important;
+  }
+  .notif-inbox-card:hover .btn-notif-action,
+  .btn-notif-action:hover,
+  .btn-notif-action:active {
+    background: var(--forest) !important;
+    color: #ffffff !important;
+    border-color: var(--forest) !important;
   }
 
   /* Chat Koordinasi Mobile Optimization */
