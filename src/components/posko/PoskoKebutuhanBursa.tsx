@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CaseRecord } from "../../App";
+import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { BursaItem, PenawaranItem } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 
@@ -23,6 +23,7 @@ export function PoskoKebutuhanBursa({
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
 
   // Filter verified cases (either in bursaList or status is Kebutuhan Terbuka / Sebagian / Teralokasi / Selesai)
   const verifiedCases = cases.filter((c) => {
@@ -443,29 +444,61 @@ export function PoskoKebutuhanBursa({
                   </div>
                 </div>
 
-                {/* 2. Title */}
-                <div>
-                  <h3 className="posko-case-title">
-                    Kebutuhan {c.item} · {c.qty}
-                  </h3>
-                </div>
+                {/* 2. Main Body with Visual Evidence Thumbnail */}
+                <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
+                  {/* Visual Photo Thumbnail */}
+                  <div
+                    className="posko-case-photo-thumb"
+                    onClick={() =>
+                      setPreviewImage({
+                        src: getFieldEvidencePhoto(c.item, c.fotoBukti),
+                        title: `Kebutuhan ${c.item} · ${c.qty}`,
+                        location: c.location,
+                      })
+                    }
+                    title="Klik untuk memperbesar foto dokumentasi"
+                  >
+                    <img
+                      src={getFieldEvidencePhoto(c.item, c.fotoBukti)}
+                      alt={c.item}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+                      }}
+                      className="posko-case-photo-img"
+                    />
+                    <div className="posko-case-photo-badge">
+                      <AppIcon name="camera" size={11} />
+                      <span>{c.fotoBukti ? "Foto Pelapor" : "Dokumentasi"}</span>
+                    </div>
+                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                      🔍
+                    </div>
+                  </div>
 
-                {/* 3. Metadata Row */}
-                <div className="posko-case-meta-row">
-                  <span className="posko-case-meta-item">
-                    <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
-                    <span>{c.location}</span>
-                  </span>
-                  <span className="posko-case-meta-item">
-                    <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
-                    <span><strong>{(c.kk || "").toString().toLowerCase().includes("kk") ? c.kk : `${c.kk} KK`}</strong> Terdampak</span>
-                  </span>
-                  {(c as any).reporter && (
-                    <span className="posko-case-meta-item">
-                      <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
-                      <span>Pelapor: <strong>{(c as any).reporter}</strong></span>
-                    </span>
-                  )}
+                  {/* Title & Metadata */}
+                  <div className="posko-case-info-col">
+                    <h3 className="posko-case-title">
+                      Kebutuhan {c.item} · {c.qty}
+                    </h3>
+
+                    <div className="posko-case-meta-row">
+                      <span className="posko-case-meta-item">
+                        <AppIcon name="pin" size={13} style={{ color: "#80866e" }} />
+                        <span>{c.location}</span>
+                      </span>
+                      <span className="posko-case-meta-item">
+                        <AppIcon name="users" size={13} style={{ color: "#80866e" }} />
+                        <span><strong>{(c.kk || "").toString().toLowerCase().includes("kk") ? c.kk : `${c.kk} KK`}</strong> Terdampak</span>
+                      </span>
+                      {(c.applicantName || (c as any).reporter) && (
+                        <span className="posko-case-meta-item">
+                          <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
+                          <span>Pelapor: <strong>{c.applicantName || (c as any).reporter}</strong></span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* 4. Unified Balance Panel */}
@@ -604,6 +637,122 @@ export function PoskoKebutuhanBursa({
             >
               Selanjutnya <span>&rarr;</span>
             </button>
+          </div>
+        </div>
+      )}
+      {/* Lightbox Photo Preview Modal */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              overflow: "hidden",
+              maxWidth: "680px",
+              width: "100%",
+              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.35)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              style={{
+                padding: "14px 18px",
+                background: "#013220",
+                color: "#ffffff",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <AppIcon name="camera" size={16} />
+                <span style={{ fontWeight: 700, fontSize: "0.92rem" }}>
+                  {previewImage.title}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  background: "rgba(255, 255, 255, 0.15)",
+                  border: "none",
+                  color: "#ffffff",
+                  borderRadius: "50%",
+                  width: "28px",
+                  height: "28px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 800,
+                  fontSize: "0.85rem",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div
+              style={{
+                background: "#0b130e",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "280px",
+                maxHeight: "65vh",
+              }}
+            >
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                style={{
+                  width: "100%",
+                  maxHeight: "65vh",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </div>
+
+            {previewImage.location && (
+              <div
+                style={{
+                  padding: "12px 18px",
+                  background: "#f8faf9",
+                  borderTop: "1px solid #e2e8f0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontSize: "0.82rem",
+                  color: "#475569",
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AppIcon name="pin" size={13} style={{ color: "#013220" }} />
+                  <span>{previewImage.location}</span>
+                </span>
+                <span style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                  Dokumentasi Bencana Terverifikasi
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
