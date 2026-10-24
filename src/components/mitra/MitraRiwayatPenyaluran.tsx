@@ -365,7 +365,7 @@ export function MitraRiwayatPenyaluran({
         </div>
       ) : paginatedMissions.length === 0 ? (
         <div className="reksa-empty-state">
-          <div className="reksa-empty-icon">🔍</div>
+          <div className="reksa-empty-icon"><AppIcon name="search" size={28} style={{ color: "#80866e" }} /></div>
           <h3 className="reksa-empty-title">Tidak Ditemukan Riwayat yang Cocok</h3>
           <p className="reksa-empty-desc">
             Tidak ada riwayat penyaluran yang memenuhi kriteria pencarian "<strong>{search}</strong>".

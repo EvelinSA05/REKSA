@@ -540,7 +540,7 @@ export function MitraBursaBantuan({
                       <span>{item.kebutuhan?.foto_bukti || cases?.find((c) => c.id === item.kode_kasus)?.fotoBukti ? "Foto Pelapor" : "Dokumentasi"}</span>
                     </div>
                     <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
-                      🔍
+                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
                     </div>
                   </div>
 

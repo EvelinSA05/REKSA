@@ -7476,23 +7476,26 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   position: absolute;
   top: 6px;
   right: 6px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
+  background: rgba(1, 50, 32, 0.82);
+  backdrop-filter: blur(6px);
   color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
-  opacity: 0.9;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  opacity: 0.95;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .posko-case-photo-thumb:hover .posko-case-photo-zoom {
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.12);
+  background: #013220;
+  border-color: #ffffff;
 }
 
 .posko-case-info-col {
