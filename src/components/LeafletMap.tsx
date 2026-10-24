@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import { apiService, PoskoItem } from '../services/api';
+import { resolveCaseGeoLocation } from '../utils/geoUtils';
 
 export interface LocationInfo {
   lat: number;
@@ -792,7 +793,14 @@ export function LeafletMap({
     } else if (operational) {
       if (Array.isArray(cases) && cases.length > 0) {
         const bounds: [number, number][] = [];
-        const validCases = cases.filter(
+        const validCases = cases.map((c) => {
+          const geo = resolveCaseGeoLocation(c);
+          return {
+            ...c,
+            lat: geo.lat,
+            lng: geo.lng,
+          };
+        }).filter(
           (c) => Number.isFinite(Number(c?.lat)) && Number.isFinite(Number(c?.lng))
         );
 
@@ -1287,8 +1295,9 @@ export function LeafletMap({
         }, 650);
       } else if (Array.isArray(cases) && map) {
         const foundCase = cases.find((c) => String(c?.id).trim() === cleanId);
-        if (foundCase && Number.isFinite(Number(foundCase.lat)) && Number.isFinite(Number(foundCase.lng))) {
-          map.flyTo([Number(foundCase.lat), Number(foundCase.lng)], 15.5, { animate: true, duration: 0.6 });
+        if (foundCase) {
+          const geo = resolveCaseGeoLocation(foundCase);
+          map.flyTo([geo.lat, geo.lng], 15.5, { animate: true, duration: 0.6 });
         }
       }
     }

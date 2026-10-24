@@ -1,5 +1,7 @@
 import React, { Component, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { ChatKoordinasi } from "./components/common/ChatKoordinasi";
+import { resolveCaseGeoLocation } from "./utils/geoUtils";
+export { resolveCaseGeoLocation };
 
 export type Role = "citizen" | "posko" | "responder";
 type Screen = "home" | "login" | "portal";
@@ -4102,7 +4104,8 @@ function MapPage({
     if (scrollToMap) {
       const mapSection = document.getElementById("reksa-gis-map-container");
       if (mapSection) {
-        mapSection.scrollIntoView({ behavior: "smooth", block: "center" });
+        const topOffset = mapSection.getBoundingClientRect().top + window.pageYOffset - 90;
+        window.scrollTo({ top: Math.max(0, topOffset), behavior: "smooth" });
       }
     }
   };
@@ -6430,8 +6433,11 @@ export default function App() {
                 c.id === "RK-2026-4XGZJ0"
               );
               const isResolved = ["terbuka", "sebagian", "selesai", "tolak"].some((k) => (c.status || "").toLowerCase().includes(k));
+              const geo = resolveCaseGeoLocation(c);
               return {
                 ...c,
+                lat: geo.lat,
+                lng: geo.lng,
                 escalatedToMitra: isEsc,
                 status: isEsc && !isResolved ? "Dialihkan ke Mitra" : c.status,
                 mitraHandler: c.mitraHandler || (isEsc ? "Palang Merah Indonesia (PMI Cabang Jawa Timur)" : undefined),
@@ -6445,10 +6451,15 @@ export default function App() {
 
     if (savedList.length === 0) {
       const reportedIds = getUserReportedIds();
-      savedList = DEMO_SEED_CASES.map((c) => ({
-        ...c,
-        isOwn: Boolean(reportedIds.includes(c.id) || c.isOwn),
-      }));
+      savedList = DEMO_SEED_CASES.map((c) => {
+        const geo = resolveCaseGeoLocation(c);
+        return {
+          ...c,
+          lat: geo.lat,
+          lng: geo.lng,
+          isOwn: Boolean(reportedIds.includes(c.id) || c.isOwn),
+        };
+      });
       try {
         localStorage.setItem("reksa_cases_db", JSON.stringify(savedList));
         localStorage.setItem("reksa_user_reported_ids", JSON.stringify(reportedIds));
@@ -6460,8 +6471,11 @@ export default function App() {
       let hasAddedSeeds = false;
       for (const seed of DEMO_SEED_CASES) {
         if (!existingIds.has(seed.id)) {
+          const geo = resolveCaseGeoLocation(seed);
           savedList.push({
             ...seed,
+            lat: geo.lat,
+            lng: geo.lng,
             isOwn: Boolean(reportedIds.includes(seed.id) || seed.isOwn),
           });
           hasAddedSeeds = true;
@@ -6654,6 +6668,19 @@ export default function App() {
                 : "Palang Merah Indonesia (PMI Cabang Jawa Timur)";
               const effectiveMitra = localCase?.mitraHandler || (notesCombined.includes("mitra") || isEsc ? defaultMitra : undefined);
 
+              const rawItemLat = item.latitude ? Number(item.latitude) : (poskoInfo?.latitude ? Number(poskoInfo.latitude) : -7.2654);
+              const rawItemLng = item.longitude ? Number(item.longitude) : (poskoInfo?.longitude ? Number(poskoInfo.longitude) : 112.7521);
+              const caseGeo = resolveCaseGeoLocation({
+                lat: rawItemLat,
+                lng: rawItemLng,
+                province: p,
+                regency: k,
+                district: d,
+                village: v,
+                location: locStr,
+                id: caseCode,
+              });
+
               return {
                 id: caseCode,
                 rawId: item.id,
@@ -6675,8 +6702,8 @@ export default function App() {
                 regency: k,
                 district: d || "",
                 village: v,
-                lat: item.latitude ? Number(item.latitude) : (poskoInfo?.latitude ? Number(poskoInfo.latitude) : -7.2654),
-                lng: item.longitude ? Number(item.longitude) : (poskoInfo?.longitude ? Number(poskoInfo.longitude) : 112.7521),
+                lat: caseGeo.lat,
+                lng: caseGeo.lng,
                 fotoBukti: resolvedFoto,
                 fileName: undefined,
                 vulnerableDetails: item.vulnerable_group ? "Kelompok Rentan" : "Tidak ada",
