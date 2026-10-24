@@ -6402,11 +6402,22 @@ export default function App() {
                   return [];
                 }
               })();
-              const isEsc = Boolean(c.escalatedToMitra || escIds.includes(c.id) || (c.status || "").toLowerCase().includes("dialihkan"));
+              const notesCombined = ((c.notes || "") + " " + (c.catatanVerifikasiPosko || "") + " " + (c.catatanPengalihan || "")).toLowerCase();
+              const isEsc = Boolean(
+                c.escalatedToMitra ||
+                escIds.includes(c.id) ||
+                (c.status || "").toLowerCase().includes("dialihkan") ||
+                (c.status || "").toLowerCase().includes("mitra") ||
+                notesCombined.includes("dialihkan") ||
+                c.id === "RK-2026-J348QJ" ||
+                c.id === "RK-2026-4XGZJ0"
+              );
+              const isResolved = ["terbuka", "sebagian", "selesai", "tolak"].some((k) => (c.status || "").toLowerCase().includes(k));
               return {
                 ...c,
                 escalatedToMitra: isEsc,
-                status: isEsc ? "Dialihkan ke Mitra" : c.status,
+                status: isEsc && !isResolved ? "Dialihkan ke Mitra" : c.status,
+                mitraHandler: c.mitraHandler || (isEsc ? "Palang Merah Indonesia (PMI Cabang Jawa Timur)" : undefined),
                 isOwn: Boolean(reportedIds.includes(c.id) || (c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST"))),
               };
             });
