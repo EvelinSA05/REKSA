@@ -6550,6 +6550,25 @@ export default function App() {
         localStorage.setItem("reksa_cases_db", JSON.stringify(savedList));
         localStorage.setItem("reksa_user_reported_ids", JSON.stringify(reportedIds));
       } catch {}
+    } else {
+      // Pastikan kasus demo standar juga tersedia berdampingan dengan kasus buatan lokal user
+      const existingIds = new Set(savedList.map((c) => c.id));
+      const reportedIds = getUserReportedIds();
+      let hasAddedSeeds = false;
+      for (const seed of DEMO_SEED_CASES) {
+        if (!existingIds.has(seed.id)) {
+          savedList.push({
+            ...seed,
+            isOwn: Boolean(reportedIds.includes(seed.id) || seed.isOwn),
+          });
+          hasAddedSeeds = true;
+        }
+      }
+      if (hasAddedSeeds) {
+        try {
+          localStorage.setItem("reksa_cases_db", JSON.stringify(savedList));
+        } catch {}
+      }
     }
 
     let savedProfile = {
