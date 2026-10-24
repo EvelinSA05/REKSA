@@ -1419,11 +1419,16 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         <span>Buat Draf Kondisi dengan AI</span>
                       </button>
                       <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
                         <span>Smart Triage Aktif</span>
                       </span>
+                      {aiAppliedFeedback && (
+                        <span style={{ fontSize: "0.74rem", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: "6px", fontWeight: 600 }}>
+                          ✓ {aiAppliedFeedback}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <textarea 
@@ -1477,118 +1482,24 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
 
                       {/* Detected vulnerable groups chip */}
                       {aiTriage.detectedVulnerables.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                           <span style={{ fontSize: "0.76rem", color: "#475569", fontWeight: 700 }}>Kelompok Rentan Terdeteksi:</span>
                           {aiTriage.detectedVulnerables.map((vuln, vIdx) => (
-                            <span key={vIdx} style={{ background: "#f1f5f9", color: "#334155", border: "1px solid #e2e8f0", fontSize: "0.74rem", padding: "2px 8px", borderRadius: "6px", fontWeight: 600 }}>
-                              ✓ {vuln}
+                            <span
+                              key={vIdx}
+                              style={{
+                                background: "#f1f5f9",
+                                color: "#334155",
+                                border: "1px solid #cbd5e1",
+                                fontSize: "0.74rem",
+                                padding: "3px 9px",
+                                borderRadius: "6px",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {vuln}
                             </span>
                           ))}
-                        </div>
-                      )}
-
-                      {/* 1-Click Apply AI Recommendation button */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Tentukan urgensi rekomendasi AI: untuk bencana, prioritaskan "Sangat mendesak" atau "Perlu segera" (tidak pernah "Bisa menunggu")
-                          let targetUrgency = "Perlu segera";
-                          if (aiTriage.urgency === "Kritis" || aiTriage.score >= 75 || aiTriage.recommendedUrgency === "Sangat mendesak") {
-                            targetUrgency = "Sangat mendesak";
-                          } else if (aiTriage.urgency === "Tinggi" || aiTriage.score >= 60) {
-                            targetUrgency = "Sangat mendesak";
-                          } else {
-                            targetUrgency = "Perlu segera";
-                          }
-                          setCitizenUrgency(targetUrgency);
-
-                          // Jika deskripsi kondisi masih kosong atau sangat singkat (< 25 karakter), lengkapi otomatis dengan AI
-                          let descriptionAdded = false;
-                          if (!conditionDescription || conditionDescription.trim().length < 25) {
-                            const autoDesc = generateAiConditionDescription({
-                              category,
-                              customCategory,
-                              amount,
-                              customUnit,
-                              notes,
-                              village,
-                              district,
-                              regency,
-                              affectedPeople,
-                              familyCount,
-                              vulnerableList,
-                              availabilityCondition,
-                              kategoriKerusakanRumah,
-                            });
-                            setConditionDescription(autoDesc);
-                            descriptionAdded = true;
-                          }
-
-                          // Normalize any vulnerable group names to exact form checkbox IDs
-                          const validOptions = ["Balita", "Anak-anak", "Lansia", "Ibu hamil", "Penyandang disabilitas"];
-                          const normalizeMap: Record<string, string> = {
-                            "bayi": "Balita",
-                            "balita": "Balita",
-                            "anak": "Anak-anak",
-                            "anak-anak": "Anak-anak",
-                            "lansia": "Lansia",
-                            "ibu hamil": "Ibu hamil",
-                            "hamil": "Ibu hamil",
-                            "disabilitas": "Penyandang disabilitas",
-                            "penyandang disabilitas": "Penyandang disabilitas",
-                          };
-
-                          const mappedDetected = (aiTriage.detectedVulnerables || []).map((v: string) => {
-                            const lower = v.toLowerCase();
-                            for (const [k, mapped] of Object.entries(normalizeMap)) {
-                              if (lower.includes(k)) return mapped;
-                            }
-                            return v;
-                          }).filter((x: string) => validOptions.includes(x));
-
-                          const currentActive = vulnerableList.filter((x) => x !== "Tidak ada" && validOptions.includes(x));
-                          const mergedVulns = Array.from(new Set([...currentActive, ...mappedDetected]));
-
-                          if (mergedVulns.length > 0) {
-                            setVulnerableList(mergedVulns);
-                          }
-
-                          // Auto-select availability condition if still empty
-                          if (!availabilityCondition && category) {
-                            const availCfg = getAvailabilityConfig(category);
-                            if (availCfg.options && availCfg.options.length > 0) {
-                              setAvailabilityCondition(availCfg.options[0]);
-                            }
-                          }
-
-                          const feedbackText = `Rekomendasi AI Diterapkan: Urgensi diset "${targetUrgency}"${descriptionAdded ? ', deskripsi kondisi dilengkapi' : ''}${mergedVulns.length > 0 ? ` & kelompok rentan (${mergedVulns.join(', ')}) dicentang` : ''}`;
-                          setAiAppliedFeedback(feedbackText);
-                          setTimeout(() => setAiAppliedFeedback(null), 4500);
-                        }}
-                        style={{
-                          background: aiAppliedFeedback ? "#166534" : "#013220",
-                          color: "#ffffff",
-                          border: "none",
-                          padding: "8px 16px",
-                          borderRadius: "8px",
-                          fontSize: "0.82rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          boxShadow: "0 2px 6px rgba(1,50,32,0.2)",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        <Icon name="check" />
-                        <span>{aiAppliedFeedback ? "✓ Rekomendasi AI Berhasil Diterapkan!" : "Terapkan Rekomendasi AI ke Formulir"}</span>
-                      </button>
-
-                      {aiAppliedFeedback && (
-                        <div style={{ marginTop: "8px", fontSize: "0.78rem", color: "#166534", background: "#dcfce7", border: "1px solid #bbf7d0", padding: "6px 12px", borderRadius: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                          <Icon name="check" />
-                          <span>{aiAppliedFeedback}</span>
                         </div>
                       )}
                     </div>
