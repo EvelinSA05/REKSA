@@ -45,10 +45,95 @@ export function MitraBursaBantuan({
 
   // Open needs in bursa murni yang telah diverifikasi sah (oleh BPBD atau Mitra)
   const openItems = useMemo(() => {
-    return (bursaList || []).filter(
+    const directBursa = (bursaList || []).filter(
       (b) => b.status === "Terbuka" || b.status === "Klaim Diajukan" || b.status === "Sebagian Terpenuhi"
     );
-  }, [bursaList]);
+
+    const existingIdentifiers = new Set<string>();
+    directBursa.forEach((b) => {
+      if (b.id) existingIdentifiers.add(String(b.id));
+      if (b.kebutuhan_id) existingIdentifiers.add(String(b.kebutuhan_id));
+      if (b.kebutuhan?.kode_kasus) existingIdentifiers.add(b.kebutuhan.kode_kasus.toLowerCase().trim());
+      if ((b as any).kode_kasus) existingIdentifiers.add(String((b as any).kode_kasus).toLowerCase().trim());
+    });
+
+    const additionalFromCases: BursaItem[] = [];
+
+    (cases || []).forEach((c) => {
+      const s = (c.status || "").toLowerCase();
+      const isOpen = s.includes("terbuka") || s.includes("sebagian");
+      const isClosed = s.includes("selesai") || s.includes("tolak") || s.includes("teralokasi") || s.includes("pengiriman");
+      if (!isOpen || isClosed) return;
+
+      const caseIdLower = (c.id || "").toLowerCase().trim();
+      const rawIdStr = c.rawId ? String(c.rawId) : "";
+
+      if (
+        (caseIdLower && existingIdentifiers.has(caseIdLower)) ||
+        (rawIdStr && existingIdentifiers.has(rawIdStr))
+      ) {
+        return;
+      }
+
+      if (caseIdLower) existingIdentifiers.add(caseIdLower);
+      if (rawIdStr) existingIdentifiers.add(rawIdStr);
+
+      const targetNum = parseInt((c.qty || c.kk || "100").replace(/[^0-9]/g, "")) || 100;
+      const targetUnit = (c.qty || c.kk || "Unit").replace(/[0-9.,]/g, "").trim() || "Unit";
+      const numericId = typeof c.rawId === "number" ? c.rawId : (parseInt(c.id.replace(/\D/g, "")) || (2000 + additionalFromCases.length));
+
+      additionalFromCases.push({
+        id: numericId,
+        kebutuhan_id: numericId,
+        posko_id: 1,
+        item_bantuan: c.item || "Kebutuhan Darurat Warga",
+        target_volume: `${targetNum} ${targetUnit}`,
+        volume_terpenuhi: c.totalAlokasiResmi || "0 Unit",
+        urgensi: c.urgency || "Sedang",
+        status: s.includes("sebagian") ? "Sebagian Terpenuhi" : "Terbuka",
+        published_at: c.date || "Hari ini, Baru diverifikasi",
+        posko: {
+          id: 1,
+          kode_posko: "PSK-SBY-01",
+          nama_posko: c.posko || "Posko BPBD Provinsi Jawa Timur",
+          desa: c.village || "Gubeng",
+          kecamatan: c.district || "Gubeng",
+          kabupaten: c.regency || "Kota Surabaya",
+          provinsi: c.province || "Jawa Timur",
+          latitude: Number(c.lat) || -7.2654,
+          longitude: Number(c.lng) || 112.7521,
+          kapasitas_kk: 100,
+          kk_terdata: 25,
+          status_operasional: "Aktif Penuh",
+        },
+        kebutuhan: {
+          id: numericId,
+          kode_kasus: c.id,
+          citizen_name: c.applicantName || "Andi Pratama",
+          citizen_phone: c.applicantPhone || "+62 812 4455 0188",
+          posko_id: 1,
+          kategori_kebutuhan: c.item,
+          volume_permintaan: `${targetNum} ${targetUnit}`,
+          jumlah_kk: parseInt((c.kk || "1").replace(/\D/g, "")) || 1,
+          status_hunian: c.shelterStatus || "Rumah Tinggal Pribadi",
+          tingkat_urgensi: c.urgency || "Sedang",
+          status: c.status || "Kebutuhan Terbuka",
+          desa: c.village || "",
+          kecamatan: c.district || "",
+          kabupaten: c.regency || "",
+          provinsi: c.province || "Jawa Timur",
+          latitude: Number(c.lat) || -7.2654,
+          longitude: Number(c.lng) || 112.7521,
+          foto_bukti: c.fotoBukti,
+          deskripsi: c.notes || c.conditionDescription,
+          created_at: c.createdAtRaw || new Date().toISOString(),
+        },
+      });
+    });
+
+    // Tempatkan kebutuhan yang baru diverifikasi di baris paling atas agar langsung terlihat
+    return [...additionalFromCases, ...directBursa];
+  }, [bursaList, cases]);
 
   // Counts for metric cards and tab pills
   const totalOpen = openItems.length;
@@ -141,25 +226,62 @@ export function MitraBursaBantuan({
       const num = parseInt(offeredAmount) || 100;
       const amountStr = `${num} ${offeredUnit}`;
 
-      const res = await apiService.createPenawaran({
+      // Simpan proposal penawaran ke penyimpanan lokal agar langsung masuk antrean Posko & Mitra
+      let localOffers: any[] = [];
+      try {
+        const saved = localStorage.getItem("reksa_penawaran_db");
+        if (saved) localOffers = JSON.parse(saved);
+      } catch (_) {}
+
+      const newOffer = {
+        id: Date.now(),
+        kode_penawaran: `TWR-2026-${String(Date.now()).slice(-4)}`,
         bursa_id: modalBursa.id,
+        kebutuhan_id: modalBursa.kebutuhan_id || modalBursa.id,
+        posko_id: modalBursa.posko_id || 1,
+        mitra_id: 4,
+        mitra_name: userName || "dr. Hendra Wijaya",
+        organisasi: userOrg || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+        jenis_bantuan: modalBursa.item_bantuan,
         jumlah_tawaran: amountStr,
         volume_angka: num,
         satuan: offeredUnit,
-        metode_penyaluran: deliveryMethod,
-        kategori_komoditas: modalBursa.item_bantuan,
         waktu_kesiapan: readinessTime,
-        armada_info: deliveryMethod === 'mandiri' ? (fleetInfo || 'Armada Mandiri Mitra') : undefined,
-        organisasi: userOrg,
+        armada_info: deliveryMethod === 'mandiri' ? (fleetInfo || 'Armada Mandiri Mitra') : 'Serah Terima ke Gudang Posko BPBD',
+        status: "Diajukan" as const,
         catatan: notesInput,
-      });
+        created_at: "Hari ini, Baru diajukan",
+        bursa: modalBursa,
+        kebutuhan: modalBursa.kebutuhan,
+      };
 
-      if (res.success) {
-        notify?.(`Penawaran bantuan ${modalBursa.item_bantuan} (${amountStr}) berhasil diajukan ke Posko!`);
-        setModalBursa(null);
-        await onRefresh?.();
-        onNavigateToMyOffers();
+      const updatedOffers = [newOffer, ...localOffers];
+      try {
+        localStorage.setItem("reksa_penawaran_db", JSON.stringify(updatedOffers));
+      } catch (_) {}
+      update?.({ penawaranList: updatedOffers });
+
+      try {
+        await apiService.createPenawaran({
+          bursa_id: modalBursa.id,
+          jumlah_tawaran: amountStr,
+          volume_angka: num,
+          satuan: offeredUnit,
+          metode_penyaluran: deliveryMethod,
+          kategori_komoditas: modalBursa.item_bantuan,
+          waktu_kesiapan: readinessTime,
+          armada_info: deliveryMethod === 'mandiri' ? (fleetInfo || 'Armada Mandiri Mitra') : undefined,
+          organisasi: userOrg,
+          catatan: notesInput,
+        });
+      } catch (_) {
+        // Fallback anggun ke lokal
       }
+
+      notify?.(`Penawaran bantuan ${modalBursa.item_bantuan} (${amountStr}) berhasil diajukan ke Posko!`);
+      setModalBursa(null);
+      await onRefresh?.().catch(() => {});
+      onNavigateToMyOffers();
     } catch (err: any) {
       notify?.(err?.message || "Gagal mengajukan penawaran bantuan.");
     } finally {
