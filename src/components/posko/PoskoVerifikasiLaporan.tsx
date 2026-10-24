@@ -1227,28 +1227,34 @@ export function PoskoVerifikasiLaporan({
 
                 <label
                   className="reksa-form-label"
-                  style={{ fontWeight: 700, fontSize: "0.85rem", color: "#013220", display: "block", marginBottom: "6px" }}
+                  style={{ fontWeight: 700, fontSize: "0.85rem", color: "#013220", display: "block", marginBottom: "6px", flexShrink: 0 }}
                 >
                   Catatan atau Arahan untuk Mitra (Opsional):
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={notesInput}
                   onChange={(e) => setNotesInput(e.target.value)}
                   placeholder="Contoh: Kebutuhan sangat mendesak untuk warga lansia dan balita di tenda posko barat. Akses jalan dapat dilalui armada roda 4."
                   style={{
                     width: "100%",
-                    padding: "10px",
+                    minHeight: "95px",
+                    flexShrink: 0,
+                    boxSizing: "border-box",
+                    padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #cbd5e1",
+                    border: "1.5px solid #cbd5e1",
                     fontSize: "0.88rem",
+                    lineHeight: 1.5,
                     marginBottom: "16px",
+                    fontFamily: "inherit",
+                    resize: "vertical",
                   }}
                 />
               </>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px", flexShrink: 0 }}>
               <button
                 type="button"
                 disabled={isSubmitting}
