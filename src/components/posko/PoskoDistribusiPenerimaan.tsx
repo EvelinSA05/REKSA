@@ -23,13 +23,12 @@ export function PoskoDistribusiPenerimaan({
   selectedCaseId,
 }: PoskoDistribusiPenerimaanProps) {
   const [tab, setTab] = useState<"all" | "active" | "arrived" | "completed">("active");
-  const [search, setSearch] = useState(selectedCaseId || "");
+  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
   useEffect(() => {
     if (selectedCaseId) {
-      setSearch(selectedCaseId);
       const target = selectedCaseId.toLowerCase();
       const foundMisi = misiList.find(
         (m) =>
@@ -38,6 +37,7 @@ export function PoskoDistribusiPenerimaan({
           String(m.kebutuhan_id) === target.replace(/\D/g, "")
       );
       if (foundMisi) {
+        setSearch(selectedCaseId);
         if (foundMisi.status_tahapan === "Selesai") {
           setTab("completed");
         } else if (
