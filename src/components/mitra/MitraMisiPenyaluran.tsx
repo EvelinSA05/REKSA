@@ -33,15 +33,36 @@ export function MitraMisiPenyaluran({
       if (s) localSaved = JSON.parse(s);
     } catch {}
 
-    const combined: MisiItem[] = [...(misiList || [])];
-    localSaved.forEach((lm) => {
-      // Pastikan misi penugasan baru yang belum di-advance mulai dari Tahap 1: "Menunggu Persiapan"
-      if (lm.kode_misi?.startsWith("MISI-EXP-") && lm.status_tahapan === "Dalam Perjalanan") {
-        lm.status_tahapan = "Menunggu Persiapan";
-        lm.estimasi_waktu = "Menunggu Persiapan Armada";
+    // 1. Baca dari props misiList, dan normalisasi misi bertipe MISI-EXP- ke Tahap 1: "Menunggu Persiapan"
+    const combined: MisiItem[] = (misiList || []).map((m) => {
+      if (m.kode_misi?.startsWith("MISI-EXP-") && (m.status_tahapan === "Dalam Perjalanan" || !m.status_tahapan)) {
+        return {
+          ...m,
+          status_tahapan: "Menunggu Persiapan",
+          estimasi_waktu: "Menunggu Persiapan Armada",
+        };
       }
-      if (!combined.some((m) => m.id === lm.id || (m.kode_misi && lm.kode_misi && m.kode_misi === lm.kode_misi))) {
-        combined.unshift(lm);
+      return m;
+    });
+
+    localSaved.forEach((lm) => {
+      const normalizedLm = { ...lm };
+      if (normalizedLm.kode_misi?.startsWith("MISI-EXP-") && (normalizedLm.status_tahapan === "Dalam Perjalanan" || !normalizedLm.status_tahapan)) {
+        normalizedLm.status_tahapan = "Menunggu Persiapan";
+        normalizedLm.estimasi_waktu = "Menunggu Persiapan Armada";
+      }
+
+      const matchIdx = combined.findIndex(
+        (m) => m.id === normalizedLm.id || (m.kode_misi && normalizedLm.kode_misi && m.kode_misi === normalizedLm.kode_misi)
+      );
+
+      if (matchIdx >= 0) {
+        if (combined[matchIdx].kode_misi?.startsWith("MISI-EXP-") && combined[matchIdx].status_tahapan === "Dalam Perjalanan") {
+          combined[matchIdx].status_tahapan = "Menunggu Persiapan";
+          combined[matchIdx].estimasi_waktu = "Menunggu Persiapan Armada";
+        }
+      } else {
+        combined.unshift(normalizedLm);
       }
     });
 
@@ -99,14 +120,20 @@ export function MitraMisiPenyaluran({
         };
 
         combined.unshift(syntheticMisi);
-
-        try {
-          const currentMisiDb = JSON.parse(localStorage.getItem("reksa_misi_db") || "[]");
-          currentMisiDb.unshift(syntheticMisi);
-          localStorage.setItem("reksa_misi_db", JSON.stringify(currentMisiDb));
-        } catch {}
       }
     });
+
+    // 4. Pastikan SEMUA misi penugasan mitra (MISI-EXP-) yang masih 'Dalam Perjalanan' dipaksa ke 'Menunggu Persiapan' (Tahap 1)
+    combined.forEach((m) => {
+      if (m.kode_misi?.startsWith("MISI-EXP-") && m.status_tahapan === "Dalam Perjalanan") {
+        m.status_tahapan = "Menunggu Persiapan";
+        m.estimasi_waktu = "Menunggu Persiapan Armada";
+      }
+    });
+
+    try {
+      localStorage.setItem("reksa_misi_db", JSON.stringify(combined));
+    } catch {}
 
     return combined;
   }, [misiList, userName, userOrg]);

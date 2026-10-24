@@ -6901,8 +6901,20 @@ export default function App() {
         const preservedMisi = localMisi.filter(
           (m: any) => !existingMisiIds.has(String(m.id)) && !existingMisiCodes.has(String(m.kode_misi))
         );
-        const nextMisi = [...preservedMisi, ...remoteMisi];
+        let nextMisi = [...preservedMisi, ...remoteMisi];
         if (nextMisi.length === 0) nextMisi.push(...DEMO_SEED_MISI);
+
+        // Pastikan misi penugasan baru selalu dimulai dari Tahap 1: Menunggu Persiapan
+        nextMisi = nextMisi.map((m: any) => {
+          if (m.kode_misi?.startsWith("MISI-EXP-") && m.status_tahapan === "Dalam Perjalanan") {
+            return {
+              ...m,
+              status_tahapan: "Menunggu Persiapan",
+              estimasi_waktu: "Menunggu Persiapan Armada",
+            };
+          }
+          return m;
+        });
 
         try {
           localStorage.setItem("reksa_bursa_db", JSON.stringify(nextBursa));
