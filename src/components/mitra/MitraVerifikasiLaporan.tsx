@@ -953,6 +953,8 @@ export function MitraVerifikasiLaporan({
                   placeholder="Contoh: Komoditas tidak tersedia di gudang Mitra / Lokasi di luar jangkauan armada saat ini."
                   style={{
                     width: "100%",
+                    minHeight: "90px",
+                    flexShrink: 0,
                     padding: "10px",
                     borderRadius: "8px",
                     border: "1px solid #cbd5e1",
