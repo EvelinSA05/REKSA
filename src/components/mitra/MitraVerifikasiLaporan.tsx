@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { AppIcon } from "../common/Icons";
 import { apiService } from "../../services/api";
@@ -29,6 +29,10 @@ export function MitraVerifikasiLaporan({
   const [notesInput, setNotesInput] = useState("");
   const [priorityChoice, setPriorityChoice] = useState("Tinggi");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    onRefresh?.();
+  }, [onRefresh]);
 
   // Kasus yang dialihkan ke mitra — semua status "Menunggu Verifikasi Mitra" / "Dialihkan ke Mitra"
   const escIds: string[] = (() => {
@@ -203,29 +207,54 @@ export function MitraVerifikasiLaporan({
             Verifikasi Laporan Dialihkan
           </h1>
         </div>
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid rgba(1, 50, 32, 0.12)",
-            padding: "8px 14px",
-            borderRadius: "10px",
-            fontSize: "0.84rem",
-            fontWeight: 700,
-            color: "#013220",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <span
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={() => onRefresh?.()}
+              style={{
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                color: "#166534",
+                borderRadius: "10px",
+                padding: "8px 14px",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              title="Segarkan antrean dari database server"
+            >
+              <AppIcon name="clock" size={14} />
+              <span>Segarkan Antrean</span>
+            </button>
+          )}
+          <div
             style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              background: "#15803d",
+              background: "#ffffff",
+              border: "1px solid rgba(1, 50, 32, 0.12)",
+              padding: "8px 14px",
+              borderRadius: "10px",
+              fontSize: "0.84rem",
+              fontWeight: 700,
+              color: "#013220",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
             }}
-          />
-          <span>Antrean Mitra ({allEscalated.length} Laporan)</span>
+          >
+            <span
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: "#15803d",
+              }}
+            />
+            <span>Antrean Mitra ({allEscalated.length} Laporan)</span>
+          </div>
         </div>
       </div>
 
