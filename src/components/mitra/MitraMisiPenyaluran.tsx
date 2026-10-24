@@ -715,54 +715,6 @@ export function MitraMisiPenyaluran({
           </div>
         </div>
 
-        {/* Quick Horizontal Scrollable Pills (Clean single row with overflow-x: auto) */}
-        {activeMissions.length > 1 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              overflowX: "auto",
-              paddingTop: "12px",
-              borderTop: "1px solid #f1f5f9",
-              scrollbarWidth: "thin",
-            }}
-          >
-            <span style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 700, whiteSpace: "nowrap" }}>
-              Akses Cepat:
-            </span>
-            {activeMissions.map((m) => {
-              const isActive = m.id === currentMission.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setSelectedMisiId(m.id)}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "20px",
-                    fontSize: "0.78rem",
-                    fontWeight: isActive ? 700 : 500,
-                    whiteSpace: "nowrap",
-                    cursor: "pointer",
-                    border: isActive ? "1.5px solid #013220" : "1px solid #e2e8f0",
-                    background: isActive ? "#013220" : "#ffffff",
-                    color: isActive ? "#ffffff" : "#475569",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    transition: "all 0.12s ease",
-                  }}
-                >
-                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: isActive ? "#86efac" : "#94a3b8" }} />
-                  <span>{m.kode_misi}</span>
-                  <span style={{ opacity: 0.85, fontSize: "0.72rem" }}>({m.muatan})</span>
-                  {m.status_kendala && <span>⚠️</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* 4. ACTIVE MISSION CONSOLE CARD */}
