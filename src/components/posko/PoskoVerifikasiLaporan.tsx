@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CaseRecord, getFieldEvidencePhoto } from "../../App";
-import { apiService } from "../../services/api";
+import { apiService, BursaItem } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { evaluateCaseSla, getMitraByCommodity } from "../../utils/slaEscalationEngine";
 
@@ -251,11 +251,87 @@ export function PoskoVerifikasiLaporan({
             status: optimisticStatus,
             urgency: modalAction === "verify" ? priorityChoice : c.urgency,
             catatanVerifikasiPosko:
-              notesInput || c.catatanVerifikasiPosko,
+              notesInput || c.catatanVerifikasiPosko || "Data terverifikasi sah oleh Koordinator Posko dan dirilis ke Bursa Bantuan.",
+            alasanPenolakan: modalAction === "verify" ? undefined : c.alasanPenolakan,
+            tindakLanjutPenolakan: modalAction === "verify" ? undefined : c.tindakLanjutPenolakan,
           }
         : c
     );
-    update?.({ casesList: updatedCases });
+
+    let updatedBursaList: BursaItem[] = [];
+    try {
+      const bLocal = localStorage.getItem("reksa_bursa_db");
+      if (bLocal) {
+        updatedBursaList = JSON.parse(bLocal);
+      }
+    } catch (_) {}
+
+    if (modalAction === "verify") {
+      const targetNum = parseInt((selectedCase.qty || selectedCase.kk || "100").replace(/[^0-9]/g, "")) || 100;
+      const targetUnit = (selectedCase.qty || selectedCase.kk || "Unit").replace(/[0-9.,]/g, "").trim() || "Unit";
+      const numericId = typeof selectedCase.rawId === "number" ? selectedCase.rawId : (parseInt(selectedCase.id.replace(/\D/g, "")) || Date.now());
+
+      const newBursaItem: BursaItem = {
+        id: numericId,
+        kebutuhan_id: numericId,
+        posko_id: 1,
+        item_bantuan: selectedCase.item || "Kebutuhan Darurat Warga",
+        target_volume: `${targetNum} ${targetUnit}`,
+        volume_terpenuhi: selectedCase.totalAlokasiResmi || "0 Unit",
+        urgensi: priorityChoice || selectedCase.urgency || "Tinggi",
+        status: "Terbuka",
+        published_at: "Hari ini, Baru diverifikasi",
+        posko: {
+          id: 1,
+          kode_posko: "PSK-01",
+          nama_posko: selectedCase.posko || "Posko BPBD Provinsi Jawa Timur",
+          desa: selectedCase.village || "Gubeng",
+          kecamatan: selectedCase.district || "Gubeng",
+          kabupaten: selectedCase.regency || "Kota Surabaya",
+          provinsi: selectedCase.province || "Jawa Timur",
+          latitude: Number(selectedCase.lat) || -7.2654,
+          longitude: Number(selectedCase.lng) || 112.7521,
+          kapasitas_kk: 100,
+          kk_terdata: 25,
+          status_operasional: "Aktif Penuh",
+        },
+        kebutuhan: {
+          id: numericId,
+          kode_kasus: selectedCase.id,
+          citizen_name: selectedCase.applicantName || "Warga Terdampak",
+          citizen_phone: selectedCase.applicantPhone,
+          posko_id: 1,
+          kategori_kebutuhan: selectedCase.item,
+          volume_permintaan: `${targetNum} ${targetUnit}`,
+          jumlah_kk: parseInt((selectedCase.kk || "1").replace(/\D/g, "")) || 1,
+          status_hunian: selectedCase.shelterStatus || "Rumah Tinggal Pribadi",
+          tingkat_urgensi: priorityChoice || selectedCase.urgency || "Tinggi",
+          status: "Kebutuhan Terbuka",
+          desa: selectedCase.village || "",
+          kecamatan: selectedCase.district || "",
+          kabupaten: selectedCase.regency || "",
+          provinsi: selectedCase.province || "Jawa Timur",
+          latitude: Number(selectedCase.lat) || -7.2654,
+          longitude: Number(selectedCase.lng) || 112.7521,
+          foto_bukti: selectedCase.fotoBukti,
+          deskripsi: notesInput || selectedCase.notes,
+          created_at: new Date().toISOString(),
+        },
+      };
+
+      const filteredBursa = updatedBursaList.filter(
+        (b) =>
+          b.id !== numericId &&
+          b.kebutuhan_id !== numericId &&
+          b.kebutuhan?.kode_kasus !== selectedCase.id
+      );
+      updatedBursaList = [newBursaItem, ...filteredBursa];
+      try {
+        localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
+      } catch (_) {}
+    }
+
+    update?.({ casesList: updatedCases, bursaList: updatedBursaList });
     // Simpan ke localStorage agar persistent saat refresh
     try {
       localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCases));
@@ -925,6 +1001,48 @@ export function PoskoVerifikasiLaporan({
                         <AppIcon name="check" size={13} />
                         <span>Selesai Klarifikasi &amp; Rilis</span>
                       </button>
+                    )}
+
+                    {isRejected && (
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal(c, "escalate")}
+                          className="btn-case-escalate"
+                          title="Alihkan penanganan laporan ke Mitra Kemanusiaan"
+                        >
+                          <AppIcon name="shield" size={13} />
+                          <span>Alihkan ke Mitra</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openActionModal(c, "verify")}
+                          className="btn-case-verify"
+                          style={{
+                            background: "#013220",
+                            color: "#ffffff",
+                            border: "1px solid #013220",
+                            padding: "7px 18px",
+                            borderRadius: "8px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                          }}
+                          title="Pulihkan dan terbitkan laporan ini ke Bursa Bantuan Terbuka"
+                        >
+                          <AppIcon name="check" size={13} />
+                          <span>Pulihkan &amp; Terbitkan ke Bursa</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {isVerified && (
+                      <span style={{ fontSize: "0.82rem", color: "#047857", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <AppIcon name="check" size={14} /> Terdaftar di Bursa Bantuan
+                      </span>
                     )}
                   </div>
                 </div>
