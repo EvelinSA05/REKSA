@@ -414,6 +414,14 @@ export function PoskoKebutuhanBursa({
               ? "status-pending"
               : "status-verified";
 
+            const isDelegated = Boolean(
+              c.escalatedToMitra ||
+              c.mitraHandler ||
+              (c.status || "").toLowerCase().includes("mitra") ||
+              (c.status || "").toLowerCase().includes("dialihkan")
+            );
+            const assignedMitra = c.mitraHandler || "Mitra Kemanusiaan";
+
             return (
               <div
                 key={c.id}
@@ -436,6 +444,45 @@ export function PoskoKebutuhanBursa({
                     <span className={`posko-case-status-badge ${statusClass}`}>
                       {c.status}
                     </span>
+                    {isDelegated ? (
+                      <span
+                        style={{
+                          background: "#eff6ff",
+                          color: "#1d4ed8",
+                          border: "1.5px solid #bfdbfe",
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                        title={`Laporan dialihkan ke ${assignedMitra}.`}
+                      >
+                        <span style={{ fontSize: "0.80rem" }}>⚡</span>
+                        <span>Dialihkan ke Mitra</span>
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          background: "#ecfdf5",
+                          color: "#065f46",
+                          border: "1.5px solid #a7f3d0",
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                        title="Diverifikasi sah langsung oleh Petugas Posko BPBD."
+                      >
+                        <span style={{ fontSize: "0.80rem" }}>🛡️</span>
+                        <span>Verifikasi Posko BPBD</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="posko-case-date">
