@@ -168,83 +168,167 @@ export function ReksaAiChatbot({ state, update, setPage }: ReksaAiChatbotProps) 
     });
   };
 
+  // Floating button draggable position
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const saved = localStorage.getItem("reksa_ai_button_pos");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  });
+
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const initialPosRef = useRef({ x: 0, y: 0 });
+  const hasMovedRef = useRef(false);
+  const currentPosRef = useRef<{ x: number; y: number } | null>(position);
+  const [isDraggingState, setIsDraggingState] = useState(false);
+
+  // Clamp on window resize
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setPosition((prev) => {
+        if (!prev) return null;
+        const btnSize = 56;
+        const margin = 12;
+        const maxX = Math.max(margin, window.innerWidth - btnSize - margin);
+        const maxY = Math.max(margin, window.innerHeight - btnSize - margin);
+        const clampedX = Math.min(Math.max(prev.x, margin), maxX);
+        const clampedY = Math.min(Math.max(prev.y, margin), maxY);
+        if (clampedX !== prev.x || clampedY !== prev.y) {
+          const next = { x: clampedX, y: clampedY };
+          currentPosRef.current = next;
+          try {
+            localStorage.setItem("reksa_ai_button_pos", JSON.stringify(next));
+          } catch {}
+          return next;
+        }
+        return prev;
+      });
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+    return () => window.removeEventListener("resize", handleWindowResize);
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    const buttonRect = e.currentTarget.getBoundingClientRect();
+    isDraggingRef.current = true;
+    hasMovedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    initialPosRef.current = { x: buttonRect.left, y: buttonRect.top };
+    setIsDraggingState(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDraggingRef.current) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.hypot(dx, dy) > 5) {
+      hasMovedRef.current = true;
+    }
+
+    const btnSize = 56;
+    const margin = 12;
+    const minX = margin;
+    const maxX = Math.max(margin, window.innerWidth - btnSize - margin);
+    const minY = margin;
+    const maxY = Math.max(margin, window.innerHeight - btnSize - margin);
+
+    let newX = initialPosRef.current.x + dx;
+    let newY = initialPosRef.current.y + dy;
+
+    newX = Math.min(Math.max(newX, minX), maxX);
+    newY = Math.min(Math.max(newY, minY), maxY);
+
+    const nextPos = { x: newX, y: newY };
+    currentPosRef.current = nextPos;
+    setPosition(nextPos);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDraggingState(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    if (currentPosRef.current) {
+      try {
+        localStorage.setItem("reksa_ai_button_pos", JSON.stringify(currentPosRef.current));
+      } catch {}
+    }
+  };
+
+  const handleButtonClick = () => {
+    if (hasMovedRef.current) {
+      hasMovedRef.current = false;
+      return;
+    }
+    setIsOpen(true);
+  };
+
   return (
     <>
-      {/* 1. FLOATING LAUNCHER BUTTON */}
+      {/* 1. FLOATING LAUNCHER BUTTON (DRAGGABLE & COMPACT) */}
       {!isOpen && (
         <div
           className="reksa-ai-widget-container"
           style={{
             position: "fixed",
-            bottom: "24px",
-            right: "24px",
+            left: position ? `${position.x}px` : "auto",
+            top: position ? `${position.y}px` : "auto",
+            right: position ? "auto" : "24px",
+            bottom: position ? "auto" : "24px",
             zIndex: 9999,
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            touchAction: "none",
+            userSelect: "none",
           }}
         >
-          {/* Pulsing Helper Pill */}
-          <div
-            onClick={() => setIsOpen(true)}
-            style={{
-              background: "#ffffff",
-              color: "#013220",
-              border: "1.5px solid rgba(1, 50, 32, 0.15)",
-              padding: "8px 14px",
-              borderRadius: "999px",
-              boxShadow: "0 8px 24px rgba(1, 50, 32, 0.16)",
-              fontSize: "0.82rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              transition: "transform 0.2s ease, box-shadow 0.2s ease",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            <span
-              style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                background: "#10b981",
-                boxShadow: "0 0 8px #10b981",
-              }}
-            />
-            <span>Tanya REKSA AI</span>
-          </div>
-
           {/* Main Floating Trigger Button */}
           <button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onClick={handleButtonClick}
             style={{
               width: "56px",
               height: "56px",
               borderRadius: "50%",
               background: "linear-gradient(135deg, #013220 0%, #064e3b 50%, #047857 100%)",
               color: "#ffffff",
-              border: "2px solid rgba(255, 255, 255, 0.4)",
-              boxShadow: "0 10px 28px rgba(1, 50, 32, 0.35), 0 0 15px rgba(16, 185, 129, 0.3)",
-              cursor: "pointer",
+              border: "2.5px solid rgba(255, 255, 255, 0.7)",
+              boxShadow: isDraggingState
+                ? "0 16px 36px rgba(1, 50, 32, 0.45), 0 0 20px rgba(16, 185, 129, 0.5)"
+                : "0 10px 28px rgba(1, 50, 32, 0.35), 0 0 15px rgba(16, 185, 129, 0.3)",
+              cursor: isDraggingState ? "grabbing" : "grab",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               position: "relative",
-              transition: "all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+              touchAction: "none",
+              userSelect: "none",
+              transform: isDraggingState ? "scale(1.08)" : "scale(1)",
+              transition: isDraggingState ? "none" : "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.08) rotate(5deg)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1) rotate(0deg)";
-            }}
-            title="Buka Asisten Cerdas REKSA AI"
+            title="Buka REKSA AI (Dapat digeser)"
           >
-            <span style={{ fontSize: "1.4rem", filter: "grayscale(100%)" }}>✨</span>
+            <span style={{ fontSize: "1.45rem", filter: "grayscale(100%)", pointerEvents: "none" }}>✨</span>
             <span
               style={{
                 position: "absolute",
@@ -259,6 +343,7 @@ export function ReksaAiChatbot({ state, update, setPage }: ReksaAiChatbotProps) 
                 border: "1.5px solid #ffffff",
                 letterSpacing: "0.02em",
                 boxShadow: "0 2px 5px rgba(1, 50, 32, 0.25)",
+                pointerEvents: "none",
               }}
             >
               AI
