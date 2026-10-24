@@ -10,6 +10,9 @@ interface MitraVerifikasiLaporanProps {
   notify?: (msg: string) => void;
   update?: (changes: any, log?: string) => void;
   onSelectCase?: (c: CaseRecord) => void;
+  userOrg?: string;
+  userName?: string;
+  onNavigateToTasks?: () => void;
 }
 
 export function MitraVerifikasiLaporan({
@@ -18,6 +21,9 @@ export function MitraVerifikasiLaporan({
   notify,
   update,
   onSelectCase,
+  userOrg = "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+  userName = "dr. Hendra Wijaya",
+  onNavigateToTasks,
 }: MitraVerifikasiLaporanProps) {
   const [tab, setTab] = useState<"menunggu" | "diverifikasi" | "ditolak" | "semua">("menunggu");
   const [search, setSearch] = useState("");
@@ -124,12 +130,23 @@ export function MitraVerifikasiLaporan({
     setIsSubmitting(true);
 
     // Optimistic update — UI langsung berubah
+    const isDirectAssignment = Boolean(
+      selectedCase.escalatedToMitra ||
+      selectedCase.mitraHandler ||
+      (selectedCase.status || "").toLowerCase().includes("mitra") ||
+      (selectedCase.status || "").toLowerCase().includes("dialihkan")
+    );
+
     const newStatus =
       modalAction === "verify" 
-        ? "Kebutuhan Terbuka" 
+        ? (isDirectAssignment ? "Dalam Pengiriman" : "Kebutuhan Terbuka") 
         : modalAction === "clarify"
         ? "Perlu Klarifikasi"
         : "Ditolak Mitra";
+
+    const targetNum = parseInt((selectedCase.qty || selectedCase.kk || "100").replace(/[^0-9]/g, "")) || 100;
+    const targetUnit = (selectedCase.qty || selectedCase.kk || "Unit").replace(/[0-9.,]/g, "").trim() || "Unit";
+    const numericId = typeof selectedCase.rawId === "number" ? selectedCase.rawId : (parseInt(selectedCase.id.replace(/\D/g, "")) || Date.now());
 
     const updatedCases = cases.map((c) =>
       c.id === selectedCase.id
@@ -138,6 +155,9 @@ export function MitraVerifikasiLaporan({
             status: newStatus,
             urgency: modalAction === "verify" ? priorityChoice : c.urgency,
             escalatedToMitra: true,
+            totalAlokasiResmi: modalAction === "verify" ? `${targetNum} ${targetUnit}` : c.totalAlokasiResmi,
+            mitraHandler: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+            catatanVerifikasiPosko: modalAction === "verify" ? (notesInput || "Data diverifikasi valid oleh Mitra. Misi Penyaluran langsung diterbitkan dan armada siaga bergerak.") : c.catatanVerifikasiPosko,
             statusTone: modalAction === "clarify" ? "#d97706" : c.statusTone,
             clarificationCategory: modalAction === "clarify" ? clarificationCategory : c.clarificationCategory,
             clarificationQuestion: modalAction === "clarify" ? (notesInput || `Mohon lengkapi perbaikan ${clarificationCategory.toLowerCase()} untuk laporan kebutuhan ini.`) : c.clarificationQuestion,
@@ -155,6 +175,7 @@ export function MitraVerifikasiLaporan({
           }
         : c
     );
+
     let updatedBursaList: any[] = [];
     try {
       const bLocal = localStorage.getItem("reksa_bursa_db");
@@ -163,21 +184,31 @@ export function MitraVerifikasiLaporan({
       }
     } catch (_) {}
 
-    if (modalAction === "verify") {
-      const targetNum = parseInt((selectedCase.qty || selectedCase.kk || "100").replace(/[^0-9]/g, "")) || 100;
-      const targetUnit = (selectedCase.qty || selectedCase.kk || "Unit").replace(/[0-9.,]/g, "").trim() || "Unit";
-      const numericId = typeof selectedCase.rawId === "number" ? selectedCase.rawId : (parseInt(selectedCase.id.replace(/\D/g, "")) || Date.now());
+    let updatedPenawaranList: any[] = [];
+    try {
+      const pLocal = localStorage.getItem("reksa_penawaran_db");
+      if (pLocal) updatedPenawaranList = JSON.parse(pLocal);
+    } catch (_) {}
 
+    let updatedMisiList: any[] = [];
+    try {
+      const mLocal = localStorage.getItem("reksa_misi_db");
+      if (mLocal) updatedMisiList = JSON.parse(mLocal);
+    } catch (_) {}
+
+    if (modalAction === "verify") {
       const newBursaItem = {
         id: numericId,
         kebutuhan_id: numericId,
         posko_id: 1,
         item_bantuan: selectedCase.item || "Kebutuhan Darurat Warga",
         target_volume: `${targetNum} ${targetUnit}`,
-        volume_terpenuhi: "0 Unit",
+        volume_terpenuhi: `${targetNum} ${targetUnit}`,
         urgensi: priorityChoice || selectedCase.urgency || "Tinggi",
-        status: "Terbuka",
+        status: isDirectAssignment ? "Teralokasi Penuh" : "Terbuka",
         published_at: "Hari ini, Baru diverifikasi",
+        claimed_org: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+        claimed_volume: `${targetNum} ${targetUnit}`,
         posko: {
           id: 1,
           kode_posko: "PSK-01",
@@ -203,7 +234,7 @@ export function MitraVerifikasiLaporan({
           jumlah_kk: parseInt((selectedCase.kk || "1").replace(/\D/g, "")) || 1,
           status_hunian: selectedCase.shelterStatus || "Rumah Tinggal Pribadi",
           tingkat_urgensi: priorityChoice || selectedCase.urgency || "Tinggi",
-          status: "Kebutuhan Terbuka",
+          status: isDirectAssignment ? "Dalam Pengiriman" : "Kebutuhan Terbuka",
           desa: selectedCase.village || "",
           kecamatan: selectedCase.district || "",
           kabupaten: selectedCase.regency || "",
@@ -225,14 +256,75 @@ export function MitraVerifikasiLaporan({
         updatedBursaList = [newBursaItem, ...updatedBursaList];
       }
 
+      // ─── ALUR PENUGASAN LANGSUNG: OTOMATIS PENAWARAN DISETUJUI & TERBIT MISI ───
+      const resolvedFleet = (selectedCase.item || "").toLowerCase().includes("obat") || (selectedCase.item || "").toLowerCase().includes("medis")
+        ? "Mobil Ambulans & Logistik Medis PMI No. 04"
+        : (selectedCase.item || "").toLowerCase().includes("air")
+        ? "Truk Tangki Air Bersih Mitra No. 02"
+        : "Mobil Box Logistik Distribusi Cepat Mitra";
+
+      const newOffer = {
+        id: Date.now(),
+        kode_penawaran: `TWR-DIR-${String(Date.now()).slice(-4)}`,
+        bursa_id: numericId,
+        kebutuhan_id: numericId,
+        posko_id: 1,
+        mitra_id: 4,
+        mitra_name: userName || "dr. Hendra Wijaya",
+        organisasi: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+        jenis_bantuan: selectedCase.item || "Bantuan Kemanusiaan",
+        jumlah_tawaran: `${targetNum} ${targetUnit}`,
+        volume_angka: targetNum,
+        satuan: targetUnit,
+        waktu_kesiapan: "Siap Berangkat Langsung",
+        armada_info: resolvedFleet,
+        status: "Disetujui" as const,
+        jumlah_disetujui: `${targetNum} ${targetUnit}`,
+        volume_disetujui_angka: targetNum,
+        catatan: notesInput || "Penugasan langsung dari Posko BPBD disahkan dan armada mitra siap berangkat.",
+        created_at: "Hari ini, Baru diverifikasi",
+        bursa: newBursaItem,
+        kebutuhan: newBursaItem.kebutuhan,
+      };
+
+      updatedPenawaranList = [newOffer, ...updatedPenawaranList.filter((p: any) => p.kebutuhan_id !== numericId)];
+
+      const newMisi = {
+        id: Date.now(),
+        kode_misi: `MISI-EXP-${String(Date.now()).slice(-4)}`,
+        kebutuhan_id: numericId,
+        bursa_id: numericId,
+        penawaran_id: newOffer.id,
+        posko_id: 1,
+        responder_name: userName || "dr. Hendra Wijaya",
+        responder_phone: "+62 812 8899 0011",
+        organisasi: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+        armada_info: resolvedFleet,
+        muatan: `${targetNum} ${targetUnit}`,
+        status_tahapan: "Dalam Perjalanan",
+        estimasi_waktu: "25 Menit (3,8 km)",
+        catatan_lapangan: notesInput || "Armada logistik mitra telah diverifikasi dan langsung diberangkatkan menuju lokasi warga terdampak.",
+        posko: newBursaItem.posko,
+        kebutuhan: newBursaItem.kebutuhan,
+      };
+
+      updatedMisiList = [newMisi, ...updatedMisiList.filter((m: any) => m.kebutuhan_id !== numericId)];
+
       try {
         localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
+        localStorage.setItem("reksa_penawaran_db", JSON.stringify(updatedPenawaranList));
+        localStorage.setItem("reksa_misi_db", JSON.stringify(updatedMisiList));
       } catch (_) {}
     }
 
     update?.({ 
       casesList: updatedCases,
-      ...(modalAction === "verify" ? { bursaList: updatedBursaList } : {})
+      ...(modalAction === "verify" ? { 
+        bursaList: updatedBursaList,
+        penawaranList: updatedPenawaranList,
+        misiList: updatedMisiList,
+        assignment: "Dalam Perjalanan",
+      } : {})
     });
     try {
       localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCases));
@@ -240,7 +332,7 @@ export function MitraVerifikasiLaporan({
 
     const notifMsg =
       modalAction === "verify"
-        ? `Laporan ${selectedCase.id} diverifikasi Mitra & diterbitkan ke Bursa Bantuan!`
+        ? `Laporan ${selectedCase.id} diverifikasi & disahkan! Penawaran otomatis disetujui Posko BPBD dan Misi Penyaluran armada langsung aktif diterbitkan.`
         : modalAction === "clarify"
         ? `Permintaan klarifikasi telah dikirimkan ke pelapor untuk laporan ${selectedCase.id}.`
         : `Laporan ${selectedCase.id} ditolak oleh Mitra.`;
@@ -1052,6 +1144,18 @@ export function MitraVerifikasiLaporan({
 
             {modalAction === "verify" && (
               <>
+                <div style={{
+                  background: "#f0fdf4",
+                  border: "1px solid #bbf7d0",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "16px",
+                  fontSize: "0.84rem",
+                  color: "#166534",
+                  lineHeight: 1.45,
+                }}>
+                  <strong>🚀 Jalur Penugasan Khusus:</strong> Karena laporan ini telah didelegasikan resmi sejak awal kepada <strong>{userOrg || selectedCase.mitraHandler || "Mitra Kemanusiaan"}</strong>, verifikasi ini otomatis mencatat proposal di <strong>Penawaran Saya</strong>, disetujui Posko BPBD, dan <strong>Misi Penyaluran armada langsung aktif diterbitkan</strong>.
+                </div>
                 <label
                   style={{
                     fontWeight: 700,
@@ -1338,7 +1442,7 @@ export function MitraVerifikasiLaporan({
                 {isSubmitting
                   ? "Menyimpan..."
                   : modalAction === "verify"
-                  ? "Konfirmasi & Rilis ke Bursa"
+                  ? "Verifikasi & Terbitkan Misi Penyaluran"
                   : modalAction === "clarify"
                   ? "Kirim Permintaan Klarifikasi"
                   : "Simpan Penolakan"}
