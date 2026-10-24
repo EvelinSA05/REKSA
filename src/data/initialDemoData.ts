@@ -652,3 +652,79 @@ export const DEMO_SEED_PENAWARAN: PenawaranItem[] = [
     created_at: "Hari ini, 02:45 WIB",
   },
 ];
+
+export interface DemoActivityLog {
+  id: number;
+  kebutuhan_id: number;
+  kebutuhan?: { kode_kasus: string };
+  aksi: string;
+  deskripsi: string;
+  created_at: string;
+}
+
+export const DEMO_SEED_ACTIVITY_LOGS: DemoActivityLog[] = [
+  {
+    id: 101,
+    kebutuhan_id: 1,
+    kebutuhan: { kode_kasus: "RK-2026-00319" },
+    aksi: "Permintaan Klarifikasi Posko",
+    deskripsi: "Petugas Posko BPBD meminta kelengkapan rincian jumlah jiwa rentan dan foto pendukung untuk laporan RK-2026-00319.",
+    created_at: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 102,
+    kebutuhan_id: 2,
+    kebutuhan: { kode_kasus: "RK-2026-00288" },
+    aksi: "Armada Distribusi Tiba di Lokasi",
+    deskripsi: "Mobil Ambulans & Logistik PMI No. 02 telah tiba di titik kumpul balai warga. Warga diminta menandatangani BAST penerimaan fisik bantuan.",
+    created_at: new Date(Date.now() - 28 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 103,
+    kebutuhan_id: 3,
+    kebutuhan: { kode_kasus: "RK-2026-00245" },
+    aksi: "Misi Penyaluran Armada Bergerak",
+    deskripsi: "Misi MISI-ASG-002 diberangkatkan membawa 15 Paket Tenda & Terpal Pengungsi menuju Cugenang. Jalur terpantau lancar.",
+    created_at: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 104,
+    kebutuhan_id: 4,
+    kebutuhan: { kode_kasus: "RK-2026-00192" },
+    aksi: "Penawaran Bantuan Mitra Diajukan",
+    deskripsi: "Palang Merah Indonesia (PMI Cabang Jatim) mengajukan komitmen 30 Paket Obat & Hygiene Kit untuk laporan RK-2026-00192.",
+    created_at: new Date(Date.now() - 85 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 105,
+    kebutuhan_id: 4,
+    kebutuhan: { kode_kasus: "RK-2026-00192" },
+    aksi: "Pengalihan Kasus ke Mitra",
+    deskripsi: "Koordinator Posko mengalihkan penanganan kasus RK-2026-00192 ke Palang Merah Indonesia untuk respon tanggap darurat medis cepat.",
+    created_at: new Date(Date.now() - 110 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 106,
+    kebutuhan_id: 5,
+    kebutuhan: { kode_kasus: "RK-2026-00128" },
+    aksi: "Kebutuhan Dipublikasikan ke Bursa",
+    deskripsi: "Laporan RK-2026-00128 (Sandang & Selimut Hangat) diverifikasi sah oleh Koordinator Posko dan kuota dibuka di Bursa Kemitraan.",
+    created_at: new Date(Date.now() - 140 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 107,
+    kebutuhan_id: 6,
+    kebutuhan: { kode_kasus: "RK-2026-00104" },
+    aksi: "Serah Terima Bantuan Selesai",
+    deskripsi: "Penyaluran 100 Porsi Pangan Siap Santap telah selesai dan BAST digital telah ditandatangani oleh perwakilan warga.",
+    created_at: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 108,
+    kebutuhan_id: 2,
+    kebutuhan: { kode_kasus: "RK-2026-00288" },
+    aksi: "Pesan Chat Koordinasi",
+    deskripsi: "dr. Hendra Wijaya (PMI): 'Armada logistik kami sudah memasuki area Buduran, titik kumpul warga sudah siap?'",
+    created_at: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
+  },
+];
