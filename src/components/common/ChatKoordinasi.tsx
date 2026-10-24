@@ -192,10 +192,19 @@ const getInitialMessagesByChannel = (): Record<string, ChatMessageItem[]> => {
       const cached = localStorage.getItem("reksa_chat_messages_cache");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed && typeof parsed === "object" && Array.isArray(parsed.umum)) {
+        if (parsed && typeof parsed === "object") {
+          const filterClean = (list?: ChatMessageItem[]) =>
+            (list || []).filter(
+              (m) =>
+                m.id <= 11 &&
+                !["jgvjh", "bjbjk", "sdtsd", "sdfsdf", "bnb", "gesadsfds", "fgdfg]"].includes(
+                  (m.message || "").trim().toLowerCase()
+                )
+            );
           return {
-            ...INITIAL_SEED_MESSAGES_BY_CHANNEL,
-            ...parsed,
+            umum: filterClean(parsed.umum).length > 0 ? filterClean(parsed.umum) : INITIAL_SEED_MESSAGES_BY_CHANNEL.umum,
+            posko_mitra: filterClean(parsed.posko_mitra).length > 0 ? filterClean(parsed.posko_mitra) : INITIAL_SEED_MESSAGES_BY_CHANNEL.posko_mitra,
+            bantuan_warga: filterClean(parsed.bantuan_warga).length > 0 ? filterClean(parsed.bantuan_warga) : INITIAL_SEED_MESSAGES_BY_CHANNEL.bantuan_warga,
           };
         }
       }
@@ -632,7 +641,12 @@ export function ChatKoordinasi({
           <button
             type="button"
             className="clean-refresh-btn"
-            onClick={() => loadMessages(selectedChannel, false)}
+            onClick={() => {
+              try {
+                localStorage.removeItem("reksa_chat_messages_cache");
+              } catch {}
+              loadMessages(selectedChannel, false);
+            }}
             title="Muat ulang pesan sekarang"
           >
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2">

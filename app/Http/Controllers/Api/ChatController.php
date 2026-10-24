@@ -183,4 +183,25 @@ class ChatController extends Controller
             'data' => $channelDefinitions,
         ]);
     }
+
+    /**
+     * Delete an unwanted chat message.
+     */
+    public function destroy($id)
+    {
+        $msg = ChatMessage::find($id);
+        if (!$msg) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesan tidak ditemukan.',
+            ], 404);
+        }
+
+        $msg->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pesan berhasil dihapus.',
+        ]);
+    }
 }

@@ -60,6 +60,7 @@ Route::get('/activity-logs', [ActivityLogController::class, 'index']);
 // Ruang Komunikasi Terpadu 3 Role (Warga, Posko BPBD, Mitra)
 Route::get('/chat', [ChatController::class, 'index']);
 Route::post('/chat', [ChatController::class, 'store']);
+Route::delete('/chat/{id}', [ChatController::class, 'destroy']);
 Route::get('/chat/channels', [ChatController::class, 'channels']);
 
 // Authenticated Sanctum Routes
