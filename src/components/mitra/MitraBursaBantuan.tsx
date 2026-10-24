@@ -385,73 +385,90 @@ export function MitraBursaBantuan({
                 }
               : c
           );
-          try {
-            localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCasesList));
-          } catch (_) {}
         }
-
-        let localBursa: any[] = [];
-        try {
-          const bSaved = localStorage.getItem("reksa_bursa_db");
-          if (bSaved) localBursa = JSON.parse(bSaved);
-        } catch (_) {}
-        if (localBursa.length > 0) {
-          updatedBursaList = localBursa.map((b) =>
-            b.id === modalBursa.id || b.kebutuhan_id === modalBursa.kebutuhan_id
+      } else {
+        if (cases) {
+          updatedCasesList = cases.map((c) =>
+            (relatedCase && c.id === relatedCase.id) ||
+            (c.rawId && (c.rawId === modalBursa.id || c.rawId === modalBursa.kebutuhan_id)) ||
+            (c.id && modalBursa.kebutuhan?.kode_kasus === c.id)
               ? {
-                  ...b,
-                  status: "Teralokasi Penuh",
-                  volume_terpenuhi: amountStr,
-                  claimed_org: userOrg || relatedCase?.mitraHandler,
-                  claimed_volume: amountStr,
+                  ...c,
+                  status: "Klaim Diajukan",
                 }
-              : b
+              : c
           );
-          try {
-            localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
-          } catch (_) {}
         }
       }
 
+      if (updatedCasesList) {
+        try {
+          localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCasesList));
+        } catch (_) {}
+      }
+
+      // Update bursa status
+      let localBursa: any[] = [];
+      try {
+        const bSaved = localStorage.getItem("reksa_bursa_db");
+        if (bSaved) localBursa = JSON.parse(bSaved);
+      } catch (_) {}
+      const currentBursa = localBursa.length > 0 ? localBursa : (bursaList || []);
+      updatedBursaList = currentBursa.map((b) =>
+        b.id === modalBursa.id || b.kebutuhan_id === modalBursa.kebutuhan_id
+          ? {
+              ...b,
+              status: isDelegatedToMitra ? "Teralokasi Penuh" : "Klaim Diajukan",
+              volume_terpenuhi: isDelegatedToMitra ? amountStr : b.volume_terpenuhi,
+              claimed_org: userOrg || relatedCase?.mitraHandler,
+              claimed_volume: amountStr,
+              claimed_armada: resolvedFleet,
+              claim_notes: notesInput,
+            }
+          : b
+      );
+      try {
+        localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
+      } catch (_) {}
+
+      // Update React shared state
       update?.({
         penawaranList: updatedOffers,
+        bursaList: updatedBursaList,
+        ...(updatedCasesList ? { casesList: updatedCasesList } : {}),
         ...(isDelegatedToMitra ? {
           misiList: updatedMisiList,
-          ...(updatedCasesList ? { casesList: updatedCasesList } : {}),
-          ...(updatedBursaList ? { bursaList: updatedBursaList } : {}),
           assignment: "Dalam Perjalanan",
         } : {})
       });
 
-      try {
-        await apiService.createPenawaran({
-          bursa_id: modalBursa.id,
-          jumlah_tawaran: amountStr,
-          volume_angka: num,
-          satuan: offeredUnit,
-          metode_penyaluran: deliveryMethod,
-          kategori_komoditas: modalBursa.item_bantuan,
-          waktu_kesiapan: readinessTime,
-          armada_info: resolvedFleet,
-          organisasi: userOrg,
-          catatan: notesInput,
-        });
-      } catch (_) {
-        // Fallback anggun ke lokal
-      }
+      // Tutup modal dan langsung pindah ke halaman Penawaran Saya
+      setModalBursa(null);
+      setIsSubmitting(false);
 
       if (isDelegatedToMitra) {
-        notify?.(`Komitmen diajukan! Penawaran otomatis disetujui & Misi Penyaluran armada langsung aktif diterbitkan.`);
+        notify?.(`Komitmen diajukan! Penawaran otomatis disetujui (ACC) & Misi Penyaluran armada langsung aktif.`);
       } else {
         notify?.(`Penawaran bantuan ${modalBursa.item_bantuan} (${amountStr}) berhasil diajukan ke Posko BPBD (menunggu verifikasi & persetujuan Posko).`);
       }
 
-      setModalBursa(null);
-      await onRefresh?.().catch(() => {});
       onNavigateToMyOffers();
+
+      // Kirim ke backend di background tanpa memblokir UI
+      apiService.createPenawaran({
+        bursa_id: modalBursa.id,
+        jumlah_tawaran: amountStr,
+        volume_angka: num,
+        satuan: offeredUnit,
+        metode_penyaluran: deliveryMethod,
+        kategori_komoditas: modalBursa.item_bantuan,
+        waktu_kesiapan: readinessTime,
+        armada_info: resolvedFleet,
+        organisasi: userOrg,
+        catatan: notesInput,
+      }).catch(() => {});
     } catch (err: any) {
       notify?.(err?.message || "Gagal mengajukan penawaran bantuan.");
-    } finally {
       setIsSubmitting(false);
     }
   };
