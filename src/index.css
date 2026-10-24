@@ -5814,20 +5814,24 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 }
 
 /* Side-by-Side Visual Evidence & Geographic Map */
-.case-evidence-geo-grid {
+.case-evidence-geo-section {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-  gap: 16px !important;
+  grid-template-columns: 1.08fr 0.92fr !important;
+  gap: 28px !important;
+  margin-top: 24px !important;
   align-items: stretch !important;
   width: 100% !important;
 }
 
-.case-evidence-geo-grid .case-section-card {
+.case-evidence-geo-section .case-section-card {
   min-width: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-@media (max-width: 640px) {
-  .case-evidence-geo-grid {
+@media (max-width: 900px) {
+  .case-evidence-geo-section {
     grid-template-columns: 1fr !important;
   }
 }
