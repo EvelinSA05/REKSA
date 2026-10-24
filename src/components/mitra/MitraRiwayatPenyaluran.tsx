@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { MisiItem } from "../../services/api";
-import { CaseRecord } from "../../App";
+import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { AppIcon } from "../common/Icons";
 import { BastPrintModal } from "../common/BastPrintModal";
 
@@ -25,6 +25,7 @@ export function MitraRiwayatPenyaluran({
   const [filterTab, setFilterTab] = useState<"all" | "zero_discrepancy" | "posko_support" | "mandiri">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedBastMisi, setSelectedBastMisi] = useState<MisiItem | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
   const pageSize = 5;
 
   // Filter only completed missions
@@ -422,32 +423,68 @@ export function MitraRiwayatPenyaluran({
                       </span>
                     </div>
 
-                    {/* Main Title */}
-                    <h3 style={{ margin: "2px 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220", lineHeight: 1.35 }}>
-                      Muatan: {m.muatan} · {m.armada_info || "Armada Mitra Terdaftar"}
-                    </h3>
+                    {/* Main Body with Visual Photo Thumbnail */}
+                    <div className="posko-case-body-main" style={{ margin: "8px 0 10px" }}>
+                      <div
+                        className="posko-case-photo-thumb"
+                        style={{ width: "115px", height: "95px", minWidth: "115px", flexShrink: 0 }}
+                        onClick={() => {
+                          const photoUrl = getFieldEvidencePhoto(m.muatan, m.kebutuhan?.foto_bukti);
+                          setPreviewImage({
+                            src: photoUrl,
+                            title: `Riwayat Misi Selesai: ${m.muatan}`,
+                            location: m.kebutuhan?.desa ? `Desa ${m.kebutuhan.desa}, Kec. ${m.kebutuhan.kecamatan || 'Sidoarjo'}` : (m.posko?.nama_posko || 'Lokasi Misi'),
+                          });
+                        }}
+                        title="Klik untuk memperbesar foto dokumentasi penyaluran"
+                      >
+                        <img
+                          src={getFieldEvidencePhoto(m.muatan, m.kebutuhan?.foto_bukti)}
+                          alt={m.muatan}
+                          className="posko-case-photo-img"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80";
+                          }}
+                        />
+                        <div className="posko-case-photo-badge">
+                          <AppIcon name="check" size={10} />
+                          <span>Bukti Selesai</span>
+                        </div>
+                        <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                          <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                        </div>
+                      </div>
 
-                    {/* Meta List */}
-                    <div className="reksa-meta-list" style={{ marginTop: "6px", fontSize: "0.85rem" }}>
-                      {m.kebutuhan?.kode_kasus && (
-                        <>
+                      <div className="posko-case-info-col">
+                        {/* Main Title */}
+                        <h3 style={{ margin: "0 0 6px", fontSize: "1.18rem", fontWeight: 800, color: "#013220", lineHeight: 1.35 }}>
+                          Muatan: {m.muatan} · {m.armada_info || "Armada Mitra Terdaftar"}
+                        </h3>
+
+                        {/* Meta List */}
+                        <div className="reksa-meta-list" style={{ fontSize: "0.84rem" }}>
+                          {m.kebutuhan?.kode_kasus && (
+                            <>
+                              <span className="reksa-meta-item">
+                                Kasus: <strong>{m.kebutuhan.kode_kasus}</strong>
+                              </span>
+                              <span className="reksa-meta-divider">·</span>
+                            </>
+                          )}
                           <span className="reksa-meta-item">
-                            Kasus: <strong>{m.kebutuhan.kode_kasus}</strong>
+                            Tujuan: <strong>{m.kebutuhan?.desa ? `${m.kebutuhan.desa}, ${m.kebutuhan.kecamatan}` : "Lokasi Sasaran Bencana"}</strong>
                           </span>
                           <span className="reksa-meta-divider">·</span>
-                        </>
-                      )}
-                      <span className="reksa-meta-item">
-                        Tujuan: <strong>{m.kebutuhan?.desa ? `${m.kebutuhan.desa}, ${m.kebutuhan.kecamatan}` : "Lokasi Sasaran Bencana"}</strong>
-                      </span>
-                      <span className="reksa-meta-divider">·</span>
-                      <span className="reksa-meta-item">
-                        Posko: <strong>{m.posko?.nama_posko || "Posko BPBD Wilayah"}</strong>
-                      </span>
-                      <span className="reksa-meta-divider">·</span>
-                      <span className="reksa-meta-item">
-                        Petugas: <strong>{m.responder_name}</strong> ({m.organisasi})
-                      </span>
+                          <span className="reksa-meta-item">
+                            Posko: <strong>{m.posko?.nama_posko || "Posko BPBD Wilayah"}</strong>
+                          </span>
+                          <span className="reksa-meta-divider">·</span>
+                          <span className="reksa-meta-item">
+                            Petugas: <strong>{m.responder_name}</strong> ({m.organisasi})
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -650,6 +687,77 @@ export function MitraRiwayatPenyaluran({
           }
           onClose={() => setSelectedBastMisi(null)}
         />
+      )}
+
+      {/* Lightbox Photo Preview Modal */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              maxWidth: "680px",
+              width: "100%",
+              overflow: "hidden",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255,255,255,0.2)",
+            }}
+          >
+            <div style={{ position: "relative", width: "100%", maxHeight: "460px", background: "#0f172a", overflow: "hidden" }}>
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", maxHeight: "460px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  background: "rgba(0, 0, 0, 0.6)",
+                  border: "none",
+                  borderRadius: "50%",
+                  color: "#ffffff",
+                  width: "36px",
+                  height: "36px",
+                  cursor: "pointer",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: "16px 20px", background: "#ffffff" }}>
+              <h4 style={{ margin: "0 0 4px", color: "#013220", fontSize: "1.05rem", fontWeight: 700 }}>
+                {previewImage.title}
+              </h4>
+              {previewImage.location && (
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.84rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AppIcon name="pin" size={13} style={{ color: "#047857" }} />
+                  {previewImage.location}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

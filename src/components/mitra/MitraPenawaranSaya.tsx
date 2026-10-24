@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { PenawaranItem, BursaItem } from "../../services/api";
 import { AppIcon } from "../common/Icons";
+import { getFieldEvidencePhoto } from "../../App";
 
 interface MitraPenawaranSayaProps {
   penawaranList: PenawaranItem[];
@@ -20,6 +21,7 @@ export function MitraPenawaranSaya({
   const [tab, setTab] = useState<"pending" | "approved" | "rejected" | "all">("all");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
   const pageSize = 5;
 
   const myOffers: PenawaranItem[] = useMemo(() => {
@@ -462,67 +464,102 @@ export function MitraPenawaranSaya({
                   )}
                 </div>
 
-                {/* Commodity Title & Offered Quantity */}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", margin: "4px 0 14px" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.25rem", color: "#013220", fontWeight: 800 }}>
-                    {cleanTitle}
-                  </h3>
-                  <span
-                    style={{
-                      fontSize: "0.95rem",
-                      fontWeight: 800,
-                      color: "#15803d",
-                      background: "#f0fdf4",
-                      padding: "3px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #bbf7d0",
+                {/* Main Body with Visual Evidence Photo Thumbnail */}
+                <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
+                  <div
+                    className="posko-case-photo-thumb"
+                    onClick={() => {
+                      const photoUrl = getFieldEvidencePhoto(cleanTitle, (o as any).foto_bukti || o.kebutuhan?.foto_bukti);
+                      setPreviewImage({
+                        src: photoUrl,
+                        title: `Proposal Komitmen: ${cleanTitle}`,
+                        location: `Organisasi: ${o.organisasi} · Tawaran: ${o.jumlah_tawaran} (${deliveryMethod})`,
+                      });
                     }}
+                    title="Klik untuk memperbesar foto dokumentasi komoditas"
                   >
-                    {o.jumlah_tawaran}
-                  </span>
-                </div>
-
-                {/* Structured Metadata Box */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: "10px",
-                    padding: "12px 16px",
-                    background: "#f8fafc",
-                    borderRadius: "12px",
-                    border: "1px solid #f1f5f9",
-                    marginBottom: "14px",
-                    fontSize: "0.83rem",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <AppIcon name="users" size={14} style={{ color: "#15803d" }} />
-                    <span style={{ color: "#64748b" }}>Organisasi:</span>
-                    <strong style={{ color: "#0f172a" }}>{o.organisasi}</strong>
+                    <img
+                      src={getFieldEvidencePhoto(cleanTitle, (o as any).foto_bukti || o.kebutuhan?.foto_bukti)}
+                      alt={cleanTitle}
+                      className="posko-case-photo-img"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80";
+                      }}
+                    />
+                    <div className="posko-case-photo-badge">
+                      <AppIcon name="camera" size={11} />
+                      <span>Foto Komoditas</span>
+                    </div>
+                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                    </div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <AppIcon name="truck" size={14} style={{ color: "#15803d" }} />
-                    <span style={{ color: "#64748b" }}>Metode:</span>
-                    <strong style={{ color: "#0f172a" }}>{deliveryMethod}</strong>
+                  <div className="posko-case-info-col">
+                    {/* Commodity Title & Offered Quantity */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", margin: "0 0 10px" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.2rem", color: "#013220", fontWeight: 800 }}>
+                        {cleanTitle}
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: "0.95rem",
+                          fontWeight: 800,
+                          color: "#15803d",
+                          background: "#f0fdf4",
+                          padding: "3px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #bbf7d0",
+                        }}
+                      >
+                        {o.jumlah_tawaran}
+                      </span>
+                    </div>
+
+                    {/* Structured Metadata Box */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: "10px",
+                        padding: "12px 16px",
+                        background: "#f8fafc",
+                        borderRadius: "12px",
+                        border: "1px solid #f1f5f9",
+                        marginBottom: "12px",
+                        fontSize: "0.83rem",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <AppIcon name="users" size={14} style={{ color: "#15803d" }} />
+                        <span style={{ color: "#64748b" }}>Organisasi:</span>
+                        <strong style={{ color: "#0f172a" }}>{o.organisasi}</strong>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <AppIcon name="truck" size={14} style={{ color: "#15803d" }} />
+                        <span style={{ color: "#64748b" }}>Metode:</span>
+                        <strong style={{ color: "#0f172a" }}>{deliveryMethod}</strong>
+                      </div>
+
+                      {o.armada_info && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <AppIcon name="file" size={14} style={{ color: "#15803d" }} />
+                          <span style={{ color: "#64748b" }}>Armada:</span>
+                          <strong style={{ color: "#0f172a" }}>{o.armada_info}</strong>
+                        </div>
+                      )}
+
+                      {o.waktu_kesiapan && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <AppIcon name="clock" size={14} style={{ color: "#15803d" }} />
+                          <span style={{ color: "#64748b" }}>Kesiapan:</span>
+                          <strong style={{ color: "#0f172a" }}>{o.waktu_kesiapan}</strong>
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  {o.armada_info && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <AppIcon name="file" size={14} style={{ color: "#15803d" }} />
-                      <span style={{ color: "#64748b" }}>Armada:</span>
-                      <strong style={{ color: "#0f172a" }}>{o.armada_info}</strong>
-                    </div>
-                  )}
-
-                  {o.waktu_kesiapan && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <AppIcon name="clock" size={14} style={{ color: "#15803d" }} />
-                      <span style={{ color: "#64748b" }}>Kesiapan:</span>
-                      <strong style={{ color: "#0f172a" }}>{o.waktu_kesiapan}</strong>
-                    </div>
-                  )}
                 </div>
 
                 {/* Status Notice Boxes */}
@@ -671,6 +708,77 @@ export function MitraPenawaranSaya({
             >
               Selanjutnya <span>&rarr;</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Photo Preview Modal */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              maxWidth: "680px",
+              width: "100%",
+              overflow: "hidden",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255,255,255,0.2)",
+            }}
+          >
+            <div style={{ position: "relative", width: "100%", maxHeight: "460px", background: "#0f172a", overflow: "hidden" }}>
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", maxHeight: "460px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  background: "rgba(0, 0, 0, 0.6)",
+                  border: "none",
+                  borderRadius: "50%",
+                  color: "#ffffff",
+                  width: "36px",
+                  height: "36px",
+                  cursor: "pointer",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: "16px 20px", background: "#ffffff" }}>
+              <h4 style={{ margin: "0 0 4px", color: "#013220", fontSize: "1.05rem", fontWeight: 700 }}>
+                {previewImage.title}
+              </h4>
+              {previewImage.location && (
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.84rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AppIcon name="pin" size={13} style={{ color: "#047857" }} />
+                  {previewImage.location}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
