@@ -13,6 +13,7 @@ interface MitraBursaBantuanProps {
   onNavigateToMyOffers: () => void;
   cases?: CaseRecord[];
   update?: (callback: (prev: any) => any) => void;
+  penawaranList?: PenawaranItem[];
 }
 
 export function MitraBursaBantuan({
@@ -24,6 +25,7 @@ export function MitraBursaBantuan({
   onNavigateToMyOffers,
   cases,
   update,
+  penawaranList = [],
 }: MitraBursaBantuanProps) {
   // Search & Filter state
   const [filterUrgency, setFilterUrgency] = useState<"Semua" | "Kritis" | "Tinggi" | "Sedang">("Semua");
@@ -44,11 +46,54 @@ export function MitraBursaBantuan({
   const [notesInput, setNotesInput] = useState("Mitra siap menyerahkan pasokan barang kebutuhan ke Posko BPBD.");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Kebutuhan aktif di bursa posko (terbuka, klaim, atau teralokasi operasional)
+  // Kebutuhan aktif di bursa posko (terbuka, belum dikomitmenkan oleh mitra)
   const openItems = useMemo(() => {
-    const directBursa = (bursaList || []).filter(
-      (b) => b.status !== "Selesai" && b.status !== "Ditolak"
-    );
+    // 1. Kumpulkan semua identifier penawaran yang sudah diajukan oleh mitra (dari state & localStorage)
+    const offeredBursaIds = new Set<string>();
+    const offeredKebutuhanIds = new Set<string>();
+    const offeredCaseCodes = new Set<string>();
+
+    const allOffers: PenawaranItem[] = [...(penawaranList || [])];
+    try {
+      const savedOffers = localStorage.getItem("reksa_penawaran_db");
+      if (savedOffers) {
+        const parsed = JSON.parse(savedOffers);
+        if (Array.isArray(parsed)) allOffers.push(...parsed);
+      }
+    } catch {}
+
+    allOffers.forEach((o) => {
+      if (o.bursa_id) offeredBursaIds.add(String(o.bursa_id));
+      if (o.kebutuhan_id) offeredKebutuhanIds.add(String(o.kebutuhan_id));
+      if (o.kebutuhan?.kode_kasus) offeredCaseCodes.add(o.kebutuhan.kode_kasus.toLowerCase().trim());
+      if ((o as any).kode_kasus) offeredCaseCodes.add(String((o as any).kode_kasus).toLowerCase().trim());
+    });
+
+    // 2. Filter directBursa: jangan tampilkan yang sudah selesai, ditolak, teralokasi penuh, klaim diajukan, atau sudah ada di Penawaran Saya
+    const directBursa = (bursaList || []).filter((b) => {
+      const s = (b.status || "").toLowerCase();
+      if (
+        s.includes("selesai") ||
+        s.includes("tolak") ||
+        s.includes("penuh") ||
+        s.includes("klaim") ||
+        s.includes("disetujui")
+      ) {
+        return false;
+      }
+
+      // Sembunyikan jika mitra ini sudah mengajukan komitmen / ada di Penawaran Saya
+      const bursaIdStr = String(b.id);
+      const kebutuhanIdStr = b.kebutuhan_id ? String(b.kebutuhan_id) : "";
+      const caseCode = b.kebutuhan?.kode_kasus ? b.kebutuhan.kode_kasus.toLowerCase().trim() : "";
+
+      if (offeredBursaIds.has(bursaIdStr)) return false;
+      if (kebutuhanIdStr && offeredKebutuhanIds.has(kebutuhanIdStr)) return false;
+      if (caseCode && offeredCaseCodes.has(caseCode)) return false;
+      if (b.claimed_org) return false;
+
+      return true;
+    });
 
     const existingIdentifiers = new Set<string>();
     directBursa.forEach((b) => {
@@ -62,11 +107,23 @@ export function MitraBursaBantuan({
 
     (cases || []).forEach((c) => {
       const s = (c.status || "").toLowerCase();
-      const isClosed = s.includes("selesai") || s.includes("tolak");
-      if (isClosed) return;
+      // Jangan tampilkan jika sudah selesai, ditolak, klaim diajukan, dalam pengiriman, atau teralokasi
+      if (
+        s.includes("selesai") ||
+        s.includes("tolak") ||
+        s.includes("klaim") ||
+        s.includes("pengiriman") ||
+        s.includes("penuh")
+      ) {
+        return;
+      }
 
       const caseIdLower = (c.id || "").toLowerCase().trim();
       const rawIdStr = c.rawId ? String(c.rawId) : "";
+
+      // Jangan tampilkan jika kasus ini sudah diajukan penawarannya oleh mitra
+      if (caseIdLower && offeredCaseCodes.has(caseIdLower)) return;
+      if (rawIdStr && (offeredBursaIds.has(rawIdStr) || offeredKebutuhanIds.has(rawIdStr))) return;
 
       if (
         (caseIdLower && existingIdentifiers.has(caseIdLower)) ||
@@ -134,7 +191,7 @@ export function MitraBursaBantuan({
 
     // Tempatkan kebutuhan yang baru diverifikasi di baris paling atas agar langsung terlihat
     return [...additionalFromCases, ...directBursa];
-  }, [bursaList, cases]);
+  }, [bursaList, cases, penawaranList]);
 
   // Counts for metric cards and tab pills
   const totalOpen = openItems.length;
