@@ -771,14 +771,25 @@ export function MitraVerifikasiLaporan({
 
       {/* MODAL VERIFIKASI / TOLAK */}
       {modalAction && selectedCase && (
-        <div className="modal-backdrop">
+        <div
+          className="modal-backdrop"
+          onClick={() => setModalAction(null)}
+          style={{ overflowY: "auto", padding: "20px 14px", display: "flex", justifyContent: "center", alignItems: "flex-start" }}
+        >
           <div
             className="modal"
+            onClick={(e) => e.stopPropagation()}
             style={{
               width: "min(560px, 95%)",
+              maxHeight: "calc(100vh - 40px)",
+              overflowY: "auto",
               textAlign: "left",
               borderRadius: "16px",
-              padding: "28px",
+              padding: "24px 28px",
+              margin: "auto",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.35)",
             }}
           >
             <div
