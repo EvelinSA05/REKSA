@@ -5334,7 +5334,19 @@ function Activity({
 function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nugroho", setName, onRefresh, setRole }: RouterProps) {
   if (page === "dashboard") return <MitraDashboard state={state} update={update} setPage={setPage} notify={notify} onRefresh={onRefresh} />;
   if (page === "chat") return <ChatKoordinasi role="responder" name={name} state={state} notify={notify} onRefresh={onRefresh} setPage={setPage} />;
-  if (page === "verify-mitra") return <MitraVerifikasiLaporan cases={state.casesList || []} onRefresh={onRefresh} notify={notify} update={update} />;
+  if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("verify-mitra")} posko onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
+  if (page === "verify-mitra") return (
+    <MitraVerifikasiLaporan 
+      cases={state.casesList || []} 
+      onRefresh={onRefresh} 
+      notify={notify} 
+      update={update} 
+      onSelectCase={(c) => { 
+        if (c?.id) update({ activeCaseId: c.id }); 
+        setPage("case"); 
+      }} 
+    />
+  );
   if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} cases={state.casesList || []} update={update} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} />;

@@ -9,6 +9,7 @@ interface MitraVerifikasiLaporanProps {
   onRefresh?: () => Promise<void> | void;
   notify?: (msg: string) => void;
   update?: (changes: any, log?: string) => void;
+  onSelectCase?: (c: CaseRecord) => void;
 }
 
 export function MitraVerifikasiLaporan({
@@ -16,6 +17,7 @@ export function MitraVerifikasiLaporan({
   onRefresh,
   notify,
   update,
+  onSelectCase,
 }: MitraVerifikasiLaporanProps) {
   const [tab, setTab] = useState<"menunggu" | "diverifikasi" | "ditolak" | "semua">("menunggu");
   const [search, setSearch] = useState("");
@@ -24,9 +26,11 @@ export function MitraVerifikasiLaporan({
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
 
   // Modal state
-  const [modalAction, setModalAction] = useState<"verify" | "reject" | null>(null);
+  const [modalAction, setModalAction] = useState<"verify" | "reject" | "clarify" | null>(null);
   const [selectedCase, setSelectedCase] = useState<CaseRecord | null>(null);
   const [notesInput, setNotesInput] = useState("");
+  const [clarificationCategory, setClarificationCategory] = useState("Foto / Bukti Fisik Buram / Kurang Jelas");
+  const [requestAttachment, setRequestAttachment] = useState(true);
   const [priorityChoice, setPriorityChoice] = useState("Tinggi");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -106,20 +110,26 @@ export function MitraVerifikasiLaporan({
     (c.status || "").toLowerCase().includes("tolak")
   ).length;
 
-  const openModal = (c: CaseRecord, action: "verify" | "reject") => {
+  const openModal = (c: CaseRecord, action: "verify" | "reject" | "clarify") => {
     setSelectedCase(c);
     setModalAction(action);
     setNotesInput("");
+    setClarificationCategory("Foto / Bukti Fisik Buram / Kurang Jelas");
+    setRequestAttachment(true);
     setPriorityChoice(c.urgency === "Kritis" ? "Kritis" : "Tinggi");
   };
 
   const handleExecuteAction = async () => {
-    if (!selectedCase) return;
+    if (!selectedCase || !modalAction) return;
     setIsSubmitting(true);
 
     // Optimistic update — UI langsung berubah
     const newStatus =
-      modalAction === "verify" ? "Kebutuhan Terbuka" : "Ditolak Mitra";
+      modalAction === "verify" 
+        ? "Kebutuhan Terbuka" 
+        : modalAction === "clarify"
+        ? "Perlu Klarifikasi"
+        : "Ditolak Mitra";
 
     const updatedCases = cases.map((c) =>
       c.id === selectedCase.id
@@ -128,6 +138,20 @@ export function MitraVerifikasiLaporan({
             status: newStatus,
             urgency: modalAction === "verify" ? priorityChoice : c.urgency,
             escalatedToMitra: true,
+            statusTone: modalAction === "clarify" ? "#d97706" : c.statusTone,
+            clarificationCategory: modalAction === "clarify" ? clarificationCategory : c.clarificationCategory,
+            clarificationQuestion: modalAction === "clarify" ? (notesInput || `Mohon lengkapi perbaikan ${clarificationCategory.toLowerCase()} untuk laporan kebutuhan ini.`) : c.clarificationQuestion,
+            clarificationAttachmentRequested: modalAction === "clarify" ? requestAttachment : c.clarificationAttachmentRequested,
+            clarificationHistory: modalAction === "clarify" ? [
+              ...(c.clarificationHistory || []),
+              {
+                date: new Date().toISOString(),
+                by: "Mitra Kemanusiaan",
+                category: clarificationCategory,
+                question: notesInput || `Mohon lengkapi perbaikan ${clarificationCategory.toLowerCase()} untuk laporan kebutuhan ini.`,
+                requestAttachment: requestAttachment,
+              }
+            ] : c.clarificationHistory,
           }
         : c
     );
@@ -139,6 +163,8 @@ export function MitraVerifikasiLaporan({
     const notifMsg =
       modalAction === "verify"
         ? `Laporan ${selectedCase.id} diverifikasi Mitra & diterbitkan ke Bursa Bantuan!`
+        : modalAction === "clarify"
+        ? `Permintaan klarifikasi telah dikirimkan ke pelapor untuk laporan ${selectedCase.id}.`
         : `Laporan ${selectedCase.id} ditolak oleh Mitra.`;
     notify?.(notifMsg);
     setModalAction(null);
@@ -152,6 +178,14 @@ export function MitraVerifikasiLaporan({
           action: "verify_and_publish",
           priority: priorityChoice,
           catatan: notesInput || "Diverifikasi oleh Mitra dan dirilis ke Bursa Bantuan.",
+        });
+      } else if (modalAction === "clarify") {
+        await apiService.verifyKebutuhan(selectedCase.id, {
+          action: "clarify",
+          kategori_klarifikasi: clarificationCategory,
+          pertanyaan: notesInput || `Mohon lengkapi perbaikan ${clarificationCategory.toLowerCase()} untuk laporan kebutuhan ini.`,
+          meminta_lampiran: requestAttachment,
+          catatan: notesInput,
         });
       } else if (modalAction === "reject") {
         await apiService.verifyKebutuhan(selectedCase.id, {
@@ -396,9 +430,11 @@ export function MitraVerifikasiLaporan({
               s.includes("sebagian") ||
               s.includes("selesai");
             const isRejected = s.includes("tolak");
+            const isClarify = s.includes("klarifikasi");
             const isPending =
               s.includes("menunggu verifikasi mitra") ||
-              s.includes("dialihkan ke mitra");
+              s.includes("dialihkan ke mitra") ||
+              (!isVerified && !isRejected);
 
             const cardClass = isVerified
               ? "card-verified"
@@ -436,12 +472,19 @@ export function MitraVerifikasiLaporan({
                         gap: "5px",
                       }}
                     >
-                      {isPending && <AppIcon name="bolt" size={11} />}
-                      <span>
-                        {isPending
-                          ? "Dialihkan ke Mitra — Menunggu Verifikasi"
-                          : c.status}
-                      </span>
+                      {isClarify ? (
+                        <>
+                          <AppIcon name="alert" size={11} />
+                          <span>Menunggu Klarifikasi Pelapor</span>
+                        </>
+                      ) : isPending ? (
+                        <>
+                          <AppIcon name="bolt" size={11} />
+                          <span>Dialihkan ke Mitra — Menunggu Verifikasi</span>
+                        </>
+                      ) : (
+                        <span>{c.status}</span>
+                      )}
                     </span>
 
                     {c.province && (
@@ -647,6 +690,40 @@ export function MitraVerifikasiLaporan({
                     </div>
                   )}
 
+                  {((c.status || "").toLowerCase().includes("klarifikasi") || c.clarificationQuestion) && (
+                    <div
+                      style={{
+                        background: "#fffbeb",
+                        border: "1px solid #fde68a",
+                        borderRadius: "10px",
+                        padding: "10px 14px",
+                        fontSize: "0.84rem",
+                        color: "#92400e",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
+                        <AppIcon name="alert" size={14} />
+                        <span>STATUS: MENUNGGU KLARIFIKASI PELAPOR</span>
+                        {c.clarificationCategory && (
+                          <span style={{ fontSize: "0.75rem", background: "#fef3c7", padding: "2px 8px", borderRadius: "6px", border: "1px solid #fcd34d" }}>
+                            {c.clarificationCategory}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <strong>Pertanyaan Klarifikasi:</strong> {c.clarificationQuestion || "Menunggu pelapor melengkapi rincian data."}
+                      </div>
+                      {c.clarificationCitizenResponse && (
+                        <div style={{ marginTop: "4px", padding: "8px 10px", background: "#ffffff", borderRadius: "8px", border: "1px solid #fde68a", color: "#1e293b" }}>
+                          <strong style={{ color: "#013220" }}>Tanggapan Warga:</strong> {c.clarificationCitizenResponse}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Hasil verifikasi jika sudah diverifikasi */}
                   {isVerified && (
                     <div
@@ -695,27 +772,32 @@ export function MitraVerifikasiLaporan({
 
                 {/* Action footer */}
                 <div className="posko-case-footer-row">
-                  <div />
+                  <button
+                    type="button"
+                    onClick={() => onSelectCase?.(c)}
+                    className="btn-case-view"
+                    title="Buka dokumen detail dan pemeriksaan kasus"
+                  >
+                    <AppIcon name="file" size={14} />
+                    <span>Buka Kasus</span>
+                  </button>
+
                   <div className="posko-case-actions-cluster">
                     {isPending && (
                       <>
                         <button
                           type="button"
+                          onClick={() => openModal(c, "clarify")}
+                          className="btn-case-clarify"
+                          title="Minta klarifikasi tambahan dari pelapor"
+                        >
+                          <AppIcon name="alert" size={13} />
+                          <span>Minta Klarifikasi</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => openModal(c, "reject")}
-                          style={{
-                            background: "#ffffff",
-                            color: "#64748b",
-                            border: "1px solid #cbd5e1",
-                            padding: "7px 14px",
-                            borderRadius: "8px",
-                            fontSize: "0.80rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
+                          className="btn-case-reject"
                           title="Tolak laporan — tidak dapat ditangani Mitra"
                         >
                           <AppIcon name="x" size={13} />
@@ -724,21 +806,7 @@ export function MitraVerifikasiLaporan({
                         <button
                           type="button"
                           onClick={() => openModal(c, "verify")}
-                          style={{
-                            background: "#013220",
-                            color: "#ffffff",
-                            border: "1px solid #013220",
-                            padding: "7px 18px",
-                            borderRadius: "8px",
-                            fontSize: "0.80rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(1, 50, 32, 0.15)",
-                            transition: "all 0.15s ease",
-                          }}
+                          className="btn-case-verify"
                           title="Verifikasi laporan dan rilis ke Bursa Bantuan"
                         >
                           <AppIcon name="check" size={13} />
@@ -760,6 +828,22 @@ export function MitraVerifikasiLaporan({
                       >
                         <AppIcon name="check" size={14} />
                         <span>Aktif di Bursa</span>
+                      </div>
+                    )}
+
+                    {isRejected && (
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "0.83rem",
+                          color: "#991b1b",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <AppIcon name="x" size={14} />
+                        <span>Ditolak Mitra</span>
                       </div>
                     )}
                   </div>
@@ -855,6 +939,8 @@ export function MitraVerifikasiLaporan({
               >
                 {modalAction === "verify"
                   ? `Verifikasi Laporan ${selectedCase.id}`
+                  : modalAction === "clarify"
+                  ? `Minta Klarifikasi untuk ${selectedCase.id}`
                   : `Tolak Laporan ${selectedCase.id}`}
               </h2>
               <button
@@ -964,6 +1050,108 @@ export function MitraVerifikasiLaporan({
               </>
             )}
 
+            {modalAction === "clarify" && (
+              <>
+                <div
+                  style={{
+                    background: "#fffbeb",
+                    border: "1px solid #fde68a",
+                    borderRadius: "10px",
+                    padding: "10px 14px",
+                    marginBottom: "14px",
+                    fontSize: "0.84rem",
+                    color: "#92400e",
+                  }}
+                >
+                  <strong>Pertanyaan Langsung ke Warga:</strong> Permintaan klarifikasi akan dikirimkan ke pelapor untuk melengkapi bukti atau rincian kebutuhan yang diperlukan.
+                </div>
+
+                <label
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    color: "#013220",
+                    display: "block",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Jenis Informasi yang Perlu Diperbaiki:
+                </label>
+                <select
+                  value={clarificationCategory}
+                  onChange={(e) => setClarificationCategory(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "0.88rem",
+                    marginBottom: "14px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <option value="Foto / Bukti Fisik Buram / Kurang Jelas">Foto / Bukti Fisik Buram atau Kurang Jelas</option>
+                  <option value="Rincian Jumlah Jiwa Rentan & KK Terdampak">Rincian Jumlah Jiwa Rentan (Balita/Lansia) &amp; KK</option>
+                  <option value="Titik Koordinat Lokasi & Akses Distribusi">Titik Koordinat Lokasi &amp; Akses Jalan Lapangan</option>
+                  <option value="Spesifikasi & Volume Permintaan Logistik">Spesifikasi &amp; Volume Permintaan Kebutuhan Medis/Logistik</option>
+                  <option value="Kelengkapan Informasi Lainnya">Kelengkapan Informasi Lainnya</option>
+                </select>
+
+                <label
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                    color: "#013220",
+                    display: "block",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Pertanyaan Spesifik untuk Pelapor (Wajib):
+                </label>
+                <textarea
+                  rows={4}
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  placeholder="Tuliskan pertanyaan spesifik, misalnya: 'Foto kondisi pasien/tenda pengungsian buram, mohon unggah ulang foto yang jelas' atau 'Mohon rincikan jumlah balita dan obat darurat yang dibutuhkan.'"
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "0.88rem",
+                    marginBottom: "12px",
+                    boxSizing: "border-box",
+                    fontFamily: "inherit",
+                  }}
+                />
+
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "0.86rem",
+                    color: "#013220",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    marginBottom: "16px",
+                    background: "#fbfbf8",
+                    padding: "10px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={requestAttachment}
+                    onChange={(e) => setRequestAttachment(e.target.checked)}
+                    style={{ width: "16px", height: "16px", accentColor: "#013220" }}
+                  />
+                  <span>Meminta pelapor mengunggah foto atau dokumen bukti pendukung tambahan</span>
+                </label>
+              </>
+            )}
+
             {modalAction === "reject" && (
               <>
                 <div
@@ -1042,11 +1230,17 @@ export function MitraVerifikasiLaporan({
                 type="button"
                 disabled={
                   isSubmitting ||
-                  (modalAction === "reject" && !notesInput.trim())
+                  (modalAction === "reject" && !notesInput.trim()) ||
+                  (modalAction === "clarify" && !notesInput.trim())
                 }
                 onClick={handleExecuteAction}
                 style={{
-                  background: modalAction === "reject" ? "#334155" : "#013220",
+                  background:
+                    modalAction === "reject"
+                      ? "#334155"
+                      : modalAction === "clarify"
+                      ? "#b45309"
+                      : "#013220",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "8px",
@@ -1057,7 +1251,8 @@ export function MitraVerifikasiLaporan({
                   fontFamily: "inherit",
                   opacity:
                     isSubmitting ||
-                    (modalAction === "reject" && !notesInput.trim())
+                    (modalAction === "reject" && !notesInput.trim()) ||
+                    (modalAction === "clarify" && !notesInput.trim())
                       ? 0.6
                       : 1,
                 }}
@@ -1066,6 +1261,8 @@ export function MitraVerifikasiLaporan({
                   ? "Menyimpan..."
                   : modalAction === "verify"
                   ? "Konfirmasi & Rilis ke Bursa"
+                  : modalAction === "clarify"
+                  ? "Kirim Permintaan Klarifikasi"
                   : "Simpan Penolakan"}
               </button>
             </div>
