@@ -2287,10 +2287,80 @@ function CaseDetail({
       setIsVerifying(false);
     }
     const updatedCases = currentCases.map((c) => 
-      c.id === activeCase.id ? { ...c, status: "Kebutuhan Terbuka" } : c
+      c.id === activeCase.id ? { ...c, status: "Kebutuhan Terbuka", alasanPenolakan: undefined, tindakLanjutPenolakan: undefined } : c
     );
+
+    const targetNum = parseInt((activeCase.qty || activeCase.kk || "100").replace(/[^0-9]/g, "")) || 100;
+    const targetUnit = (activeCase.qty || activeCase.kk || "Unit").replace(/[0-9.,]/g, "").trim() || "Unit";
+    const numericId = typeof activeCase.rawId === "number" ? activeCase.rawId : (parseInt(activeCase.id.replace(/\D/g, "")) || Date.now());
+
+    const newBursaItem: BursaItem = {
+      id: numericId,
+      kebutuhan_id: numericId,
+      posko_id: 1,
+      item_bantuan: activeCase.item || "Kebutuhan Darurat Warga",
+      target_volume: `${targetNum} ${targetUnit}`,
+      volume_terpenuhi: activeCase.totalAlokasiResmi || "0 Unit",
+      urgensi: activeCase.urgency || "Tinggi",
+      status: "Terbuka",
+      published_at: "Hari ini, Baru diverifikasi",
+      posko: {
+        id: 1,
+        kode_posko: "PSK-01",
+        nama_posko: activeCase.posko || "Posko BPBD Provinsi Jawa Timur",
+        desa: activeCase.village || "Gubeng",
+        kecamatan: activeCase.district || "Gubeng",
+        kabupaten: activeCase.regency || "Kota Surabaya",
+        provinsi: activeCase.province || "Jawa Timur",
+        latitude: Number(activeCase.lat) || -7.2654,
+        longitude: Number(activeCase.lng) || 112.7521,
+        kapasitas_kk: 100,
+        kk_terdata: 25,
+        status_operasional: "Aktif Penuh",
+      },
+      kebutuhan: {
+        id: numericId,
+        kode_kasus: activeCase.id,
+        citizen_name: activeCase.applicantName || "Warga Terdampak",
+        citizen_phone: activeCase.applicantPhone,
+        posko_id: 1,
+        kategori_kebutuhan: activeCase.item,
+        volume_permintaan: `${targetNum} ${targetUnit}`,
+        jumlah_kk: parseInt((activeCase.kk || "1").replace(/\D/g, "")) || 1,
+        status_hunian: activeCase.shelterStatus || "Rumah Tinggal Pribadi",
+        tingkat_urgensi: activeCase.urgency || "Tinggi",
+        status: "Kebutuhan Terbuka",
+        desa: activeCase.village || "",
+        kecamatan: activeCase.district || "",
+        kabupaten: activeCase.regency || "",
+        provinsi: activeCase.province || "Jawa Timur",
+        latitude: Number(activeCase.lat) || -7.2654,
+        longitude: Number(activeCase.lng) || 112.7521,
+        foto_bukti: activeCase.fotoBukti,
+        deskripsi: activeCase.notes,
+        created_at: new Date().toISOString(),
+      },
+    };
+
+    let existingBursa: BursaItem[] = state.bursaList || [];
+    try {
+      const bLocal = localStorage.getItem("reksa_bursa_db");
+      if (bLocal) existingBursa = JSON.parse(bLocal);
+    } catch (_) {}
+
+    const updatedBursaList = [
+      newBursaItem,
+      ...existingBursa.filter(
+        (b) => b.id !== numericId && b.kebutuhan_id !== numericId && b.kebutuhan?.kode_kasus !== activeCase.id
+      ),
+    ];
+    try {
+      localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
+      localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCases));
+    } catch (_) {}
+
     update(
-      { casesList: updatedCases, status: "Kebutuhan Terbuka" },
+      { casesList: updatedCases, bursaList: updatedBursaList, status: "Kebutuhan Terbuka" },
       `Laporan kasus ${activeCase.id} diverifikasi & disetujui untuk dipublikasikan ke Bursa Kebutuhan Terbuka oleh Petugas Posko.`
     );
     await onRefresh?.();
@@ -2696,9 +2766,9 @@ function CaseDetail({
           </div>
         </div>
         <div className="case-hero-quick-action">
-          {posko && (activeCase.status === "Dalam Verifikasi" || activeCase.status === "Diajukan") && (
+          {posko && (activeCase.status === "Dalam Verifikasi" || activeCase.status === "Diajukan" || (activeCase.status || "").toLowerCase().includes("tolak") || (activeCase.status || "").toLowerCase().includes("klarifikasi")) && (
             <button type="button" className="btn-hero-action secondary" onClick={handleVerify} disabled={isVerifying}>
-              <Icon name="check" /> {isVerifying ? "Memproses Verifikasi..." : "Verifikasi Kasus (Approve)"}
+              <Icon name="check" /> {isVerifying ? "Memproses Verifikasi..." : "Verifikasi Kasus & Rilis ke Bursa"}
             </button>
           )}
           {posko && activeCase.status === "Klaim Diajukan" && (
