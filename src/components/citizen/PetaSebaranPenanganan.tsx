@@ -726,9 +726,11 @@ export function PetaSebaranPenanganan({
           }; font-size: 13px;">${p.nama}</strong><br/>
           <span style="font-size: 11px; color: #64748b;">Wilayah ${p.pulau}</span>
           <div style="margin-top: 4px; font-weight: 700; color: #013220;">
-            <span style="filter: grayscale(100%); margin-right: 4px;">${isBpbd ? "🏢" : isMitra ? "🤝" : "⚪"}</span>
+            <span style="filter: grayscale(100%); margin-right: 4px;">${stats.mitraPct > 0 && stats.bpbdPct > 0 ? "🤝" : isBpbd ? "🏢" : isMitra ? "🤝" : "⚪"}</span>
             ${
-              isBpbd
+              stats.mitraPct > 0 && stats.bpbdPct > 0
+                ? `<span style="color: #013220;">🏢 BPBD ${stats.bpbdPct}%</span> · <span style="color: #059669; font-weight: 800;">🤝 Mitra ${stats.mitraPct}%</span>`
+                : isBpbd
                 ? "Respon Dominan BPBD (" + stats.bpbdPct + "%)"
                 : isMitra
                 ? "Respon Dominan Mitra (" + stats.mitraPct + "%)"
@@ -1611,18 +1613,42 @@ export function PetaSebaranPenanganan({
                             {p.isDisasterZone && (
                               <g style={{ pointerEvents: "none" }}>
                                 {/* Circle Pin Marker */}
-                                <circle
-                                  cx={p.svgCenter[0]}
-                                  cy={p.svgCenter[1]}
-                                  r={isSelected ? 6.5 : 5}
-                                  fill={isBpbd ? "#013220" : "#10b981"}
-                                  stroke="#ffffff"
-                                  strokeWidth={isSelected ? 2.5 : 1.8}
-                                />
+                                {stats.mitraPct > 0 && stats.bpbdPct > 0 ? (
+                                  <>
+                                    {/* Dual-Tone Collaboration Marker: Emerald outer ring + Forest Green center */}
+                                    <circle
+                                      cx={p.svgCenter[0]}
+                                      cy={p.svgCenter[1]}
+                                      r={isSelected ? 9.5 : 8}
+                                      fill="#10b981"
+                                      fillOpacity={0.28}
+                                      stroke="#10b981"
+                                      strokeWidth={2}
+                                    />
+                                    <circle
+                                      cx={p.svgCenter[0]}
+                                      cy={p.svgCenter[1]}
+                                      r={isSelected ? 5.5 : 4.5}
+                                      fill="#013220"
+                                      stroke="#ffffff"
+                                      strokeWidth={1.8}
+                                    />
+                                  </>
+                                ) : (
+                                  <circle
+                                    cx={p.svgCenter[0]}
+                                    cy={p.svgCenter[1]}
+                                    r={isSelected ? 6.5 : 5}
+                                    fill={isBpbd ? "#013220" : "#10b981"}
+                                    stroke="#ffffff"
+                                    strokeWidth={isSelected ? 2.5 : 1.8}
+                                  />
+                                )}
+
                                 {/* Province Label */}
                                 <text
                                   x={p.svgCenter[0]}
-                                  y={p.svgCenter[1] - 8}
+                                  y={p.svgCenter[1] - 11}
                                   textAnchor="middle"
                                   fill="#013220"
                                   fontSize={isSelected ? "10.5px" : "9px"}
@@ -1635,63 +1661,103 @@ export function PetaSebaranPenanganan({
                                 >
                                   {p.nama.replace("Provinsi ", "")}
                                 </text>
-                                {/* Dominant Percentage */}
-                                <text
-                                  x={p.svgCenter[0]}
-                                  y={p.svgCenter[1] + 13}
-                                  textAnchor="middle"
-                                  fill={isBpbd ? "#013220" : "#047857"}
-                                  fontSize="8px"
-                                  fontWeight="800"
-                                  style={{
-                                    textShadow:
-                                      "0 1px 2px rgba(255,255,255,0.9)",
-                                  }}
-                                >
-                                  {isBpbd ? `BPBD ${stats.bpbdPct}%` : `Mitra ${stats.mitraPct}%`}
-                                </text>
+
+                                {/* Dominant / Collaboration Percentage */}
+                                {stats.mitraPct > 0 && stats.bpbdPct > 0 ? (
+                                  <text
+                                    x={p.svgCenter[0]}
+                                    y={p.svgCenter[1] + 16}
+                                    textAnchor="middle"
+                                    fontSize="8px"
+                                    fontWeight="800"
+                                    style={{
+                                      textShadow: "0 1px 2px rgba(255,255,255,0.95), 0 0 2px #ffffff",
+                                    }}
+                                  >
+                                    <tspan fill="#013220">BPBD {stats.bpbdPct}%</tspan>
+                                    <tspan fill="#64748b"> · </tspan>
+                                    <tspan fill="#059669" fontWeight="900">Mitra {stats.mitraPct}%</tspan>
+                                  </text>
+                                ) : (
+                                  <text
+                                    x={p.svgCenter[0]}
+                                    y={p.svgCenter[1] + 13}
+                                    textAnchor="middle"
+                                    fill={isBpbd ? "#013220" : "#047857"}
+                                    fontSize="8px"
+                                    fontWeight="800"
+                                    style={{
+                                      textShadow:
+                                        "0 1px 2px rgba(255,255,255,0.9)",
+                                    }}
+                                  >
+                                    {isBpbd ? `BPBD ${stats.bpbdPct}%` : `Mitra ${stats.mitraPct}%`}
+                                  </text>
+                                )}
 
                                 {/* Popover Daerah Penerima Bantuan: HANYA MUNCUL SAAT DITEKAN/DIKLIK */}
-                                {pressedProvinsiId === p.id && p.daerahPenerimaList && p.daerahPenerimaList.length > 0 && (
-                                  <g style={{ pointerEvents: "none" }}>
-                                    <rect
-                                      x={p.svgCenter[0] - 70}
-                                      y={p.svgCenter[1] - 46}
-                                      width={140}
-                                      height={28}
-                                      rx={14}
-                                      fill="#013220"
-                                      stroke="#10b981"
-                                      strokeWidth={1.8}
-                                      filter="drop-shadow(0 4px 10px rgba(0,0,0,0.30))"
-                                    />
-                                    <polygon
-                                      points={`${p.svgCenter[0] - 6},${p.svgCenter[1] - 18} ${p.svgCenter[0] + 6},${p.svgCenter[1] - 18} ${p.svgCenter[0]},${p.svgCenter[1] - 12}`}
-                                      fill="#013220"
-                                    />
-                                    <text
-                                      x={p.svgCenter[0]}
-                                      y={p.svgCenter[1] - 32}
-                                      textAnchor="middle"
-                                      fill="#ffffff"
-                                      fontSize="9.5px"
-                                      fontWeight="800"
-                                      style={{ letterSpacing: "0.02em" }}
-                                    >
-                                      {p.daerahPenerimaList[0].namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")}
-                                    </text>
-                                    <text
-                                      x={p.svgCenter[0]}
-                                      y={p.svgCenter[1] - 21}
-                                      textAnchor="middle"
-                                      fill="#6ee7b7"
-                                      fontSize="7.5px"
-                                      fontWeight="700"
-                                    >
-                                      {p.daerahPenerimaList[0].komoditas} · {p.daerahPenerimaList[0].statusKategori === "selesai" ? "Diterima" : "Dalam Penyaluran"}
-                                    </text>
-                                  </g>
-                                )}
+                                {pressedProvinsiId === p.id && p.daerahPenerimaList && p.daerahPenerimaList.length > 0 && (() => {
+                                  const mitraItem = p.daerahPenerimaList.find((d) => d.penyalurTipe === "mitra");
+                                  const displayItem = mitraItem || p.daerahPenerimaList[0];
+                                  const isMitraPenyalur = displayItem.penyalurTipe === "mitra";
+
+                                  return (
+                                    <g style={{ pointerEvents: "none" }}>
+                                      {/* Background card with drop shadow */}
+                                      <rect
+                                        x={p.svgCenter[0] - 100}
+                                        y={p.svgCenter[1] - 64}
+                                        width={200}
+                                        height={48}
+                                        rx={10}
+                                        fill="#013220"
+                                        stroke="#10b981"
+                                        strokeWidth={2}
+                                        filter="drop-shadow(0 6px 14px rgba(0,0,0,0.40))"
+                                      />
+                                      {/* Triangle arrow pointer */}
+                                      <polygon
+                                        points={`${p.svgCenter[0] - 7},${p.svgCenter[1] - 16} ${p.svgCenter[0] + 7},${p.svgCenter[1] - 16} ${p.svgCenter[0]},${p.svgCenter[1] - 9}`}
+                                        fill="#013220"
+                                      />
+                                      {/* Badge Mitra / BPBD */}
+                                      <rect
+                                        x={p.svgCenter[0] - 92}
+                                        y={p.svgCenter[1] - 58}
+                                        width={184}
+                                        height={16}
+                                        rx={8}
+                                        fill={isMitraPenyalur ? "rgba(16, 185, 129, 0.25)" : "rgba(255, 255, 255, 0.15)"}
+                                        stroke={isMitraPenyalur ? "#10b981" : "#94a3b8"}
+                                        strokeWidth={1}
+                                      />
+                                      <text
+                                        x={p.svgCenter[0]}
+                                        y={p.svgCenter[1] - 46}
+                                        textAnchor="middle"
+                                        fill={isMitraPenyalur ? "#6ee7b7" : "#e2e8f0"}
+                                        fontSize="8.5px"
+                                        fontWeight="800"
+                                        style={{ letterSpacing: "0.02em" }}
+                                      >
+                                        {isMitraPenyalur
+                                          ? `🤝 Mitra: ${displayItem.penyalurNama || "Palang Merah Indonesia"}`
+                                          : `🏢 BPBD: ${displayItem.namaKabupatenKota}`}
+                                      </text>
+                                      {/* Subtext location & status */}
+                                      <text
+                                        x={p.svgCenter[0]}
+                                        y={p.svgCenter[1] - 26}
+                                        textAnchor="middle"
+                                        fill="#ffffff"
+                                        fontSize="8.5px"
+                                        fontWeight="700"
+                                      >
+                                        {displayItem.namaKabupatenKota.replace("Kabupaten ", "Kab. ").replace("Kota ", "Kota ")} · {displayItem.komoditas}
+                                      </text>
+                                    </g>
+                                  );
+                                })()}
                               </g>
                             )}
                           </g>
@@ -1893,6 +1959,20 @@ export function PetaSebaranPenanganan({
                   />
                   <span style={{ color: "#047857", fontWeight: 700 }}>
                     Dominan Mitra (&gt;50%)
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span
+                    style={{
+                      width: "12px",
+                      height: "8px",
+                      background: "linear-gradient(90deg, #013220 50%, #10b981 50%)",
+                      borderRadius: "2px",
+                      display: "inline-block",
+                    }}
+                  />
+                  <span style={{ color: "#065f46", fontWeight: 700 }}>
+                    Kolaborasi BPBD &amp; Mitra
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
