@@ -794,62 +794,92 @@ export function MitraMisiPenyaluran({
             </div>
 
             {/* Visual Evidence / Relief Cargo Photo */}
-            <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", margin: "8px 0 14px", flexWrap: "wrap" }}>
-              <div
-                className="posko-case-photo-thumb"
-                style={{ width: "120px", height: "100px", minWidth: "120px", flexShrink: 0 }}
-                onClick={() => {
-                  const photoUrl = getFieldEvidencePhoto(currentMission.muatan, currentMission.kebutuhan?.foto_bukti);
-                  setPreviewImage({
-                    src: photoUrl,
-                    title: `Muatan Misi: ${currentMission.muatan}`,
-                    location: currentMission.kebutuhan?.desa ? `Desa ${currentMission.kebutuhan.desa}, Kec. ${currentMission.kebutuhan.kecamatan || 'Sidoarjo'}` : (currentMission.posko?.nama_posko || 'Lokasi Misi'),
-                  });
-                }}
-                title="Klik untuk memperbesar foto dokumentasi logistik"
-              >
-                <img
-                  src={getFieldEvidencePhoto(currentMission.muatan, currentMission.kebutuhan?.foto_bukti)}
-                  alt={currentMission.muatan}
-                  className="posko-case-photo-img"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80";
-                  }}
-                />
-                <div className="posko-case-photo-badge">
-                  <AppIcon name="camera" size={11} />
-                  <span>Foto Lapangan</span>
-                </div>
-                <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
-                  <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
-                </div>
-              </div>
+            {(() => {
+              const commodityCategory =
+                currentMission.kebutuhan?.kategori_kebutuhan ||
+                (currentMission as any).item_bantuan ||
+                (currentMission as any).jenis_bantuan ||
+                "";
+              const photoEvidence =
+                currentMission.kebutuhan?.foto_bukti ||
+                (currentMission as any).foto_bukti ||
+                (currentMission.kebutuhan as any)?.fotoBukti;
+              const photoSearchTerm = `${commodityCategory} ${currentMission.muatan || ""}`.trim();
+              const photoUrl = getFieldEvidencePhoto(photoSearchTerm, photoEvidence);
 
-              <div style={{ flex: "1 1 260px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "6px" }}>
-                  <h2 style={{ margin: 0, fontSize: "1.3rem", color: "#013220", fontWeight: 800 }}>
-                    Muatan: {currentMission.muatan}
-                  </h2>
-                  <span
-                    style={{
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      color: "#15803d",
-                      background: "#f0fdf4",
-                      padding: "3px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #bbf7d0",
+              return (
+                <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", margin: "8px 0 14px", flexWrap: "wrap" }}>
+                  <div
+                    className="posko-case-photo-thumb"
+                    style={{ width: "120px", height: "100px", minWidth: "120px", flexShrink: 0 }}
+                    onClick={() => {
+                      setPreviewImage({
+                        src: photoUrl,
+                        title: `Muatan Misi: ${commodityCategory ? `${commodityCategory} (${currentMission.muatan})` : currentMission.muatan}`,
+                        location: currentMission.kebutuhan?.desa ? `Desa ${currentMission.kebutuhan.desa}, Kec. ${currentMission.kebutuhan.kecamatan || 'Sidoarjo'}` : (currentMission.posko?.nama_posko || 'Lokasi Misi'),
+                      });
                     }}
+                    title="Klik untuk memperbesar foto dokumentasi logistik"
                   >
-                    {currentMission.armada_info || "Armada Mitra Terdaftar"}
-                  </span>
+                    <img
+                      src={photoUrl}
+                      alt={commodityCategory || currentMission.muatan}
+                      className="posko-case-photo-img"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=600&q=80";
+                      }}
+                    />
+                    <div className="posko-case-photo-badge">
+                      <AppIcon name="camera" size={11} />
+                      <span>Foto Lapangan</span>
+                    </div>
+                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                    </div>
+                  </div>
+
+                  <div style={{ flex: "1 1 260px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "6px" }}>
+                      <h2 style={{ margin: 0, fontSize: "1.3rem", color: "#013220", fontWeight: 800 }}>
+                        Muatan: {currentMission.muatan}
+                      </h2>
+                      {commodityCategory && (
+                        <span
+                          style={{
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            color: "#047857",
+                            background: "#ecfdf5",
+                            padding: "3px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid #a7f3d0",
+                          }}
+                        >
+                          {commodityCategory}
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          fontSize: "0.85rem",
+                          fontWeight: 700,
+                          color: "#15803d",
+                          background: "#f0fdf4",
+                          padding: "3px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #bbf7d0",
+                        }}
+                      >
+                        {currentMission.armada_info || "Armada Mitra Terdaftar"}
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, color: "#64748b", fontSize: "0.86rem", lineHeight: 1.45 }}>
+                      {currentMission.catatan_lapangan || "Armada siap menjalankan distribusi logistik tepat sasaran ke titik posko/warga terdampak."}
+                    </p>
+                  </div>
                 </div>
-                <p style={{ margin: 0, color: "#64748b", fontSize: "0.86rem", lineHeight: 1.45 }}>
-                  {currentMission.catatan_lapangan || "Armada siap menjalankan distribusi logistik tepat sasaran ke titik posko/warga terdampak."}
-                </p>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
           <button

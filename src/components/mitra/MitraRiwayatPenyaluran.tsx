@@ -425,36 +425,51 @@ export function MitraRiwayatPenyaluran({
 
                     {/* Main Body with Visual Photo Thumbnail */}
                     <div className="posko-case-body-main" style={{ margin: "8px 0 10px" }}>
-                      <div
-                        className="posko-case-photo-thumb"
-                        style={{ width: "115px", height: "95px", minWidth: "115px", flexShrink: 0 }}
-                        onClick={() => {
-                          const photoUrl = getFieldEvidencePhoto(m.muatan, m.kebutuhan?.foto_bukti);
-                          setPreviewImage({
-                            src: photoUrl,
-                            title: `Riwayat Misi Selesai: ${m.muatan}`,
-                            location: m.kebutuhan?.desa ? `Desa ${m.kebutuhan.desa}, Kec. ${m.kebutuhan.kecamatan || 'Sidoarjo'}` : (m.posko?.nama_posko || 'Lokasi Misi'),
-                          });
-                        }}
-                        title="Klik untuk memperbesar foto dokumentasi penyaluran"
-                      >
-                        <img
-                          src={getFieldEvidencePhoto(m.muatan, m.kebutuhan?.foto_bukti)}
-                          alt={m.muatan}
-                          className="posko-case-photo-img"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80";
-                          }}
-                        />
-                        <div className="posko-case-photo-badge">
-                          <AppIcon name="check" size={10} />
-                          <span>Bukti Selesai</span>
-                        </div>
-                        <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
-                          <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
-                        </div>
-                      </div>
+                      {(() => {
+                        const commodityCategory =
+                          m.kebutuhan?.kategori_kebutuhan ||
+                          (m as any).item_bantuan ||
+                          (m as any).jenis_bantuan ||
+                          "";
+                        const photoEvidence =
+                          m.kebutuhan?.foto_bukti ||
+                          (m as any).foto_bukti ||
+                          (m.kebutuhan as any)?.fotoBukti;
+                        const photoSearchTerm = `${commodityCategory} ${m.muatan || ""}`.trim();
+                        const photoUrl = getFieldEvidencePhoto(photoSearchTerm, photoEvidence);
+
+                        return (
+                          <div
+                            className="posko-case-photo-thumb"
+                            style={{ width: "115px", height: "95px", minWidth: "115px", flexShrink: 0 }}
+                            onClick={() => {
+                              setPreviewImage({
+                                src: photoUrl,
+                                title: `Riwayat Misi Selesai: ${commodityCategory ? `${commodityCategory} (${m.muatan})` : m.muatan}`,
+                                location: m.kebutuhan?.desa ? `Desa ${m.kebutuhan.desa}, Kec. ${m.kebutuhan.kecamatan || 'Sidoarjo'}` : (m.posko?.nama_posko || 'Lokasi Misi'),
+                              });
+                            }}
+                            title="Klik untuk memperbesar foto dokumentasi penyaluran"
+                          >
+                            <img
+                              src={photoUrl}
+                              alt={commodityCategory || m.muatan}
+                              className="posko-case-photo-img"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=600&q=80";
+                              }}
+                            />
+                            <div className="posko-case-photo-badge">
+                              <AppIcon name="check" size={10} />
+                              <span>Bukti Selesai</span>
+                            </div>
+                            <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                              <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       <div className="posko-case-info-col">
                         {/* Main Title */}

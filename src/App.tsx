@@ -323,7 +323,7 @@ export const getFieldEvidencePhoto = (item?: string, fotoBukti?: string) => {
   if (category.includes("bayi") || category.includes("balita") || category.includes("lansia") || category.includes("popok") || category.includes("susu")) {
     return "https://images.unsplash.com/photo-1516627145497-ae6968895b74?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
   }
-  if (category.includes("sarana") || category.includes("vital") || category.includes("listrik") || category.includes("genset")) {
+  if (category.includes("sarana") || category.includes("vital") || category.includes("listrik") || category.includes("genset") || category.includes("fasilitas") || category.includes("infrastruktur")) {
     return "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
   }
   return "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
