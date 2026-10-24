@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
@@ -25,15 +25,97 @@ export function MitraMisiPenyaluran({
   onNavigateToBursa,
   selectedCaseId,
 }: MitraMisiPenyaluranProps) {
-  const activeMissions = misiList.filter((m) => m.status_tahapan !== "Selesai");
+  // Gabungkan misi dari remote, localStorage, dan penawaran yang sudah berstatus 'Disetujui'
+  const allMissions = useMemo(() => {
+    let localSaved: MisiItem[] = [];
+    try {
+      const s = localStorage.getItem("reksa_misi_db");
+      if (s) localSaved = JSON.parse(s);
+    } catch {}
+
+    const combined: MisiItem[] = [...(misiList || [])];
+    localSaved.forEach((lm) => {
+      if (!combined.some((m) => m.id === lm.id || (m.kode_misi && lm.kode_misi && m.kode_misi === lm.kode_misi))) {
+        combined.unshift(lm);
+      }
+    });
+
+    // Otomatis terbitkan misi aktif untuk setiap komitmen/penawaran mitra yang telah Disetujui
+    let localOffers: any[] = [];
+    try {
+      const pSaved = localStorage.getItem("reksa_penawaran_db");
+      if (pSaved) localOffers = JSON.parse(pSaved);
+    } catch {}
+
+    localOffers.forEach((o: any) => {
+      const isApproved = o.status === "Disetujui" || o.status === "Disetujui Posko" || o.status === "Disahkan";
+      if (!isApproved) return;
+
+      const alreadyHasMisi = combined.some(
+        (m) =>
+          m.penawaran_id === o.id ||
+          (m.bursa_id && o.bursa_id && m.bursa_id === o.bursa_id) ||
+          (m.kebutuhan_id && o.kebutuhan_id && m.kebutuhan_id === o.kebutuhan_id) ||
+          (o.kode_penawaran && m.kode_misi?.includes(o.kode_penawaran.replace(/\D/g, "")))
+      );
+
+      if (!alreadyHasMisi) {
+        const missionId = typeof o.id === "number" ? o.id + 100000 : Date.now();
+        const syntheticMisi: MisiItem = {
+          id: missionId,
+          kode_misi: `MISI-EXP-${String(o.kode_penawaran || missionId).slice(-4)}`,
+          kebutuhan_id: o.kebutuhan_id || o.bursa_id || 1,
+          bursa_id: o.bursa_id || 1,
+          penawaran_id: o.id,
+          posko_id: o.posko_id || 1,
+          responder_name: o.mitra_name || userName || "dr. Hendra Wijaya",
+          responder_phone: "+62 812 8899 0011",
+          organisasi: o.organisasi || userOrg || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+          armada_info: o.armada_info || "Mobil Box Logistik Distribusi Cepat Mitra",
+          muatan: o.jumlah_tawaran || o.jumlah_disetujui || "100 Unit",
+          status_tahapan: "Dalam Perjalanan",
+          estimasi_waktu: "25 Menit (3,8 km)",
+          catatan_lapangan: o.catatan || "Komitmen telah disetujui posko dan armada mitra langsung diberangkatkan menuju lokasi warga terdampak.",
+          posko: o.bursa?.posko || {
+            id: 1,
+            nama_posko: "Posko BPBD Provinsi Jawa Timur",
+            desa: "Gubeng",
+            kecamatan: "Gubeng",
+            kabupaten: "Kota Surabaya",
+          },
+          kebutuhan: o.kebutuhan || o.bursa?.kebutuhan || {
+            id: o.kebutuhan_id || 1,
+            kode_kasus: o.bursa?.kebutuhan?.kode_kasus || `RK-2026-EXP`,
+            kategori_kebutuhan: o.jenis_bantuan,
+            desa: "Gubeng",
+            kecamatan: "Gubeng",
+            kabupaten: "Kota Surabaya",
+          },
+        };
+
+        combined.unshift(syntheticMisi);
+
+        try {
+          const currentMisiDb = JSON.parse(localStorage.getItem("reksa_misi_db") || "[]");
+          currentMisiDb.unshift(syntheticMisi);
+          localStorage.setItem("reksa_misi_db", JSON.stringify(currentMisiDb));
+        } catch {}
+      }
+    });
+
+    return combined;
+  }, [misiList, userName, userOrg]);
+
+  const activeMissions = allMissions.filter((m) => m.status_tahapan !== "Selesai");
 
   const [selectedMisiId, setSelectedMisiId] = useState<number | null>(() => {
     if (selectedCaseId) {
       const target = selectedCaseId.toLowerCase();
-      const match = misiList.find(
+      const match = allMissions.find(
         (m) =>
           m.kebutuhan?.kode_kasus?.toLowerCase() === target ||
           m.kode_misi?.toLowerCase() === target ||
+          (m as any).penawaran_id?.toString() === target ||
           String(m.kebutuhan_id) === target.replace(/\D/g, "")
       );
       if (match) return match.id;
@@ -44,15 +126,16 @@ export function MitraMisiPenyaluran({
   useEffect(() => {
     if (selectedCaseId) {
       const target = selectedCaseId.toLowerCase();
-      const match = misiList.find(
+      const match = allMissions.find(
         (m) =>
           m.kebutuhan?.kode_kasus?.toLowerCase() === target ||
           m.kode_misi?.toLowerCase() === target ||
+          (m as any).penawaran_id?.toString() === target ||
           String(m.kebutuhan_id) === target.replace(/\D/g, "")
       );
       if (match) setSelectedMisiId(match.id);
     }
-  }, [selectedCaseId, misiList]);
+  }, [selectedCaseId, allMissions]);
 
   // Obstacle reporting modal
   const [obstacleModalMisi, setObstacleModalMisi] = useState<MisiItem | null>(null);

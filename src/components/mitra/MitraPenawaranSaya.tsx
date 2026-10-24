@@ -7,7 +7,7 @@ interface MitraPenawaranSayaProps {
   penawaranList: PenawaranItem[];
   bursaList: BursaItem[];
   userOrg?: string;
-  onNavigateToTasks: () => void;
+  onNavigateToTasks: (targetCaseId?: string) => void;
   onNavigateToBursa: () => void;
 }
 
@@ -443,7 +443,7 @@ export function MitraPenawaranSaya({
                     <button
                       type="button"
                       className="reksa-btn reksa-btn-primary"
-                      onClick={onNavigateToTasks}
+                      onClick={() => onNavigateToTasks(o.kebutuhan?.kode_kasus || o.kode_penawaran || String(o.bursa_id))}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
