@@ -1563,8 +1563,9 @@ function Modal({ title, children, close, icon }: { title: string; children: Reac
   );
 }
 
-function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0, state, update, onGoHome }: { 
+function Sidebar({ role, name, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0, state, update, onGoHome }: { 
   role: Role; 
+  name?: string;
   page: PortalPage; 
   collapsed: boolean; 
   mobile: boolean; 
@@ -1580,16 +1581,14 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
   onGoHome?: () => void;
 }) {
   const group = roleNavigation[role];
+  const userProfile = state?.userProfile;
+  const userName = userProfile?.name || name || (role === "citizen" ? "Andi Pratama" : role === "posko" ? "Siti Rahma" : "dr. Hendra Wijaya");
+  const userEmail = userProfile?.email || (role === "citizen" ? "andi.masyarakat@reksa.id" : role === "posko" ? "siti.posko@reksa.id" : "hendra.pmi@reksa.id");
   const roleLabel = role === "citizen" 
     ? "Masyarakat" 
     : role === "posko" 
-    ? (state?.bpbdScope === "nasional" ? "BPBD Nasional (Pusat)" : `BPBD ${state?.bpbdProvince || "Jawa Timur"}`)
-    : "Responder";
-  const roleCopy = role === "citizen" 
-    ? "Akun pribadi" 
-    : role === "posko" 
-    ? (state?.bpbdScope === "nasional" ? "Supervisi 32 Provinsi" : `Yurisdiksi ${state?.bpbdProvince || "Wilayah"}`)
-    : "Mitra terverifikasi";
+    ? (state?.bpbdScope === "nasional" ? "Posko BPBD Nasional" : `Posko BPBD ${state?.bpbdProvince || "Jawa Timur"}`)
+    : (userProfile?.role || (userName.toLowerCase().includes("hendra") || userEmail.toLowerCase().includes("pmi") ? "Mitra PMI Jawa Timur" : "Responder Mitra"));
   const badgeText = notifCount > 99 ? "99+" : notifCount > 0 ? String(notifCount) : null;
   const items = (rows: NavItem[]) => rows.map((item) => {
     const isNotif = item.label === "Notifikasi" || item.page === "notifications";
@@ -1640,7 +1639,11 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
           <span>Mode akses</span>
           <div>
             <i><Icon name="user" /></i>
-            <p><b>{roleLabel}</b><small>{roleCopy}</small></p>
+            <p>
+              <b style={{ fontSize: "11px", color: "var(--white)", lineHeight: "1.3" }}>{roleLabel}</b>
+              <small style={{ marginTop: "2px", color: "var(--white)", opacity: 0.9, fontSize: "9.5px", fontWeight: 600 }}>{userName}</small>
+              <small style={{ marginTop: "1px", color: "var(--sage)", fontSize: "8.5px", wordBreak: "break-all" }}>{userEmail}</small>
+            </p>
           </div>
         </div>
         <nav>{items(group.main)}</nav>
@@ -1886,7 +1889,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   };
 
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
-    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} state={state} update={update} onGoHome={onGoHome} />
+    <Sidebar role={role} name={name} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} state={state} update={update} onGoHome={onGoHome} />
     <header className="mobile-header">
       <button
         type="button"
@@ -6443,14 +6446,17 @@ export default function App() {
       }
     }
 
+    const localRole = (localStorage.getItem("reksa_auth_role") as Role) || "citizen";
+    const localName = localStorage.getItem("reksa_auth_name") || "Andi Pratama";
+    const localEmail = localStorage.getItem("reksa_auth_email");
     let savedProfile = {
-      name: "Andi Pratama",
-      email: "andi.masyarakat@reksa.id",
+      name: localName,
+      email: localEmail || (localRole === "posko" ? "siti.posko@reksa.id" : localRole === "responder" ? (localName.toLowerCase().includes("hendra") ? "hendra.pmi@reksa.id" : "arif.bpbd@reksa.id") : "andi.masyarakat@reksa.id"),
       phone: "+62 812 4455 0188",
       nik: "3202110482910002",
-      org: "Warga Wilayah Surabaya",
+      org: localRole === "responder" ? (localName.toLowerCase().includes("hendra") ? "Markas PMI Cabang Jawa Timur" : "Satgas Reaksi Cepat BPBD Wilayah") : "Warga Wilayah Surabaya",
       address: "Jl. Pemuda No. 1, Kec. Gubeng, Kota Surabaya, Jawa Timur",
-      role: "Masyarakat",
+      role: localRole === "posko" ? "Petugas BPBD Jawa Timur" : localRole === "responder" ? (localName.toLowerCase().includes("hendra") ? "Mitra Kemanusiaan · PMI" : "Responder") : "Masyarakat",
     };
     const localProfile = localStorage.getItem("reksa_user_profile");
     if (localProfile) {
@@ -6545,6 +6551,13 @@ export default function App() {
         setState((prev) => {
           const prevCasesMap = new Map((prev.casesList || []).map((c) => [c.id, c]));
           const reportedIds = getUserReportedIds();
+          const escIds: string[] = (() => {
+            try {
+              return JSON.parse(localStorage.getItem("reksa_escalated_case_ids") || "[]");
+            } catch {
+              return [];
+            }
+          })();
 
           const dbCases: CaseRecord[] = res.data
             .filter((item: any) => {
@@ -6593,6 +6606,26 @@ export default function App() {
                 addUserReportedId(caseCode);
               }
 
+              const rawStatus = (item.status || "").trim();
+              const statusLower = rawStatus.toLowerCase();
+              const notesCombined = ((item.catatan_verifikasi_posko || "") + " " + (item.deskripsi || "") + " " + (localCase?.catatanPengalihan || "")).toLowerCase();
+              const isEsc = Boolean(
+                localCase?.escalatedToMitra ||
+                escIds.includes(caseCode) ||
+                statusLower.includes("dialihkan") ||
+                statusLower.includes("mitra") ||
+                notesCombined.includes("dialihkan ke mitra") ||
+                notesCombined.includes("dialihkan")
+              );
+              const isResolved = ["terbuka", "sebagian", "selesai", "tolak"].some((k) => statusLower.includes(k));
+              const effectiveStatus = isEsc && !isResolved
+                ? "Dialihkan ke Mitra"
+                : (rawStatus || "Dalam Verifikasi");
+              const defaultMitra = notesCombined.includes("baznas")
+                ? "BAZNAS Tanggap Bencana & Tagana Jatim"
+                : "Palang Merah Indonesia (PMI Cabang Jawa Timur)";
+              const effectiveMitra = localCase?.mitraHandler || (notesCombined.includes("mitra") || isEsc ? defaultMitra : undefined);
+
               return {
                 id: caseCode,
                 rawId: item.id,
@@ -6601,7 +6634,7 @@ export default function App() {
                 kk: `${item.jumlah_kk || 1} KK`,
                 qty: item.volume_permintaan || "1 Paket",
                 urgency: item.tingkat_urgensi || "Sedang",
-                status: item.status || "Dalam Verifikasi",
+                status: effectiveStatus,
                 isOwn: isUserOwnReport,
                 notes: item.deskripsi || item.catatan_verifikasi_posko || `Kebutuhan ${item.kategori_kebutuhan} untuk warga terdampak.`,
                 date: new Date(item.created_at || Date.now()).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }),
@@ -6647,10 +6680,11 @@ export default function App() {
                 slaDeadlineRaw: localCase?.slaDeadlineRaw,
                 slaMinutesRemaining: localCase?.slaMinutesRemaining,
                 slaStatus: localCase?.slaStatus,
-                escalatedToMitra: localCase?.escalatedToMitra || false,
-                escalatedAtRaw: localCase?.escalatedAtRaw,
-                escalatedReason: localCase?.escalatedReason,
-                mitraHandler: localCase?.mitraHandler,
+                escalatedToMitra: isEsc,
+                escalatedAtRaw: localCase?.escalatedAtRaw || item.verified_at || item.created_at,
+                escalatedReason: localCase?.escalatedReason || item.catatan_verifikasi_posko,
+                mitraHandler: effectiveMitra,
+                catatanPengalihan: localCase?.catatanPengalihan || item.catatan_verifikasi_posko,
                 verifiedByRole: localCase?.verifiedByRole || (item.verified_at ? "bpbd" : undefined),
                 responseTimeMinutes: localCase?.responseTimeMinutes || (item.verified_at ? 38 : undefined),
                 faseDarurat: localCase?.faseDarurat || (item.kategori_kebutuhan?.includes("Stimulan") ? "Transisi Darurat ke Pemulihan" : "Tanggap Darurat"),
@@ -6671,6 +6705,14 @@ export default function App() {
           const currentReportedIds = new Set(getUserReportedIds());
           localUserReports.forEach((c) => currentReportedIds.add(c.id));
           localStorage.setItem("reksa_user_reported_ids", JSON.stringify(Array.from(currentReportedIds)));
+
+          const nextEscIds = new Set(escIds);
+          mergedCases.forEach((c) => {
+            if (c.escalatedToMitra) nextEscIds.add(c.id);
+          });
+          try {
+            localStorage.setItem("reksa_escalated_case_ids", JSON.stringify(Array.from(nextEscIds)));
+          } catch {}
 
           localStorage.setItem("reksa_cases_db", JSON.stringify(mergedCases));
           return {
@@ -6792,6 +6834,21 @@ export default function App() {
           localStorage.setItem("reksa_bpbd_scope", acc.scope);
           if (acc.provinsi) localStorage.setItem("reksa_bpbd_province", acc.provinsi);
           else localStorage.removeItem("reksa_bpbd_province");
+          const nextProfile = {
+            name: acc.name,
+            email: acc.email,
+            phone: acc.phone || "",
+            nik: acc.nik || "",
+            org: acc.poskoName || "",
+            address: acc.address || "",
+            role: acc.role,
+            scope: acc.scope,
+            provinsi: acc.provinsi,
+          };
+          try {
+            localStorage.setItem("reksa_user_profile", JSON.stringify(nextProfile));
+            localStorage.setItem("reksa_auth_email", acc.email);
+          } catch {}
           setState((s) => ({
             ...s,
             bpbdScope: acc.scope,
@@ -6800,47 +6857,66 @@ export default function App() {
             poskoName: acc.poskoName,
             poskoPic: acc.name,
             poskoAddress: acc.address,
-            userProfile: {
-              name: acc.name,
-              email: acc.email,
-              phone: acc.phone || "",
-              nik: acc.nik || "",
-              org: acc.poskoName || "",
-              address: acc.address || "",
-              role: acc.role,
-              scope: acc.scope,
-              provinsi: acc.provinsi,
-            }
+            userProfile: nextProfile,
           }));
         } else if (r === "posko") {
+          const nextProfile = {
+            name: n,
+            email: "siti.posko@reksa.id",
+            phone: "+62 812 8899 1102",
+            nik: "PSK-SKB-2026-01",
+            org: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
+            address: "Gedung Serbaguna Posko Utama, Jl. Pemuda No. 1, Kota Surabaya",
+            role: "Petugas BPBD Jawa Timur",
+            scope: "daerah",
+            provinsi: "Jawa Timur",
+          };
+          try {
+            localStorage.setItem("reksa_user_profile", JSON.stringify(nextProfile));
+            localStorage.setItem("reksa_auth_email", nextProfile.email);
+          } catch {}
           setState((s) => ({
             ...s,
             bpbdScope: "daerah",
             bpbdProvince: "Jawa Timur",
-            userProfile: {
-              name: n,
-              email: "siti.posko@reksa.id",
-              phone: "+62 812 8899 1102",
-              nik: "PSK-SKB-2026-01",
-              org: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
-              address: "Gedung Serbaguna Posko Utama, Jl. Pemuda No. 1, Kota Surabaya",
-              role: "Petugas BPBD Jawa Timur",
-              scope: "daerah",
-              provinsi: "Jawa Timur",
-            }
+            userProfile: nextProfile,
           }));
         } else if (r === "responder") {
+          const isHendra = n.toLowerCase().includes("hendra");
+          const nextProfile = {
+            name: n,
+            email: isHendra ? "hendra.pmi@reksa.id" : "arif.bpbd@reksa.id",
+            phone: "+62 813 7722 9901",
+            nik: isHendra ? "RSP-PMI-8812" : "RSP-BPBD-9941",
+            org: isHendra ? "Markas PMI Cabang Jawa Timur" : "Satgas Reaksi Cepat BPBD Wilayah",
+            address: isHendra ? "Markas PMI Jawa Timur, Jl. Karang Menjangan No. 22, Surabaya" : "Markas Komando BPBD, Jl. Perintis Kemerdekaan No. 15",
+            role: isHendra ? "Mitra Kemanusiaan · PMI" : "Satgas Responder BPBD",
+          };
+          try {
+            localStorage.setItem("reksa_user_profile", JSON.stringify(nextProfile));
+            localStorage.setItem("reksa_auth_email", nextProfile.email);
+          } catch {}
           setState((s) => ({
             ...s,
-            userProfile: {
-              name: n,
-              email: "arif.bpbd@reksa.id",
-              phone: "+62 813 7722 9901",
-              nik: "RSP-BPBD-9941",
-              org: "Satgas Reaksi Cepat BPBD Wilayah",
-              address: "Markas Komando BPBD, Jl. Perintis Kemerdekaan No. 15",
-              role: "Mitra Responder",
-            }
+            userProfile: nextProfile,
+          }));
+        } else {
+          const nextProfile = {
+            name: n,
+            email: "andi.masyarakat@reksa.id",
+            phone: "+62 812 4455 0188",
+            nik: "3202110482910002",
+            org: "Warga Wilayah Surabaya",
+            address: "Jl. Pemuda No. 1, Kec. Gubeng, Kota Surabaya, Jawa Timur",
+            role: "Masyarakat",
+          };
+          try {
+            localStorage.setItem("reksa_user_profile", JSON.stringify(nextProfile));
+            localStorage.setItem("reksa_auth_email", nextProfile.email);
+          } catch {}
+          setState((s) => ({
+            ...s,
+            userProfile: nextProfile,
           }));
         }
         navigate("portal"); 

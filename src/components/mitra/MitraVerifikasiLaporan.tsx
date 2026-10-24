@@ -31,27 +31,43 @@ export function MitraVerifikasiLaporan({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Kasus yang dialihkan ke mitra — semua status "Menunggu Verifikasi Mitra" / "Dialihkan ke Mitra"
+  const escIds: string[] = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("reksa_escalated_case_ids") || "[]");
+    } catch {
+      return [];
+    }
+  })();
+
   const allEscalated = cases.filter((c) => {
     const s = (c.status || "").toLowerCase();
+    const notes = ((c.notes || "") + " " + (c.catatanVerifikasiPosko || "") + " " + (c.catatanPengalihan || "")).toLowerCase();
     return (
       c.escalatedToMitra === true ||
+      escIds.includes(c.id) ||
       s.includes("menunggu verifikasi mitra") ||
-      s.includes("dialihkan ke mitra")
+      s.includes("dialihkan ke mitra") ||
+      s.includes("mitra") ||
+      notes.includes("dialihkan ke mitra") ||
+      notes.includes("dialihkan")
     );
   });
 
   const filterCases = allEscalated.filter((c) => {
     const s = (c.status || "").toLowerCase();
+    const isResolved = ["terbuka", "sebagian", "selesai"].some((k) => s.includes(k));
+    const isRejected = s.includes("tolak");
+
     let matchTab = true;
 
     if (tab === "menunggu") {
-      matchTab =
-        s.includes("menunggu verifikasi mitra") ||
-        s.includes("dialihkan ke mitra");
+      matchTab = !isResolved && !isRejected;
     } else if (tab === "diverifikasi") {
-      matchTab = s.includes("terbuka") || s.includes("sebagian") || s.includes("selesai");
+      matchTab = isResolved;
     } else if (tab === "ditolak") {
-      matchTab = s.includes("tolak");
+      matchTab = isRejected;
+    } else if (tab === "semua") {
+      matchTab = true;
     }
 
     if (!matchTab) return false;
@@ -77,7 +93,7 @@ export function MitraVerifikasiLaporan({
 
   const menungguCount = allEscalated.filter((c) => {
     const s = (c.status || "").toLowerCase();
-    return s.includes("menunggu verifikasi mitra") || s.includes("dialihkan ke mitra");
+    return !["terbuka", "sebagian", "selesai", "tolak"].some((k) => s.includes(k));
   }).length;
   const diverifikasiCount = allEscalated.filter((c) =>
     ["terbuka", "sebagian", "selesai"].some((k) => (c.status || "").toLowerCase().includes(k))

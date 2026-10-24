@@ -255,8 +255,9 @@ class KebutuhanWargaController extends Controller
             : KebutuhanWarga::where('kode_kasus', $id)->firstOrFail();
 
         $validated = $request->validate([
-            'action' => 'required|string|in:verify_and_publish,verify,reject,clarify,review_further',
+            'action' => 'required|string|in:verify_and_publish,verify,reject,clarify,review_further,escalate',
             'catatan' => 'nullable|string',
+            'mitra' => 'nullable|string',
             'pertanyaan' => 'nullable|string',
             'kategori_klarifikasi' => 'nullable|string|max:150',
             'meminta_lampiran' => 'nullable|boolean',
@@ -351,13 +352,25 @@ class KebutuhanWargaController extends Controller
                 'catatan_verifikasi_posko' => $notes,
             ]);
 
+        } elseif ($validated['action'] === 'escalate') {
+            $mitra = $request->input('mitra') ?? 'Palang Merah Indonesia (PMI Cabang Jawa Timur)';
+            $notes = $validated['catatan'] ?? "Dialihkan ke {$mitra} untuk verifikasi & penyaluran cepat.";
+            $catatanLengkap = "Dialihkan ke {$mitra}. Catatan: {$notes}";
+
+            $case->update([
+                'status' => 'Dialihkan ke Mitra',
+                'catatan_verifikasi_posko' => $catatanLengkap,
+                'verified_by' => $poskoUserId,
+                'verified_at' => now(),
+            ]);
+
             LogAktivitas::create([
                 'kebutuhan_id' => $case->id,
                 'posko_id' => $case->posko_id,
                 'user_id' => $request->user()?->id,
                 'user_name' => $verifierName,
-                'aksi' => 'Pemeriksaan Lanjutan',
-                'deskripsi' => "Kasus {$case->kode_kasus} dijadwalkan untuk pemeriksaan lanjutan tim posko: {$notes}",
+                'aksi' => 'Dialihkan ke Mitra',
+                'deskripsi' => "Kasus {$case->kode_kasus} dialihkan ke {$mitra} oleh Posko. Catatan: {$notes}",
             ]);
         } else {
             $alasan = $validated['alasan'] ?? $validated['catatan'] ?? 'Laporan tidak sesuai fakta lapangan / duplikasi data.';

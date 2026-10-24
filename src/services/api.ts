@@ -324,7 +324,8 @@ export const apiService = {
   verifyKebutuhan: (
     id: number | string,
     payload: {
-      action: 'verify_and_publish' | 'reject' | 'clarify' | 'review_further';
+      action: 'verify_and_publish' | 'verify' | 'reject' | 'clarify' | 'review_further' | 'escalate';
+      mitra?: string;
       catatan?: string;
       pertanyaan?: string;
       kategori_klarifikasi?: string;
