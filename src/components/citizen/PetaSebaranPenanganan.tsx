@@ -135,7 +135,7 @@ export function getProvinceBpbdMitraStats(p: DynamicProvinsiData | ProvinsiIndon
 
   const bpbdPct = dynamic.bpbdPct !== undefined ? dynamic.bpbdPct : (totalRespon > 0 ? Math.round((bpbdRespon / totalRespon) * 100) : 100);
   const mitraPct = dynamic.mitraPct !== undefined ? dynamic.mitraPct : (100 - bpbdPct);
-  const dominant = dynamic.dominant || (mitraRespon > 0 || mitraPaket > 0 ? "mitra" : "bpbd");
+  const dominant = dynamic.dominant || (mitraRespon > bpbdRespon || mitraPaket > bpbdPaket ? "mitra" : "bpbd");
 
   return {
     dominant,
@@ -324,7 +324,7 @@ export function PetaSebaranPenanganan({
       const bpbdPct = Math.round((totalBpbd / totalRespon) * 100);
       const mitraPct = 100 - bpbdPct;
 
-      const dominant: "bpbd" | "mitra" = totalMitra > 0 ? "mitra" : "bpbd";
+      const dominant: "bpbd" | "mitra" = totalMitra > totalBpbd ? "mitra" : "bpbd";
 
       // Aid packages volume based on real cases & KK
       const totalPaket = Math.max(totalRespon * 12, totalKk);
@@ -524,10 +524,10 @@ export function PetaSebaranPenanganan({
       ).length,
     [realProvincesData]
   );
-  const countMitra = useMemo(
+  const countMitraAssisted = useMemo(
     () =>
       realProvincesData.filter(
-        (p) => p.isDisasterZone && p.dominant === "mitra"
+        (p) => p.isDisasterZone && (p.mitraRespon > 0 || p.dominant === "mitra")
       ).length,
     [realProvincesData]
   );
@@ -611,7 +611,7 @@ export function PetaSebaranPenanganan({
         return false;
       if (
         activeStatusFilter === "mitra_dominan" &&
-        (!p.isDisasterZone || p.dominant !== "mitra")
+        (!p.isDisasterZone || (p.dominant !== "mitra" && (p.mitraRespon || 0) === 0))
       )
         return false;
 
@@ -1009,11 +1009,11 @@ export function PetaSebaranPenanganan({
 
           <span style={{ color: "#e2e8f0" }}>|</span>
 
-          {/* Dominan Mitra */}
+          {/* Dibantu Mitra */}
           <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
             <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
             <span style={{ fontSize: "0.82rem", color: "#475569" }}>
-              Dominan Mitra: <strong style={{ color: "#047857" }}>{countMitra} Wilayah</strong> ({Math.round((countMitra / disasterProvinces.length) * 100)}%)
+              Dibantu Mitra: <strong style={{ color: "#047857" }}>{countMitraAssisted} Wilayah</strong> ({Math.round((countMitraAssisted / Math.max(1, disasterProvinces.length)) * 100)}%)
             </span>
           </div>
 
@@ -1105,7 +1105,7 @@ export function PetaSebaranPenanganan({
             }}
           >
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#10b981" }} />
-            Mitra ({countMitra})
+            Dibantu Mitra ({countMitraAssisted})
           </button>
 
           <button
@@ -2221,257 +2221,6 @@ export function PetaSebaranPenanganan({
                       {selectedProvinsi.komoditasUtama && selectedProvinsi.isDisasterZone && (
                         <div style={{ color: "#64748b", fontSize: "0.72rem", marginTop: "2px" }}>
                           Komoditas Utama: {selectedProvinsi.komoditasUtama}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* DAFTAR DAERAH YANG MEMPEROLEH BANTUAN DI PROVINSI INI */}
-                    <div
-                      style={{
-                        background: "#ffffff",
-                        padding: "8px 12px",
-                        borderRadius: "10px",
-                        border: "1.5px solid #a7f3d0",
-                        boxShadow: "0 2px 8px rgba(1, 50, 32, 0.04)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "6px",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <AppIcon name="pin" size={13} style={{ color: "#047857" }} />
-                          <span
-                            style={{
-                              color: "#013220",
-                              fontSize: "0.74rem",
-                              fontWeight: 800,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.04em",
-                            }}
-                          >
-                            Daerah Penerima Bantuan
-                          </span>
-                        </div>
-                        <span
-                          style={{
-                            background:
-                              (selectedProvinsi.daerahPenerimaList || []).length > 0
-                                ? "#ecfdf5"
-                                : "#f1f5f9",
-                            color:
-                              (selectedProvinsi.daerahPenerimaList || []).length > 0
-                                ? "#047857"
-                                : "#64748b",
-                            border:
-                              (selectedProvinsi.daerahPenerimaList || []).length > 0
-                                ? "1px solid #6ee7b7"
-                                : "1px solid #cbd5e1",
-                            fontSize: "0.66rem",
-                            fontWeight: 700,
-                            padding: "2px 7px",
-                            borderRadius: "999px",
-                          }}
-                        >
-                          {(selectedProvinsi.daerahPenerimaList || []).length > 0
-                            ? `${(selectedProvinsi.daerahPenerimaList || []).length} Wilayah Terdata`
-                            : "Nihil Laporan"}
-                        </span>
-                      </div>
-
-                      {(selectedProvinsi.daerahPenerimaList || []).length > 0 ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "6px",
-                            maxHeight: "115px",
-                            overflowY: "auto",
-                            paddingRight: "4px",
-                          }}
-                        >
-                          {(selectedProvinsi.daerahPenerimaList || []).map((d, dIdx) => (
-                            <div
-                              key={d.id || dIdx}
-                              style={{
-                                background: "#f8fafc",
-                                borderRadius: "8px",
-                                border: "1px solid #e2e8f0",
-                                padding: "8px 10px",
-                                transition: "all 0.15s ease",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "flex-start",
-                                  gap: "6px",
-                                  marginBottom: "4px",
-                                }}
-                              >
-                                <div>
-                                  <strong
-                                    style={{
-                                      color: "#0f172a",
-                                      fontSize: "0.84rem",
-                                      display: "block",
-                                    }}
-                                  >
-                                    {d.namaKabupatenKota}
-                                  </strong>
-                                  <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
-                                    {d.namaKecamatan ? `${d.namaKecamatan}, ` : ""}
-                                    {d.namaDesa || d.lokasiSpesifik}
-                                  </span>
-                                </div>
-                                <span
-                                  style={{
-                                    fontSize: "0.68rem",
-                                    fontWeight: 700,
-                                    padding: "2px 7px",
-                                    borderRadius: "999px",
-                                    whiteSpace: "nowrap",
-                                    background:
-                                      d.statusKategori === "selesai"
-                                        ? "#ecfdf5"
-                                        : d.statusKategori === "dalam_pengiriman"
-                                        ? "#eff6ff"
-                                        : "#fefce8",
-                                    color:
-                                      d.statusKategori === "selesai"
-                                        ? "#047857"
-                                        : d.statusKategori === "dalam_pengiriman"
-                                        ? "#1d4ed8"
-                                        : "#854d0e",
-                                    border:
-                                      d.statusKategori === "selesai"
-                                        ? "1px solid #a7f3d0"
-                                        : d.statusKategori === "dalam_pengiriman"
-                                        ? "1px solid #bfdbfe"
-                                        : "1px solid #fef08a",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "5px",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        width: "5px",
-                                        height: "5px",
-                                        borderRadius: "50%",
-                                        background:
-                                          d.statusKategori === "selesai"
-                                            ? "#10b981"
-                                            : d.statusKategori === "dalam_pengiriman"
-                                            ? "#3b82f6"
-                                            : "#eab308",
-                                      }}
-                                    />
-                                    {d.statusKategori === "selesai"
-                                      ? "Bantuan Diterima (BAST)"
-                                      : d.statusKategori === "dalam_pengiriman"
-                                      ? "Dalam Penyaluran"
-                                      : "Terverifikasi"}
-                                  </span>
-                                </span>
-                              </div>
-
-                              {/* Box Bantuan & Penerima */}
-                              <div
-                                style={{
-                                  background: "#ffffff",
-                                  padding: "6px 8px",
-                                  borderRadius: "6px",
-                                  border: "1px solid #f1f5f9",
-                                  fontSize: "0.73rem",
-                                  marginTop: "4px",
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  flexWrap: "wrap",
-                                  gap: "4px",
-                                }}
-                              >
-                                <div>
-                                  <span style={{ color: "#64748b" }}>Bantuan: </span>
-                                  <strong style={{ color: "#013220" }}>
-                                    {d.volume || d.komoditas}
-                                  </strong>{" "}
-                                  <span style={{ color: "#475569" }}>({d.komoditas})</span>
-                                </div>
-                                <div style={{ color: "#013220", fontWeight: 700 }}>
-                                  {d.jumlahKk} KK ({d.jumlahJiwa} Jiwa)
-                                </div>
-                              </div>
-
-                              {/* Pihak Penyalur & Armada */}
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "center",
-                                  fontSize: "0.70rem",
-                                  color: "#64748b",
-                                  marginTop: "4px",
-                                  flexWrap: "wrap",
-                                  gap: "4px",
-                                }}
-                              >
-                                <span>
-                                  Penyalur:{" "}
-                                  <strong
-                                    style={{
-                                      color:
-                                        d.penyalurTipe === "bpbd" ? "#013220" : "#047857",
-                                    }}
-                                  >
-                                    {d.penyalurNama}
-                                  </strong>
-                                </span>
-                                {d.armadaInfo && (
-                                  <span style={{ color: "#64748b" }}>
-                                    {d.armadaInfo}
-                                  </span>
-                                )}
-                              </div>
-
-                              {d.catatan && (
-                                <div
-                                  style={{
-                                    fontSize: "0.68rem",
-                                    color: "#64748b",
-                                    fontStyle: "italic",
-                                    marginTop: "3px",
-                                    borderTop: "1px dashed #e2e8f0",
-                                    paddingTop: "3px",
-                                  }}
-                                >
-                                  "{d.catatan}"
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            padding: "6px 0",
-                            fontSize: "0.75rem",
-                            color: "#64748b",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          Seluruh daerah di {selectedProvinsi.nama} berstatus kondusif. Belum
-                          ada daerah yang memerlukan penyaluran logistik darurat saat ini.
                         </div>
                       )}
                     </div>
