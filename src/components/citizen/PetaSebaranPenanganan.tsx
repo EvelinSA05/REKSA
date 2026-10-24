@@ -128,7 +128,7 @@ export function getProvinceBpbdMitraStats(p: DynamicProvinsiData | ProvinsiIndon
 
   const bpbdPct = dynamic.bpbdPct ?? 50;
   const mitraPct = dynamic.mitraPct ?? 50;
-  const dominant = dynamic.dominant || (bpbdPct >= mitraPct ? "bpbd" : "mitra");
+  const dominant = dynamic.dominant || (mitraPct > 0 ? "mitra" : "bpbd");
   const bpbdPaket = dynamic.bpbdPaket ?? 0;
   const mitraPaket = dynamic.mitraPaket ?? 0;
   const totalPaket = dynamic.totalPaket ?? (bpbdPaket + mitraPaket);
@@ -323,7 +323,7 @@ export function PetaSebaranPenanganan({
       const bpbdPct = Math.round((totalBpbd / totalRespon) * 100);
       const mitraPct = 100 - bpbdPct;
 
-      const dominant: "bpbd" | "mitra" = bpbdPct >= mitraPct ? "bpbd" : "mitra";
+      const dominant: "bpbd" | "mitra" = totalMitra > 0 ? "mitra" : "bpbd";
 
       // Aid packages volume based on real cases & KK
       const totalPaket = Math.max(totalRespon * 12, totalKk);
@@ -666,18 +666,18 @@ export function PetaSebaranPenanganan({
     // Render all provinces with BPBD vs Mitra response choropleth
     realProvincesData.forEach((p) => {
       const stats = getProvinceBpbdMitraStats(p);
-      const isBpbd = stats.dominant === "bpbd";
-      const isMitra = stats.dominant === "mitra";
+      const hasMitraResponse = stats.mitraPct > 0 || stats.mitraRespon > 0 || stats.dominant === "mitra";
+      const isBpbdOnly = !hasMitraResponse && p.isDisasterZone && (stats.dominant === "bpbd" || stats.bpbdPct > 0);
       const isSelected = selectedProvinsi?.id === p.id;
 
       let fillColor = "#e2e8f0"; // Neutral soft slate for non-disaster provinces
       let fillOpacity = 0.55;
 
-      if (isBpbd) {
-        fillColor = "#013220"; // Forest Green (Posko BPBD)
+      if (hasMitraResponse) {
+        fillColor = "#10b981"; // Emerald Green / Hijau Muda (Daerah peta yang sudah dibantu Mitra)
         fillOpacity = isSelected ? 0.98 : 0.88;
-      } else if (isMitra) {
-        fillColor = "#10b981"; // Emerald Green (Mitra Kemanusiaan)
+      } else if (isBpbdOnly) {
+        fillColor = "#013220"; // Forest Green (Posko BPBD)
         fillOpacity = isSelected ? 0.98 : 0.88;
       } else if (isSelected) {
         fillColor = "#cbd5e1";
@@ -1549,18 +1549,18 @@ export function PetaSebaranPenanganan({
                       {/* Render All 32 Provinces of Indonesia */}
                       {realProvincesData.map((p) => {
                         const stats = getProvinceBpbdMitraStats(p);
-                        const isBpbd = stats.dominant === "bpbd";
-                        const isMitra = stats.dominant === "mitra";
+                        const hasMitraResponse = stats.mitraPct > 0 || stats.mitraRespon > 0 || stats.dominant === "mitra";
+                        const isBpbdOnly = !hasMitraResponse && p.isDisasterZone && (stats.dominant === "bpbd" || stats.bpbdPct > 0);
                         const isSelected = selectedProvinsi?.id === p.id;
 
                         let fillColor = "#e2e8f0"; // Neutral soft slate
                         let fillOpacity = 0.55;
 
-                        if (isBpbd) {
-                          fillColor = "#013220"; // Forest Green (BPBD)
+                        if (hasMitraResponse) {
+                          fillColor = "#10b981"; // Emerald Green / Hijau Muda (Daerah peta yang sudah dibantu Mitra)
                           fillOpacity = isSelected ? 0.98 : 0.88;
-                        } else if (isMitra) {
-                          fillColor = "#10b981"; // Emerald Green (Mitra)
+                        } else if (isBpbdOnly) {
+                          fillColor = "#013220"; // Forest Green / Hijau Tua (BPBD)
                           fillOpacity = isSelected ? 0.98 : 0.88;
                         } else if (isSelected) {
                           fillColor = "#cbd5e1";
@@ -1592,18 +1592,10 @@ export function PetaSebaranPenanganan({
                             >
                               <title>
                                 {p.nama} (
-                                {isBpbd
-                                  ? "Dominan BPBD (" +
-                                    stats.bpbdPct +
-                                    "% vs Mitra " +
-                                    stats.mitraPct +
-                                    "%)"
-                                  : isMitra
-                                  ? "Dominan Mitra (" +
-                                    stats.mitraPct +
-                                    "% vs BPBD " +
-                                    stats.bpbdPct +
-                                    "%)"
+                                {hasMitraResponse
+                                  ? `Dibantu Mitra (${stats.mitraPct}% Mitra · ${stats.bpbdPct}% BPBD)`
+                                  : isBpbdOnly
+                                  ? `Respon BPBD (${stats.bpbdPct}%)`
                                   : "Kondisi Terkendali"}
                                 )
                               </title>
@@ -1613,25 +1605,25 @@ export function PetaSebaranPenanganan({
                             {p.isDisasterZone && (
                               <g style={{ pointerEvents: "none" }}>
                                 {/* Circle Pin Marker */}
-                                {stats.mitraPct > 0 && stats.bpbdPct > 0 ? (
+                                {hasMitraResponse ? (
                                   <>
-                                    {/* Dual-Tone Collaboration Marker: Emerald outer ring + Forest Green center */}
+                                    {/* Elevated Badge Marker for Mitra Assisted Region */}
                                     <circle
                                       cx={p.svgCenter[0]}
                                       cy={p.svgCenter[1]}
-                                      r={isSelected ? 9.5 : 8}
-                                      fill="#10b981"
-                                      fillOpacity={0.28}
-                                      stroke="#10b981"
-                                      strokeWidth={2}
+                                      r={isSelected ? 10 : 8.5}
+                                      fill="#ffffff"
+                                      fillOpacity={0.45}
+                                      stroke="#ffffff"
+                                      strokeWidth={1.8}
                                     />
                                     <circle
                                       cx={p.svgCenter[0]}
                                       cy={p.svgCenter[1]}
-                                      r={isSelected ? 5.5 : 4.5}
+                                      r={isSelected ? 6 : 5}
                                       fill="#013220"
                                       stroke="#ffffff"
-                                      strokeWidth={1.8}
+                                      strokeWidth={2}
                                     />
                                   </>
                                 ) : (
@@ -1944,7 +1936,7 @@ export function PetaSebaranPenanganan({
                     }}
                   />
                   <span style={{ color: "#013220", fontWeight: 700 }}>
-                    Dominan BPBD (&gt;50%)
+                    Respon BPBD
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1958,21 +1950,7 @@ export function PetaSebaranPenanganan({
                     }}
                   />
                   <span style={{ color: "#047857", fontWeight: 700 }}>
-                    Dominan Mitra (&gt;50%)
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span
-                    style={{
-                      width: "12px",
-                      height: "8px",
-                      background: "linear-gradient(90deg, #013220 50%, #10b981 50%)",
-                      borderRadius: "2px",
-                      display: "inline-block",
-                    }}
-                  />
-                  <span style={{ color: "#065f46", fontWeight: 700 }}>
-                    Kolaborasi BPBD &amp; Mitra
+                    Dibantu Mitra Kemanusiaan
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1986,7 +1964,7 @@ export function PetaSebaranPenanganan({
                     }}
                   />
                   <span style={{ color: "#64748b", fontWeight: 600 }}>
-                    Terkendali / Rutin
+                    Terkendali / Siaga Rutin
                   </span>
                 </div>
               </div>
