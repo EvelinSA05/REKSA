@@ -7567,6 +7567,28 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   transform: translateY(-1px);
 }
 
+.btn-case-escalate {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-case-escalate:hover {
+  background: #d1fae5;
+  border-color: #6ee7b7;
+  color: #065f46;
+  transform: translateY(-1px);
+}
+
 .btn-case-reject {
   background: #fef2f2;
   color: #991b1b;
@@ -12956,6 +12978,36 @@ img, svg, video, canvas {
   .peta-sebaran-search-row select,
   .peta-sebaran-search-row > div {
     width: 100% !important;
+  }
+
+  /* Posko Case Verification Mobile Buttons */
+  .posko-case-footer-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  .posko-case-footer-row .btn-case-view {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 14px !important;
+    box-sizing: border-box !important;
+  }
+  .posko-case-actions-cluster {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .posko-case-actions-cluster .btn-case-clarify,
+  .posko-case-actions-cluster .btn-case-escalate,
+  .posko-case-actions-cluster .btn-case-reject,
+  .posko-case-actions-cluster .btn-case-verify {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 6px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
   }
 }
 
