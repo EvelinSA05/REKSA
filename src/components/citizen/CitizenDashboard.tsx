@@ -313,17 +313,17 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                       padding: "3px 10px",
                       borderRadius: "999px",
                       background:
-                        currentMission.status_tahapan === "Dalam Pengiriman"
+                        currentMission.status_tahapan === "Dalam Pengiriman" || currentMission.status_tahapan === "Dalam Perjalanan"
                           ? "#dcfce7"
-                          : currentMission.status_tahapan === "Tiba di Lokasi & Diserahkan"
+                          : currentMission.status_tahapan === "Tiba di Lokasi & Diserahkan" || currentMission.status_tahapan === "Tiba di Lokasi" || currentMission.status_tahapan === "Menunggu Konfirmasi Penerimaan"
                           ? "#e0e7ff"
                           : currentMission.status_tahapan === "Selesai"
                           ? "#f0fdf4"
                           : "#f1f5f9",
                       color:
-                        currentMission.status_tahapan === "Dalam Pengiriman"
+                        currentMission.status_tahapan === "Dalam Pengiriman" || currentMission.status_tahapan === "Dalam Perjalanan"
                           ? "#15803d"
-                          : currentMission.status_tahapan === "Tiba di Lokasi & Diserahkan"
+                          : currentMission.status_tahapan === "Tiba di Lokasi & Diserahkan" || currentMission.status_tahapan === "Tiba di Lokasi" || currentMission.status_tahapan === "Menunggu Konfirmasi Penerimaan"
                           ? "#3730a3"
                           : currentMission.status_tahapan === "Selesai"
                           ? "#166534"

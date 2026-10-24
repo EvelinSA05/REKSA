@@ -1014,14 +1014,42 @@ export function MissionLiveTrackingMap({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: trackingSource === 'device_gps' ? 'rgba(59, 130, 246, 0.25)' : isStandby ? 'rgba(148, 163, 184, 0.25)' : 'rgba(34, 197, 94, 0.22)',
-              border: `1px solid ${trackingSource === 'device_gps' ? '#60a5fa' : isStandby ? '#94a3b8' : '#4ade80'}`,
+              background:
+                trackingSource === 'device_gps'
+                  ? 'rgba(59, 130, 246, 0.25)'
+                  : isStandby
+                  ? 'rgba(148, 163, 184, 0.25)'
+                  : isReady
+                  ? 'rgba(245, 158, 11, 0.25)'
+                  : isArrived || isConfirming || isFinished
+                  ? 'rgba(16, 185, 129, 0.25)'
+                  : 'rgba(34, 197, 94, 0.22)',
+              border: `1px solid ${
+                trackingSource === 'device_gps'
+                  ? '#60a5fa'
+                  : isStandby
+                  ? '#94a3b8'
+                  : isReady
+                  ? '#fbbf24'
+                  : isArrived || isConfirming || isFinished
+                  ? '#34d399'
+                  : '#4ade80'
+              }`,
               padding: '2.5px 9px',
               borderRadius: '9999px',
               fontSize: '0.72rem',
               fontWeight: 700,
               letterSpacing: '0.02em',
-              color: trackingSource === 'device_gps' ? '#93c5fd' : isStandby ? '#e2e8f0' : '#4ade80',
+              color:
+                trackingSource === 'device_gps'
+                  ? '#93c5fd'
+                  : isStandby
+                  ? '#e2e8f0'
+                  : isReady
+                  ? '#fef08a'
+                  : isArrived || isConfirming || isFinished
+                  ? '#a7f3d0'
+                  : '#4ade80',
             }}
           >
             <span
@@ -1029,9 +1057,28 @@ export function MissionLiveTrackingMap({
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: trackingSource === 'device_gps' ? '#3b82f6' : isStandby ? '#94a3b8' : '#22c55e',
-                boxShadow: isStandby ? 'none' : `0 0 6px ${trackingSource === 'device_gps' ? '#3b82f6' : '#22c55e'}`,
-                animation: isStandby ? 'none' : 'blink-dot 1.4s ease-in-out infinite',
+                background:
+                  trackingSource === 'device_gps'
+                    ? '#3b82f6'
+                    : isStandby
+                    ? '#94a3b8'
+                    : isReady
+                    ? '#f59e0b'
+                    : isArrived || isConfirming || isFinished
+                    ? '#10b981'
+                    : '#22c55e',
+                boxShadow: isStandby
+                  ? 'none'
+                  : `0 0 6px ${
+                      trackingSource === 'device_gps'
+                        ? '#3b82f6'
+                        : isReady
+                        ? '#f59e0b'
+                        : isArrived || isConfirming || isFinished
+                        ? '#10b981'
+                        : '#22c55e'
+                    }`,
+                animation: isStandby || isArrived || isConfirming || isFinished ? 'none' : 'blink-dot 1.4s ease-in-out infinite',
               }}
             />
             <span>
@@ -1041,6 +1088,12 @@ export function MissionLiveTrackingMap({
                 ? 'Standby di Posko'
                 : isReady
                 ? 'Siap Berangkat'
+                : isArrived
+                ? 'Tiba di Lokasi'
+                : isConfirming
+                ? 'Menunggu Konfirmasi'
+                : isFinished
+                ? 'Misi Selesai'
                 : 'Dalam Perjalanan'}
             </span>
           </div>
@@ -1331,7 +1384,7 @@ export function MissionLiveTrackingMap({
                 ? 'GPS Aktif'
                 : isStandby
                 ? 'Standby di Posko'
-                : isArrived
+                : isArrived || isConfirming || isFinished
                 ? 'Tiba di Lokasi'
                 : 'Jalur Lancar'}
             </strong>
