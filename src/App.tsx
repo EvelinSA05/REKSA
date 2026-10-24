@@ -4040,6 +4040,7 @@ function PoskoDashboard({ state, update, setPage }: { state: SharedState; update
             <MapView 
               operational 
               hideCard 
+              height="100%"
               cases={allCases}
               onSelectCase={(c) => {
                 if (c?.id) {

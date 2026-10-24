@@ -618,6 +618,18 @@ export function LeafletMap({
     };
   }, []);
 
+  // Handle dynamic container resizing smoothly
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    });
+    ro.observe(mapContainerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
   // Update markers & layers whenever data / position changes
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -1283,7 +1295,14 @@ export function LeafletMap({
   }, [focusedCaseId, focusTrigger, cases]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: '10px', 
+      width: '100%',
+      height: height === '100%' ? '100%' : undefined,
+      flex: height === '100%' ? 1 : undefined,
+    }}>
       {/* SEARCH BAR (Google Maps Style) */}
       {pickLocation && (
         <div style={{ position: 'relative', width: '100%' }}>
@@ -1407,6 +1426,8 @@ export function LeafletMap({
         position: 'relative', 
         width: '100%', 
         height: height || (operational ? '400px' : '340px'),
+        flex: height === '100%' ? 1 : undefined,
+        minHeight: height === '100%' ? '360px' : undefined,
         borderRadius: '16px', 
         overflow: 'hidden', 
         border: '1.5px solid #d4dfd6', 
