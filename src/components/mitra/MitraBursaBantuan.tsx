@@ -92,6 +92,7 @@ export function MitraBursaBantuan({
         urgensi: c.urgency || "Sedang",
         status: s.includes("sebagian") ? "Sebagian Terpenuhi" : "Terbuka",
         published_at: c.date || "Hari ini, Baru diverifikasi",
+        isDelegatedToMitra: Boolean(c.escalatedToMitra || c.mitraHandler),
         posko: {
           id: 1,
           kode_posko: "PSK-SBY-01",
@@ -213,10 +214,30 @@ export function MitraBursaBantuan({
     const { num, unit } = parseVolume(item.target_volume);
     setOfferedAmount(String(num || 100));
     setOfferedUnit(unit || "Unit");
-    setDeliveryMethod('serah_posko');
-    setFleetInfo("");
-    setReadinessTime("Hari ini, Siap Diserahkan ke Posko");
-    setNotesInput("Mitra siap menyerahkan pasokan barang kebutuhan ke Posko BPBD.");
+
+    const isDelegated = Boolean(
+      (item as any).isDelegatedToMitra ||
+      cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
+      cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
+    );
+
+    if (isDelegated) {
+      setDeliveryMethod('mandiri');
+      const itemTitle = (item.item_bantuan || "").toLowerCase();
+      const defaultFleet = itemTitle.includes("obat") || itemTitle.includes("medis")
+        ? "Mobil Ambulans & Logistik Medis PMI No. 04"
+        : itemTitle.includes("air")
+        ? "Truk Tangki Air Bersih Mitra No. 02"
+        : "Mobil Box Logistik Distribusi Cepat Mitra";
+      setFleetInfo(defaultFleet);
+      setReadinessTime("Hari ini, Siap Berangkat Langsung");
+      setNotesInput("Penugasan komitmen langsung mitra: armada dan relawan siaga penuh diberangkatkan.");
+    } else {
+      setDeliveryMethod('serah_posko');
+      setFleetInfo("");
+      setReadinessTime("Hari ini, Siap Diserahkan ke Posko");
+      setNotesInput("Mitra siap menyerahkan pasokan barang kebutuhan ke Posko BPBD.");
+    }
   };
 
   const handleSubmitOffer = async () => {
@@ -226,40 +247,146 @@ export function MitraBursaBantuan({
       const num = parseInt(offeredAmount) || 100;
       const amountStr = `${num} ${offeredUnit}`;
 
-      // Simpan proposal penawaran ke penyimpanan lokal agar langsung masuk antrean Posko & Mitra
+      const relatedCase = cases?.find(
+        (c) =>
+          (c.rawId && (c.rawId === modalBursa.id || c.rawId === modalBursa.kebutuhan_id)) ||
+          (c.id && modalBursa.kebutuhan?.kode_kasus === c.id) ||
+          (c.id && String(modalBursa.id).includes(c.id))
+      );
+
+      const isDelegatedToMitra = Boolean(
+        (modalBursa as any).isDelegatedToMitra ||
+        relatedCase?.escalatedToMitra ||
+        relatedCase?.mitraHandler
+      );
+
+      // Simpan proposal penawaran ke penyimpanan lokal
       let localOffers: any[] = [];
       try {
         const saved = localStorage.getItem("reksa_penawaran_db");
         if (saved) localOffers = JSON.parse(saved);
       } catch (_) {}
 
+      const resolvedFleet = deliveryMethod === 'mandiri' 
+        ? (fleetInfo || 'Mobil Box Logistik Distribusi Cepat Mitra') 
+        : 'Serah Terima ke Gudang Posko BPBD';
+
       const newOffer = {
         id: Date.now(),
-        kode_penawaran: `TWR-2026-${String(Date.now()).slice(-4)}`,
+        kode_penawaran: isDelegatedToMitra 
+          ? `TWR-DIR-${String(Date.now()).slice(-4)}` 
+          : `TWR-2026-${String(Date.now()).slice(-4)}`,
         bursa_id: modalBursa.id,
         kebutuhan_id: modalBursa.kebutuhan_id || modalBursa.id,
         posko_id: modalBursa.posko_id || 1,
         mitra_id: 4,
         mitra_name: userName || "dr. Hendra Wijaya",
-        organisasi: userOrg || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+        organisasi: userOrg || relatedCase?.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
         jenis_bantuan: modalBursa.item_bantuan,
         jumlah_tawaran: amountStr,
         volume_angka: num,
         satuan: offeredUnit,
         waktu_kesiapan: readinessTime,
-        armada_info: deliveryMethod === 'mandiri' ? (fleetInfo || 'Armada Mandiri Mitra') : 'Serah Terima ke Gudang Posko BPBD',
-        status: "Diajukan" as const,
+        armada_info: resolvedFleet,
+        status: (isDelegatedToMitra ? "Disetujui" : "Diajukan") as "Disetujui" | "Diajukan",
+        jumlah_disetujui: isDelegatedToMitra ? amountStr : undefined,
+        volume_disetujui_angka: isDelegatedToMitra ? num : undefined,
         catatan: notesInput,
-        created_at: "Hari ini, Baru diajukan",
+        created_at: isDelegatedToMitra ? "Hari ini, Baru diajukan & disetujui" : "Hari ini, Baru diajukan",
         bursa: modalBursa,
         kebutuhan: modalBursa.kebutuhan,
       };
 
-      const updatedOffers = [newOffer, ...localOffers];
+      const updatedOffers = [newOffer, ...localOffers.filter((o: any) => o.bursa_id !== modalBursa.id)];
       try {
         localStorage.setItem("reksa_penawaran_db", JSON.stringify(updatedOffers));
       } catch (_) {}
-      update?.({ penawaranList: updatedOffers });
+
+      // Jika alur penugasan mitra: otomatis terbit Misi Penyaluran dan update status kasus & bursa
+      let updatedMisiList: any[] = [];
+      let updatedCasesList: CaseRecord[] | undefined = undefined;
+      let updatedBursaList: BursaItem[] | undefined = undefined;
+
+      if (isDelegatedToMitra) {
+        let localMisi: any[] = [];
+        try {
+          const mSaved = localStorage.getItem("reksa_misi_db");
+          if (mSaved) localMisi = JSON.parse(mSaved);
+        } catch (_) {}
+
+        const newMisi = {
+          id: Date.now(),
+          kode_misi: `MISI-EXP-${String(Date.now()).slice(-4)}`,
+          kebutuhan_id: modalBursa.kebutuhan_id || modalBursa.id,
+          bursa_id: modalBursa.id,
+          penawaran_id: newOffer.id,
+          posko_id: modalBursa.posko_id || 1,
+          responder_name: userName || "dr. Hendra Wijaya",
+          responder_phone: "+62 812 8899 0011",
+          organisasi: userOrg || relatedCase?.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+          armada_info: resolvedFleet,
+          muatan: amountStr,
+          status_tahapan: "Dalam Perjalanan",
+          estimasi_waktu: "25 Menit (3,8 km)",
+          catatan_lapangan: notesInput || "Komitmen telah disahkan dan armada mitra langsung diberangkatkan menuju lokasi warga terdampak.",
+          posko: modalBursa.posko,
+          kebutuhan: modalBursa.kebutuhan,
+        };
+
+        updatedMisiList = [newMisi, ...localMisi.filter((m: any) => m.kebutuhan_id !== modalBursa.kebutuhan_id && m.bursa_id !== modalBursa.id)];
+        try {
+          localStorage.setItem("reksa_misi_db", JSON.stringify(updatedMisiList));
+        } catch (_) {}
+
+        if (cases) {
+          updatedCasesList = cases.map((c) =>
+            (relatedCase && c.id === relatedCase.id) ||
+            (c.rawId && (c.rawId === modalBursa.id || c.rawId === modalBursa.kebutuhan_id)) ||
+            (c.id && modalBursa.kebutuhan?.kode_kasus === c.id)
+              ? {
+                  ...c,
+                  status: "Dalam Pengiriman",
+                  totalAlokasiResmi: amountStr,
+                }
+              : c
+          );
+          try {
+            localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCasesList));
+          } catch (_) {}
+        }
+
+        let localBursa: any[] = [];
+        try {
+          const bSaved = localStorage.getItem("reksa_bursa_db");
+          if (bSaved) localBursa = JSON.parse(bSaved);
+        } catch (_) {}
+        if (localBursa.length > 0) {
+          updatedBursaList = localBursa.map((b) =>
+            b.id === modalBursa.id || b.kebutuhan_id === modalBursa.kebutuhan_id
+              ? {
+                  ...b,
+                  status: "Teralokasi Penuh",
+                  volume_terpenuhi: amountStr,
+                  claimed_org: userOrg || relatedCase?.mitraHandler,
+                  claimed_volume: amountStr,
+                }
+              : b
+          );
+          try {
+            localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
+          } catch (_) {}
+        }
+      }
+
+      update?.({
+        penawaranList: updatedOffers,
+        ...(isDelegatedToMitra ? {
+          misiList: updatedMisiList,
+          ...(updatedCasesList ? { casesList: updatedCasesList } : {}),
+          ...(updatedBursaList ? { bursaList: updatedBursaList } : {}),
+          assignment: "Dalam Perjalanan",
+        } : {})
+      });
 
       try {
         await apiService.createPenawaran({
@@ -270,7 +397,7 @@ export function MitraBursaBantuan({
           metode_penyaluran: deliveryMethod,
           kategori_komoditas: modalBursa.item_bantuan,
           waktu_kesiapan: readinessTime,
-          armada_info: deliveryMethod === 'mandiri' ? (fleetInfo || 'Armada Mandiri Mitra') : undefined,
+          armada_info: resolvedFleet,
           organisasi: userOrg,
           catatan: notesInput,
         });
@@ -278,7 +405,12 @@ export function MitraBursaBantuan({
         // Fallback anggun ke lokal
       }
 
-      notify?.(`Penawaran bantuan ${modalBursa.item_bantuan} (${amountStr}) berhasil diajukan ke Posko!`);
+      if (isDelegatedToMitra) {
+        notify?.(`Komitmen diajukan! Penawaran otomatis disetujui & Misi Penyaluran armada langsung aktif diterbitkan.`);
+      } else {
+        notify?.(`Penawaran bantuan ${modalBursa.item_bantuan} (${amountStr}) berhasil diajukan ke Posko BPBD (menunggu verifikasi & persetujuan Posko).`);
+      }
+
       setModalBursa(null);
       await onRefresh?.().catch(() => {});
       onNavigateToMyOffers();
@@ -607,6 +739,29 @@ export function MitraBursaBantuan({
                     <span className="posko-case-status-badge status-pending">
                       {item.status || "Terbuka"}
                     </span>
+                    {Boolean(
+                      (item as any).isDelegatedToMitra ||
+                      cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
+                      cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
+                    ) && (
+                      <span
+                        style={{
+                          background: "#eff6ff",
+                          color: "#1d4ed8",
+                          border: "1px solid #bfdbfe",
+                          padding: "3px 9px",
+                          borderRadius: "999px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                        title="Penugasan langsung dari/ke mitra. Komitmen bantuan otomatis disetujui tanpa verifikasi ulang Posko."
+                      >
+                        <span>🚀 Penugasan Khusus Mitra</span>
+                      </span>
+                    )}
                     <span
                       style={{
                         background: aiMatch.matchScore >= 95 ? "#ecfdf5" : "#f0fdf4",
@@ -801,10 +956,26 @@ export function MitraBursaBantuan({
                         type="button"
                         onClick={() => openOfferModal(item)}
                         className="btn-case-verify"
-                        title="Ajukan komitmen penugasan armada organisasi Anda"
+                        title={
+                          Boolean(
+                            (item as any).isDelegatedToMitra ||
+                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
+                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
+                          )
+                            ? "Ajukan komitmen armada mitra (otomatis disetujui & langsung aktif misi penyaluran)"
+                            : "Ajukan komitmen penugasan armada organisasi Anda ke Posko BPBD"
+                        }
                       >
                         <AppIcon name="handshake" size={14} />
-                        <span>Ajukan Komitmen Bantuan</span>
+                        <span>
+                          {Boolean(
+                            (item as any).isDelegatedToMitra ||
+                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
+                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
+                          )
+                            ? "Ajukan Komitmen (Langsung Kirim)"
+                            : "Ajukan Komitmen Bantuan"}
+                        </span>
                         <AppIcon name="arrow-right" size={13} />
                       </button>
                     )}
@@ -872,6 +1043,11 @@ export function MitraBursaBantuan({
         const unit = (modalBursa as any).satuan || parsedTarget.unit || "Unit";
         const isKritis = modalBursa.urgensi?.toLowerCase().includes("kritis");
         const isTinggi = modalBursa.urgensi?.toLowerCase().includes("tinggi") || !modalBursa.urgensi;
+        const isDelegatedModal = Boolean(
+          (modalBursa as any)?.isDelegatedToMitra ||
+          cases?.find((c) => (c.rawId && (c.rawId === modalBursa.id || c.rawId === modalBursa.kebutuhan_id)) || (c.id && modalBursa.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
+          cases?.find((c) => (c.rawId && (c.rawId === modalBursa.id || c.rawId === modalBursa.kebutuhan_id)) || (c.id && modalBursa.kebutuhan?.kode_kasus === c.id))?.mitraHandler
+        );
 
         return (
           <div className="modal-backdrop" onClick={() => setModalBursa(null)}>
@@ -950,6 +1126,44 @@ export function MitraBursaBantuan({
                   Ajukan Komitmen Penyaluran
                 </h2>
               </div>
+
+              {/* ALUR NOTIFICATION BANNER */}
+              {isDelegatedModal ? (
+                <div
+                  style={{
+                    background: "#f0fdf4",
+                    border: "1.5px solid #86efac",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    fontSize: "0.84rem",
+                    color: "#166534",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                    <span>🚀 Alur Penugasan Khusus Mitra:</span>
+                  </strong>
+                  <span>
+                    Kebutuhan ini adalah hasil penugasan langsung kepada mitra Anda. Ketika Anda menekan <strong>"Kirim Komitmen &amp; Aktifkan Misi"</strong>, penawaran akan <strong>otomatis disetujui (ACC langsung)</strong> dan <strong>Misi Penyaluran armada langsung aktif berjalan</strong> tanpa perlu verifikasi ulang dari Posko BPBD.
+                  </span>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    fontSize: "0.84rem",
+                    color: "#334155",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>ℹ️ Alur Standar Posko BPBD:</strong> Penawaran komitmen bantuan ini akan dikirimkan ke Posko BPBD dan tetap memerlukan verifikasi serta persetujuan resmi dari meja Posko BPBD sebelum misi penyaluran diterbitkan.
+                </div>
+              )}
 
               {/* CONTEXT TARGET CARD */}
               <div
@@ -1330,7 +1544,12 @@ export function MitraBursaBantuan({
                   {isSubmitting ? (
                     <>
                       <AppIcon name="clock" size={14} />
-                      <span>Mengirim Penawaran...</span>
+                      <span>{isDelegatedModal ? "Memproses Komitmen & Misi..." : "Mengirim Penawaran..."}</span>
+                    </>
+                  ) : isDelegatedModal ? (
+                    <>
+                      <AppIcon name="check" size={14} />
+                      <span>Kirim Komitmen &amp; Aktifkan Misi</span>
                     </>
                   ) : (
                     <>

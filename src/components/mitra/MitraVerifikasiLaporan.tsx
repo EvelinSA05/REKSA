@@ -13,6 +13,7 @@ interface MitraVerifikasiLaporanProps {
   userOrg?: string;
   userName?: string;
   onNavigateToTasks?: () => void;
+  onNavigateToBursa?: () => void;
 }
 
 export function MitraVerifikasiLaporan({
@@ -24,6 +25,7 @@ export function MitraVerifikasiLaporan({
   userOrg = "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
   userName = "dr. Hendra Wijaya",
   onNavigateToTasks,
+  onNavigateToBursa,
 }: MitraVerifikasiLaporanProps) {
   const [tab, setTab] = useState<"menunggu" | "diverifikasi" | "ditolak" | "semua">("menunggu");
   const [search, setSearch] = useState("");
@@ -139,7 +141,7 @@ export function MitraVerifikasiLaporan({
 
     const newStatus =
       modalAction === "verify" 
-        ? (isDirectAssignment ? "Dalam Pengiriman" : "Kebutuhan Terbuka") 
+        ? "Kebutuhan Terbuka" 
         : modalAction === "clarify"
         ? "Perlu Klarifikasi"
         : "Ditolak Mitra";
@@ -155,9 +157,9 @@ export function MitraVerifikasiLaporan({
             status: newStatus,
             urgency: modalAction === "verify" ? priorityChoice : c.urgency,
             escalatedToMitra: true,
-            totalAlokasiResmi: modalAction === "verify" ? `${targetNum} ${targetUnit}` : c.totalAlokasiResmi,
+            totalAlokasiResmi: c.totalAlokasiResmi,
             mitraHandler: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
-            catatanVerifikasiPosko: modalAction === "verify" ? (notesInput || "Data diverifikasi valid oleh Mitra. Misi Penyaluran langsung diterbitkan dan armada siaga bergerak.") : c.catatanVerifikasiPosko,
+            catatanVerifikasiPosko: modalAction === "verify" ? (notesInput || "Data diverifikasi valid oleh Mitra dan dirilis ke Bursa Bantuan.") : c.catatanVerifikasiPosko,
             statusTone: modalAction === "clarify" ? "#d97706" : c.statusTone,
             clarificationCategory: modalAction === "clarify" ? clarificationCategory : c.clarificationCategory,
             clarificationQuestion: modalAction === "clarify" ? (notesInput || `Mohon lengkapi perbaikan ${clarificationCategory.toLowerCase()} untuk laporan kebutuhan ini.`) : c.clarificationQuestion,
@@ -184,18 +186,6 @@ export function MitraVerifikasiLaporan({
       }
     } catch (_) {}
 
-    let updatedPenawaranList: any[] = [];
-    try {
-      const pLocal = localStorage.getItem("reksa_penawaran_db");
-      if (pLocal) updatedPenawaranList = JSON.parse(pLocal);
-    } catch (_) {}
-
-    let updatedMisiList: any[] = [];
-    try {
-      const mLocal = localStorage.getItem("reksa_misi_db");
-      if (mLocal) updatedMisiList = JSON.parse(mLocal);
-    } catch (_) {}
-
     if (modalAction === "verify") {
       const newBursaItem = {
         id: numericId,
@@ -203,12 +193,14 @@ export function MitraVerifikasiLaporan({
         posko_id: 1,
         item_bantuan: selectedCase.item || "Kebutuhan Darurat Warga",
         target_volume: `${targetNum} ${targetUnit}`,
-        volume_terpenuhi: `${targetNum} ${targetUnit}`,
+        volume_terpenuhi: "0 Unit",
         urgensi: priorityChoice || selectedCase.urgency || "Tinggi",
-        status: isDirectAssignment ? "Teralokasi Penuh" : "Terbuka",
+        status: "Terbuka" as const,
+        isDelegatedToMitra: isDirectAssignment,
+        assignedMitra: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
         published_at: "Hari ini, Baru diverifikasi",
-        claimed_org: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
-        claimed_volume: `${targetNum} ${targetUnit}`,
+        claimed_org: undefined,
+        claimed_volume: undefined,
         posko: {
           id: 1,
           kode_posko: "PSK-01",
@@ -234,7 +226,7 @@ export function MitraVerifikasiLaporan({
           jumlah_kk: parseInt((selectedCase.kk || "1").replace(/\D/g, "")) || 1,
           status_hunian: selectedCase.shelterStatus || "Rumah Tinggal Pribadi",
           tingkat_urgensi: priorityChoice || selectedCase.urgency || "Tinggi",
-          status: isDirectAssignment ? "Dalam Pengiriman" : "Kebutuhan Terbuka",
+          status: "Kebutuhan Terbuka",
           desa: selectedCase.village || "",
           kecamatan: selectedCase.district || "",
           kabupaten: selectedCase.regency || "",
@@ -256,64 +248,8 @@ export function MitraVerifikasiLaporan({
         updatedBursaList = [newBursaItem, ...updatedBursaList];
       }
 
-      // ─── ALUR PENUGASAN LANGSUNG: OTOMATIS PENAWARAN DISETUJUI & TERBIT MISI ───
-      const resolvedFleet = (selectedCase.item || "").toLowerCase().includes("obat") || (selectedCase.item || "").toLowerCase().includes("medis")
-        ? "Mobil Ambulans & Logistik Medis PMI No. 04"
-        : (selectedCase.item || "").toLowerCase().includes("air")
-        ? "Truk Tangki Air Bersih Mitra No. 02"
-        : "Mobil Box Logistik Distribusi Cepat Mitra";
-
-      const newOffer = {
-        id: Date.now(),
-        kode_penawaran: `TWR-DIR-${String(Date.now()).slice(-4)}`,
-        bursa_id: numericId,
-        kebutuhan_id: numericId,
-        posko_id: 1,
-        mitra_id: 4,
-        mitra_name: userName || "dr. Hendra Wijaya",
-        organisasi: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
-        jenis_bantuan: selectedCase.item || "Bantuan Kemanusiaan",
-        jumlah_tawaran: `${targetNum} ${targetUnit}`,
-        volume_angka: targetNum,
-        satuan: targetUnit,
-        waktu_kesiapan: "Siap Berangkat Langsung",
-        armada_info: resolvedFleet,
-        status: "Disetujui" as const,
-        jumlah_disetujui: `${targetNum} ${targetUnit}`,
-        volume_disetujui_angka: targetNum,
-        catatan: notesInput || "Penugasan langsung dari Posko BPBD disahkan dan armada mitra siap berangkat.",
-        created_at: "Hari ini, Baru diverifikasi",
-        bursa: newBursaItem,
-        kebutuhan: newBursaItem.kebutuhan,
-      };
-
-      updatedPenawaranList = [newOffer, ...updatedPenawaranList.filter((p: any) => p.kebutuhan_id !== numericId)];
-
-      const newMisi = {
-        id: Date.now(),
-        kode_misi: `MISI-EXP-${String(Date.now()).slice(-4)}`,
-        kebutuhan_id: numericId,
-        bursa_id: numericId,
-        penawaran_id: newOffer.id,
-        posko_id: 1,
-        responder_name: userName || "dr. Hendra Wijaya",
-        responder_phone: "+62 812 8899 0011",
-        organisasi: userOrg || selectedCase.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
-        armada_info: resolvedFleet,
-        muatan: `${targetNum} ${targetUnit}`,
-        status_tahapan: "Dalam Perjalanan",
-        estimasi_waktu: "25 Menit (3,8 km)",
-        catatan_lapangan: notesInput || "Armada logistik mitra telah diverifikasi dan langsung diberangkatkan menuju lokasi warga terdampak.",
-        posko: newBursaItem.posko,
-        kebutuhan: newBursaItem.kebutuhan,
-      };
-
-      updatedMisiList = [newMisi, ...updatedMisiList.filter((m: any) => m.kebutuhan_id !== numericId)];
-
       try {
         localStorage.setItem("reksa_bursa_db", JSON.stringify(updatedBursaList));
-        localStorage.setItem("reksa_penawaran_db", JSON.stringify(updatedPenawaranList));
-        localStorage.setItem("reksa_misi_db", JSON.stringify(updatedMisiList));
       } catch (_) {}
     }
 
@@ -321,9 +257,6 @@ export function MitraVerifikasiLaporan({
       casesList: updatedCases,
       ...(modalAction === "verify" ? { 
         bursaList: updatedBursaList,
-        penawaranList: updatedPenawaranList,
-        misiList: updatedMisiList,
-        assignment: "Dalam Perjalanan",
       } : {})
     });
     try {
@@ -332,14 +265,19 @@ export function MitraVerifikasiLaporan({
 
     const notifMsg =
       modalAction === "verify"
-        ? `Laporan ${selectedCase.id} diverifikasi & disahkan! Penawaran otomatis disetujui Posko BPBD dan Misi Penyaluran armada langsung aktif diterbitkan.`
+        ? `Laporan ${selectedCase.id} berhasil diverifikasi dan dirilis ke Bursa Bantuan. Buka Bursa Bantuan untuk mengajukan komitmen bantuan mitra.`
         : modalAction === "clarify"
         ? `Permintaan klarifikasi telah dikirimkan ke pelapor untuk laporan ${selectedCase.id}.`
         : `Laporan ${selectedCase.id} ditolak oleh Mitra.`;
     notify?.(notifMsg);
+    const wasVerify = modalAction === "verify";
     setModalAction(null);
     setSelectedCase(null);
     setIsSubmitting(false);
+
+    if (wasVerify) {
+      onNavigateToBursa?.();
+    }
 
     // Kirim ke server di background
     try {
@@ -1154,7 +1092,7 @@ export function MitraVerifikasiLaporan({
                   color: "#166534",
                   lineHeight: 1.45,
                 }}>
-                  <strong>🚀 Jalur Penugasan Khusus:</strong> Karena laporan ini telah didelegasikan resmi sejak awal kepada <strong>{userOrg || selectedCase.mitraHandler || "Mitra Kemanusiaan"}</strong>, verifikasi ini otomatis mencatat proposal di <strong>Penawaran Saya</strong>, disetujui Posko BPBD, dan <strong>Misi Penyaluran armada langsung aktif diterbitkan</strong>.
+                  <strong>📋 Verifikasi &amp; Rilis ke Bursa:</strong> Setelah diverifikasi sah, laporan kebutuhan ini akan dirilis ke <strong>Bursa Bantuan</strong>. Mitra selanjutnya dapat mengajukan komitmen bantuan pada Bursa Bantuan; karena merupakan alur penugasan mitra, penawaran tersebut akan <strong>otomatis disetujui (di-ACC)</strong> dan langsung mengaktifkan <strong>Misi Penyaluran</strong> armada.
                 </div>
                 <label
                   style={{
@@ -1442,7 +1380,7 @@ export function MitraVerifikasiLaporan({
                 {isSubmitting
                   ? "Menyimpan..."
                   : modalAction === "verify"
-                  ? "Verifikasi & Terbitkan Misi Penyaluran"
+                  ? "Verifikasi & Rilis ke Bursa Bantuan"
                   : modalAction === "clarify"
                   ? "Kirim Permintaan Klarifikasi"
                   : "Simpan Penolakan"}

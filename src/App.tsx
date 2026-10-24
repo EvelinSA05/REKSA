@@ -5356,6 +5356,7 @@ function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nu
       userOrg={state.userProfile?.org}
       userName={name}
       onNavigateToTasks={() => setPage("tasks")}
+      onNavigateToBursa={() => setPage("bursa")}
     />
   );
   if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} cases={state.casesList || []} update={update} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
