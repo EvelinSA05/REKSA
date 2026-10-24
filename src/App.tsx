@@ -1589,7 +1589,13 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
         title={collapsed ? item.label : undefined} 
         className={page === item.page ? "active" : ""} 
         key={item.label} 
-        onClick={() => { select(item.page); close(); }}
+        onClick={() => { 
+          if (update && (item.page === "offers" || item.page === "assignments" || item.page === "resources" || item.page === "cases" || item.page === "dashboard")) {
+            update({ activeCaseId: undefined });
+          }
+          select(item.page); 
+          close(); 
+        }}
         style={{ position: "relative" }}
       >
         <span style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
