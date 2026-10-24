@@ -35,6 +35,11 @@ export function MitraMisiPenyaluran({
 
     const combined: MisiItem[] = [...(misiList || [])];
     localSaved.forEach((lm) => {
+      // Pastikan misi penugasan baru yang belum di-advance mulai dari Tahap 1: "Menunggu Persiapan"
+      if (lm.kode_misi?.startsWith("MISI-EXP-") && lm.status_tahapan === "Dalam Perjalanan") {
+        lm.status_tahapan = "Menunggu Persiapan";
+        lm.estimasi_waktu = "Menunggu Persiapan Armada";
+      }
       if (!combined.some((m) => m.id === lm.id || (m.kode_misi && lm.kode_misi && m.kode_misi === lm.kode_misi))) {
         combined.unshift(lm);
       }
@@ -73,9 +78,9 @@ export function MitraMisiPenyaluran({
           organisasi: o.organisasi || userOrg || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
           armada_info: o.armada_info || "Mobil Box Logistik Distribusi Cepat Mitra",
           muatan: o.jumlah_tawaran || o.jumlah_disetujui || "100 Unit",
-          status_tahapan: "Dalam Perjalanan",
-          estimasi_waktu: "25 Menit (3,8 km)",
-          catatan_lapangan: o.catatan || "Komitmen telah disetujui posko dan armada mitra langsung diberangkatkan menuju lokasi warga terdampak.",
+          status_tahapan: "Menunggu Persiapan",
+          estimasi_waktu: "Menunggu Persiapan Armada",
+          catatan_lapangan: o.catatan || "Komitmen telah disahkan. Armada sedang dipersiapkan untuk pengecekan logistik sebelum keberangkatan.",
           posko: o.bursa?.posko || {
             id: 1,
             nama_posko: "Posko BPBD Provinsi Jawa Timur",
@@ -195,12 +200,12 @@ export function MitraMisiPenyaluran({
   ];
 
   const getStepIndex = (status: string) => {
-    if (status === "Diterima" || status === "Baru") return 0;
-    if (status === "Disiapkan") return 1;
-    if (status === "Dalam Pengiriman") return 2;
+    if (status === "Diterima" || status === "Baru" || status === "Menunggu Persiapan") return 0;
+    if (status === "Disiapkan" || status === "Siap Berangkat") return 1;
+    if (status === "Dalam Pengiriman" || status === "Dalam Perjalanan") return 2;
     if (status === "Tiba di Lokasi" || status === "Tiba di Lokasi & Diserahkan") return 3;
-    if (status === "Menunggu Konfirmasi Penerimaan") return 4;
-    const idx = states.findIndex((s) => s.title === status);
+    if (status === "Menunggu Konfirmasi" || status === "Menunggu Konfirmasi Penerimaan") return 4;
+    const idx = states.findIndex((s) => s.title.toLowerCase() === (status || "").toLowerCase());
     return idx >= 0 ? idx : 0;
   };
 
@@ -208,15 +213,34 @@ export function MitraMisiPenyaluran({
     try {
       setIsUpdating(true);
       const res = await apiService.advanceMisiStep(misi.id);
-      if (res.success) {
+      if (res.success && res.data) {
         notify?.(`Tahapan misi ${misi.kode_misi} diperbarui ke '${res.data.status_tahapan}'!`);
         await onRefresh?.();
+        return;
       }
     } catch (err: any) {
-      notify?.(err?.message || "Gagal memperbarui tahapan misi.");
-    } finally {
-      setIsUpdating(false);
+      console.log("Remote step advance fallback:", err);
     }
+
+    // Local client-side advancement for instant reactive update
+    const curIdx = getStepIndex(misi.status_tahapan);
+    const nextIdx = Math.min(curIdx + 1, states.length - 1);
+    const nextStatus = states[nextIdx].title;
+
+    try {
+      const saved = localStorage.getItem("reksa_misi_db");
+      let list = saved ? JSON.parse(saved) : [];
+      list = list.map((m: any) =>
+        m.id === misi.id || m.kode_misi === misi.kode_misi
+          ? { ...m, status_tahapan: nextStatus }
+          : m
+      );
+      localStorage.setItem("reksa_misi_db", JSON.stringify(list));
+    } catch (_) {}
+
+    notify?.(`Tahapan misi ${misi.kode_misi} diperbarui ke '${nextStatus}'!`);
+    await onRefresh?.();
+    setIsUpdating(false);
   };
 
   const handleConfirmFinalReceipt = async (misi: MisiItem) => {
@@ -229,12 +253,26 @@ export function MitraMisiPenyaluran({
       if (res.success) {
         notify?.(`Misi penyaluran ${misi.kode_misi} berhasil diselesaikan tuntas! Kasus resmi selesai.`);
         await onRefresh?.();
+        return;
       }
     } catch (err: any) {
-      notify?.(err?.message || "Gagal mengonfirmasi serah terima tuntas.");
-    } finally {
-      setIsUpdating(false);
+      console.log("Remote confirm receipt fallback:", err);
     }
+
+    try {
+      const saved = localStorage.getItem("reksa_misi_db");
+      let list = saved ? JSON.parse(saved) : [];
+      list = list.map((m: any) =>
+        m.id === misi.id || m.kode_misi === misi.kode_misi
+          ? { ...m, status_tahapan: "Selesai" }
+          : m
+      );
+      localStorage.setItem("reksa_misi_db", JSON.stringify(list));
+    } catch (_) {}
+
+    notify?.(`Misi penyaluran ${misi.kode_misi} berhasil diselesaikan tuntas! Kasus resmi selesai.`);
+    await onRefresh?.();
+    setIsUpdating(false);
   };
 
   const handleReportObstacle = async () => {

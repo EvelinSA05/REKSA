@@ -418,9 +418,9 @@ export function MitraBursaBantuan({
           organisasi: userOrg || relatedCase?.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
           armada_info: resolvedFleet,
           muatan: amountStr,
-          status_tahapan: "Dalam Perjalanan",
-          estimasi_waktu: "25 Menit (3,8 km)",
-          catatan_lapangan: notesInput || "Komitmen telah disahkan dan armada mitra langsung diberangkatkan menuju lokasi warga terdampak.",
+          status_tahapan: "Menunggu Persiapan",
+          estimasi_waktu: "Menunggu Persiapan Armada",
+          catatan_lapangan: notesInput || "Komitmen telah disahkan. Armada sedang dipersiapkan untuk pengecekan logistik sebelum keberangkatan.",
           posko: modalBursa.posko,
           kebutuhan: modalBursa.kebutuhan,
         };
