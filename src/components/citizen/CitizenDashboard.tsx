@@ -36,6 +36,16 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
   const hasCases = currentCases.length > 0;
   const clarificationCases = currentCases.filter((c) => c.status === "Perlu Klarifikasi");
 
+  // Pagination for citizen all cases: max 4 cards per page
+  const [casesPage, setCasesPage] = useState(1);
+  const CASES_PER_PAGE = 4;
+  const totalCasesCount = currentCases.length;
+  const totalCasesPages = Math.max(1, Math.ceil(totalCasesCount / CASES_PER_PAGE));
+  const validCasesPage = Math.min(Math.max(1, casesPage), totalCasesPages);
+  const startCasesIndex = (validCasesPage - 1) * CASES_PER_PAGE;
+  const endCasesIndex = Math.min(startCasesIndex + CASES_PER_PAGE, totalCasesCount);
+  const pagedCases = currentCases.slice(startCasesIndex, endCasesIndex);
+
   // Real-time logistic tracking missions for citizen
   const [localMisiList, setLocalMisiList] = useState<MisiItem[]>(state.misiList || []);
   const [selectedMisiId, setSelectedMisiId] = useState<number | null>(null);
@@ -454,8 +464,9 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         </div>
 
         {hasCases ? (
-          <div className="all-cases-grid">
-            {currentCases.map((c) => {
+          <>
+            <div className="all-cases-grid">
+            {pagedCases.map((c) => {
               const cPercent = getCaseProgress(c.status);
               const isCritical = c.urgency === "Kritis" || c.urgency === "Sangat mendesak";
               const isHigh = c.urgency === "Tinggi" || c.urgency === "Perlu segera";
@@ -602,6 +613,54 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
               );
             })}
           </div>
+
+          {totalCasesCount > 0 && (
+            <div className="posko-pagination-card" style={{ marginTop: "24px" }}>
+              <div className="posko-pagination-info">
+                <span>
+                  Menampilkan <strong>{startCasesIndex + 1}</strong> - <strong>{endCasesIndex}</strong> dari <strong>{totalCasesCount}</strong> laporan
+                </span>
+                <span className="posko-pagination-limit-badge">Maks. 4 card per halaman</span>
+              </div>
+
+              {totalCasesPages > 1 && (
+                <div className="posko-pagination-controls">
+                  <button
+                    type="button"
+                    className="posko-page-nav-btn"
+                    disabled={validCasesPage <= 1}
+                    onClick={() => setCasesPage(validCasesPage - 1)}
+                    title="Halaman sebelumnya"
+                  >
+                    <span>&larr;</span> Sebelumnya
+                  </button>
+
+                  {Array.from({ length: totalCasesPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className={`posko-page-num-btn ${p === validCasesPage ? "active" : ""}`}
+                      onClick={() => setCasesPage(p)}
+                      title={`Ke halaman ${p}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="posko-page-nav-btn"
+                    disabled={validCasesPage >= totalCasesPages}
+                    onClick={() => setCasesPage(validCasesPage + 1)}
+                    title="Halaman selanjutnya"
+                  >
+                    Selanjutnya <span>&rarr;</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
         ) : (
           <div className="empty-overview-card">
             <div className="empty-overview-badge">

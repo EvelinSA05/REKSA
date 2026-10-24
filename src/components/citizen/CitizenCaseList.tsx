@@ -106,6 +106,21 @@ export function CitizenCaseList({
     return matchesOwn && matchesCompleted && matchesFilter && matchesSearch;
   });
 
+  // Pagination: Maksimal 4 card di 1 halaman
+  const [currentPage, setCurrentPage] = useState(1);
+  const CASES_PER_PAGE = 4;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchQuery, historyScope]);
+
+  const totalItems = data.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / CASES_PER_PAGE));
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (validPage - 1) * CASES_PER_PAGE;
+  const endIndex = Math.min(startIndex + CASES_PER_PAGE, totalItems);
+  const paginatedData = data.slice(startIndex, endIndex);
+
   const openReceiptModal = (c: CaseRecord) => {
     setConfirmingReceiptCase(c);
     setReceivedVolume(c.qty || "");
@@ -483,7 +498,7 @@ export function CitizenCaseList({
             </div>
           )
         ) : (
-          data.map((c) => {
+          paginatedData.map((c) => {
             const isCritical = c.urgency === "Kritis" || c.urgency === "Sangat mendesak";
             const isHigh = c.urgency === "Tinggi" || c.urgency === "Perlu segera";
             const isDone = c.status === "Selesai";
@@ -776,6 +791,54 @@ export function CitizenCaseList({
           })
         )}
       </div>
+
+      {/* PAGINATION CONTROLS */}
+      {totalItems > 0 && (
+        <div className="posko-pagination-card" style={{ marginTop: "24px" }}>
+          <div className="posko-pagination-info">
+            <span>
+              Menampilkan <strong>{startIndex + 1}</strong> - <strong>{endIndex}</strong> dari <strong>{totalItems}</strong> laporan
+            </span>
+            <span className="posko-pagination-limit-badge">Maks. 4 card per halaman</span>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="posko-pagination-controls">
+              <button
+                type="button"
+                className="posko-page-nav-btn"
+                disabled={validPage <= 1}
+                onClick={() => setCurrentPage(validPage - 1)}
+                title="Halaman sebelumnya"
+              >
+                <span>&larr;</span> Sebelumnya
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`posko-page-num-btn ${p === validPage ? "active" : ""}`}
+                  onClick={() => setCurrentPage(p)}
+                  title={`Ke halaman ${p}`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                className="posko-page-nav-btn"
+                disabled={validPage >= totalPages}
+                onClick={() => setCurrentPage(validPage + 1)}
+                title="Halaman selanjutnya"
+              >
+                Selanjutnya <span>&rarr;</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CLARIFICATION MODAL */}
       {clarificationCase && (
