@@ -23,10 +23,23 @@ export function MitraPenawaranSaya({
   const pageSize = 5;
 
   const myOffers: PenawaranItem[] = useMemo(() => {
-    const list = [...penawaranList];
+    let localSaved: any[] = [];
+    try {
+      const s = localStorage.getItem("reksa_penawaran_db");
+      if (s) localSaved = JSON.parse(s);
+    } catch {}
+
+    const combined = [...penawaranList];
+    localSaved.forEach((lo) => {
+      if (!combined.some((p) => p.id === lo.id || p.kode_penawaran === lo.kode_penawaran)) {
+        combined.unshift(lo);
+      }
+    });
+
+    const list = [...combined];
     bursaList.forEach((b) => {
       if (b.status === "Klaim Diajukan" && b.claimed_org) {
-        const exists = penawaranList.some((p) => p.bursa_id === b.id);
+        const exists = list.some((p) => p.bursa_id === b.id);
         if (!exists) {
           list.push({
             id: b.id,

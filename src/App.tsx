@@ -6864,9 +6864,45 @@ export default function App() {
         apiService.getPenawaran().catch(() => ({ success: false, data: [] as PenawaranItem[] })),
       ]);
       setState((prev) => {
-        const nextBursa = bRes.success && Array.isArray(bRes.data) && bRes.data.length > 0 ? bRes.data : (prev.bursaList && prev.bursaList.length > 0 ? prev.bursaList : DEMO_SEED_BURSA);
-        const nextMisi = mRes.success && Array.isArray(mRes.data) && mRes.data.length > 0 ? mRes.data : (prev.misiList && prev.misiList.length > 0 ? prev.misiList : DEMO_SEED_MISI);
-        const nextPenawaran = pRes.success && Array.isArray(pRes.data) && pRes.data.length > 0 ? pRes.data : (prev.penawaranList && prev.penawaranList.length > 0 ? prev.penawaranList : DEMO_SEED_PENAWARAN);
+        // Baca penyimpanan lokal untuk menjaga item yang baru dibuat di browser
+        let localBursa: BursaItem[] = prev.bursaList || [];
+        let localMisi: MisiItem[] = prev.misiList || [];
+        let localPenawaran: PenawaranItem[] = prev.penawaranList || [];
+        try {
+          const b = localStorage.getItem("reksa_bursa_db");
+          if (b) localBursa = JSON.parse(b);
+          const m = localStorage.getItem("reksa_misi_db");
+          if (m) localMisi = JSON.parse(m);
+          const p = localStorage.getItem("reksa_penawaran_db");
+          if (p) localPenawaran = JSON.parse(p);
+        } catch {}
+
+        // 1. Gabungkan penawaran remote & lokal (jangan timpa penawaran yang baru diajukan mitra)
+        const remotePenawaran = pRes.success && Array.isArray(pRes.data) ? pRes.data : [];
+        const existingPenawaranIds = new Set(remotePenawaran.map((p: any) => String(p.id)));
+        const existingPenawaranCodes = new Set(remotePenawaran.map((p: any) => String(p.kode_penawaran)));
+        const preservedPenawaran = localPenawaran.filter(
+          (p: any) => !existingPenawaranIds.has(String(p.id)) && !existingPenawaranCodes.has(String(p.kode_penawaran))
+        );
+        const nextPenawaran = [...preservedPenawaran, ...remotePenawaran];
+        if (nextPenawaran.length === 0) nextPenawaran.push(...DEMO_SEED_PENAWARAN);
+
+        // 2. Gabungkan bursa remote & lokal
+        const remoteBursa = bRes.success && Array.isArray(bRes.data) ? bRes.data : [];
+        const existingBursaIds = new Set(remoteBursa.map((b: any) => String(b.id)));
+        const preservedBursa = localBursa.filter((b: any) => !existingBursaIds.has(String(b.id)));
+        const nextBursa = [...preservedBursa, ...remoteBursa];
+        if (nextBursa.length === 0) nextBursa.push(...DEMO_SEED_BURSA);
+
+        // 3. Gabungkan misi remote & lokal
+        const remoteMisi = mRes.success && Array.isArray(mRes.data) ? mRes.data : [];
+        const existingMisiIds = new Set(remoteMisi.map((m: any) => String(m.id)));
+        const existingMisiCodes = new Set(remoteMisi.map((m: any) => String(m.kode_misi)));
+        const preservedMisi = localMisi.filter(
+          (m: any) => !existingMisiIds.has(String(m.id)) && !existingMisiCodes.has(String(m.kode_misi))
+        );
+        const nextMisi = [...preservedMisi, ...remoteMisi];
+        if (nextMisi.length === 0) nextMisi.push(...DEMO_SEED_MISI);
 
         try {
           localStorage.setItem("reksa_bursa_db", JSON.stringify(nextBursa));
@@ -6934,6 +6970,15 @@ export default function App() {
       const next = { ...s, ...changes, logs: nextLogs };
       if (changes.casesList) {
         localStorage.setItem("reksa_cases_db", JSON.stringify(changes.casesList));
+      }
+      if (changes.bursaList) {
+        localStorage.setItem("reksa_bursa_db", JSON.stringify(changes.bursaList));
+      }
+      if (changes.misiList) {
+        localStorage.setItem("reksa_misi_db", JSON.stringify(changes.misiList));
+      }
+      if (changes.penawaranList) {
+        localStorage.setItem("reksa_penawaran_db", JSON.stringify(changes.penawaranList));
       }
       if (changes.activeCaseId) {
         localStorage.setItem("reksa_active_case_id", changes.activeCaseId);
