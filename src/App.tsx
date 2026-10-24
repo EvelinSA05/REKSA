@@ -3678,8 +3678,8 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
   if (page === "case") return <CaseDetail state={state} update={update} back={() => setPage("cases")} posko onRefresh={onRefresh} notify={notify} setRole={setRole} setName={setName} />;
   if (page === "cases") return <PoskoVerifikasiLaporan cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} onRefresh={onRefresh} notify={notify} selectedCaseId={state.activeCaseId} update={update} />;
   if (page === "resources") return <PoskoKebutuhanBursa cases={scopedCases} bursaList={scopedBursa} penawaranList={scopedPenawaran} onNavigateToOffers={() => setPage("offers")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
-  if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={scopedPenawaran} bursaList={scopedBursa} cases={scopedCases} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} selectedCaseId={state.activeCaseId} />;
-  if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={scopedMisi} cases={scopedCases} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} selectedCaseId={state.activeCaseId} />;
+  if (page === "offers") return <PoskoPenawaranAlokasi penawaranList={scopedPenawaran} bursaList={scopedBursa} cases={scopedCases} onRefresh={onRefresh} notify={notify} onNavigateToMissions={() => setPage("assignments")} />;
+  if (page === "assignments") return <PoskoDistribusiPenerimaan misiList={scopedMisi} cases={scopedCases} onRefresh={onRefresh} notify={notify} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} />;
   if (page === "map") return <MapPage open={() => setPage("case")} cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} role="posko" />;
   if (page === "notifications") return <Notifications role="posko" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Petugas Posko" notify={notify} state={state} update={update} setName={setName} />;
@@ -5324,7 +5324,7 @@ function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nu
   if (page === "verify-mitra") return <MitraVerifikasiLaporan cases={state.casesList || []} onRefresh={onRefresh} notify={notify} update={update} />;
   if (page === "bursa") return <MitraBursaBantuan bursaList={state.bursaList || []} cases={state.casesList || []} update={update} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToMyOffers={() => setPage("my-offers")} />;
   if (page === "my-offers") return <MitraPenawaranSaya penawaranList={state.penawaranList || []} bursaList={state.bursaList || []} userOrg={state.userProfile?.org} onNavigateToTasks={() => setPage("tasks")} onNavigateToBursa={() => setPage("bursa")} />;
-  if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} selectedCaseId={state.activeCaseId} />;
+  if (page === "tasks") return <MitraMisiPenyaluran misiList={state.misiList || []} userOrg={state.userProfile?.org} userName={name} onRefresh={onRefresh} notify={notify} onNavigateToHistory={() => setPage("history")} onNavigateToBursa={() => setPage("bursa")} />;
   if (page === "history") return <MitraRiwayatPenyaluran misiList={state.misiList || []} cases={state.casesList || []} onNavigateToTasks={() => setPage("tasks")} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("tasks"); }} notify={notify} onRefresh={onRefresh} />;
   if (page === "map") return (
     <MapPage 
