@@ -78,13 +78,25 @@ export type CaseRecord = {
   estimasiStimulanNominal?: number;
 };
 
-const initialCases: CaseRecord[] = [];
+const DEFAULT_CITIZEN_REPORT_IDS = [
+  "RK-2026-00124",
+  "RK-2026-00125",
+  "RK-2026-00126",
+  "RK-2026-00127",
+  "RK-2026-00128",
+  "RK-2026-00129",
+];
 
 export function getUserReportedIds(): string[] {
   try {
-    return JSON.parse(localStorage.getItem("reksa_user_reported_ids") || "[]");
+    const raw = localStorage.getItem("reksa_user_reported_ids");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+    return DEFAULT_CITIZEN_REPORT_IDS;
   } catch {
-    return [];
+    return DEFAULT_CITIZEN_REPORT_IDS;
   }
 }
 
@@ -381,6 +393,7 @@ import { PetaSebaranPenanganan } from "./components/citizen/PetaSebaranPenangana
 import { CitizenReport } from "./components/citizen/CitizenReport";
 import { CitizenCaseList } from "./components/citizen/CitizenCaseList";
 import { apiService, BursaItem, MisiItem, PenawaranItem } from "./services/api";
+import { DEMO_SEED_CASES, DEMO_SEED_BURSA, DEMO_SEED_MISI, DEMO_SEED_PENAWARAN } from "./data/initialDemoData";
 import { PoskoVerifikasiLaporan } from "./components/posko/PoskoVerifikasiLaporan";
 import { PoskoKebutuhanBursa } from "./components/posko/PoskoKebutuhanBursa";
 import { PoskoPenawaranAlokasi } from "./components/posko/PoskoPenawaranAlokasi";
@@ -6511,6 +6524,18 @@ export default function App() {
       } catch (e) {}
     }
 
+    if (savedList.length === 0) {
+      const reportedIds = getUserReportedIds();
+      savedList = DEMO_SEED_CASES.map((c) => ({
+        ...c,
+        isOwn: Boolean(reportedIds.includes(c.id) || c.isOwn),
+      }));
+      try {
+        localStorage.setItem("reksa_cases_db", JSON.stringify(savedList));
+        localStorage.setItem("reksa_user_reported_ids", JSON.stringify(reportedIds));
+      } catch {}
+    }
+
     let savedProfile = {
       name: "Andi Pratama",
       email: "andi.masyarakat@reksa.id",
@@ -6533,20 +6558,47 @@ export default function App() {
     let savedBursa: BursaItem[] = [];
     try {
       const bLocal = localStorage.getItem("reksa_bursa_db");
-      if (bLocal) savedBursa = JSON.parse(bLocal);
+      if (bLocal) {
+        const parsed = JSON.parse(bLocal);
+        if (Array.isArray(parsed) && parsed.length > 0) savedBursa = parsed;
+      }
     } catch {}
+    if (savedBursa.length === 0) {
+      savedBursa = [...DEMO_SEED_BURSA];
+      try {
+        localStorage.setItem("reksa_bursa_db", JSON.stringify(savedBursa));
+      } catch {}
+    }
 
     let savedMisi: MisiItem[] = [];
     try {
       const mLocal = localStorage.getItem("reksa_misi_db");
-      if (mLocal) savedMisi = JSON.parse(mLocal);
+      if (mLocal) {
+        const parsed = JSON.parse(mLocal);
+        if (Array.isArray(parsed) && parsed.length > 0) savedMisi = parsed;
+      }
     } catch {}
+    if (savedMisi.length === 0) {
+      savedMisi = [...DEMO_SEED_MISI];
+      try {
+        localStorage.setItem("reksa_misi_db", JSON.stringify(savedMisi));
+      } catch {}
+    }
 
     let savedPenawaran: PenawaranItem[] = [];
     try {
       const pLocal = localStorage.getItem("reksa_penawaran_db");
-      if (pLocal) savedPenawaran = JSON.parse(pLocal);
+      if (pLocal) {
+        const parsed = JSON.parse(pLocal);
+        if (Array.isArray(parsed) && parsed.length > 0) savedPenawaran = parsed;
+      }
     } catch {}
+    if (savedPenawaran.length === 0) {
+      savedPenawaran = [...DEMO_SEED_PENAWARAN];
+      try {
+        localStorage.setItem("reksa_penawaran_db", JSON.stringify(savedPenawaran));
+      } catch {}
+    }
 
     return {
       status: "Dalam Verifikasi", 
@@ -6726,9 +6778,9 @@ export default function App() {
         apiService.getPenawaran().catch(() => ({ success: false, data: [] as PenawaranItem[] })),
       ]);
       setState((prev) => {
-        const nextBursa = bRes.success && Array.isArray(bRes.data) ? bRes.data : prev.bursaList || [];
-        const nextMisi = mRes.success && Array.isArray(mRes.data) ? mRes.data : prev.misiList || [];
-        const nextPenawaran = pRes.success && Array.isArray(pRes.data) ? pRes.data : prev.penawaranList || [];
+        const nextBursa = bRes.success && Array.isArray(bRes.data) && bRes.data.length > 0 ? bRes.data : (prev.bursaList && prev.bursaList.length > 0 ? prev.bursaList : DEMO_SEED_BURSA);
+        const nextMisi = mRes.success && Array.isArray(mRes.data) && mRes.data.length > 0 ? mRes.data : (prev.misiList && prev.misiList.length > 0 ? prev.misiList : DEMO_SEED_MISI);
+        const nextPenawaran = pRes.success && Array.isArray(pRes.data) && pRes.data.length > 0 ? pRes.data : (prev.penawaranList && prev.penawaranList.length > 0 ? prev.penawaranList : DEMO_SEED_PENAWARAN);
 
         try {
           localStorage.setItem("reksa_bursa_db", JSON.stringify(nextBursa));
