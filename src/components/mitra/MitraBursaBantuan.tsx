@@ -43,10 +43,10 @@ export function MitraBursaBantuan({
   const [notesInput, setNotesInput] = useState("Mitra siap menyerahkan pasokan barang kebutuhan ke Posko BPBD.");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Open needs in bursa murni yang telah diverifikasi sah (oleh BPBD atau Mitra)
+  // Kebutuhan aktif di bursa posko (terbuka, klaim, atau teralokasi operasional)
   const openItems = useMemo(() => {
     const directBursa = (bursaList || []).filter(
-      (b) => b.status === "Terbuka" || b.status === "Klaim Diajukan" || b.status === "Sebagian Terpenuhi"
+      (b) => b.status !== "Selesai" && b.status !== "Ditolak"
     );
 
     const existingIdentifiers = new Set<string>();
@@ -61,9 +61,8 @@ export function MitraBursaBantuan({
 
     (cases || []).forEach((c) => {
       const s = (c.status || "").toLowerCase();
-      const isOpen = s.includes("terbuka") || s.includes("sebagian");
-      const isClosed = s.includes("selesai") || s.includes("tolak") || s.includes("teralokasi") || s.includes("pengiriman");
-      if (!isOpen || isClosed) return;
+      const isClosed = s.includes("selesai") || s.includes("tolak");
+      if (isClosed) return;
 
       const caseIdLower = (c.id || "").toLowerCase().trim();
       const rawIdStr = c.rawId ? String(c.rawId) : "";
@@ -736,7 +735,15 @@ export function MitraBursaBantuan({
                     <span className={`posko-case-urgency-badge urgency-${urgencyClass}`}>
                       Prioritas {item.urgensi}
                     </span>
-                    <span className="posko-case-status-badge status-pending">
+                    <span
+                      className={`posko-case-status-badge ${
+                        item.status === "Teralokasi Penuh"
+                          ? "status-verified"
+                          : item.status === "Klaim Diajukan"
+                          ? "status-clarify"
+                          : "status-pending"
+                      }`}
+                    >
                       {item.status || "Terbuka"}
                     </span>
                     {Boolean(
@@ -937,7 +944,26 @@ export function MitraBursaBantuan({
                   </div>
 
                   <div className="posko-case-actions-cluster">
-                    {isClaimedByMe ? (
+                    {item.status === "Teralokasi Penuh" ? (
+                      <span
+                        className="posko-case-status-badge"
+                        style={{
+                          padding: "8px 16px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "0.84rem",
+                          background: "#f0fdf4",
+                          color: "#166534",
+                          border: "1px solid #bbf7d0",
+                          borderRadius: "8px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <AppIcon name="check" size={14} />
+                        <span>Teralokasi Penuh · Siap Disalurkan</span>
+                      </span>
+                    ) : isClaimedByMe ? (
                       <span
                         className="posko-case-status-badge status-clarify"
                         style={{
