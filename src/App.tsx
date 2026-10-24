@@ -279,7 +279,9 @@ const icons: Record<string, React.ReactNode> = {
   info: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path d="M12 16v-4M12 8h.01" strokeWidth="2.2" /></svg>,
   search: <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" strokeWidth="2" /><path d="m21 21-4.35-4.35" strokeWidth="2.2" /></svg>,
   logout: <svg viewBox="0 0 24 24"><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10" /></svg>,
-  menu: <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
+  x: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+  close: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+  menu: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"><line x1="4" y1="6.5" x2="20" y2="6.5" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17.5" x2="20" y2="17.5" /></svg>,
   alert: <svg viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>,
   chat: <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
   shield: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
@@ -1609,8 +1611,14 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
       <aside className={`sidebar ${collapsed ? "collapsed" : ""} ${mobile ? "mobile-open" : ""}`}>
         <div className="side-logo">
           <Logo light />
-          <button className="side-toggle" onClick={toggle} aria-label={collapsed ? "Perluas sidebar" : "Ciutkan sidebar"}>
-            <Icon name="menu" />
+          <button
+            type="button"
+            className="side-toggle"
+            onClick={mobile ? close : toggle}
+            aria-label={mobile ? "Tutup sidebar" : collapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
+            title={mobile ? "Tutup menu sidebar" : collapsed ? "Perluas sidebar" : "Ciutkan sidebar"}
+          >
+            <Icon name={mobile ? "x" : "menu"} />
           </button>
         </div>
         <div className="side-context">
@@ -2017,7 +2025,15 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
     <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} state={state} update={update} />
     <header className="mobile-header">
-      <button onClick={() => setMobile(true)} aria-label="Buka menu"><Icon name="menu" /></button>
+      <button
+        type="button"
+        className="mobile-header-menu-btn"
+        onClick={() => setMobile(true)}
+        aria-label="Buka menu navigasi"
+        title="Buka menu navigasi"
+      >
+        <Icon name="menu" />
+      </button>
       <Logo />
       <button onClick={() => go("notifications")} aria-label="Notifikasi" style={{ position: "relative" }}>
         <Icon name="bell" />
