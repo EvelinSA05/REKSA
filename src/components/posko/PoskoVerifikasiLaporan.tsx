@@ -13,6 +13,44 @@ interface PoskoVerifikasiLaporanProps {
   update?: (changes: any, log?: string) => void;
 }
 
+const MITRA_PARTNERS = [
+  {
+    name: "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+    badge: "Medis & Ambulans",
+    color: "#dc2626",
+    bg: "#fef2f2",
+    desc: "Obat darurat, higiene kit, ambulans, pertolongan pertama, dan posko medis lapangan.",
+  },
+  {
+    name: "BAZNAS Tanggap Bencana & Tagana Jatim",
+    badge: "Pangan & Dapur Umum",
+    color: "#059669",
+    bg: "#ecfdf5",
+    desc: "Dapur umum mandiri, paket sembako keluarga, makanan siap saji, dan selimut darurat.",
+  },
+  {
+    name: "Muhammadiyah Disaster Management Center (MDMC)",
+    badge: "Shelter & Tenda",
+    color: "#0284c7",
+    bg: "#f0f9ff",
+    desc: "Tenda pleton/keluarga, terpal pengungsi, matras tidur, dan hunian darurat.",
+  },
+  {
+    name: "Dompet Dhuafa & Sahabat Relawan Anak",
+    badge: "Balita, Nutrisi & Lansia",
+    color: "#d97706",
+    bg: "#fffbeb",
+    desc: "Susu formula, popok balita/lansia, bubur bayi, biskuit nutrisi, dan trauma healing.",
+  },
+  {
+    name: "Sedekah Air & Senkom Siaga Bencana",
+    badge: "Air Bersih & WASH",
+    color: "#2563eb",
+    bg: "#eff6ff",
+    desc: "Tandon air bersih, mobil tangki air, filter air minum, dan sanitasi MCK darurat.",
+  },
+];
+
 export function PoskoVerifikasiLaporan({
   cases,
   onSelectCase,
@@ -75,7 +113,8 @@ export function PoskoVerifikasiLaporan({
   }, [selectedCaseId, cases, localEscalatedIds]);
 
   // Modals
-  const [modalAction, setModalAction] = useState<"verify" | "clarify" | "reject" | "further" | null>(null);
+  const [modalAction, setModalAction] = useState<"verify" | "clarify" | "reject" | "further" | "escalate" | null>(null);
+  const [selectedMitra, setSelectedMitra] = useState<string>("");
   const [priorityChoice, setPriorityChoice] = useState("Kritis");
   const [notesInput, setNotesInput] = useState("");
   const [clarificationCategory, setClarificationCategory] = useState("Foto / Bukti Fisik Buram / Kurang Jelas");
@@ -121,7 +160,7 @@ export function PoskoVerifikasiLaporan({
   const endIndex = Math.min(startIndex + pageSize, totalItems);
   const paginatedCases = filterCases.slice(startIndex, endIndex);
 
-  const openActionModal = (c: CaseRecord, action: "verify" | "clarify" | "reject" | "further") => {
+  const openActionModal = (c: CaseRecord, action: "verify" | "clarify" | "reject" | "further" | "escalate") => {
     setSelectedCase(c);
     setModalAction(action);
     setPriorityChoice(c.urgency === "Kritis" || c.urgency === "Tinggi" ? c.urgency : "Tinggi");
@@ -131,6 +170,9 @@ export function PoskoVerifikasiLaporan({
       setRequestAttachment(true);
     } else if (action === "reject") {
       setRejectionFollowUp("Silakan berkoordinasi dengan pengurus RT/RW setempat atau laporkan langsung ke Posko BPBD terdekat di kantor kelurahan/kecamatan.");
+    } else if (action === "escalate") {
+      const rec = c.mitraHandler || getMitraByCommodity(c.item, c.location);
+      setSelectedMitra(rec || MITRA_PARTNERS[0].name);
     }
   };
 
@@ -139,6 +181,48 @@ export function PoskoVerifikasiLaporan({
     setIsSubmitting(true);
 
     // ─── OPTIMISTIC UPDATE ─────────────────────────────────────────────────
+    if (modalAction === "escalate") {
+      const chosenMitra = selectedMitra || selectedCase.mitraHandler || getMitraByCommodity(selectedCase.item, selectedCase.location) || MITRA_PARTNERS[0].name;
+      const next = Array.from(new Set([...localEscalatedIds, selectedCase.id]));
+      setLocalEscalatedIds(next);
+      try {
+        localStorage.setItem("reksa_escalated_case_ids", JSON.stringify(next));
+      } catch (_) {}
+
+      const updatedCases = cases.map((item) => {
+        if (item.id === selectedCase.id) {
+          return {
+            ...item,
+            escalatedToMitra: true,
+            status: "Dialihkan ke Mitra",
+            mitraHandler: chosenMitra,
+            catatanPengalihan: notesInput || `Dialihkan resmi oleh Posko BPBD ke ${chosenMitra} untuk verifikasi & penyaluran cepat.`,
+            escalatedAtRaw: new Date().toISOString(),
+          };
+        }
+        return item;
+      });
+
+      update?.({ casesList: updatedCases });
+      try {
+        localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCases));
+      } catch (_) {}
+
+      notify?.(`Laporan ${selectedCase.id} dialihkan ke ${chosenMitra}! Laporan kini dapat dipantau di tab 'Dialihkan ke Mitra'.`);
+      setModalAction(null);
+      setSelectedCase(null);
+      setIsSubmitting(false);
+
+      try {
+        await apiService.verifyKebutuhan(selectedCase.id, {
+          action: "escalate",
+          mitra: chosenMitra,
+          catatan: notesInput,
+        });
+        onRefresh?.().catch(() => {});
+      } catch (_) {}
+      return;
+    }
     // Update state lokal LANGSUNG agar UI tidak perlu menunggu server
     const optimisticStatus =
       modalAction === "verify"
@@ -719,20 +803,6 @@ export function PoskoVerifikasiLaporan({
                           type="button"
                           onClick={() => openActionModal(c, "clarify")}
                           className="btn-case-clarify"
-                          style={{
-                            background: "#ffffff",
-                            color: "#013220",
-                            border: "1px solid #c2ddc6",
-                            padding: "7px 14px",
-                            borderRadius: "8px",
-                            fontSize: "0.80rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
                           title="Minta klarifikasi tambahan dari pelapor"
                         >
                           <AppIcon name="alert" size={13} />
@@ -740,22 +810,17 @@ export function PoskoVerifikasiLaporan({
                         </button>
                         <button
                           type="button"
+                          onClick={() => openActionModal(c, "escalate")}
+                          className="btn-case-escalate"
+                          title="Alihkan verifikasi dan penanganan langsung ke Mitra Kemanusiaan"
+                        >
+                          <AppIcon name="shield" size={13} />
+                          <span>Alihkan ke Mitra</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => openActionModal(c, "reject")}
                           className="btn-case-reject"
-                          style={{
-                            background: "#ffffff",
-                            color: "#64748b",
-                            border: "1px solid #cbd5e1",
-                            padding: "7px 14px",
-                            borderRadius: "8px",
-                            fontSize: "0.80rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
                           title="Tolak laporan jika tidak memenuhi syarat"
                         >
                           <AppIcon name="x" size={13} />
@@ -765,21 +830,6 @@ export function PoskoVerifikasiLaporan({
                           type="button"
                           onClick={() => openActionModal(c, "verify")}
                           className="btn-case-verify"
-                          style={{
-                            background: "#013220",
-                            color: "#ffffff",
-                            border: "1px solid #013220",
-                            padding: "7px 18px",
-                            borderRadius: "8px",
-                            fontSize: "0.80rem",
-                            fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(1, 50, 32, 0.15)",
-                            transition: "all 0.15s ease",
-                          }}
                           title="Verifikasi laporan dan rilis kuota ke Bursa Bantuan"
                         >
                           <AppIcon name="check" size={13} />
@@ -903,6 +953,7 @@ export function PoskoVerifikasiLaporan({
               <h2 style={{ fontSize: "1.25rem", color: "#013220", margin: 0, fontWeight: 800 }}>
                 {modalAction === "verify" && `Verifikasi Laporan ${selectedCase.id}`}
                 {modalAction === "clarify" && `Minta Klarifikasi untuk ${selectedCase.id}`}
+                {modalAction === "escalate" && `Alihkan Kasus ${selectedCase.id} ke Mitra`}
                 {modalAction === "reject" && `Tolak Laporan ${selectedCase.id}`}
                 {modalAction === "further" && `Pemeriksaan Lanjutan ${selectedCase.id}`}
               </h2>
@@ -1032,6 +1083,117 @@ export function PoskoVerifikasiLaporan({
               </>
             )}
 
+            {modalAction === "escalate" && (
+              <>
+                <div
+                  style={{
+                    background: "#ecfdf5",
+                    border: "1px solid #a7f3d0",
+                    borderRadius: "10px",
+                    padding: "12px 14px",
+                    marginBottom: "16px",
+                    fontSize: "0.84rem",
+                    color: "#065f46",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                  }}
+                >
+                  <AppIcon name="shield" size={18} style={{ marginTop: "2px" }} />
+                  <div>
+                    <strong>Delegasi Resmi ke Lembaga Mitra Kemanusiaan:</strong>
+                    <p style={{ margin: "4px 0 0", lineHeight: 1.45 }}>
+                      Laporan ini akan dialihkan langsung ke antrean kerja Mitra untuk verifikasi lapangan cepat, komitmen pemenuhan logistik, dan penyaluran tanpa menunggu proses validasi reguler Posko.
+                    </p>
+                  </div>
+                </div>
+
+                <label
+                  className="reksa-form-label"
+                  style={{ fontWeight: 700, fontSize: "0.85rem", color: "#013220", display: "block", marginBottom: "8px" }}
+                >
+                  Pilih Lembaga Mitra Penanganan:
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px", maxHeight: "240px", overflowY: "auto", paddingRight: "4px" }}>
+                  {MITRA_PARTNERS.map((mitra) => {
+                    const isSelected = selectedMitra === mitra.name;
+                    return (
+                      <div
+                        key={mitra.name}
+                        onClick={() => setSelectedMitra(mitra.name)}
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: isSelected ? "2px solid #047857" : "1px solid #e2e8f0",
+                          background: isSelected ? "#f0fdf4" : "#ffffff",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "10px",
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "2px" }}>
+                            <span style={{ fontWeight: 700, fontSize: "0.86rem", color: isSelected ? "#065f46" : "#0f172a" }}>
+                              {mitra.name}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "0.70rem",
+                                fontWeight: 700,
+                                padding: "2px 8px",
+                                borderRadius: "20px",
+                                background: mitra.bg,
+                                color: mitra.color,
+                              }}
+                            >
+                              {mitra.badge}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: "0.78rem", color: "#64748b", lineHeight: 1.35 }}>
+                            {mitra.desc}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            border: isSelected ? "5px solid #047857" : "2px solid #cbd5e1",
+                            background: "#ffffff",
+                            flexShrink: 0,
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <label
+                  className="reksa-form-label"
+                  style={{ fontWeight: 700, fontSize: "0.85rem", color: "#013220", display: "block", marginBottom: "6px" }}
+                >
+                  Catatan atau Arahan untuk Mitra (Opsional):
+                </label>
+                <textarea
+                  rows={3}
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                  placeholder="Contoh: Kebutuhan sangat mendesak untuk warga lansia dan balita di tenda posko barat. Akses jalan dapat dilalui armada roda 4."
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "0.88rem",
+                    marginBottom: "16px",
+                  }}
+                />
+              </>
+            )}
+
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
               <button
                 type="button"
@@ -1052,10 +1214,10 @@ export function PoskoVerifikasiLaporan({
               </button>
               <button
                 type="button"
-                disabled={isSubmitting || (modalAction === "reject" && !notesInput.trim()) || (modalAction === "clarify" && !notesInput.trim())}
+                disabled={isSubmitting || (modalAction === "reject" && !notesInput.trim()) || (modalAction === "clarify" && !notesInput.trim()) || (modalAction === "escalate" && !selectedMitra)}
                 onClick={handleExecuteAction}
                 style={{
-                  background: modalAction === "reject" ? "#334155" : "#013220",
+                  background: modalAction === "reject" ? "#334155" : modalAction === "escalate" ? "#047857" : "#013220",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "8px",
@@ -1065,7 +1227,15 @@ export function PoskoVerifikasiLaporan({
                   cursor: "pointer",
                 }}
               >
-                {isSubmitting ? "Menyimpan..." : modalAction === "verify" ? "Konfirmasi & Rilis ke Bursa" : modalAction === "clarify" ? "Kirim Permintaan Klarifikasi" : "Simpan Penolakan Resmi"}
+                {isSubmitting
+                  ? "Menyimpan..."
+                  : modalAction === "verify"
+                  ? "Konfirmasi & Rilis ke Bursa"
+                  : modalAction === "clarify"
+                  ? "Kirim Permintaan Klarifikasi"
+                  : modalAction === "escalate"
+                  ? "Konfirmasi Alihkan ke Mitra"
+                  : "Simpan Penolakan Resmi"}
               </button>
             </div>
           </div>
