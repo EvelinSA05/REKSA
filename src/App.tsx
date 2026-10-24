@@ -395,7 +395,7 @@ import { PetaSebaranPenanganan } from "./components/citizen/PetaSebaranPenangana
 import { CitizenReport } from "./components/citizen/CitizenReport";
 import { CitizenCaseList } from "./components/citizen/CitizenCaseList";
 import { apiService, BursaItem, MisiItem, PenawaranItem } from "./services/api";
-import { DEMO_SEED_CASES, DEMO_SEED_BURSA, DEMO_SEED_MISI, DEMO_SEED_PENAWARAN } from "./data/initialDemoData";
+import { DEMO_SEED_CASES, DEMO_SEED_BURSA, DEMO_SEED_MISI, DEMO_SEED_PENAWARAN, DEMO_SEED_ACTIVITY_LOGS } from "./data/initialDemoData";
 import { PoskoVerifikasiLaporan } from "./components/posko/PoskoVerifikasiLaporan";
 import { PoskoKebutuhanBursa } from "./components/posko/PoskoKebutuhanBursa";
 import { PoskoPenawaranAlokasi } from "./components/posko/PoskoPenawaranAlokasi";
@@ -1855,7 +1855,16 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
-  const [dbLogs, setDbLogs] = useState<any[]>([]);
+  const [dbLogs, setDbLogs] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem("reksa_cached_activity_logs");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEMO_SEED_ACTIVITY_LOGS;
+  });
   const [readNotifIds, setReadNotifIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("reksa_read_notifications");
@@ -1901,8 +1910,11 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       isFetching = true;
       try {
         const res = await apiService.getActivityLogs();
-        if (isMounted && res.success && Array.isArray(res.data)) {
+        if (isMounted && res.success && Array.isArray(res.data) && res.data.length > 0) {
           setDbLogs(res.data);
+          try {
+            localStorage.setItem("reksa_cached_activity_logs", JSON.stringify(res.data));
+          } catch {}
           if (res.data.length > 0) {
             const newest = res.data[0];
             if (lastSeenLogIdRef.current !== null && newest.id > lastSeenLogIdRef.current) {
@@ -5743,7 +5755,16 @@ function Notifications({
   setPage?: RouterProps["setPage"]; 
 }) {
   const [filter, setFilter] = useState("Semua");
-  const [dbLogs, setDbLogs] = useState<any[]>([]);
+  const [dbLogs, setDbLogs] = useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem("reksa_cached_activity_logs");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEMO_SEED_ACTIVITY_LOGS;
+  });
   const [readNotifIds, setReadNotifIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("reksa_read_notifications");
@@ -5783,10 +5804,14 @@ function Notifications({
       isFetching = true;
       try {
         const res = await apiService.getActivityLogs();
-        if (isMounted && res.success && Array.isArray(res.data)) {
+        if (isMounted && res.success && Array.isArray(res.data) && res.data.length > 0) {
           setDbLogs(res.data);
+          try {
+            localStorage.setItem("reksa_cached_activity_logs", JSON.stringify(res.data));
+          } catch {}
         }
       } catch {
+        // Keep DEMO_SEED_ACTIVITY_LOGS
       } finally {
         isFetching = false;
         if (isMounted) {
@@ -6641,7 +6666,14 @@ export default function App() {
       allocated: 0, 
       delivered: 700, 
       assignment: "Baru", 
-      logs: [],
+      logs: (() => {
+        try {
+          const saved = localStorage.getItem("reksa_user_session_logs");
+          return saved ? JSON.parse(saved) : [];
+        } catch {
+          return [];
+        }
+      })(),
       poskoName: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
       poskoPic: "Siti Rahma",
       poskoPhone: "+62 812 8899 1102",
@@ -6876,7 +6908,11 @@ export default function App() {
 
   const update = (changes: Partial<SharedState>, log?: string) => {
     setState((s) => {
-      const next = { ...s, ...changes, logs: log ? [log, ...s.logs] : s.logs };
+      const nextLogs = log ? [log, ...s.logs] : s.logs;
+      try {
+        localStorage.setItem("reksa_user_session_logs", JSON.stringify(nextLogs.slice(0, 50)));
+      } catch {}
+      const next = { ...s, ...changes, logs: nextLogs };
       if (changes.casesList) {
         localStorage.setItem("reksa_cases_db", JSON.stringify(changes.casesList));
       }
