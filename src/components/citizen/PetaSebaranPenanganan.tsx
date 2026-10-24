@@ -668,6 +668,8 @@ export function PetaSebaranPenanganan({
       const stats = getProvinceBpbdMitraStats(p);
       const hasMitraResponse = stats.mitraPct > 0 || stats.mitraRespon > 0 || stats.dominant === "mitra";
       const isBpbdOnly = !hasMitraResponse && p.isDisasterZone && (stats.dominant === "bpbd" || stats.bpbdPct > 0);
+      const isMitra = hasMitraResponse;
+      const isBpbd = isBpbdOnly;
       const isSelected = selectedProvinsi?.id === p.id;
 
       let fillColor = "#e2e8f0"; // Neutral soft slate for non-disaster provinces
@@ -1551,6 +1553,8 @@ export function PetaSebaranPenanganan({
                         const stats = getProvinceBpbdMitraStats(p);
                         const hasMitraResponse = stats.mitraPct > 0 || stats.mitraRespon > 0 || stats.dominant === "mitra";
                         const isBpbdOnly = !hasMitraResponse && p.isDisasterZone && (stats.dominant === "bpbd" || stats.bpbdPct > 0);
+                        const isMitra = hasMitraResponse;
+                        const isBpbd = isBpbdOnly;
                         const isSelected = selectedProvinsi?.id === p.id;
 
                         let fillColor = "#e2e8f0"; // Neutral soft slate
