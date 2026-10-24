@@ -6601,6 +6601,8 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 14px;
   padding: 20px 22px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
 }
 
 .ops-panel-header {
@@ -6711,12 +6713,30 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
-  height: 380px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  height: 100%;
+}
+
+.ops-map-wrapper > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ops-map-wrapper div[style*="position: relative"] {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 .ops-map-wrapper .map {
   margin: 0;
   height: 100%;
+  flex: 1;
 }
 
 .ops-map-wrapper .leaflet-overlay-card,
