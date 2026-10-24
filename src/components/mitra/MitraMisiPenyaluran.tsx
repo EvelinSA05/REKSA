@@ -81,19 +81,6 @@ export function MitraMisiPenyaluran({
   }, [isDropdownOpen]);
 
   const currentMission = activeMissions.find((m) => m.id === selectedMisiId) || activeMissions[0];
-  const currentMissionIndex = activeMissions.findIndex((m) => m.id === currentMission?.id);
-
-  const handlePrevMission = () => {
-    if (currentMissionIndex > 0) {
-      setSelectedMisiId(activeMissions[currentMissionIndex - 1].id);
-    }
-  };
-
-  const handleNextMission = () => {
-    if (currentMissionIndex < activeMissions.length - 1) {
-      setSelectedMisiId(activeMissions[currentMissionIndex + 1].id);
-    }
-  };
 
   const selectorFilteredMissions = activeMissions.filter((m) => {
     if (filterStatus === "shipping" && m.status_tahapan !== "Dalam Perjalanan" && m.status_tahapan !== "Dalam Pengiriman") return false;
@@ -642,56 +629,8 @@ export function MitraMisiPenyaluran({
             )}
           </div>
 
-          {/* Right: Quick Previous / Next Navigation & All Misi Dialog */}
+          {/* Right: All Misi Dialog */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              disabled={currentMissionIndex <= 0}
-              onClick={handlePrevMission}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #cbd5e1",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                color: currentMissionIndex <= 0 ? "#94a3b8" : "#013220",
-                cursor: currentMissionIndex <= 0 ? "not-allowed" : "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-              title="Pindah ke misi sebelumnya"
-            >
-              <span>◀ Prev</span>
-            </button>
-
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#475569", padding: "0 4px" }}>
-              {currentMissionIndex + 1} / {activeMissions.length}
-            </span>
-
-            <button
-              type="button"
-              disabled={currentMissionIndex >= activeMissions.length - 1}
-              onClick={handleNextMission}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #cbd5e1",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                color: currentMissionIndex >= activeMissions.length - 1 ? "#94a3b8" : "#013220",
-                cursor: currentMissionIndex >= activeMissions.length - 1 ? "not-allowed" : "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-              title="Pindah ke misi berikutnya"
-            >
-              <span>Next ▶</span>
-            </button>
-
             <button
               type="button"
               onClick={() => setIsGridModalOpen(true)}
