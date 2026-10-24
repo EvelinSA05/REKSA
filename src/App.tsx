@@ -359,9 +359,17 @@ export const getCaseProgress = (status?: string): number => {
   }
 };
 
-function Logo({ light = false }: { light?: boolean }) {
+function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => void }) {
   return (
-    <button className={`logo ${light ? "logo-light" : ""}`} onClick={() => location.reload()} aria-label="REKSA, kembali ke beranda">
+    <button 
+      type="button"
+      className={`logo ${light ? "logo-light" : ""}`} 
+      onClick={onClick || (() => {
+        localStorage.setItem("reksa_auth_screen", "home");
+        location.reload();
+      })} 
+      aria-label="REKSA, kembali ke beranda"
+    >
       <svg viewBox="0 0 42 42" aria-hidden="true">
         <path d="M7 7h16c7 0 12 4 12 10s-5 10-12 10H7V7Z" />
         <path d="M18 27 35 38M7 20h17" />
@@ -525,7 +533,7 @@ function Navbar({ navigate }: { navigate: (s: Screen) => void }) {
   return (
     <header className="public-navbar">
       <div className="shell public-navbar-inner">
-        <Logo light />
+        <Logo light onClick={() => navigate("home")} />
         <nav className="desktop-nav">
           <a href="#tentang" onClick={scrollTo("tentang")}>Tentang REKSA</a>
           <a href="#peta" onClick={scrollTo("peta")}>Peta Respon Bantuan</a>
@@ -776,7 +784,7 @@ function Home({ navigate, state }: { navigate: (s: Screen) => void; state?: Shar
 
       <footer>
         <div className="footer-main">
-          <div className="footer-brand"><Logo light /><p>Ruang Ekosistem Kolaborasi Pascabencana</p></div>
+          <div className="footer-brand"><Logo light onClick={() => navigate("home")} /><p>Ruang Ekosistem Kolaborasi Pascabencana</p></div>
           <nav>
             <strong>Navigasi</strong>
             <a href="#tentang" onClick={(e) => {
@@ -858,7 +866,7 @@ function Login({ navigate, onLogin }: { navigate: (s: Screen) => void; onLogin: 
         
         <div className="auth-showcase-inner">
           <div className="auth-brand-row">
-            <Logo light />
+            <Logo light onClick={() => navigate("home")} />
             <button className="auth-back-btn" onClick={() => navigate("home")}>
               ← Kembali ke beranda
             </button>
@@ -1555,7 +1563,7 @@ function Modal({ title, children, close, icon }: { title: string; children: Reac
   );
 }
 
-function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0, state, update }: { 
+function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole, setName, notify, notifCount = 0, state, update, onGoHome }: { 
   role: Role; 
   page: PortalPage; 
   collapsed: boolean; 
@@ -1569,6 +1577,7 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
   notifCount?: number;
   state?: SharedState;
   update?: (changes: Partial<SharedState>, log?: string) => void;
+  onGoHome?: () => void;
 }) {
   const group = roleNavigation[role];
   const roleLabel = role === "citizen" 
@@ -1616,7 +1625,7 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
       <div className={`sidebar-scrim ${mobile ? "show" : ""}`} onClick={close} />
       <aside className={`sidebar ${collapsed ? "collapsed" : ""} ${mobile ? "mobile-open" : ""}`}>
         <div className="side-logo">
-          <Logo light />
+          <Logo light onClick={onGoHome} />
           <button
             type="button"
             className="side-toggle"
@@ -1641,7 +1650,7 @@ function Sidebar({ role, page, collapsed, mobile, select, toggle, close, setRole
   );
 }
 
-function Portal({ role, setRole, name, setName, state, update, logout, onRefresh }: { 
+function Portal({ role, setRole, name, setName, state, update, logout, onRefresh, onGoHome }: { 
   role: Role; 
   setRole?: (r: Role) => void;
   name: string; 
@@ -1650,6 +1659,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   update: (x: Partial<SharedState>, log?: string) => void; 
   logout: () => void; 
   onRefresh?: () => Promise<void> | void;
+  onGoHome?: () => void;
 }) {
   const [page, setPage] = useState<PortalPage>(() => {
     if (typeof window !== "undefined") {
@@ -1876,7 +1886,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
   };
 
   return <div className={`portal-shell ${collapsed && !isMobileView ? "side-collapsed" : ""}`}>
-    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} state={state} update={update} />
+    <Sidebar role={role} setRole={setRole} setName={setName} notify={notify} page={page} collapsed={collapsed} mobile={mobile} select={go} toggle={() => setCollapsed(!collapsed)} close={() => setMobile(false)} notifCount={unreadCount} state={state} update={update} onGoHome={onGoHome} />
     <header className="mobile-header">
       <button
         type="button"
@@ -1887,7 +1897,7 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
       >
         <Icon name="menu" />
       </button>
-      <Logo />
+      <Logo onClick={onGoHome} />
       <button onClick={() => go("notifications")} aria-label="Notifikasi" style={{ position: "relative" }}>
         <Icon name="bell" />
         {unreadCount > 0 && (
@@ -6339,16 +6349,12 @@ export default function App() {
     if (saved && (saved === "home" || saved === "login" || saved === "portal")) {
       return saved;
     }
-    return "portal";
+    return "home";
   });
 
   const [showSplash, setShowSplash] = useState(() => {
-    const hasVisited = sessionStorage.getItem("reksa_session_active");
-    if (hasVisited) return false;
-    sessionStorage.setItem("reksa_session_active", "true");
-    const savedScreen = localStorage.getItem("reksa_auth_screen");
-    if (savedScreen === "portal" || !savedScreen) return false;
-    return true;
+    const saved = localStorage.getItem("reksa_auth_screen");
+    return !saved || saved === "home";
   });
 
   const [role, setRole] = useState<Role>(() => {
@@ -6766,6 +6772,9 @@ export default function App() {
   };
 
   const navigate = (s: Screen) => { 
+    if (s === "home") {
+      setShowSplash(true);
+    }
     setScreen(s); 
     localStorage.setItem("reksa_auth_screen", s);
     window.scrollTo(0, 0); 
@@ -6916,6 +6925,7 @@ export default function App() {
             navigate("login");
           }} 
           onRefresh={fetchDatabaseAll} 
+          onGoHome={() => navigate("home")}
         />
       )}
       {screen === "home" && <Home navigate={navigate} state={state} />}
