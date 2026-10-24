@@ -5527,15 +5527,15 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 /* 2-Column Content Grid */
 .case-detail-content-grid {
   display: grid;
-  grid-template-columns: 1.08fr 0.92fr;
-  gap: 28px;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
 }
 
-.case-detail-left-col,
-.case-detail-right-col {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+@media (max-width: 900px) {
+  .case-detail-content-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .case-section-card {
@@ -5751,15 +5751,15 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
 
 .case-evidence-frame {
   margin: 0;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(1, 50, 32, 0.12);
-  background: #000;
+  background: #f8fafc;
 }
 
 .case-evidence-frame img {
   width: 100%;
-  height: 220px;
+  height: 180px;
   object-fit: cover;
   display: block;
   transition: transform 0.3s ease;
@@ -5805,7 +5805,8 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(1, 50, 32, 0.1);
-  height: 220px;
+  height: 180px;
+  min-height: 180px;
 }
 
 .case-map-container .map {

@@ -2961,11 +2961,10 @@ function CaseDetail({
         </div>
       </div>
 
-      {/* 2-COLUMN MAIN CONTENT GRID */}
-      <div className="case-detail-content-grid">
-        {/* LEFT COLUMN: SITUATION, EVIDENCE & DECISION SUPPORT */}
-        <div className="case-detail-left-col">
-          {/* PENILAIAN URGENSI & FAKTOR KONDISI LAPANGAN */}
+      {/* UNIFIED 2-COLUMN CONTENT GRID (SEAMLESS ROWS, ZERO EMPTY SPACE) */}
+      <div className="case-detail-content-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", alignItems: "stretch" }}>
+        {/* ROW 1: STATUS KEBUTUHAN & EKSEKUSI PENYALURAN */}
+        {/* PENILAIAN URGENSI & FAKTOR KONDISI LAPANGAN */}
           <div className="case-section-card">
             <div className="case-section-header">
               <div className="section-icon-box"><Icon name="check" /></div>
@@ -3011,73 +3010,7 @@ function CaseDetail({
             </div>
           </div>
 
-          {/* GAMBAR 2 REVISION: URAIAN KEBUTUHAN & PROFIL PEMOHON (RAPI & JELAS) */}
-          <div className="case-section-card">
-            <div className="case-section-header">
-              <div className="section-icon-box"><Icon name="file" /></div>
-              <div className="case-section-header-text">
-                <span className="eyebrow">Data Permohonan Kasus</span>
-                <h3>Uraian Kebutuhan &amp; Profil Pemohon</h3>
-                <small>Rincian permohonan warga di {activeCase.location}</small>
-              </div>
-            </div>
-
-            <div className="situation-body">
-              <div style={{ background: "#fbfbf8", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(1,50,32,0.08)", marginBottom: "16px" }}>
-                <small style={{ color: "#758378", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
-                  Uraian Kebutuhan Lapangan oleh Warga:
-                </small>
-                <h4 style={{ margin: 0, color: "#013220", fontSize: "1rem", lineHeight: 1.5, fontWeight: 700 }}>
-                  "{activeCase.notes || `Membutuhkan ${activeCase.qty} ${activeCase.item} untuk persediaan warga pascabencana.`}"
-                </h4>
-              </div>
-
-              <div className="reporter-profile-box">
-                <div className="reporter-profile-main">
-                  <div className="reporter-avatar">
-                    {activeCase.applicantName ? activeCase.applicantName.split(" ").map(n => n[0]).join("").slice(0, 2) : "AP"}
-                  </div>
-                  <div className="reporter-identity">
-                    <div className="reporter-name-row">
-                      <strong className="reporter-name">{activeCase.applicantName || "Andi Pratama"}</strong>
-                    </div>
-                    <div className="reporter-credentials">
-                      <span className="reporter-cred-item">
-                        <span className="cred-lbl">NIK:</span>
-                        <span className="cred-val mono">{activeCase.applicantNik || "3202110482910002"}</span>
-                      </span>
-                      <span className="reporter-cred-sep">•</span>
-                      <span className="reporter-cred-item">
-                        <span className="cred-lbl">Telp:</span>
-                        <span className="cred-val nowrap">{activeCase.applicantPhone || "+62 812 4455 0188"}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="reporter-badge-wrap">
-                  <span className="reporter-tag">
-                    Warga Pemohon
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px", background: "#fbfbf8", padding: "12px 14px", borderRadius: "12px", border: "1px solid rgba(1,50,32,0.08)" }}>
-                <div>
-                  <small style={{ color: "#758378", fontSize: "11px", display: "block" }}>Status Tempat Tinggal</small>
-                  <strong style={{ color: "#013220", fontSize: "12.5px" }}>{activeCase.shelterStatus || "Rumah Tinggal Pribadi (Terdampak Langsung)"}</strong>
-                </div>
-                <div>
-                  <small style={{ color: "#758378", fontSize: "11px", display: "block" }}>Wilayah Administrasi</small>
-                  <strong style={{ color: "#013220", fontSize: "12.5px" }}>{activeCase.location}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: RESOURCE ALLOCATION & LOGS */}
-        <div className="case-detail-right-col">
-          {/* GAMBAR 2 REVISION: TINJAUAN ALOKASI & PENYALUR BANTUAN (LOGIS & MUDAH DIPAHAMI) */}
+        {/* GAMBAR 2 REVISION: TINJAUAN ALOKASI & PENYALUR BANTUAN (LOGIS & MUDAH DIPAHAMI) */}
           {/* TINJAUAN ALOKASI & PENYALURAN (REAL-TIME, BUSINESS-DRIVEN & DESIGN-SYSTEM COMPLIANT) */}
           <div className="case-section-card">
             <div className="case-section-header">
@@ -3511,15 +3444,76 @@ function CaseDetail({
             )}
           </div>
 
-          {/* GAMBAR 3 REVISION: ACTIVITY LOG WITH DYNAMIC REAL-TIME TIMESTAMPS & CASE CODE */}
+        {/* ROW 2: PROFIL PEMOHON & CATATAN PROSES KASUS */}
+        {/* GAMBAR 2 REVISION: URAIAN KEBUTUHAN & PROFIL PEMOHON (RAPI & JELAS) */}
+          <div className="case-section-card">
+            <div className="case-section-header">
+              <div className="section-icon-box"><Icon name="file" /></div>
+              <div className="case-section-header-text">
+                <span className="eyebrow">Data Permohonan Kasus</span>
+                <h3>Uraian Kebutuhan &amp; Profil Pemohon</h3>
+                <small>Rincian permohonan warga di {activeCase.location}</small>
+              </div>
+            </div>
+
+            <div className="situation-body">
+              <div style={{ background: "#fbfbf8", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(1,50,32,0.08)", marginBottom: "16px" }}>
+                <small style={{ color: "#758378", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
+                  Uraian Kebutuhan Lapangan oleh Warga:
+                </small>
+                <h4 style={{ margin: 0, color: "#013220", fontSize: "1rem", lineHeight: 1.5, fontWeight: 700 }}>
+                  "{activeCase.notes || `Membutuhkan ${activeCase.qty} ${activeCase.item} untuk persediaan warga pascabencana.`}"
+                </h4>
+              </div>
+
+              <div className="reporter-profile-box">
+                <div className="reporter-profile-main">
+                  <div className="reporter-avatar">
+                    {activeCase.applicantName ? activeCase.applicantName.split(" ").map(n => n[0]).join("").slice(0, 2) : "AP"}
+                  </div>
+                  <div className="reporter-identity">
+                    <div className="reporter-name-row">
+                      <strong className="reporter-name">{activeCase.applicantName || "Andi Pratama"}</strong>
+                    </div>
+                    <div className="reporter-credentials">
+                      <span className="reporter-cred-item">
+                        <span className="cred-lbl">NIK:</span>
+                        <span className="cred-val mono">{activeCase.applicantNik || "3202110482910002"}</span>
+                      </span>
+                      <span className="reporter-cred-sep">•</span>
+                      <span className="reporter-cred-item">
+                        <span className="cred-lbl">Telp:</span>
+                        <span className="cred-val nowrap">{activeCase.applicantPhone || "+62 812 4455 0188"}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="reporter-badge-wrap">
+                  <span className="reporter-tag">
+                    Warga Pemohon
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px", background: "#fbfbf8", padding: "12px 14px", borderRadius: "12px", border: "1px solid rgba(1,50,32,0.08)" }}>
+                <div>
+                  <small style={{ color: "#758378", fontSize: "11px", display: "block" }}>Status Tempat Tinggal</small>
+                  <strong style={{ color: "#013220", fontSize: "12.5px" }}>{activeCase.shelterStatus || "Rumah Tinggal Pribadi (Terdampak Langsung)"}</strong>
+                </div>
+                <div>
+                  <small style={{ color: "#758378", fontSize: "11px", display: "block" }}>Wilayah Administrasi</small>
+                  <strong style={{ color: "#013220", fontSize: "12.5px" }}>{activeCase.location}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {/* GAMBAR 3 REVISION: ACTIVITY LOG WITH DYNAMIC REAL-TIME TIMESTAMPS & CASE CODE */}
           <div className="case-section-card">
             <Activity state={state} activeCase={activeCase} update={update} />
           </div>
-        </div>
-      </div>
 
-      {/* DOKUMENTASI VISUAL & PEMETAAN GEOGRAFIS BERDAMPINGAN (EQUAL HEIGHT, 100% TERISI TANPA SPACE KOSONG) */}
-      <div className="case-evidence-geo-section">
+        {/* ROW 3: BUKTI VISUAL LAPANGAN & PEMETAAN GEOGRAFIS BERDAMPINGAN */}
         {/* CARD KIRI: FOTO BUKTI KONDISI LAPANGAN */}
         <div className="case-section-card" style={{ margin: 0, display: "flex", flexDirection: "column", height: "100%" }}>
           <div className="case-section-header">
@@ -3533,7 +3527,7 @@ function CaseDetail({
 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px", flex: 1 }}>
             {/* Foto Bukti Awal */}
-            <figure className="case-evidence-frame" style={{ margin: 0, display: "flex", flexDirection: "column", flex: 1, minHeight: "260px" }}>
+            <figure className="case-evidence-frame" style={{ margin: 0, display: "flex", flexDirection: "column", borderRadius: "14px", overflow: "hidden", background: "#f8fafc" }}>
               <div style={{ padding: "8px 12px", background: "#f8fafc", borderBottom: "1px solid rgba(1,50,32,0.08)", fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>
                 📷 1. Foto / Dokumentasi Awal Saat Pelaporan
               </div>
@@ -3543,9 +3537,9 @@ function CaseDetail({
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
                 }}
-                style={{ width: "100%", height: "260px", objectFit: "cover", display: "block" }}
+                style={{ width: "100%", height: "180px", objectFit: "cover", display: "block" }}
               />
-              <figcaption className="case-evidence-caption" style={{ marginTop: "auto" }}>
+              <figcaption className="case-evidence-caption" style={{ padding: "10px 14px", background: "#ffffff", borderTop: "1px solid rgba(1,50,32,0.08)" }}>
                 <div className="evidence-caption-main">
                   <span><Icon name="pin" /> Titik Lokasi: {activeCase.location}</span>
                   <small>{activeCase.fotoBukti ? "Dokumentasi Lapangan Diunggah Langsung Oleh Pemohon" : `Validasi Geotag Terhubung ke ${activeCase.posko?.split(" - ")[0] || "Posko BPBD"}`}</small>
@@ -3566,7 +3560,7 @@ function CaseDetail({
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
                   }}
-                  style={{ width: "100%", height: "260px", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "180px", objectFit: "cover", display: "block" }}
                 />
                 <figcaption className="case-evidence-caption" style={{ background: "#f0fdf4" }}>
                   <div className="evidence-caption-main">
@@ -3621,7 +3615,7 @@ function CaseDetail({
               <small>Koordinat presisi ({caseLat.toFixed(5)}, {caseLng.toFixed(5)}) · {activeCase.location}</small>
             </div>
           </div>
-          <div className="case-map-container" style={{ flex: 1, minHeight: "260px", height: "100%" }}>
+          <div className="case-map-container" style={{ minHeight: "180px", height: "180px", borderRadius: "14px", overflow: "hidden" }}>
             <MapView 
               operational 
               hideCard 
@@ -3634,7 +3628,7 @@ function CaseDetail({
               caseUrgency={activeCase.urgency}
             />
           </div>
-          <div className="case-evidence-caption" style={{ marginTop: "auto", borderRadius: "10px", border: "1px solid rgba(1,50,32,0.08)" }}>
+          <div className="case-evidence-caption" style={{ marginTop: "12px", borderRadius: "10px", border: "1px solid rgba(1,50,32,0.08)", padding: "10px 14px", background: "#ffffff" }}>
             <div className="evidence-caption-main">
               <span><Icon name="pin" /> Wilayah: {activeCase.location}</span>
               <small>Peta Geospasial Terintegrasi OpenStreetMap</small>
@@ -3644,7 +3638,7 @@ function CaseDetail({
         </div>
       </div>
 
-      {/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
+{/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
       {isBastModalOpen && (
         <BastPrintModal
           caseRecord={activeCase}
