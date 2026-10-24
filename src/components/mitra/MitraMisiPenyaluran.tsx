@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
+import { getFieldEvidencePhoto } from "../../App";
 
 interface MitraMisiPenyaluranProps {
   misiList: MisiItem[];
@@ -64,6 +65,7 @@ export function MitraMisiPenyaluran({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "shipping" | "ready" | "arrived" | "obstacle">("all");
   const [isGridModalOpen, setIsGridModalOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -708,23 +710,62 @@ export function MitraMisiPenyaluran({
               </span>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", margin: "4px 0 12px" }}>
-              <h2 style={{ margin: 0, fontSize: "1.35rem", color: "#013220", fontWeight: 800 }}>
-                Muatan Distribusi:
-              </h2>
-              <span
-                style={{
-                  fontSize: "1.05rem",
-                  fontWeight: 800,
-                  color: "#15803d",
-                  background: "#f0fdf4",
-                  padding: "3px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #bbf7d0",
+            {/* Visual Evidence / Relief Cargo Photo */}
+            <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", margin: "8px 0 14px", flexWrap: "wrap" }}>
+              <div
+                className="posko-case-photo-thumb"
+                style={{ width: "120px", height: "100px", minWidth: "120px", flexShrink: 0 }}
+                onClick={() => {
+                  const photoUrl = getFieldEvidencePhoto(currentMission.muatan, currentMission.kebutuhan?.foto_bukti);
+                  setPreviewImage({
+                    src: photoUrl,
+                    title: `Muatan Misi: ${currentMission.muatan}`,
+                    location: currentMission.kebutuhan?.desa ? `Desa ${currentMission.kebutuhan.desa}, Kec. ${currentMission.kebutuhan.kecamatan || 'Sidoarjo'}` : (currentMission.posko?.nama_posko || 'Lokasi Misi'),
+                  });
                 }}
+                title="Klik untuk memperbesar foto dokumentasi logistik"
               >
-                {currentMission.muatan}
-              </span>
+                <img
+                  src={getFieldEvidencePhoto(currentMission.muatan, currentMission.kebutuhan?.foto_bukti)}
+                  alt={currentMission.muatan}
+                  className="posko-case-photo-img"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=600&q=80";
+                  }}
+                />
+                <div className="posko-case-photo-badge">
+                  <AppIcon name="camera" size={11} />
+                  <span>Foto Lapangan</span>
+                </div>
+                <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                  <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                </div>
+              </div>
+
+              <div style={{ flex: "1 1 260px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "6px" }}>
+                  <h2 style={{ margin: 0, fontSize: "1.3rem", color: "#013220", fontWeight: 800 }}>
+                    Muatan: {currentMission.muatan}
+                  </h2>
+                  <span
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      color: "#15803d",
+                      background: "#f0fdf4",
+                      padding: "3px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #bbf7d0",
+                    }}
+                  >
+                    {currentMission.armada_info || "Armada Mitra Terdaftar"}
+                  </span>
+                </div>
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.86rem", lineHeight: 1.45 }}>
+                  {currentMission.catatan_lapangan || "Armada siap menjalankan distribusi logistik tepat sasaran ke titik posko/warga terdampak."}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -1367,6 +1408,77 @@ export function MitraMisiPenyaluran({
               >
                 Tutup
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Photo Preview Modal */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              maxWidth: "680px",
+              width: "100%",
+              overflow: "hidden",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(255,255,255,0.2)",
+            }}
+          >
+            <div style={{ position: "relative", width: "100%", maxHeight: "460px", background: "#0f172a", overflow: "hidden" }}>
+              <img
+                src={previewImage.src}
+                alt={previewImage.title}
+                style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", maxHeight: "460px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setPreviewImage(null)}
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  background: "rgba(0, 0, 0, 0.6)",
+                  border: "none",
+                  borderRadius: "50%",
+                  color: "#ffffff",
+                  width: "36px",
+                  height: "36px",
+                  cursor: "pointer",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: "16px 20px", background: "#ffffff" }}>
+              <h4 style={{ margin: "0 0 4px", color: "#013220", fontSize: "1.05rem", fontWeight: 700 }}>
+                {previewImage.title}
+              </h4>
+              {previewImage.location && (
+                <p style={{ margin: 0, color: "#64748b", fontSize: "0.84rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <AppIcon name="pin" size={13} style={{ color: "#047857" }} />
+                  {previewImage.location}
+                </p>
+              )}
             </div>
           </div>
         </div>
