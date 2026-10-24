@@ -28,8 +28,17 @@
     }
   ],
   "env": {
+    "APP_NAME": "REKSA",
     "APP_ENV": "production",
+    "APP_KEY": "base64:jJcy4arwNxl3XEPDbrMjdIXpXX+7mKFXI9oGmnimmp4=",
     "APP_DEBUG": "false",
+    "DB_CONNECTION": "pgsql",
+    "DB_HOST": "aws-0-ap-southeast-2.pooler.supabase.com",
+    "DB_PORT": "6543",
+    "DB_DATABASE": "postgres",
+    "DB_USERNAME": "postgres.hwrwsevzxqaqrjnxhnrg",
+    "DB_PASSWORD": "Tkq4elfhemR5ztMM",
+    "DB_SSLMODE": "require",
     "LOG_CHANNEL": "stderr",
     "SESSION_DRIVER": "cookie",
     "CACHE_STORE": "array"
