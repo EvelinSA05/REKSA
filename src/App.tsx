@@ -6816,13 +6816,14 @@ export default function App() {
 
           const dbCaseIds = new Set(dbCases.map((c) => c.id));
           const localUserReports = (prev.casesList || []).filter(
-            (c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST") && !c.id.startsWith("RK-2026-") && !dbCaseIds.has(c.id))
+            (c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST") && !dbCaseIds.has(c.id))
           );
           const mergedCases = [...localUserReports, ...dbCases];
 
-          // Sinkronkan ID laporan yang valid (hapus ID kasus yang telah terhapus dari server)
-          const validReportedIds = getUserReportedIds().filter((id) => dbCaseIds.has(id));
-          localStorage.setItem("reksa_user_reported_ids", JSON.stringify(validReportedIds));
+          // Pastikan ID laporan milik user lokal tetap tersimpan di userReportedIds
+          const currentReportedIds = new Set(getUserReportedIds());
+          localUserReports.forEach((c) => currentReportedIds.add(c.id));
+          localStorage.setItem("reksa_user_reported_ids", JSON.stringify(Array.from(currentReportedIds)));
 
           localStorage.setItem("reksa_cases_db", JSON.stringify(mergedCases));
           return {
