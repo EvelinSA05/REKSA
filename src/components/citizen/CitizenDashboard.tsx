@@ -445,6 +445,7 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
           <MissionLiveTrackingMap
             mission={currentMission}
             height="440px"
+            isCitizenView={true}
           />
         </section>
       )}

@@ -9,6 +9,7 @@ interface MissionLiveTrackingMapProps {
   onReportObstacle?: () => void;
   showFullscreenButton?: boolean;
   className?: string;
+  isCitizenView?: boolean;
 }
 
 interface LatLngPoint {
@@ -49,6 +50,7 @@ export function MissionLiveTrackingMap({
   height = '440px',
   onReportObstacle,
   className = '',
+  isCitizenView = false,
 }: MissionLiveTrackingMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -1050,35 +1052,67 @@ export function MissionLiveTrackingMap({
 
         {/* Map Quick Action Buttons */}
         <div className="mission-hud-actions" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Button: Use My Phone GPS */}
-          <button
-            type="button"
-            onClick={handleToggleDeviceGps}
-            title="Lacak posisi menggunakan sensor GPS perangkat/ponsel saya"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              background: trackingSource === 'device_gps' ? '#2563eb' : 'rgba(255, 255, 255, 0.12)',
-              border: `1px solid ${trackingSource === 'device_gps' ? '#93c5fd' : 'rgba(255, 255, 255, 0.25)'}`,
-              color: '#ffffff',
-              fontSize: '0.74rem',
-              fontWeight: 700,
-              padding: '4.5px 10px',
-              borderRadius: '7px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <AppIcon name="pin" size={12} />
-            <span>
-              {isLocatingDevice
-                ? 'Mendeteksi...'
-                : trackingSource === 'device_gps'
-                ? 'GPS HP Aktif'
-                : 'Gunakan GPS HP'}
-            </span>
-          </button>
+          {/* Button: Use My Phone GPS (Only for responders/drivers, hidden on citizen view) */}
+          {!isCitizenView && (
+            <button
+              type="button"
+              onClick={handleToggleDeviceGps}
+              title="Lacak posisi menggunakan sensor GPS perangkat/ponsel saya"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: trackingSource === 'device_gps' ? '#2563eb' : 'rgba(255, 255, 255, 0.12)',
+                border: `1px solid ${trackingSource === 'device_gps' ? '#93c5fd' : 'rgba(255, 255, 255, 0.25)'}`,
+                color: '#ffffff',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                padding: '4.5px 10px',
+                borderRadius: '7px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <AppIcon name="pin" size={12} />
+              <span>
+                {isLocatingDevice
+                  ? 'Mendeteksi...'
+                  : trackingSource === 'device_gps'
+                  ? 'GPS HP Aktif'
+                  : 'Gunakan GPS HP'}
+              </span>
+            </button>
+          )}
+
+          {isCitizenView && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: '#ffffff',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                padding: '4.5px 10px',
+                borderRadius: '7px',
+              }}
+              title="Posisi armada logistik terpantau langsung secara real-time"
+            >
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  boxShadow: '0 0 6px #10b981',
+                  display: 'inline-block',
+                }}
+              />
+              <span>Live Tracking</span>
+            </div>
+          )}
 
           <button
             type="button"
