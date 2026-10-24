@@ -27,6 +27,7 @@ export function MitraBursaBantuan({
 }: MitraBursaBantuanProps) {
   // Search & Filter state
   const [filterUrgency, setFilterUrgency] = useState<"Semua" | "Kritis" | "Tinggi" | "Sedang">("Semua");
+  const [filterOrigin, setFilterOrigin] = useState<"all" | "bpbd" | "mitra">("all");
   const [search, setSearch] = useState("");
   const [previewImage, setPreviewImage] = useState<{ src: string; title: string; location?: string } | null>(null);
   const [onlyAiMatch, setOnlyAiMatch] = useState(false);
@@ -141,6 +142,25 @@ export function MitraBursaBantuan({
   const countTinggi = openItems.filter((b) => b.urgensi === "Tinggi").length;
   const countSedang = openItems.filter((b) => b.urgensi === "Sedang" || b.urgensi === "Normal").length;
 
+  const countDelegated = useMemo(() => {
+    return openItems.filter((item) => {
+      const matchedCase = cases?.find(
+        (c) =>
+          (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) ||
+          (c.id && (item.kebutuhan?.kode_kasus === c.id || item.id === parseInt(c.id.replace(/\D/g, ""))))
+      );
+      return Boolean(
+        (item as any).isDelegatedToMitra ||
+        matchedCase?.escalatedToMitra ||
+        matchedCase?.mitraHandler ||
+        (matchedCase?.status || "").toLowerCase().includes("mitra") ||
+        (matchedCase?.status || "").toLowerCase().includes("dialihkan")
+      );
+    }).length;
+  }, [openItems, cases]);
+
+  const countBpbd = totalOpen - countDelegated;
+
   const urgencyTabs = [
     { label: "Semua" as const, count: totalOpen },
     { label: "Kritis" as const, count: countKritis },
@@ -148,7 +168,7 @@ export function MitraBursaBantuan({
     { label: "Sedang" as const, count: countSedang },
   ];
 
-  // Filtered items based on tab & live search & AI Match
+  // Filtered items based on tab & live search & AI Match & Origin
   const filteredItems = useMemo(() => {
     return openItems.filter((b) => {
       if (filterUrgency !== "Semua") {
@@ -157,6 +177,22 @@ export function MitraBursaBantuan({
         } else if (b.urgensi !== filterUrgency) {
           return false;
         }
+      }
+      if (filterOrigin !== "all") {
+        const matchedCase = cases?.find(
+          (c) =>
+            (c.rawId && (c.rawId === b.id || c.rawId === b.kebutuhan_id)) ||
+            (c.id && (b.kebutuhan?.kode_kasus === c.id || b.id === parseInt(c.id.replace(/\D/g, ""))))
+        );
+        const isDelegated = Boolean(
+          (b as any).isDelegatedToMitra ||
+          matchedCase?.escalatedToMitra ||
+          matchedCase?.mitraHandler ||
+          (matchedCase?.status || "").toLowerCase().includes("mitra") ||
+          (matchedCase?.status || "").toLowerCase().includes("dialihkan")
+        );
+        if (filterOrigin === "mitra" && !isDelegated) return false;
+        if (filterOrigin === "bpbd" && isDelegated) return false;
       }
       if (onlyAiMatch) {
         const ai = getAiMatchScore(b.item_bantuan, userOrg, b.urgensi);
@@ -182,7 +218,7 @@ export function MitraBursaBantuan({
       }
       return true;
     });
-  }, [openItems, filterUrgency, search, onlyAiMatch, userOrg]);
+  }, [openItems, filterUrgency, filterOrigin, search, onlyAiMatch, userOrg, cases]);
 
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
@@ -577,9 +613,9 @@ export function MitraBursaBantuan({
           overflow: "hidden",
         }}
       >
-        {/* Row 1: Urgency Filter Tabs & AI Match Toggle */}
-        <div className="posko-toolbar-tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {/* Row 1: Urgency Filter Tabs & Origin Filter & AI Match Toggle */}
+        <div className="posko-toolbar-tabs" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
             {urgencyTabs.map((tabItem) => {
               const isActive = filterUrgency === tabItem.label;
               return (
@@ -598,30 +634,97 @@ export function MitraBursaBantuan({
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setOnlyAiMatch(!onlyAiMatch);
-              setCurrentPage(1);
-            }}
-            style={{
-              background: onlyAiMatch ? "#064e3b" : "#f0fdf4",
-              color: onlyAiMatch ? "#ffffff" : "#065f46",
-              border: `1.5px solid ${onlyAiMatch ? "#047857" : "#a7f3d0"}`,
-              padding: "7px 14px",
-              borderRadius: "999px",
-              fontSize: "0.80rem",
-              fontWeight: 700,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            title="Saring kebutuhan dengan rekomendasi kecocokan AI tertinggi (>85% Match)"
-          >
-            <span>✨ {onlyAiMatch ? "Tampilkan Semua" : "Rekomendasi AI Tertinggi (>85% Match)"}</span>
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            {/* Origin Jalur Filter */}
+            <div style={{ display: "inline-flex", background: "#f8fafc", padding: "3px", borderRadius: "999px", gap: "3px", border: "1px solid #e2e8f0" }}>
+              <button
+                type="button"
+                onClick={() => { setFilterOrigin("all"); setCurrentPage(1); }}
+                style={{
+                  background: filterOrigin === "all" ? "#013220" : "transparent",
+                  color: filterOrigin === "all" ? "#ffffff" : "#475569",
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "5px 11px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                Semua Jalur
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFilterOrigin("bpbd"); setCurrentPage(1); }}
+                style={{
+                  background: filterOrigin === "bpbd" ? "#047857" : "transparent",
+                  color: filterOrigin === "bpbd" ? "#ffffff" : "#065f46",
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "5px 11px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  transition: "all 0.15s ease",
+                }}
+                title="Hanya tampilkan laporan yang diverifikasi langsung oleh Posko BPBD"
+              >
+                <span>🛡️ Verifikasi BPBD</span>
+                <span style={{ fontSize: "0.68rem", opacity: 0.9 }}>({countBpbd})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFilterOrigin("mitra"); setCurrentPage(1); }}
+                style={{
+                  background: filterOrigin === "mitra" ? "#1d4ed8" : "transparent",
+                  color: filterOrigin === "mitra" ? "#ffffff" : "#1e40af",
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "5px 11px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  transition: "all 0.15s ease",
+                }}
+                title="Hanya tampilkan laporan yang dialihkan langsung ke mitra kemanusiaan"
+              >
+                <span>⚡ Dialihkan ke Mitra</span>
+                <span style={{ fontSize: "0.68rem", opacity: 0.9 }}>({countDelegated})</span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setOnlyAiMatch(!onlyAiMatch);
+                setCurrentPage(1);
+              }}
+              style={{
+                background: onlyAiMatch ? "#064e3b" : "#f0fdf4",
+                color: onlyAiMatch ? "#ffffff" : "#065f46",
+                border: `1.5px solid ${onlyAiMatch ? "#047857" : "#a7f3d0"}`,
+                padding: "6px 13px",
+                borderRadius: "999px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              title="Saring kebutuhan dengan rekomendasi kecocokan AI tertinggi (>85% Match)"
+            >
+              <span>✨ {onlyAiMatch ? "Semua Match" : "Match AI (>85%)"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Row 2: Search Input and Results Counter */}
@@ -718,6 +821,21 @@ export function MitraBursaBantuan({
 
             const aiMatch = getAiMatchScore(item.item_bantuan, userOrg, item.urgensi);
 
+            const matchedCase = cases?.find((c) => 
+              (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || 
+              (c.id && (item.kebutuhan?.kode_kasus === c.id || item.id === parseInt(c.id.replace(/\D/g, ""))))
+            );
+
+            const isDelegatedToMitra = Boolean(
+              (item as any).isDelegatedToMitra ||
+              matchedCase?.escalatedToMitra ||
+              matchedCase?.mitraHandler ||
+              (matchedCase?.status || "").toLowerCase().includes("mitra") ||
+              (matchedCase?.status || "").toLowerCase().includes("dialihkan")
+            );
+
+            const assignedMitraName = (item as any).assignedMitra || matchedCase?.mitraHandler || "Mitra Kemanusiaan";
+
             return (
               <div
                 key={item.id}
@@ -746,27 +864,43 @@ export function MitraBursaBantuan({
                     >
                       {item.status || "Terbuka"}
                     </span>
-                    {Boolean(
-                      (item as any).isDelegatedToMitra ||
-                      cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
-                      cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
-                    ) && (
+                    {isDelegatedToMitra ? (
                       <span
                         style={{
                           background: "#eff6ff",
                           color: "#1d4ed8",
-                          border: "1px solid #bfdbfe",
-                          padding: "3px 9px",
+                          border: "1.5px solid #bfdbfe",
+                          padding: "3px 10px",
                           borderRadius: "999px",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "4px",
+                          gap: "5px",
                         }}
-                        title="Penugasan langsung dari/ke mitra. Komitmen bantuan otomatis disetujui tanpa verifikasi ulang Posko."
+                        title={`Laporan dialihkan ke ${assignedMitraName}. Komitmen bantuan langsung aktif tanpa verifikasi ulang Posko.`}
                       >
-                        <span>🚀 Penugasan Khusus Mitra</span>
+                        <span style={{ fontSize: "0.80rem" }}>⚡</span>
+                        <span>Dialihkan ke Mitra</span>
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          background: "#ecfdf5",
+                          color: "#065f46",
+                          border: "1.5px solid #a7f3d0",
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                        title="Laporan divalidasi sah langsung oleh Petugas Koordinator Posko BPBD."
+                      >
+                        <span style={{ fontSize: "0.80rem" }}>🛡️</span>
+                        <span>Verifikasi Posko BPBD</span>
                       </span>
                     )}
                     <span
@@ -939,8 +1073,18 @@ export function MitraBursaBantuan({
 
                 {/* 5. Dedicated Footer Action Bar */}
                 <div className="posko-case-footer-row">
-                  <div style={{ fontSize: "0.82rem", color: "#64748b" }}>
-                    Kebutuhan sah terverifikasi: Siap disalurkan langsung oleh mitra bantuan.
+                  <div style={{ fontSize: "0.82rem", color: "#475569", display: "flex", alignItems: "center", gap: "6px" }}>
+                    {isDelegatedToMitra ? (
+                      <>
+                        <span style={{ color: "#2563eb", fontWeight: 700 }}>⚡ Jalur Mitra:</span>
+                        <span>Dialihkan ke {assignedMitraName} (komitmen langsung aktif &amp; misi otomatis terbit).</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ color: "#047857", fontWeight: 700 }}>🛡️ Jalur BPBD:</span>
+                        <span>Diverifikasi sah oleh Posko BPBD. Komitmen armada menunggu persetujuan posko.</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="posko-case-actions-cluster">
@@ -983,22 +1127,14 @@ export function MitraBursaBantuan({
                         onClick={() => openOfferModal(item)}
                         className="btn-case-verify"
                         title={
-                          Boolean(
-                            (item as any).isDelegatedToMitra ||
-                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
-                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
-                          )
+                          isDelegatedToMitra
                             ? "Ajukan komitmen armada mitra (otomatis disetujui & langsung aktif misi penyaluran)"
                             : "Ajukan komitmen penugasan armada organisasi Anda ke Posko BPBD"
                         }
                       >
                         <AppIcon name="handshake" size={14} />
                         <span>
-                          {Boolean(
-                            (item as any).isDelegatedToMitra ||
-                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.escalatedToMitra ||
-                            cases?.find((c) => (c.rawId && (c.rawId === item.id || c.rawId === item.kebutuhan_id)) || (c.id && item.kebutuhan?.kode_kasus === c.id))?.mitraHandler
-                          )
+                          {isDelegatedToMitra
                             ? "Ajukan Komitmen (Langsung Kirim)"
                             : "Ajukan Komitmen Bantuan"}
                         </span>
