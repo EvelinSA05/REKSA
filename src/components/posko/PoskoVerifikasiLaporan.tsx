@@ -982,8 +982,27 @@ export function PoskoVerifikasiLaporan({
 
       {/* ACTION MODAL */}
       {modalAction && selectedCase && (
-        <div className="modal-backdrop">
-          <div className="modal" style={{ width: "min(560px, 95%)", textAlign: "left", borderRadius: "16px", padding: "28px" }}>
+        <div
+          className="modal-backdrop"
+          onClick={() => setModalAction(null)}
+          style={{ overflowY: "auto", padding: "20px 14px", display: "flex", justifyContent: "center", alignItems: "flex-start" }}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(580px, 95%)",
+              maxHeight: "calc(100vh - 40px)",
+              overflowY: "auto",
+              textAlign: "left",
+              borderRadius: "16px",
+              padding: "24px 28px",
+              margin: "auto",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.35)",
+            }}
+          >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <h2 style={{ fontSize: "1.25rem", color: "#013220", margin: 0, fontWeight: 800 }}>
                 {modalAction === "verify" && `Verifikasi Laporan ${selectedCase.id}`}
@@ -1149,7 +1168,7 @@ export function PoskoVerifikasiLaporan({
                 >
                   Pilih Lembaga Mitra Penanganan:
                 </label>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px", maxHeight: "240px", overflowY: "auto", paddingRight: "4px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
                   {MITRA_PARTNERS.map((mitra) => {
                     const isSelected = selectedMitra === mitra.name;
                     return (
