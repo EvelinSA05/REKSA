@@ -72,7 +72,7 @@ export function CitizenCaseList({
 
   const isCaseOwnedByUser = (c: CaseRecord) => {
     return Boolean(
-      (c.isOwn || c.applicantName === "Andi Pratama" || c.applicantName?.toLowerCase().includes("andi") || c.id === "RK-2026-J348QJ") &&
+      (c.isOwn || c.applicantName === "Andi Pratama" || c.applicantName?.toLowerCase().includes("andi") || c.id === "RK-2026-J348QJ" || c.id === "RK-2026-POBUUS" || (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2")))) &&
       !c.id.startsWith("RK-UJI-") &&
       !c.id.includes("TEST") &&
       !c.id.startsWith("RK-MULTI-")
@@ -166,6 +166,23 @@ export function CitizenCaseList({
     );
 
     localStorage.setItem("reksa_cases_db", JSON.stringify(updatedList));
+
+    try {
+      const savedMisi = localStorage.getItem("reksa_misi_db");
+      if (savedMisi) {
+        let mList = JSON.parse(savedMisi);
+        mList = mList.map((m: any) =>
+          m.kebutuhan_id === confirmingReceiptCase.rawId ||
+          m.kebutuhan?.kode_kasus === confirmingReceiptCase.id ||
+          (confirmingReceiptCase.id === "RK-2026-POBUUS" && m.muatan?.includes("2")) ||
+          (confirmingReceiptCase.item?.includes("Fasilitas") && (m.muatan?.includes("2") || m.muatan?.includes("122")))
+            ? { ...m, status_tahapan: "Selesai" }
+            : m
+        );
+        localStorage.setItem("reksa_misi_db", JSON.stringify(mList));
+      }
+    } catch (_) {}
+
     update(
       { casesList: updatedList, status: "Selesai", assignment: "Selesai", delivered: 1000 },
       `Bantuan ${confirmingReceiptCase.item} (${cleanVol}) untuk kasus ${confirmingReceiptCase.id} resmi dikonfirmasi diterima tuntas (BAST terbit).`

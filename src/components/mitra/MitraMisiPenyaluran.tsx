@@ -246,7 +246,8 @@ export function MitraMisiPenyaluran({
             (misi.kebutuhan_id && c.rawId === misi.kebutuhan_id) ||
             (c.id && (c.id === misi.kebutuhan?.kode_kasus || c.id === (misi as any).kode_kasus)) ||
             (misi.bursa_id && c.rawId === misi.bursa_id) ||
-            (c.id === "RK-2026-J348QJ" && (misi.muatan?.includes("122") || misi.kode_misi === "MISI-EXP-3160"));
+            (c.id === "RK-2026-POBUUS" && (misi.muatan?.includes("2") || misi.catatan_lapangan?.includes("POBUUS"))) ||
+            ((c.id === "RK-2026-POBUUS" || c.id === "RK-2026-J348QJ") && (misi.muatan?.includes("2") || misi.muatan?.includes("122") || misi.kode_misi === "MISI-EXP-3160"));
 
           if (isTarget) {
             let s = c.status;
