@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CaseRecord, getFieldEvidencePhoto } from "../../App";
 import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
