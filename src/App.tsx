@@ -6926,7 +6926,8 @@ export default function App() {
             const updatedCasesDb = baseCases.map((c: any) => {
               let isOwnUpdated = c.isOwn;
               if (
-                c.id === "RK-2026-POBUUS" ||
+                c.id?.includes("P09UUS") ||
+                c.id?.includes("POBUUS") ||
                 c.id === "RK-2026-J348QJ" ||
                 c.applicantName === "Andi Pratama" ||
                 c.applicantName?.toLowerCase().includes("andi") ||
@@ -6937,11 +6938,12 @@ export default function App() {
 
               const matchingMisi = nextMisi.find(
                 (m: any) =>
-                  (m.kebutuhan_id && c.rawId === m.kebutuhan_id) ||
+                  (m.kebutuhan_id && (c.rawId === m.kebutuhan_id || String(c.rawId) === String(m.kebutuhan_id))) ||
                   (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === m.kode_kasus)) ||
-                  (m.bursa_id && c.rawId === m.bursa_id) ||
-                  (c.id === "RK-2026-POBUUS" && (m.muatan?.includes("2") || m.catatan_lapangan?.includes("POBUUS"))) ||
-                  ((c.id === "RK-2026-POBUUS" || c.id === "RK-2026-J348QJ") && (m.muatan?.includes("2") || m.muatan?.includes("122") || m.kode_misi === "MISI-EXP-3160"))
+                  (m.bursa_id && (c.rawId === m.bursa_id || String(c.rawId) === String(m.bursa_id))) ||
+                  (c.id?.includes("P09UUS") || c.id?.includes("POBUUS")) ||
+                  (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2") || m.muatan?.includes("2") || m.muatan?.includes("122"))) ||
+                  (c.id === "RK-2026-J348QJ" && (m.muatan?.includes("122") || m.kode_misi === "MISI-EXP-3160"))
               );
 
               if (matchingMisi) {

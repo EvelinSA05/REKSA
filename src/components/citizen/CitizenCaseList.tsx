@@ -70,9 +70,57 @@ export function CitizenCaseList({
     return val || "Sangat mendesak";
   };
 
+  let allMisi: any[] = state?.misiList ?? [];
+  try {
+    const mSaved = localStorage.getItem("reksa_misi_db");
+    if (mSaved) {
+      const parsed = JSON.parse(mSaved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        allMisi = parsed;
+      }
+    }
+  } catch {}
+
+  const checkCaseWaitingReceipt = (c: CaseRecord) => {
+    if (c.status === "Selesai") return false;
+    if (
+      c.status === "Menunggu Konfirmasi Penerimaan" ||
+      c.status === "Tiba di Lokasi & Diserahkan" ||
+      c.status === "Tiba di lokasi"
+    ) {
+      return true;
+    }
+    const matchingMisi = allMisi.find(
+      (m: any) =>
+        (m.kebutuhan_id && (c.rawId === m.kebutuhan_id || String(c.rawId) === String(m.kebutuhan_id))) ||
+        (m.bursa_id && (c.rawId === m.bursa_id || String(c.rawId) === String(m.bursa_id))) ||
+        (m.kebutuhan?.kode_kasus && m.kebutuhan.kode_kasus === c.id) ||
+        (m.kode_kasus && m.kode_kasus === c.id) ||
+        (m.catatan_lapangan && m.catatan_lapangan.includes(c.id)) ||
+        (c.id && (c.id.includes("P09UUS") || c.id.includes("POBUUS") || c.id.includes("J348QJ"))) ||
+        (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2") || m.muatan?.includes("2") || m.muatan?.includes("122"))) ||
+        (c.location?.includes("Buduran") && (m.armada_info?.includes("Buduran") || m.kebutuhan?.desa?.includes("Buduran") || m.muatan?.includes("2")))
+    );
+
+    return Boolean(
+      matchingMisi &&
+      (matchingMisi.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
+       matchingMisi.status_tahapan === "Menunggu Konfirmasi" ||
+       matchingMisi.status_tahapan === "Tiba di lokasi" ||
+       matchingMisi.status_tahapan === "Siap Serah Terima" ||
+       matchingMisi.status_tahapan === "Dalam Perjalanan")
+    );
+  };
+
   const isCaseOwnedByUser = (c: CaseRecord) => {
     return Boolean(
-      (c.isOwn || c.applicantName === "Andi Pratama" || c.applicantName?.toLowerCase().includes("andi") || c.id === "RK-2026-J348QJ" || c.id === "RK-2026-POBUUS" || (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2")))) &&
+      (c.isOwn ||
+        c.applicantName === "Andi Pratama" ||
+        c.applicantName?.toLowerCase().includes("andi") ||
+        c.id.includes("P09UUS") ||
+        c.id.includes("POBUUS") ||
+        c.id === "RK-2026-J348QJ" ||
+        (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2")))) &&
       !c.id.startsWith("RK-UJI-") &&
       !c.id.includes("TEST") &&
       !c.id.startsWith("RK-MULTI-")
@@ -88,9 +136,7 @@ export function CitizenCaseList({
   ).length;
 
   const receiptPendingCount = allCases.filter(
-    (c) =>
-      (!own || isCaseOwnedByUser(c)) &&
-      (c.status === "Menunggu Konfirmasi Penerimaan" || c.status === "Tiba di Lokasi & Diserahkan" || c.status === "Tiba di lokasi")
+    (c) => (!own || isCaseOwnedByUser(c)) && checkCaseWaitingReceipt(c)
   ).length;
 
   const data = allCases.filter((c) => {
@@ -100,8 +146,7 @@ export function CitizenCaseList({
     const matchesFilter =
       filter === "Semua" ||
       (filter === "Perlu Klarifikasi" && c.status === "Perlu Klarifikasi") ||
-      ((filter.includes("Konfirmasi") || filter.includes("Dikonfirmasi")) &&
-        (c.status === "Menunggu Konfirmasi Penerimaan" || c.status === "Tiba di Lokasi & Diserahkan" || c.status === "Tiba di lokasi")) ||
+      ((filter.includes("Konfirmasi") || filter.includes("Dikonfirmasi")) && checkCaseWaitingReceipt(c)) ||
       c.urgency === filter ||
       (filter === "Sangat mendesak" && (c.urgency === "Kritis" || c.urgency === "Sangat mendesak")) ||
       (filter === "Perlu segera" && (c.urgency === "Tinggi" || c.urgency === "Perlu segera")) ||
@@ -528,7 +573,8 @@ export function CitizenCaseList({
             const isHigh = c.urgency === "Tinggi" || c.urgency === "Perlu segera";
             const isDone = c.status === "Selesai";
             const isClarification = c.status === "Perlu Klarifikasi";
-            const isWaitingReceipt = c.status === "Menunggu Konfirmasi Penerimaan" || c.status === "Tiba di Lokasi & Diserahkan";
+            const isWaitingReceipt = checkCaseWaitingReceipt(c);
+            const displayStatus = isWaitingReceipt ? "Menunggu Konfirmasi Penerimaan" : c.status;
 
             return (
               <div 
@@ -696,7 +742,7 @@ export function CitizenCaseList({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div className="case-status-indicator">
                       <i className={`status-dot ${isDone ? "done" : isClarification ? "warning" : isWaitingReceipt ? "waiting" : "active"}`} style={isClarification ? { background: "#f59e0b" } : isWaitingReceipt ? { background: "#10b981" } : undefined} />
-                      <span style={isClarification ? { color: "#b45309", fontWeight: 700 } : isWaitingReceipt ? { color: "#065f46", fontWeight: 700 } : undefined}>{c.status}</span>
+                      <span style={isClarification ? { color: "#b45309", fontWeight: 700 } : isWaitingReceipt ? { color: "#065f46", fontWeight: 700 } : undefined}>{displayStatus}</span>
                     </div>
                   </div>
 
@@ -752,7 +798,32 @@ export function CitizenCaseList({
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {isWaitingReceipt && (
+                        <button
+                          type="button"
+                          onClick={() => openReceiptModal(c)}
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            padding: "9px 12px",
+                            background: "#059669",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "8px",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            boxShadow: "0 2px 6px rgba(5, 150, 105, 0.25)",
+                          }}
+                        >
+                          <Icon name="check" /> Konfirmasi Bantuan Diterima (BAST)
+                        </button>
+                      )}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
                       <button
                         type="button"
                         onClick={() => openEdit(c)}
@@ -809,6 +880,7 @@ export function CitizenCaseList({
                         Pantau <Icon name="next" />
                       </button>
                     </div>
+                  </div>
                   )}
                 </div>
               </div>
