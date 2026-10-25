@@ -430,8 +430,16 @@ export function MitraBursaBantuan({
           status_tahapan: "Menunggu Persiapan",
           estimasi_waktu: "Menunggu Persiapan Armada",
           catatan_lapangan: notesInput || "Komitmen telah disahkan. Armada sedang dipersiapkan untuk pengecekan logistik sebelum keberangkatan.",
+          foto_bukti: modalBursa.kebutuhan?.foto_bukti || (modalBursa as any).foto_bukti || relatedCase?.fotoBukti,
           posko: modalBursa.posko,
-          kebutuhan: modalBursa.kebutuhan,
+          kebutuhan: modalBursa.kebutuhan || {
+            id: modalBursa.kebutuhan_id || modalBursa.id,
+            kode_kasus: relatedCase?.id || modalBursa.kebutuhan?.kode_kasus || `RK-2026-${modalBursa.id}`,
+            desa: relatedCase?.desa || modalBursa.kebutuhan?.desa || "Gubeng",
+            kecamatan: relatedCase?.kecamatan || modalBursa.kebutuhan?.kecamatan || "Gubeng",
+            kabupaten: relatedCase?.kabupaten || modalBursa.kebutuhan?.kabupaten || "Kota Surabaya",
+            foto_bukti: relatedCase?.fotoBukti || modalBursa.kebutuhan?.foto_bukti,
+          },
         };
 
         updatedMisiList = [newMisi, ...localMisi.filter((m: any) => m.kebutuhan_id !== modalBursa.kebutuhan_id && m.bursa_id !== modalBursa.id)];

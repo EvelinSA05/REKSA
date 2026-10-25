@@ -9,12 +9,12 @@ export const getFleetOrDeliveryPhoto = (armadaInfo?: string, commodityItem?: str
   if (fotoBukti && typeof fotoBukti === "string" && fotoBukti.trim() !== "" && fotoBukti !== "null") {
     return fotoBukti;
   }
+  if (commodityItem && commodityItem.trim() !== "") {
+    return getFieldEvidencePhoto(commodityItem);
+  }
   const armada = (armadaInfo || "").toLowerCase();
   if (armada.includes("ambulans") || armada.includes("ambulance")) {
     return "https://images.unsplash.com/photo-1587745416684-47953f16f02f?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
-  }
-  if (armada.includes("box") || armada.includes("truk") || armada.includes("truck") || armada.includes("pickup") || armada.includes("armada")) {
-    return "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
   }
   return getFieldEvidencePhoto(commodityItem || armadaInfo);
 };
@@ -474,34 +474,52 @@ export function PoskoDistribusiPenerimaan({
 
                 {/* 2. Main Body with Visual Fleet / Logistics Thumbnail */}
                 <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
-                  <div
-                    className="posko-case-photo-thumb"
-                    onClick={() =>
-                      setPreviewImage({
-                        src: getFleetOrDeliveryPhoto(m.armada_info, m.kebutuhan?.item, m.foto_bukti || m.kebutuhan?.foto_bukti),
-                        title: `Misi ${m.kode_misi} · ${m.armada_info}`,
-                        location: `Muatan: ${m.muatan} · ${m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Lapangan'}`,
-                      })
-                    }
-                    title="Klik untuk memperbesar foto armada & muatan logistik"
-                  >
-                    <img
-                      src={getFleetOrDeliveryPhoto(m.armada_info, m.kebutuhan?.item, m.foto_bukti || m.kebutuhan?.foto_bukti)}
-                      alt={m.armada_info}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
-                      }}
-                      className="posko-case-photo-img"
-                    />
-                    <div className="posko-case-photo-badge">
-                      <AppIcon name="truck" size={11} />
-                      <span>{m.armada_info ? "Armada & Muatan" : "Dokumentasi"}</span>
+                {(() => {
+                  const targetCase = cases?.find(
+                    (c) =>
+                      (m.kebutuhan_id && c.rawId === m.kebutuhan_id) ||
+                      (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === (m as any).kode_kasus)) ||
+                      (m.bursa_id && c.rawId === m.bursa_id)
+                  );
+
+                  const resolvedMissionPhoto =
+                    targetCase?.fotoBukti ||
+                    m.foto_bukti ||
+                    m.kebutuhan?.foto_bukti ||
+                    (m as any).fotoBukti ||
+                    (m.kebutuhan as any)?.fotoBukti ||
+                    getFleetOrDeliveryPhoto(m.armada_info, m.kebutuhan?.item || m.kebutuhan?.kategori_kebutuhan || m.muatan);
+
+                  return (
+                    <div className="posko-case-photo-thumb"
+                      onClick={() =>
+                        setPreviewImage({
+                          src: resolvedMissionPhoto,
+                          title: `Misi ${m.kode_misi} · ${m.armada_info}`,
+                          location: `Muatan: ${m.muatan} · ${m.kebutuhan ? `${m.kebutuhan.desa || ''}, ${m.kebutuhan.kecamatan || ''}` : 'Posko Lapangan'}`,
+                        })
+                      }
+                      title="Klik untuk memperbesar foto armada & muatan logistik"
+                    >
+                      <img
+                        src={resolvedMissionPhoto}
+                        alt={m.armada_info}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+                        }}
+                        className="posko-case-photo-img"
+                      />
+                      <div className="posko-case-photo-badge">
+                        <AppIcon name="camera" size={11} />
+                        <span>Foto Lapangan</span>
+                      </div>
+                      <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                        <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                      </div>
                     </div>
-                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
-                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
-                    </div>
-                  </div>
+                  );
+                })()}
 
                   <div className="posko-case-info-col">
                     <h3 className="posko-case-title">
