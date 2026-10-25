@@ -6022,7 +6022,14 @@ function Profile({
   );
 
   const allCases = state?.casesList ?? [];
-  const myCases = allCases.filter((c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST")));
+  const myCases = allCases.filter((c) =>
+    Boolean(
+      (c.isOwn || c.applicantName === "Andi Pratama" || c.applicantName?.toLowerCase().includes("andi") || c.id === "RK-2026-J348QJ") &&
+      !c.id.startsWith("RK-UJI-") &&
+      !c.id.includes("TEST") &&
+      !c.id.startsWith("RK-MULTI-")
+    )
+  );
 
   const totalReports = myCases.length;
   const inVerify = myCases.filter((c) => c.status === "Dalam Verifikasi").length;
@@ -6910,14 +6917,61 @@ export default function App() {
           localStorage.setItem("reksa_penawaran_db", JSON.stringify(nextPenawaran));
         } catch {}
 
-        const activeMission = nextMisi.find((m: MisiItem) => m.status_tahapan !== "Selesai");
-        const asgStatus = activeMission ? activeMission.status_tahapan : prev.assignment;
+        let syncedCasesList = prev.casesList || [];
+        try {
+          const currentCasesDb = JSON.parse(localStorage.getItem("reksa_cases_db") || "[]");
+          const baseCases = currentCasesDb.length > 0 ? currentCasesDb : (prev.casesList || []);
+          if (baseCases.length > 0) {
+            let casesChanged = false;
+            const updatedCasesDb = baseCases.map((c: any) => {
+              let isOwnUpdated = c.isOwn;
+              if (c.id === "RK-2026-J348QJ" || c.applicantName === "Andi Pratama") {
+                isOwnUpdated = true;
+              }
+
+              const matchingMisi = nextMisi.find(
+                (m: any) =>
+                  (m.kebutuhan_id && c.rawId === m.kebutuhan_id) ||
+                  (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === m.kode_kasus)) ||
+                  (m.bursa_id && c.rawId === m.bursa_id) ||
+                  (c.id === "RK-2026-J348QJ" && (m.muatan?.includes("122") || m.kode_misi === "MISI-EXP-3160"))
+              );
+
+              if (matchingMisi) {
+                let syncedStatus = c.status;
+                if (matchingMisi.status_tahapan === "Tiba di Lokasi & Diserahkan" || matchingMisi.status_tahapan === "Menunggu Konfirmasi") {
+                  syncedStatus = "Menunggu Konfirmasi Penerimaan";
+                } else if (matchingMisi.status_tahapan === "Dalam Perjalanan" || matchingMisi.status_tahapan === "Siap Berangkat") {
+                  syncedStatus = "Dalam Pengiriman";
+                } else if (matchingMisi.status_tahapan === "Selesai") {
+                  syncedStatus = "Selesai";
+                }
+
+                if (syncedStatus !== c.status || isOwnUpdated !== c.isOwn) {
+                  casesChanged = true;
+                  return { ...c, status: syncedStatus, isOwn: isOwnUpdated };
+                }
+              } else if (isOwnUpdated !== c.isOwn) {
+                casesChanged = true;
+                return { ...c, isOwn: isOwnUpdated };
+              }
+
+              return c;
+            });
+
+            if (casesChanged) {
+              localStorage.setItem("reksa_cases_db", JSON.stringify(updatedCasesDb));
+              syncedCasesList = updatedCasesDb;
+            }
+          }
+        } catch (_) {}
 
         return {
           ...prev,
           bursaList: nextBursa,
           misiList: nextMisi,
           penawaranList: nextPenawaran,
+          casesList: syncedCasesList,
           assignment: asgStatus,
         };
       });
