@@ -85,6 +85,7 @@ export function MitraMisiPenyaluran({
           status_tahapan: "Menunggu Persiapan",
           estimasi_waktu: "Menunggu Persiapan Armada",
           catatan_lapangan: o.catatan || "Komitmen telah disahkan. Armada sedang dipersiapkan untuk pengecekan logistik sebelum keberangkatan.",
+          foto_bukti: o.foto_bukti || o.kebutuhan?.foto_bukti || o.bursa?.kebutuhan?.foto_bukti,
           posko: o.bursa?.posko || {
             id: 1,
             nama_posko: "Posko BPBD Provinsi Jawa Timur",
