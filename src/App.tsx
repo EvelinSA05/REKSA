@@ -6966,6 +6966,9 @@ export default function App() {
           }
         } catch (_) {}
 
+        const activeMission = nextMisi.find((m: MisiItem) => m.status_tahapan !== "Selesai");
+        const asgStatus = activeMission ? activeMission.status_tahapan : prev.assignment;
+
         return {
           ...prev,
           bursaList: nextBursa,
