@@ -540,7 +540,17 @@ export function MitraBursaBantuan({
         armada_info: resolvedFleet,
         organisasi: userOrg,
         catatan: notesInput,
-      }).catch(() => {});
+      }).then((res) => {
+        if (res.success && res.data) {
+          try {
+            let cur = JSON.parse(localStorage.getItem("reksa_penawaran_db") || "[]");
+            cur = [res.data, ...cur.filter((o: any) => o.id !== newOffer.id && o.kode_penawaran !== newOffer.kode_penawaran)];
+            localStorage.setItem("reksa_penawaran_db", JSON.stringify(cur));
+          } catch (_) {}
+        }
+      }).catch((e) => {
+        console.warn("createPenawaran note:", e);
+      });
     } catch (err: any) {
       notify?.(err?.message || "Gagal mengajukan penawaran bantuan.");
       setIsSubmitting(false);

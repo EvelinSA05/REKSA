@@ -54,7 +54,7 @@ class PenawaranMitraController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'bursa_id' => 'required|integer|exists:bursa_bantuans,id',
+            'bursa_id' => 'required',
             'jumlah_tawaran' => 'required|string|max:100',
             'volume_angka' => 'nullable|integer',
             'satuan' => 'nullable|string|max:50',
@@ -66,7 +66,13 @@ class PenawaranMitraController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        $bursa = BursaBantuan::with('kebutuhan')->findOrFail($validated['bursa_id']);
+        $bursa = BursaBantuan::with('kebutuhan')->find($validated['bursa_id']);
+        if (!$bursa) {
+            $bursa = BursaBantuan::with('kebutuhan')
+                ->where('item_bantuan', 'ilike', '%' . ($validated['kategori_komoditas'] ?? '') . '%')
+                ->first()
+                ?? BursaBantuan::with('kebutuhan')->first();
+        }
         $user = $request->user();
         $defaultMitra = User::where('role', 'responder')->first();
 
@@ -135,6 +141,8 @@ class PenawaranMitraController extends Controller
             'aksi' => 'Penawaran Diajukan',
             'deskripsi' => "Mitra Bantuan {$mitraName} ({$mitraOrg}) mengajukan bantuan {$validated['jumlah_tawaran']} untuk {$bursa->item_bantuan} [Metode: {$metodeLabel}]. Menunggu peninjauan Posko.",
         ]);
+
+        \Illuminate\Support\Facades\Cache::forget('api_penawaran_index');
 
         return response()->json([
             'success' => true,
@@ -251,6 +259,8 @@ class PenawaranMitraController extends Controller
                 'deskripsi' => "Posko menyetujui alokasi {$approvedVolStr} dari penawaran {$penawaran->kode_penawaran} ({$penawaran->organisasi}). Misi {$kodeMisi} diterbitkan. Sisa kekurangan alokasi: {$kekuranganAlokasi} {$satuan}.",
             ]);
 
+            \Illuminate\Support\Facades\Cache::forget('api_penawaran_index');
+
             return response()->json([
                 'success' => true,
                 'message' => "Penawaran {$penawaran->kode_penawaran} berhasil disetujui ({$approvedVolStr}). Misi resmi {$kodeMisi} telah diterbitkan.",
@@ -306,6 +316,8 @@ class PenawaranMitraController extends Controller
             'aksi' => 'Penawaran Ditolak',
             'deskripsi' => "Penawaran {$penawaran->kode_penawaran} dari {$penawaran->organisasi} ditolak oleh Posko. Alasan: {$validated['alasan_penolakan']}.",
         ]);
+
+        \Illuminate\Support\Facades\Cache::forget('api_penawaran_index');
 
         return response()->json([
             'success' => true,
