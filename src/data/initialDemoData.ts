@@ -416,7 +416,7 @@ export const DEMO_SEED_CASES: CaseRecord[] = [
     affectedPeople: 8,
     urgency: "Tinggi",
     status: "Dialihkan ke Mitra",
-    isOwn: false,
+    isOwn: true,
     escalatedToMitra: true,
     mitraHandler: "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
     catatanPengalihan: "Dialihkan resmi oleh Posko BPBD ke Palang Merah Indonesia (PMI Cabang Jawa Timur) untuk verifikasi & penyaluran cepat.",

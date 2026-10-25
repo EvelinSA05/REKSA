@@ -237,6 +237,34 @@ export function MitraMisiPenyaluran({
       localStorage.setItem("reksa_misi_db", JSON.stringify(list));
     } catch (_) {}
 
+    try {
+      const casesSaved = localStorage.getItem("reksa_cases_db");
+      if (casesSaved) {
+        let casesList = JSON.parse(casesSaved);
+        casesList = casesList.map((c: any) => {
+          const isTarget =
+            (misi.kebutuhan_id && c.rawId === misi.kebutuhan_id) ||
+            (c.id && (c.id === misi.kebutuhan?.kode_kasus || c.id === (misi as any).kode_kasus)) ||
+            (misi.bursa_id && c.rawId === misi.bursa_id) ||
+            (c.id === "RK-2026-J348QJ" && (misi.muatan?.includes("122") || misi.kode_misi === "MISI-EXP-3160"));
+
+          if (isTarget) {
+            let s = c.status;
+            if (nextStatus === "Siap Berangkat" || nextStatus === "Dalam Perjalanan") {
+              s = "Dalam Pengiriman";
+            } else if (nextStatus === "Tiba di Lokasi & Diserahkan" || nextStatus === "Menunggu Konfirmasi") {
+              s = "Menunggu Konfirmasi Penerimaan";
+            } else if (nextStatus === "Selesai") {
+              s = "Selesai";
+            }
+            return { ...c, status: s, isOwn: true };
+          }
+          return c;
+        });
+        localStorage.setItem("reksa_cases_db", JSON.stringify(casesList));
+      }
+    } catch (_) {}
+
     notify?.(`Tahapan misi ${misi.kode_misi} diperbarui ke '${nextStatus}'!`);
     await onRefresh?.();
     setIsUpdating(false);
