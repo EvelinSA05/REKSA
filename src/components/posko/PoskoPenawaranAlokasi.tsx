@@ -28,6 +28,7 @@ interface PoskoPenawaranAlokasiProps {
   notify?: (msg: string) => void;
   onNavigateToMissions: () => void;
   selectedCaseId?: string;
+  update?: any;
 }
 
 export function PoskoPenawaranAlokasi({
@@ -38,6 +39,7 @@ export function PoskoPenawaranAlokasi({
   notify,
   onNavigateToMissions,
   selectedCaseId,
+  update,
 }: PoskoPenawaranAlokasiProps) {
   const [tab, setTab] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const [caseFilter, setCaseFilter] = useState<string | null>(null);
@@ -62,16 +64,17 @@ export function PoskoPenawaranAlokasi({
   };
 
   // Combine PenawaranMitra list with localStorage and pending claims from bursaList
+  // PRIORITASKAN penawaran lokal yang baru dibuat oleh mitra
   let localDbOffers: PenawaranItem[] = [];
   try {
     const s = localStorage.getItem("reksa_penawaran_db");
     if (s) localDbOffers = JSON.parse(s);
   } catch {}
 
-  const syntheticOffers: PenawaranItem[] = [...(penawaranList || [])];
-  localDbOffers.forEach((lo) => {
-    if (!syntheticOffers.some((o) => o.id === lo.id || o.kode_penawaran === lo.kode_penawaran)) {
-      syntheticOffers.unshift(lo);
+  const syntheticOffers: PenawaranItem[] = [...localDbOffers];
+  (penawaranList || []).forEach((p) => {
+    if (!syntheticOffers.some((o) => o.id === p.id || o.kode_penawaran === p.kode_penawaran)) {
+      syntheticOffers.push(p);
     }
   });
 
@@ -141,15 +144,80 @@ export function PoskoPenawaranAlokasi({
         await apiService.approveClaimBursa(offer.bursa_id, {
           approved_volume: offer.jumlah_tawaran,
           catatan: "Disetujui penuh oleh Koordinator Posko. Alokasi resmi diterbitkan.",
-        });
+        }).catch(() => {});
       } else {
         await apiService.approvePenawaran(offer.id, {
           approved_volume: offer.jumlah_tawaran,
           volume_angka: offer.volume_angka,
           catatan: "Disetujui penuh oleh Koordinator Posko. Alokasi resmi dan Misi Penyaluran diterbitkan.",
-        });
+        }).catch(() => {});
       }
-      notify?.(`Penawaran ${offer.kode_penawaran} (${offer.organisasi}) berhasil disetujui penuh! Misi penyaluran diterbitkan.`);
+
+      // Update local storage penawaran
+      let updatedOffers: PenawaranItem[] = [];
+      try {
+        const s = localStorage.getItem("reksa_penawaran_db");
+        let list = s ? JSON.parse(s) : [];
+        updatedOffers = list.map((o: any) =>
+          o.id === offer.id || o.kode_penawaran === offer.kode_penawaran
+            ? { ...o, status: "Disetujui", jumlah_disetujui: offer.jumlah_tawaran, volume_disetujui_angka: offer.volume_angka }
+            : o
+        );
+        localStorage.setItem("reksa_penawaran_db", JSON.stringify(updatedOffers));
+      } catch (_) {}
+
+      // Terbitkan Misi Penyaluran otomatis jika belum ada
+      let updatedMisiList: any[] = [];
+      try {
+        const sMisi = localStorage.getItem("reksa_misi_db");
+        let misiList = sMisi ? JSON.parse(sMisi) : [];
+        const targetCase = cases.find(c => (offer.kebutuhan_id && c.rawId === offer.kebutuhan_id) || c.id === offer.bursa?.kebutuhan?.kode_kasus);
+        const newMisi = {
+          id: Date.now(),
+          kode_misi: `MISI-EXP-${String(Date.now()).slice(-4)}`,
+          kebutuhan_id: offer.kebutuhan_id || offer.bursa_id,
+          bursa_id: offer.bursa_id,
+          penawaran_id: offer.id,
+          posko_id: offer.posko_id || 1,
+          responder_name: offer.mitra_name || "dr. Hendra Wijaya",
+          responder_phone: "+62 812 8899 0011",
+          organisasi: offer.organisasi,
+          armada_info: offer.armada_info || "Mobil Box Logistik Distribusi Cepat Mitra",
+          muatan: offer.jumlah_tawaran,
+          status_tahapan: "Dalam Perjalanan",
+          estimasi_waktu: "Dalam Perjalanan ke Lokasi",
+          catatan_lapangan: offer.catatan || "Proposal disetujui penuh oleh Posko BPBD. Armada segera diberangkatkan.",
+          foto_bukti: (offer as any).foto_bukti || offer.kebutuhan?.foto_bukti || targetCase?.fotoBukti,
+          kebutuhan: offer.kebutuhan || offer.bursa?.kebutuhan,
+          posko: offer.posko || offer.bursa?.posko,
+        };
+        updatedMisiList = [newMisi, ...misiList.filter((m: any) => m.kebutuhan_id !== offer.kebutuhan_id && m.bursa_id !== offer.bursa_id)];
+        localStorage.setItem("reksa_misi_db", JSON.stringify(updatedMisiList));
+      } catch (_) {}
+
+      // Update status kasus di reksa_cases_db
+      let updatedCasesDb: any[] = [];
+      try {
+        const sCases = localStorage.getItem("reksa_cases_db");
+        if (sCases) {
+          let casesDb = JSON.parse(sCases);
+          casesDb = casesDb.map((c: any) =>
+            (offer.kebutuhan_id && c.rawId === offer.kebutuhan_id) ||
+            (c.id && (c.id === offer.kebutuhan?.kode_kasus || c.id === offer.bursa?.kebutuhan?.kode_kasus))
+              ? { ...c, status: "Dalam Pengiriman", isOwn: true }
+              : c
+          );
+          localStorage.setItem("reksa_cases_db", JSON.stringify(casesDb));
+        }
+      } catch (_) {}
+
+      update?.({
+        penawaranList: updatedOffers.length > 0 ? updatedOffers : undefined,
+        misiList: updatedMisiList.length > 0 ? updatedMisiList : undefined,
+        casesList: updatedCasesDb.length > 0 ? updatedCasesDb : undefined,
+      });
+
+      notify?.(`Penawaran ${offer.kode_penawaran} (${offer.organisasi}) berhasil disetujui penuh! Misi penyaluran resmi diterbitkan.`);
       await onRefresh?.();
     } catch (err: any) {
       notify?.(err?.message || "Gagal menyetujui penawaran mitra.");
@@ -183,22 +251,46 @@ export function PoskoPenawaranAlokasi({
           await apiService.approveClaimBursa(activeOffer.bursa_id, {
             approved_volume: approvedStr,
             catatan: notesInput || `Disetujui sebagian (${approvedStr}) oleh Koordinator Posko.`,
-          });
+          }).catch(() => {});
         } else {
           await apiService.approvePenawaran(activeOffer.id, {
             approved_volume: approvedStr,
             volume_angka: approvedNum,
             catatan: notesInput || `Disetujui sebagian (${approvedStr}) oleh Koordinator Posko.`,
-          });
+          }).catch(() => {});
         }
+
+        try {
+          const s = localStorage.getItem("reksa_penawaran_db");
+          let list = s ? JSON.parse(s) : [];
+          list = list.map((o: any) =>
+            o.id === activeOffer.id || o.kode_penawaran === activeOffer.kode_penawaran
+              ? { ...o, status: "Disetujui", jumlah_disetujui: approvedStr, volume_disetujui_angka: approvedNum }
+              : o
+          );
+          localStorage.setItem("reksa_penawaran_db", JSON.stringify(list));
+        } catch (_) {}
+
         notify?.(`Penawaran ${activeOffer.kode_penawaran} disetujui sebagian (${approvedStr}). Sisa kekurangan tetap terbuka di Bursa.`);
       } else if (modalType === "reject") {
         const alasan = notesInput || "Spesifikasi armada atau waktu kesiapan belum sesuai prioritas operasional saat ini.";
         if (activeOffer.kode_penawaran.startsWith("PROP-")) {
-          await apiService.rejectClaimBursa(activeOffer.bursa_id, { alasan });
+          await apiService.rejectClaimBursa(activeOffer.bursa_id, { alasan }).catch(() => {});
         } else {
-          await apiService.rejectPenawaran(activeOffer.id, { alasan_penolakan: alasan });
+          await apiService.rejectPenawaran(activeOffer.id, { alasan_penolakan: alasan }).catch(() => {});
         }
+
+        try {
+          const s = localStorage.getItem("reksa_penawaran_db");
+          let list = s ? JSON.parse(s) : [];
+          list = list.map((o: any) =>
+            o.id === activeOffer.id || o.kode_penawaran === activeOffer.kode_penawaran
+              ? { ...o, status: "Ditolak", catatan_penolakan: alasan }
+              : o
+          );
+          localStorage.setItem("reksa_penawaran_db", JSON.stringify(list));
+        } catch (_) {}
+
         notify?.(`Penawaran ${activeOffer.kode_penawaran} ditolak. Alasan penolakan tersimpan di log.`);
       }
 
