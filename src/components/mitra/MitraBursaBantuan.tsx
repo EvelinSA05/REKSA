@@ -380,13 +380,22 @@ export function MitraBursaBantuan({
         satuan: offeredUnit,
         waktu_kesiapan: readinessTime,
         armada_info: resolvedFleet,
+        metode_penyaluran: deliveryMethod,
         status: (isDelegatedToMitra ? "Disetujui" : "Diajukan") as "Disetujui" | "Diajukan",
         jumlah_disetujui: isDelegatedToMitra ? amountStr : undefined,
         volume_disetujui_angka: isDelegatedToMitra ? num : undefined,
         catatan: notesInput,
-        created_at: isDelegatedToMitra ? "Hari ini, Baru diajukan & disetujui" : "Hari ini, Baru diajukan",
+        created_at: new Date().toISOString(),
+        foto_bukti: modalBursa.kebutuhan?.foto_bukti || (modalBursa as any).foto_bukti || relatedCase?.fotoBukti,
         bursa: modalBursa,
-        kebutuhan: modalBursa.kebutuhan,
+        kebutuhan: modalBursa.kebutuhan || {
+          id: modalBursa.kebutuhan_id || modalBursa.id,
+          kode_kasus: relatedCase?.id || modalBursa.kebutuhan?.kode_kasus || `RK-2026-${modalBursa.id}`,
+          desa: relatedCase?.desa || modalBursa.kebutuhan?.desa || "Gubeng",
+          kecamatan: relatedCase?.kecamatan || modalBursa.kebutuhan?.kecamatan || "Gubeng",
+          kabupaten: relatedCase?.kabupaten || modalBursa.kebutuhan?.kabupaten || "Kota Surabaya",
+          foto_bukti: relatedCase?.fotoBukti || modalBursa.kebutuhan?.foto_bukti,
+        },
       };
 
       const updatedOffers = [newOffer, ...localOffers.filter((o: any) => o.bursa_id !== modalBursa.id)];

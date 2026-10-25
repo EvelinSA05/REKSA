@@ -50,12 +50,34 @@ export function PoskoPenawaranAlokasi({
   const [notesInput, setNotesInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Combine PenawaranMitra list with pending claims from bursaList (if not already represented)
-  const syntheticOffers: PenawaranItem[] = [...penawaranList];
+  const formatOfferDate = (dateStr?: string) => {
+    if (!dateStr) return "Hari ini, Baru diajukan";
+    if (dateStr.includes("Hari ini") || dateStr.includes("Baru") || dateStr.includes("Kemarin") || dateStr.includes("WIB")) {
+      return dateStr;
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime())
+      ? dateStr
+      : d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " WIB";
+  };
+
+  // Combine PenawaranMitra list with localStorage and pending claims from bursaList
+  let localDbOffers: PenawaranItem[] = [];
+  try {
+    const s = localStorage.getItem("reksa_penawaran_db");
+    if (s) localDbOffers = JSON.parse(s);
+  } catch {}
+
+  const syntheticOffers: PenawaranItem[] = [...(penawaranList || [])];
+  localDbOffers.forEach((lo) => {
+    if (!syntheticOffers.some((o) => o.id === lo.id || o.kode_penawaran === lo.kode_penawaran)) {
+      syntheticOffers.unshift(lo);
+    }
+  });
 
   bursaList.forEach((b) => {
     if (b.status === "Klaim Diajukan" && b.claimed_org) {
-      const alreadyExists = penawaranList.some((p) => p.bursa_id === b.id && p.status === "Diajukan");
+      const alreadyExists = syntheticOffers.some((p) => p.bursa_id === b.id && p.status === "Diajukan");
       if (!alreadyExists) {
         syntheticOffers.push({
           id: b.id,
@@ -491,62 +513,158 @@ export function PoskoPenawaranAlokasi({
                   </div>
                 </div>
 
-                {/* Main Body with Visual Supporting Photo */}
-                <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
-                  <div
-                    className="posko-case-photo-thumb"
-                    onClick={() =>
-                      setPreviewImage({
-                        src: getOfferPhoto(o.jenis_bantuan, o.armada_info, (o as any).foto_bukti),
-                        title: `Proposal Komitmen: ${o.organisasi}`,
-                        location: `Komoditas: ${o.jenis_bantuan} (${o.jumlah_tawaran}) · ${o.armada_info || "Armada Mitra"}`,
-                      })
-                    }
-                    title="Klik untuk memperbesar foto komoditas & armada mitra"
-                  >
-                    <img
-                      src={getOfferPhoto(o.jenis_bantuan, o.armada_info, (o as any).foto_bukti)}
-                      alt={o.jenis_bantuan}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
-                      }}
-                      className="posko-case-photo-img"
-                    />
-                    <div className="posko-case-photo-badge">
-                      <AppIcon name="box" size={11} />
-                      <span>Dokumentasi Mitra</span>
-                    </div>
-                    <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
-                      <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
-                    </div>
-                  </div>
+                {/* Target Disaster Case & Location Banner */}
+                {(() => {
+                  const targetCase = cases.find(
+                    (c) =>
+                      (o.kebutuhan_id && c.rawId === o.kebutuhan_id) ||
+                      (c.id && (c.id === o.bursa?.kebutuhan?.kode_kasus || c.id === o.kebutuhan?.kode_kasus)) ||
+                      (o.bursa_id && c.rawId === o.bursa_id) ||
+                      (o.bursa?.kebutuhan?.kode_kasus && c.id === o.bursa.kebutuhan.kode_kasus)
+                  );
 
-                  <div className="posko-case-info-col">
-                    <h3 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
-                      {o.organisasi} · Penawaran: {o.jumlah_tawaran}
-                    </h3>
+                  const targetCaseCode =
+                    targetCase?.id ||
+                    o.bursa?.kebutuhan?.kode_kasus ||
+                    o.kebutuhan?.kode_kasus ||
+                    (o.kebutuhan_id ? `RK-2026-${o.kebutuhan_id}` : `RK-2026-EXP`);
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="box" size={13} style={{ color: "#80866e" }} />
-                        <span>Komoditas: <strong>{o.jenis_bantuan}</strong></span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
-                        <span>Narahubung: <strong>{o.mitra_name}</strong></span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="truck" size={13} style={{ color: "#80866e" }} />
-                        <span>Armada: <strong>{o.armada_info || "Armada Mitra"}</strong></span>
-                      </span>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                        <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
-                        <span>Diajukan: {new Date(o.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  const targetDesa =
+                    targetCase?.desa ||
+                    o.bursa?.kebutuhan?.desa ||
+                    o.kebutuhan?.desa ||
+                    o.posko?.desa ||
+                    "Wilayah Terdampak";
+
+                  const targetKec =
+                    targetCase?.kecamatan ||
+                    o.bursa?.kebutuhan?.kecamatan ||
+                    o.kebutuhan?.kecamatan ||
+                    o.posko?.kecamatan ||
+                    "Sidoarjo";
+
+                  const targetKab =
+                    targetCase?.kabupaten ||
+                    o.bursa?.kebutuhan?.kabupaten ||
+                    o.kebutuhan?.kabupaten ||
+                    o.posko?.kabupaten ||
+                    "Jawa Timur";
+
+                  const targetLocation = `Desa ${targetDesa}, Kec. ${targetKec}, ${targetKab}`;
+
+                  const targetTotalVolume =
+                    o.bursa?.target_volume ||
+                    targetCase?.qty ||
+                    `${o.volume_angka || 100} ${o.satuan || "Unit"}`;
+
+                  // Foto bukti pendukung: PRIORITASKAN foto asli dari kasus/warga/bursa
+                  const resolvedPhoto =
+                    (o as any).foto_bukti ||
+                    o.kebutuhan?.foto_bukti ||
+                    o.bursa?.kebutuhan?.foto_bukti ||
+                    (o.bursa as any)?.foto_bukti ||
+                    targetCase?.fotoBukti ||
+                    getOfferPhoto(o.jenis_bantuan, o.armada_info);
+
+                  return (
+                    <>
+                      {/* Sasaran Kasus & Titik Bencana */}
+                      <div
+                        style={{
+                          background: "rgba(1, 50, 32, 0.04)",
+                          borderRadius: "10px",
+                          padding: "8px 14px",
+                          margin: "0 0 12px",
+                          border: "1px solid rgba(1, 50, 32, 0.1)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: "8px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                          <span
+                            style={{
+                              fontWeight: 800,
+                              color: "#013220",
+                              background: "#e2e8f0",
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              fontFamily: "monospace",
+                              fontSize: "0.82rem",
+                            }}
+                          >
+                            Kasus: {targetCaseCode}
+                          </span>
+                          <span style={{ color: "#1e293b", fontWeight: 700, fontSize: "0.84rem" }}>
+                            📍 {targetLocation}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                          Target Total Kasus: <strong style={{ color: "#013220" }}>{targetTotalVolume}</strong>
+                        </div>
+                      </div>
+
+                      {/* Main Body with Visual Supporting Photo */}
+                      <div className="posko-case-body-main" style={{ marginBottom: "14px" }}>
+                        <div
+                          className="posko-case-photo-thumb"
+                          onClick={() =>
+                            setPreviewImage({
+                              src: resolvedPhoto,
+                              title: `Proposal Komitmen: ${o.organisasi}`,
+                              location: `Target Kasus: ${targetCaseCode} (${targetLocation}) · Komoditas: ${o.jenis_bantuan} (${o.jumlah_tawaran})`,
+                            })
+                          }
+                          title="Klik untuk memperbesar foto komoditas & armada mitra"
+                        >
+                          <img
+                            src={resolvedPhoto}
+                            alt={o.jenis_bantuan}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://images.unsplash.com/photo-1547683905-f686c993aae5?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&w=1200&q=82";
+                            }}
+                            className="posko-case-photo-img"
+                          />
+                          <div className="posko-case-photo-badge">
+                            <AppIcon name="camera" size={11} />
+                            <span>Foto Lapangan</span>
+                          </div>
+                          <div className="posko-case-photo-zoom" title="Klik untuk memperbesar">
+                            <AppIcon name="search" size={13} style={{ color: "#ffffff" }} />
+                          </div>
+                        </div>
+
+                        <div className="posko-case-info-col">
+                          <h3 style={{ margin: "0 0 6px", fontSize: "1.2rem", fontWeight: 800, color: "#013220" }}>
+                            {o.organisasi} · Penawaran: {o.jumlah_tawaran}
+                          </h3>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "0.82rem", color: "#64748b" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              <AppIcon name="box" size={13} style={{ color: "#80866e" }} />
+                              <span>Komoditas: <strong>{o.jenis_bantuan}</strong></span>
+                            </span>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              <AppIcon name="user" size={13} style={{ color: "#80866e" }} />
+                              <span>Narahubung: <strong>{o.mitra_name}</strong></span>
+                            </span>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              <AppIcon name="truck" size={13} style={{ color: "#80866e" }} />
+                              <span>Armada: <strong>{o.armada_info || "Armada Mitra"}</strong></span>
+                            </span>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                              <AppIcon name="calendar" size={13} style={{ color: "#80866e" }} />
+                              <span>Diajukan: {formatOfferDate(o.created_at)}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Details Grid (clean 4-column layout) */}
                 <div
