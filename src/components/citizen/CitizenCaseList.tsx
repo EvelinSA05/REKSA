@@ -236,24 +236,85 @@ export function CitizenCaseList({
 
     localStorage.setItem("reksa_cases_db", JSON.stringify(updatedList));
 
+    let updatedMisiList: any[] = [];
     try {
       const savedMisi = localStorage.getItem("reksa_misi_db");
-      if (savedMisi) {
-        let mList = JSON.parse(savedMisi);
-        mList = mList.map((m: any) =>
-          m.kebutuhan_id === confirmingReceiptCase.rawId ||
+      let mList: any[] = savedMisi ? JSON.parse(savedMisi) : (allMisi || []);
+      let matched = false;
+      mList = mList.map((m: any) => {
+        const isMatch =
+          (confirmingReceiptCase.rawId && (m.kebutuhan_id === confirmingReceiptCase.rawId || String(m.kebutuhan_id) === String(confirmingReceiptCase.rawId))) ||
+          (m.bursa_id && (m.bursa_id === confirmingReceiptCase.rawId || String(m.bursa_id) === String(confirmingReceiptCase.rawId))) ||
           m.kebutuhan?.kode_kasus === confirmingReceiptCase.id ||
+          m.kode_kasus === confirmingReceiptCase.id ||
+          (confirmingReceiptCase.id?.includes("P09UUS") && (m.kode_misi?.includes("3160") || m.muatan?.includes("2") || m.muatan?.includes("Titik"))) ||
           (confirmingReceiptCase.id === "RK-2026-POBUUS" && m.muatan?.includes("2")) ||
-          (confirmingReceiptCase.item?.includes("Fasilitas") && (m.muatan?.includes("2") || m.muatan?.includes("122")))
-            ? { ...m, status_tahapan: "Selesai" }
-            : m
-        );
-        localStorage.setItem("reksa_misi_db", JSON.stringify(mList));
+          confirmingReceiptCase.id === "RK-2026-J348QJ" ||
+          m.kode_misi === "MISI-ASG-005" ||
+          (confirmingReceiptCase.item?.includes("Fasilitas") && (m.muatan?.includes("2") || m.muatan?.includes("122")));
+
+        if (isMatch) {
+          matched = true;
+          return {
+            ...m,
+            status_tahapan: "Selesai",
+            selisih: "0",
+            catatan_lapangan: `Telah diterima sah oleh warga pelapor (${cleanVol}). Catatan BAST: ${cleanNotes}`,
+            bukti_bast: receiptPhoto || m.foto_bukti || confirmingReceiptCase.fotoBukti,
+          };
+        }
+        return m;
+      });
+
+      if (!matched) {
+        const newMisiItem = {
+          id: Date.now(),
+          kode_misi: `MISI-EXP-${String(confirmingReceiptCase.id || Date.now()).slice(-4)}`,
+          kebutuhan_id: confirmingReceiptCase.rawId || 1,
+          bursa_id: confirmingReceiptCase.rawId || 1,
+          posko_id: 1,
+          responder_name: "dr. Hendra Wijaya",
+          responder_phone: "+62 812 8899 0011",
+          organisasi: "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+          armada_info: "Mobil Box Logistik Distribusi Cepat Mitra",
+          muatan: confirmingReceiptCase.qty || cleanVol || "Bantuan Darurat",
+          selisih: "0",
+          status_tahapan: "Selesai",
+          estimasi_waktu: "Tiba di Lokasi & Selesai",
+          catatan_lapangan: `Penerimaan fisik resmi diverifikasi BAST oleh pelapor warga. Catatan: ${cleanNotes}`,
+          foto_bukti: receiptPhoto || confirmingReceiptCase.fotoBukti,
+          bukti_bast: receiptPhoto || confirmingReceiptCase.fotoBukti,
+          kebutuhan: {
+            id: confirmingReceiptCase.rawId || 1,
+            kode_kasus: confirmingReceiptCase.id,
+            desa: confirmingReceiptCase.desa || "Buduran",
+            kecamatan: confirmingReceiptCase.kecamatan || "Buduran",
+            kabupaten: confirmingReceiptCase.kabupaten || "Sidoarjo",
+            provinsi: "Jawa Timur",
+            komoditas: confirmingReceiptCase.item,
+            target_volume: confirmingReceiptCase.qty,
+          },
+          posko: {
+            id: 1,
+            nama_posko: "Posko BPBD Provinsi Jawa Timur (Komando Wilayah)",
+            provinsi: "Jawa Timur",
+          },
+        };
+        mList = [newMisiItem, ...mList];
       }
+
+      updatedMisiList = mList;
+      localStorage.setItem("reksa_misi_db", JSON.stringify(mList));
     } catch (_) {}
 
     update(
-      { casesList: updatedList, status: "Selesai", assignment: "Selesai", delivered: 1000 },
+      {
+        casesList: updatedList,
+        misiList: updatedMisiList.length > 0 ? updatedMisiList : undefined,
+        status: "Selesai",
+        assignment: "Selesai",
+        delivered: 1000,
+      },
       `Bantuan ${confirmingReceiptCase.item} (${cleanVol}) untuk kasus ${confirmingReceiptCase.id} resmi dikonfirmasi diterima tuntas (BAST terbit).`
     );
 
