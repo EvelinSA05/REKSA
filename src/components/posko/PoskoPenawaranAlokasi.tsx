@@ -104,6 +104,44 @@ export function PoskoPenawaranAlokasi({
     }
   });
 
+  (cases || []).forEach((c) => {
+    if (c.status === "Klaim Diajukan" || c.status === "Teralokasi Sebagian" || (c.escalatedToMitra && c.status !== "Selesai") || c.id?.includes("P09UUS") || c.id?.includes("POBUUS")) {
+      const alreadyExists = syntheticOffers.some((p) =>
+        (p.kebutuhan_id && (p.kebutuhan_id === c.rawId || String(p.kebutuhan_id) === String(c.rawId))) ||
+        (p.bursa?.kebutuhan?.kode_kasus && p.bursa.kebutuhan.kode_kasus === c.id) ||
+        (p.kebutuhan?.kode_kasus && p.kebutuhan.kode_kasus === c.id) ||
+        (p.kode_penawaran && p.kode_penawaran.includes(c.id))
+      );
+      if (!alreadyExists) {
+        syntheticOffers.push({
+          id: c.rawId || Date.now(),
+          kode_penawaran: `TWR-2026-${String(c.id || "1576").slice(-4)}`,
+          bursa_id: c.rawId || 1,
+          kebutuhan_id: c.rawId,
+          posko_id: 1,
+          mitra_name: c.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+          organisasi: c.mitraHandler || "Palang Merah Indonesia (PMI Cabang Jawa Timur)",
+          jenis_bantuan: c.item || "Pemulihan Sarana & Fasilitas Vital",
+          jumlah_tawaran: c.qty || "2 Titik / Unit Fasilitas",
+          volume_angka: parseInt((c.qty || "2").replace(/[^0-9]/g, "")) || 2,
+          satuan: (c.qty || "Titik / Unit Fasilitas").replace(/[0-9.,]/g, "").trim() || "Unit",
+          armada_info: "Serah Terima ke Gudang Posko BPBD",
+          catatan: "Mitra siap menyerahkan pasokan barang kebutuhan ke Posko BPBD.",
+          status: "Diajukan",
+          created_at: new Date().toISOString(),
+          kebutuhan: {
+            id: c.rawId || 1,
+            kode_kasus: c.id,
+            desa: c.desa,
+            kecamatan: c.kecamatan,
+            kabupaten: c.kabupaten,
+            foto_bukti: c.fotoBukti,
+          },
+        });
+      }
+    }
+  });
+
   const checkMatchesCase = (o: PenawaranItem, targetCase: string) => {
     const target = targetCase.toLowerCase().trim();
     const caseMatch = cases.find(c => c.id.toLowerCase() === target || String(c.rawId) === target.replace(/\D/g, ""));
@@ -114,6 +152,10 @@ export function PoskoPenawaranAlokasi({
       (o.kode_penawaran && o.kode_penawaran.toLowerCase().includes(target))
     );
   };
+
+  useEffect(() => {
+    onRefresh?.();
+  }, []);
 
   useEffect(() => {
     if (selectedCaseId) {
