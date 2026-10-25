@@ -33,40 +33,23 @@ export function MitraMisiPenyaluran({
       if (s) localSaved = JSON.parse(s);
     } catch {}
 
-    // 1. Baca dari props misiList, dan normalisasi misi bertipe MISI-EXP- ke Tahap 1: "Menunggu Persiapan"
-    const combined: MisiItem[] = (misiList || []).map((m) => {
-      if (m.kode_misi?.startsWith("MISI-EXP-") && (m.status_tahapan === "Dalam Perjalanan" || !m.status_tahapan)) {
-        return {
-          ...m,
-          status_tahapan: "Menunggu Persiapan",
-          estimasi_waktu: "Menunggu Persiapan Armada",
-        };
-      }
-      return m;
-    });
+    // 1. Ambil daftar misi dari props
+    const combined: MisiItem[] = [...(misiList || [])];
 
+    // 2. Gabungkan localSaved (mempertahankan update tahapan terbaru yang dilakukan pengguna di browser)
     localSaved.forEach((lm) => {
-      const normalizedLm = { ...lm };
-      if (normalizedLm.kode_misi?.startsWith("MISI-EXP-") && (normalizedLm.status_tahapan === "Dalam Perjalanan" || !normalizedLm.status_tahapan)) {
-        normalizedLm.status_tahapan = "Menunggu Persiapan";
-        normalizedLm.estimasi_waktu = "Menunggu Persiapan Armada";
-      }
-
       const matchIdx = combined.findIndex(
-        (m) => m.id === normalizedLm.id || (m.kode_misi && normalizedLm.kode_misi && m.kode_misi === normalizedLm.kode_misi)
+        (m) => m.id === lm.id || (m.kode_misi && lm.kode_misi && m.kode_misi === lm.kode_misi)
       );
 
       if (matchIdx >= 0) {
-        if (combined[matchIdx].kode_misi?.startsWith("MISI-EXP-") && combined[matchIdx].status_tahapan === "Dalam Perjalanan") {
-          combined[matchIdx].status_tahapan = "Menunggu Persiapan";
-          combined[matchIdx].estimasi_waktu = "Menunggu Persiapan Armada";
-        }
+        combined[matchIdx] = { ...combined[matchIdx], ...lm };
       } else {
-        combined.unshift(normalizedLm);
+        combined.unshift(lm);
       }
     });
 
-    // Otomatis terbitkan misi aktif untuk setiap komitmen/penawaran mitra yang telah Disetujui
+    // 3. Otomatis terbitkan misi aktif untuk setiap komitmen/penawaran mitra yang telah Disetujui
     let localOffers: any[] = [];
     try {
       const pSaved = localStorage.getItem("reksa_penawaran_db");
@@ -122,18 +105,6 @@ export function MitraMisiPenyaluran({
         combined.unshift(syntheticMisi);
       }
     });
-
-    // 4. Pastikan SEMUA misi penugasan mitra (MISI-EXP-) yang masih 'Dalam Perjalanan' dipaksa ke 'Menunggu Persiapan' (Tahap 1)
-    combined.forEach((m) => {
-      if (m.kode_misi?.startsWith("MISI-EXP-") && m.status_tahapan === "Dalam Perjalanan") {
-        m.status_tahapan = "Menunggu Persiapan";
-        m.estimasi_waktu = "Menunggu Persiapan Armada";
-      }
-    });
-
-    try {
-      localStorage.setItem("reksa_misi_db", JSON.stringify(combined));
-    } catch {}
 
     return combined;
   }, [misiList, userName, userOrg]);
