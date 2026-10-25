@@ -798,32 +798,7 @@ export function CitizenCaseList({
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {isWaitingReceipt && (
-                        <button
-                          type="button"
-                          onClick={() => openReceiptModal(c)}
-                          style={{
-                            width: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "6px",
-                            padding: "9px 12px",
-                            background: "#059669",
-                            color: "#ffffff",
-                            border: "none",
-                            borderRadius: "8px",
-                            fontSize: "0.85rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(5, 150, 105, 0.25)",
-                          }}
-                        >
-                          <Icon name="check" /> Konfirmasi Bantuan Diterima (BAST)
-                        </button>
-                      )}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: "6px" }}>
                       <button
                         type="button"
                         onClick={() => openEdit(c)}
@@ -880,7 +855,6 @@ export function CitizenCaseList({
                         Pantau <Icon name="next" />
                       </button>
                     </div>
-                  </div>
                   )}
                 </div>
               </div>
