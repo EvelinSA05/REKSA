@@ -13297,47 +13297,107 @@ body.reksa-density-compact .bursa-card {
 
 /* Live High-Contrast Field Mode */
 body.reksa-high-contrast {
-  filter: contrast(115%);
+  filter: contrast(120%);
 }
-body.reksa-high-contrast .workspace {
+body.reksa-high-contrast .workspace,
+body.reksa-high-contrast .portal-content {
   color: #000000 !important;
 }
-body.reksa-high-contrast button {
+body.reksa-high-contrast button,
+body.reksa-high-contrast input,
+body.reksa-high-contrast select,
+body.reksa-high-contrast textarea,
+body.reksa-high-contrast .card,
+body.reksa-high-contrast .case-card,
+body.reksa-high-contrast .posko-case-card {
   border-width: 2px !important;
+  border-color: #000000 !important;
 }
 
-/* Live Dim Mode (Tenda Malam) */
+/* Live Dim Mode (Tenda Malam / Dark Mode Lapangan) */
 body.reksa-dim-mode {
-  background-color: #121915 !important;
+  background-color: #111815 !important;
+  color: #e2e8f0 !important;
+  --paper: #111815 !important;
+  --white: #18221c !important;
+  --surface: #1e2b24 !important;
+  --border: #2a3a30 !important;
+  --dark: #f8fafc !important;
+  --subtext: #94a3b8 !important;
+}
+body.reksa-dim-mode .portal,
+body.reksa-dim-mode .portal-content,
+body.reksa-dim-mode .workspace,
+body.reksa-dim-mode .narrow-page {
+  background-color: #111815 !important;
   color: #e2e8f0 !important;
 }
-body.reksa-dim-mode .portal-content {
-  background-color: #141c18 !important;
+body.reksa-dim-mode .sidebar {
+  background-color: #0d1411 !important;
+  border-right-color: #1f2d25 !important;
 }
 body.reksa-dim-mode .settings-card-panel,
 body.reksa-dim-mode .posko-metric-card,
+body.reksa-dim-mode .mitra-metric-card,
+body.reksa-dim-mode .metric-card,
 body.reksa-dim-mode .case-card,
-body.reksa-dim-mode .posko-case-card {
-  background-color: #1a2420 !important;
-  border-color: #2d3f35 !important;
+body.reksa-dim-mode .posko-case-card,
+body.reksa-dim-mode .bursa-card,
+body.reksa-dim-mode .misi-card,
+body.reksa-dim-mode .profile-hero-card,
+body.reksa-dim-mode .profile-stat-box,
+body.reksa-dim-mode .chat-channel-list,
+body.reksa-dim-mode .chat-main,
+body.reksa-dim-mode .chat-bubble-peer,
+body.reksa-dim-mode .modal {
+  background-color: #17221b !important;
+  border-color: #2a3a30 !important;
   color: #f1f5f9 !important;
 }
 body.reksa-dim-mode .settings-switch-item {
-  background-color: #202c27 !important;
-  border-color: #2e4037 !important;
+  background-color: #1d2a23 !important;
+  border-color: #2d3e34 !important;
 }
 body.reksa-dim-mode h1,
 body.reksa-dim-mode h2,
 body.reksa-dim-mode h3,
-body.reksa-dim-mode strong {
+body.reksa-dim-mode h4,
+body.reksa-dim-mode strong,
+body.reksa-dim-mode b {
   color: #f8fafc !important;
+}
+body.reksa-dim-mode p,
+body.reksa-dim-mode span,
+body.reksa-dim-mode small,
+body.reksa-dim-mode label {
+  color: inherit;
+}
+body.reksa-dim-mode input:not([type="checkbox"]):not([type="radio"]),
+body.reksa-dim-mode select,
+body.reksa-dim-mode textarea {
+  background-color: #131b16 !important;
+  color: #f8fafc !important;
+  border-color: #2d3e34 !important;
+}
+body.reksa-dim-mode .btn-settings-ghost {
+  background-color: #1e2b24 !important;
+  color: #cbd5e1 !important;
+  border-color: #2d3e34 !important;
+}
+body.reksa-dim-mode .btn-settings-ghost:hover {
+  background-color: #26382f !important;
+  color: #ffffff !important;
 }
 
 /* Live Reduced Motion */
-body.reksa-reduced-motion * {
+body.reksa-reduced-motion *,
+body.reksa-reduced-motion *::before,
+body.reksa-reduced-motion *::after {
   animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
 }
+
 
 
 
