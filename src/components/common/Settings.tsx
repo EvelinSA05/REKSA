@@ -1082,6 +1082,9 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
               </div>
             </form>
           </div>
+        </div>
+      )}
+
       {/* MODAL AKTIVASI 2FA */}
       {showTwoFactorModal && (
         <div className="modal-backdrop" onClick={() => setShowTwoFactorModal(false)}>
