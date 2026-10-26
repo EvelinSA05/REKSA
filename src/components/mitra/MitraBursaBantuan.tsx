@@ -90,7 +90,7 @@ export function MitraBursaBantuan({
       if (offeredBursaIds.has(bursaIdStr)) return false;
       if (kebutuhanIdStr && offeredKebutuhanIds.has(kebutuhanIdStr)) return false;
       if (caseCode && offeredCaseCodes.has(caseCode)) return false;
-      if (b.claimed_org) return false;
+      if (b.claimed_org && (s.includes("penuh") || s.includes("selesai") || s.includes("terpenuhi"))) return false;
 
       return true;
     });
@@ -107,12 +107,11 @@ export function MitraBursaBantuan({
 
     (cases || []).forEach((c) => {
       const s = (c.status || "").toLowerCase();
-      // Jangan tampilkan jika sudah selesai, ditolak, klaim diajukan, dalam pengiriman, atau teralokasi
+      // Jangan tampilkan jika sudah selesai, ditolak, dibatalkan, atau teralokasi penuh
       if (
         s.includes("selesai") ||
         s.includes("tolak") ||
-        s.includes("klaim") ||
-        s.includes("pengiriman") ||
+        s.includes("batal") ||
         s.includes("penuh")
       ) {
         return;
