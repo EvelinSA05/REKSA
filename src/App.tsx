@@ -6363,11 +6363,7 @@ function Profile({
   );
 }
 
-function Settings({ notify }: { notify: (x: string) => void }) {
-  const [prefs, setPrefs] = useState([true, true, true, false]);
-  const labels = ["Notifikasi email", "Notifikasi dalam aplikasi", "Pembaruan pengiriman", "Pembaruan sistem"];
-  return <main className="workspace narrow-page"><PageHead eyebrow="Preferensi akun" title="Pengaturan" copy="Atur notifikasi dan kenyamanan tampilan." /><section className="settings-group"><h2>Notifikasi</h2>{labels.map((x, i) => <label className="switch-row" key={x}><span><b>{x}</b><small>{i === 2 ? "Perubahan status bantuan dan penyerahan." : "Informasi penting dari REKSA."}</small></span><input type="checkbox" checked={prefs[i]} onChange={() => setPrefs(prefs.map((v, n) => n === i ? !v : v))} /></label>)}</section><section className="settings-group"><h2>Kerapatan tampilan</h2><div className="filters"><button className="active" onClick={() => notify("Tampilan nyaman diterapkan.")}>Nyaman</button><button onClick={() => notify("Tampilan ringkas diterapkan.")}>Ringkas</button></div></section><Button onClick={() => notify("Pengaturan berhasil disimpan.")}>Simpan Pengaturan</Button></main>;
-}
+
 
 function Help() {
   const [open, setOpen] = useState(0);
