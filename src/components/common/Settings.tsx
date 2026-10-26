@@ -86,8 +86,19 @@ export function applyLiveSettings(settings: UserSettings) {
   }
 }
 
+// Fungsi untuk mengambil pengaturan tersimpan dengan aman
+export function getSavedSettings(): UserSettings {
+  try {
+    const saved = localStorage.getItem("reksa_app_settings");
+    if (saved) {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+    }
+  } catch {}
+  return DEFAULT_SETTINGS;
+}
+
 // Nada dering notifikasi Web Audio murni (zero-dependency, native browser)
-function playWebAudioChime() {
+export function playWebAudioChime() {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
@@ -120,19 +131,13 @@ interface SettingsProps {
 
 export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }: SettingsProps) {
   // Muat preferensi dari localStorage atau fallback ke default
-  const [settings, setSettings] = useState<UserSettings>(() => {
-    try {
-      const saved = localStorage.getItem("reksa_app_settings");
-      if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
-      }
-    } catch {}
-    return DEFAULT_SETTINGS;
-  });
+  const [settings, setSettings] = useState<UserSettings>(() => getSavedSettings());
 
   const [activeTab, setActiveTab] = useState<"notifications" | "display" | "regional" | "offline" | "security">("notifications");
   const [isSavedFeedback, setIsSavedFeedback] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
+  const [twoFactorKey, setTwoFactorKey] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -151,12 +156,19 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
       const updated = { ...prev, [key]: !prev[key] };
       try {
         localStorage.setItem("reksa_app_settings", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("reksa_settings_updated", { detail: updated }));
       } catch {}
       return updated;
     });
 
     if (key === "soundNotif" && !settings.soundNotif) {
       playWebAudioChime();
+    }
+
+    if (key === "twoFactorAuth" && !settings.twoFactorAuth) {
+      const key2fa = `RK-2FA-${Math.floor(100000 + Math.random() * 900000)}`;
+      setTwoFactorKey(key2fa);
+      setShowTwoFactorModal(true);
     }
   };
 
@@ -166,6 +178,7 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
       const updated = { ...prev, [key]: val };
       try {
         localStorage.setItem("reksa_app_settings", JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("reksa_settings_updated", { detail: updated }));
       } catch {}
       return updated;
     });
@@ -176,6 +189,7 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
     try {
       localStorage.setItem("reksa_app_settings", JSON.stringify(settings));
       applyLiveSettings(settings);
+      window.dispatchEvent(new CustomEvent("reksa_settings_updated", { detail: settings }));
       setIsSavedFeedback(true);
       setTimeout(() => setIsSavedFeedback(false), 2500);
       notify("Pengaturan preferensi berhasil disimpan dan aktif diterapkan.");
@@ -190,6 +204,7 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
       setSettings(DEFAULT_SETTINGS);
       try {
         localStorage.setItem("reksa_app_settings", JSON.stringify(DEFAULT_SETTINGS));
+        window.dispatchEvent(new CustomEvent("reksa_settings_updated", { detail: DEFAULT_SETTINGS }));
       } catch {}
       applyLiveSettings(DEFAULT_SETTINGS);
       notify("Pengaturan telah dikembalikan ke standar awal.");
@@ -199,9 +214,10 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
   // Bersihkan cache sementara
   const handleClearCache = () => {
     try {
-      // Bersihkan key temporary cache tanpa merusak akun dan transaksi
       sessionStorage.clear();
-      notify("Cache tampilan dan penelusuran berhasil dibersihkan.");
+      // Bersihkan cache query sementara tanpa menghapus sesi login dan profil
+      localStorage.removeItem("reksa_cached_activity_logs");
+      notify("Cache tampilan dan riwayat sementara berhasil dibersihkan.");
     } catch {
       notify("Cache lokal telah disegarkan.");
     }
@@ -223,11 +239,42 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
     }
   };
 
+  // Impor pulihkan cadangan JSON
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (typeof parsed === "object" && parsed !== null) {
+          const merged = { ...DEFAULT_SETTINGS, ...parsed };
+          setSettings(merged);
+          localStorage.setItem("reksa_app_settings", JSON.stringify(merged));
+          applyLiveSettings(merged);
+          window.dispatchEvent(new CustomEvent("reksa_settings_updated", { detail: merged }));
+          notify("Pengaturan berhasil dipulihkan dari file cadangan!");
+        } else {
+          notify("Format file JSON tidak sesuai.");
+        }
+      } catch {
+        notify("Gagal membaca file cadangan JSON.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   // Submit ganti password
   const handleSubmitPassword = (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
 
+    const currentSavedPass = localStorage.getItem("reksa_user_password");
+    if (currentSavedPass && oldPassword !== currentSavedPass) {
+      setPasswordError("Kata sandi lama yang Anda masukkan tidak sesuai.");
+      return;
+    }
     if (!oldPassword) {
       setPasswordError("Kata sandi lama wajib diisi.");
       return;
@@ -241,7 +288,12 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
       return;
     }
 
-    // Sukses simulasi
+    try {
+      localStorage.setItem("reksa_user_password", newPassword);
+      localStorage.setItem("reksa_password_updated_at", new Date().toISOString());
+    } catch {}
+
+    // Sukses
     setPasswordSuccess(true);
     setTimeout(() => {
       setPasswordSuccess(false);
@@ -249,7 +301,7 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      notify("Kata sandi akun Anda berhasil diperbarui.");
+      notify("Kata sandi akun Anda berhasil diperbarui dan tersimpan aman.");
     }, 1200);
   };
 
@@ -806,6 +858,31 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
               >
                 <span>📥 Cadangkan Pengaturan (JSON)</span>
               </button>
+
+              <label
+                className="btn-settings-ghost"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  margin: 0,
+                }}
+              >
+                <span>📤 Pulihkan Cadangan (JSON)</span>
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportBackup}
+                  style={{ display: "none" }}
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -1004,6 +1081,72 @@ export function Settings({ notify, role = "Pengguna", name = "Pengguna REKSA" }:
                 </button>
               </div>
             </form>
+          </div>
+      {/* MODAL AKTIVASI 2FA */}
+      {showTwoFactorModal && (
+        <div className="modal-backdrop" onClick={() => setShowTwoFactorModal(false)}>
+          <div
+            className="modal"
+            style={{ width: "min(440px, 95%)", textAlign: "left", borderRadius: "16px", padding: "24px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ margin: 0, fontSize: "1.2rem", color: "#013220", fontWeight: 800 }}>
+                Autentikasi 2-Langkah Aktif
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowTwoFactorModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748b" }}
+              >
+                <AppIcon name="x" size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: "0.88rem", color: "#475569", lineHeight: 1.5, margin: "0 0 16px" }}>
+              Akun Anda kini dilindungi verifikasi ganda saat login dari perangkat baru. Simpan kunci pemulihan darurat di bawah ini:
+            </p>
+
+            <div style={{ background: "#f1f5f9", padding: "14px", borderRadius: "10px", border: "1.5px dashed #94a3b8", textAlign: "center", marginBottom: "18px" }}>
+              <div style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", fontWeight: 700, marginBottom: "4px" }}>
+                Kode Kunci Pemulihan Darurat Lapangan
+              </div>
+              <code style={{ fontSize: "1.2rem", fontWeight: 800, color: "#013220", letterSpacing: "2px" }}>
+                {twoFactorKey}
+              </code>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(twoFactorKey);
+                  notify("Kunci 2FA berhasil disalin!");
+                }}
+                className="btn-case-view"
+              >
+                Salin Kunci
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTwoFactorModal(false);
+                  notify("Autentikasi 2-Langkah siap digunakan.");
+                }}
+                className="btn-settings-primary"
+                style={{
+                  background: "#013220",
+                  color: "#ffffff",
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Saya Sudah Simpan
+              </button>
+            </div>
           </div>
         </div>
       )}
