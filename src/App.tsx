@@ -419,6 +419,7 @@ import { MitraVerifikasiLaporan } from "./components/mitra/MitraVerifikasiLapora
 import { BastPrintModal } from "./components/common/BastPrintModal";
 import { PerbandinganKecepatanRespon } from "./components/common/PerbandinganKecepatanRespon";
 import { ReksaAiChatbot } from "./components/common/ReksaAiChatbot";
+import { Settings, applyLiveSettings } from "./components/common/Settings";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: any) {
@@ -1996,7 +1997,7 @@ function CitizenRouter({ page, setPage, state, update, notify, name = "Andi Prat
   if (page === "history") return <CitizenCaseList title="Riwayat" copy="Kebutuhan yang telah selesai dan dikonfirmasi." onCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} completed own state={state} update={update} onNavigateToReport={() => setPage("report")} onNavigateToCases={() => setPage("cases")} onRefresh={onRefresh} />;
   if (page === "notifications") return <Notifications role="citizen" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Masyarakat" notify={notify} state={state} update={update} setName={setName} />;
-  if (page === "settings") return <Settings notify={notify} />;
+  if (page === "settings") return <Settings notify={notify} role="Masyarakat" name={name} update={update} />;
   return <Help />;
 }
 
@@ -3772,7 +3773,7 @@ function PoskoRouter({ page, setPage, state, update, notify, name = "Siti Rahma"
   if (page === "map") return <MapPage open={() => setPage("case")} cases={scopedCases} onSelectCase={(c) => { if (c?.id) update({ activeCaseId: c.id }); setPage("case"); }} role="posko" />;
   if (page === "notifications") return <Notifications role="posko" open={() => setPage("case")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Petugas Posko" notify={notify} state={state} update={update} setName={setName} />;
-  if (page === "settings") return <Settings notify={notify} />;
+  if (page === "settings") return <Settings notify={notify} role="Posko BPBD" name={name} update={update} />;
   return <Help />;
 }
 
@@ -5447,7 +5448,7 @@ function ResponderRouter({ page, setPage, state, update, notify, name = "Arif Nu
   );
   if (page === "notifications") return <Notifications role="responder" open={() => setPage("tasks")} state={state} update={update} setPage={setPage} />;
   if (page === "profile") return <Profile name={name} role="Mitra Bantuan" notify={notify} state={state} update={update} setName={setName} />;
-  if (page === "settings") return <Settings notify={notify} />;
+  if (page === "settings") return <Settings notify={notify} role="Mitra" name={name} update={update} />;
   return <Help />;
 }
 
