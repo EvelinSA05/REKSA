@@ -13199,4 +13199,145 @@ img, svg, video, canvas {
   }
 }
 
+/* ==========================================================================
+   SETTINGS COMPONENT & LIVE DOM THEME STYLES
+   ========================================================================== */
+.reksa-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.reksa-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.reksa-toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.25s ease;
+  border-radius: 34px;
+}
+.reksa-toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.25s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.reksa-toggle-switch input:checked + .slider {
+  background-color: #013220;
+}
+.reksa-toggle-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.btn-settings-ghost {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-settings-ghost:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-settings-primary {
+  transition: all 0.15s ease;
+}
+.btn-settings-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* Live Density Mode: Compact */
+body.reksa-density-compact .workspace {
+  padding-top: 14px !important;
+  padding-bottom: 20px !important;
+}
+body.reksa-density-compact .posko-metrics-grid-4,
+body.reksa-density-compact .mitra-metrics-grid-4,
+body.reksa-density-compact .dashboard-kpi-grid {
+  gap: 10px !important;
+}
+body.reksa-density-compact .posko-metric-card,
+body.reksa-density-compact .mitra-metric-card,
+body.reksa-density-compact .metric-card {
+  padding: 12px 14px !important;
+}
+body.reksa-density-compact .case-card,
+body.reksa-density-compact .posko-case-card,
+body.reksa-density-compact .misi-card,
+body.reksa-density-compact .bursa-card {
+  padding: 14px 16px !important;
+  margin-bottom: 10px !important;
+}
+
+/* Live High-Contrast Field Mode */
+body.reksa-high-contrast {
+  filter: contrast(115%);
+}
+body.reksa-high-contrast .workspace {
+  color: #000000 !important;
+}
+body.reksa-high-contrast button {
+  border-width: 2px !important;
+}
+
+/* Live Dim Mode (Tenda Malam) */
+body.reksa-dim-mode {
+  background-color: #121915 !important;
+  color: #e2e8f0 !important;
+}
+body.reksa-dim-mode .portal-content {
+  background-color: #141c18 !important;
+}
+body.reksa-dim-mode .settings-card-panel,
+body.reksa-dim-mode .posko-metric-card,
+body.reksa-dim-mode .case-card,
+body.reksa-dim-mode .posko-case-card {
+  background-color: #1a2420 !important;
+  border-color: #2d3f35 !important;
+  color: #f1f5f9 !important;
+}
+body.reksa-dim-mode .settings-switch-item {
+  background-color: #202c27 !important;
+  border-color: #2e4037 !important;
+}
+body.reksa-dim-mode h1,
+body.reksa-dim-mode h2,
+body.reksa-dim-mode h3,
+body.reksa-dim-mode strong {
+  color: #f8fafc !important;
+}
+
+/* Live Reduced Motion */
+body.reksa-reduced-motion * {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+
 
