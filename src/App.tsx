@@ -418,8 +418,7 @@ import { MitraDashboard } from "./components/mitra/MitraDashboard";
 import { MitraVerifikasiLaporan } from "./components/mitra/MitraVerifikasiLaporan";
 import { BastPrintModal } from "./components/common/BastPrintModal";
 import { PerbandinganKecepatanRespon } from "./components/common/PerbandinganKecepatanRespon";
-import { ReksaAiChatbot } from "./components/common/ReksaAiChatbot";
-import { Settings, applyLiveSettings } from "./components/common/Settings";
+import { Settings, applyLiveSettings, getSavedSettings, playWebAudioChime } from "./components/common/Settings";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: any) {
@@ -1592,7 +1591,14 @@ function Sidebar({ role, name, page, collapsed, mobile, select, toggle, close, s
     : role === "posko" 
     ? (state?.bpbdScope === "nasional" ? "Posko BPBD Nasional" : `Posko BPBD ${state?.bpbdProvince || "Jawa Timur"}`)
     : (userProfile?.role || (userName.toLowerCase().includes("hendra") || userEmail.toLowerCase().includes("pmi") ? "Mitra PMI Jawa Timur" : "Responder Mitra"));
-  const badgeText = notifCount > 99 ? "99+" : notifCount > 0 ? String(notifCount) : null;
+  const appSettings = getSavedSettings();
+  const badgeText = !appSettings.inAppNotif 
+    ? null 
+    : notifCount > 99 
+    ? "99+" 
+    : notifCount > 0 
+    ? String(notifCount) 
+    : null;
   const items = (rows: NavItem[]) => rows.map((item) => {
     const isNotif = item.label === "Notifikasi" || item.page === "notifications";
     return (
@@ -1780,7 +1786,11 @@ function Portal({ role, setRole, name, setName, state, update, logout, onRefresh
               const meta = resolveDeepLinkForRole(role, newest.aksi || "", newest.deskripsi || "");
               const saved = localStorage.getItem("reksa_read_notifications");
               const readArr: string[] = saved ? JSON.parse(saved) : [];
-              if (!readArr.includes(`db-log-${newest.id}`)) {
+              const currentSettings = getSavedSettings();
+              if (currentSettings.soundNotif) {
+                playWebAudioChime();
+              }
+              if (currentSettings.inAppNotif && !readArr.includes(`db-log-${newest.id}`)) {
                 setLiveToastNotif({
                   id: `db-log-${newest.id}`,
                   title: meta.titleOverride || newest.aksi || "Pembaruan Kasus Baru",
@@ -6457,6 +6467,22 @@ export default function App() {
     const saved = localStorage.getItem("reksa_auth_screen");
     return !saved || saved === "home";
   });
+
+  // Terapkan pengaturan visual (Density, Font Size, Dim/Dark, Animasi) pada saat aplikasi dibuka
+  useEffect(() => {
+    applyLiveSettings(getSavedSettings());
+
+    const handleSettingsUpdate = () => {
+      applyLiveSettings(getSavedSettings());
+    };
+
+    window.addEventListener("reksa_settings_updated", handleSettingsUpdate);
+    window.addEventListener("storage", handleSettingsUpdate);
+    return () => {
+      window.removeEventListener("reksa_settings_updated", handleSettingsUpdate);
+      window.removeEventListener("storage", handleSettingsUpdate);
+    };
+  }, []);
 
   const [role, setRole] = useState<Role>(() => {
     const saved = localStorage.getItem("reksa_auth_role") as Role;
