@@ -418,6 +418,7 @@ import { MitraDashboard } from "./components/mitra/MitraDashboard";
 import { MitraVerifikasiLaporan } from "./components/mitra/MitraVerifikasiLaporan";
 import { BastPrintModal } from "./components/common/BastPrintModal";
 import { PerbandinganKecepatanRespon } from "./components/common/PerbandinganKecepatanRespon";
+import { ReksaAiChatbot } from "./components/common/ReksaAiChatbot";
 import { Settings, applyLiveSettings, getSavedSettings, playWebAudioChime } from "./components/common/Settings";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean; error: Error | null }> {
