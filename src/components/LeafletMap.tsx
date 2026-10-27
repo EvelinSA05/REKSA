@@ -35,6 +35,72 @@ interface LeafletMapProps {
   height?: string;
 }
 
+export function normalizeProvince(raw: string = '', lat?: number, lng?: number): string {
+  if (!raw) {
+    if (lat !== undefined && lng !== undefined) {
+      if (lat < -6.8 && lat > -8.9 && lng > 111.0 && lng < 115.0) return 'Jawa Timur';
+      if (lat < -6.4 && lat > -7.8 && lng > 106.4 && lng < 108.8) return 'Jawa Barat';
+      if (lat < -6.0 && lat > -6.4 && lng > 106.6 && lng < 107.1) return 'DKI Jakarta';
+      if (lat < -7.4 && lat > -8.3 && lng > 110.0 && lng < 110.9) return 'DI Yogyakarta';
+      if (lat < -6.7 && lat > -8.2 && lng > 108.8 && lng < 111.5) return 'Jawa Tengah';
+      if (lat < -8.0 && lat > -9.0 && lng > 114.4 && lng < 115.8) return 'Bali';
+    }
+    return '';
+  }
+
+  const s = raw.trim().toLowerCase()
+    .replace(/^(provinsi|propinsi|daerah khusus ibukota|daerah istimewa)\s+/i, '')
+    .trim();
+
+  if (/jawa\s*timur|east\s*java|jatim/i.test(s)) return 'Jawa Timur';
+  if (/jawa\s*barat|west\s*java|jabar/i.test(s)) return 'Jawa Barat';
+  if (/jawa\s*tengah|central\s*java|jateng/i.test(s)) return 'Jawa Tengah';
+  if (/jakarta|dki/i.test(s)) return 'DKI Jakarta';
+  if (/yogyakarta|jogja|diy/i.test(s)) return 'DI Yogyakarta';
+  if (/banten/i.test(s)) return 'Banten';
+  if (/bali/i.test(s)) return 'Bali';
+  if (/sumat?era\s*utara|north\s*sumat?ra|sumut/i.test(s)) return 'Sumatera Utara';
+  if (/sumat?era\s*barat|west\s*sumat?ra|sumbar/i.test(s)) return 'Sumatera Barat';
+  if (/sumat?era\s*selatan|south\s*sumat?ra|sumsel/i.test(s)) return 'Sumatera Selatan';
+  if (/sulawesi\s*selatan|south\s*sulawesi|sulsel/i.test(s)) return 'Sulawesi Selatan';
+  if (/sulawesi\s*utara|north\s*sulawesi|sulut/i.test(s)) return 'Sulawesi Utara';
+  if (/sulawesi\s*tengah|central\s*sulawesi|sulteng/i.test(s)) return 'Sulawesi Tengah';
+  if (/sulawesi\s*tenggara|southeast\s*sulawesi|sultra/i.test(s)) return 'Sulawesi Tenggara';
+  if (/sulawesi\s*barat|west\s*sulawesi|sulbar/i.test(s)) return 'Sulawesi Barat';
+  if (/kalimantan\s*timur|east\s*kalimantan|kaltim/i.test(s)) return 'Kalimantan Timur';
+  if (/kalimantan\s*barat|west\s*kalimantan|kalbar/i.test(s)) return 'Kalimantan Barat';
+  if (/kalimantan\s*selatan|south\s*kalimantan|kalsel/i.test(s)) return 'Kalimantan Selatan';
+  if (/kalimantan\s*tengah|central\s*kalimantan|kalteng/i.test(s)) return 'Kalimantan Tengah';
+  if (/kalimantan\s*utara|north\s*kalimantan|kaltara/i.test(s)) return 'Kalimantan Utara';
+  if (/nusa\s*tenggara\s*barat|ntb/i.test(s)) return 'Nusa Tenggara Barat';
+  if (/nusa\s*tenggara\s*timur|ntt/i.test(s)) return 'Nusa Tenggara Timur';
+  if (/aceh/i.test(s)) return 'Aceh';
+  if (/lampung/i.test(s)) return 'Lampung';
+  if (/riau/i.test(s)) return s.includes('kepulauan') ? 'Kepulauan Riau' : 'Riau';
+  if (/jambi/i.test(s)) return 'Jambi';
+  if (/bengkulu/i.test(s)) return 'Bengkulu';
+  if (/bangka\s*belitung/i.test(s)) return 'Kepulauan Bangka Belitung';
+  if (/gorontalo/i.test(s)) return 'Gorontalo';
+  if (/maluku\s*utara/i.test(s)) return 'Maluku Utara';
+  if (/maluku/i.test(s)) return 'Maluku';
+  if (/papua\s*barat\s*daya/i.test(s)) return 'Papua Barat Daya';
+  if (/papua\s*barat/i.test(s)) return 'Papua Barat';
+  if (/papua\s*selatan/i.test(s)) return 'Papua Selatan';
+  if (/papua\s*tengah/i.test(s)) return 'Papua Tengah';
+  if (/papua\s*pegunungan/i.test(s)) return 'Papua Pegunungan';
+  if (/papua/i.test(s)) return 'Papua';
+
+  // If BigDataCloud returns island name "Jawa" without timur/barat/tengah, infer from coordinates
+  if (s === 'jawa' && lat !== undefined && lng !== undefined) {
+    if (lng > 111.0) return 'Jawa Timur';
+    if (lng >= 108.5) return (lat < -7.4 && lat > -8.3 && lng > 110.0 && lng < 110.9) ? 'DI Yogyakarta' : 'Jawa Tengah';
+    if (lat < -6.0 && lat > -6.4 && lng > 106.6 && lng < 107.1) return 'DKI Jakarta';
+    return 'Jawa Barat';
+  }
+
+  return raw.replace(/^(provinsi|propinsi)\s+/i, '').trim();
+}
+
 function resolveFallbackLocation(lat: number, lng: number): LocationInfo {
   // East Java
   if (lat < -6.8 && lat > -8.9 && lng > 111.0 && lng < 115.0) {
@@ -308,10 +374,30 @@ export function LeafletMap({
       const res = await fetch(bdcUrl);
       if (res.ok) {
         const data = await res.json();
-        const prov = data.principalSubdivision || fallback.provinsi;
-        const kab = data.city || data.localityInfo?.administrative?.[2]?.name || data.localityInfo?.administrative?.[1]?.name || fallback.kabupaten;
-        const kec = data.localityInfo?.administrative?.[3]?.name || data.locality || fallback.kecamatan;
-        const desa = data.localityInfo?.administrative?.[4]?.name || data.locality || kec;
+        const admins = data.localityInfo?.administrative || [];
+        const admin4 = admins.find((a: any) => a.adminLevel === 4)?.name;
+        const admin5 = admins.find((a: any) => a.adminLevel === 5)?.name;
+        const admin6 = admins.find((a: any) => a.adminLevel === 6)?.name;
+        const admin7 = admins.find((a: any) => a.adminLevel >= 7)?.name;
+
+        // In Indonesia: adminLevel 4 = Provinsi, adminLevel 5 = Kabupaten/Kota, adminLevel 6 = Kecamatan
+        const rawProv = admin4 || data.principalSubdivision || fallback.provinsi;
+        const prov = normalizeProvince(rawProv, lat, lng) || fallback.provinsi;
+
+        let rawKab = admin5 || (data.city && data.city !== rawProv && data.city !== admin6 ? data.city : null) || fallback.kabupaten;
+        let kab = rawKab;
+        if (kab && !kab.toLowerCase().startsWith("kota") && !kab.toLowerCase().startsWith("kabupaten") && !kab.toLowerCase().startsWith("kab.")) {
+          if (kab.toLowerCase().includes("jakarta")) {
+            kab = `Kota ${kab.replace(/^Kota\s+/i, '')}`;
+          } else if (/surabaya|bandung|semarang|medan|makassar|denpasar|bogor|bekasi|depok|tangerang|malang|pasuruan|probolinggo|kediri|blitar|madiun|batu/i.test(kab)) {
+            kab = `Kota ${kab}`;
+          } else {
+            kab = `Kabupaten ${kab}`;
+          }
+        }
+
+        const kec = admin6 || data.locality || fallback.kecamatan;
+        const desa = admin7 || (data.city && data.city !== kab && data.city !== admin5 ? data.city : null) || data.locality || kec || fallback.desa;
 
         const resolvePosko = (p = "", k = "", c = "") => {
           const lp = p.toLowerCase();
@@ -365,7 +451,7 @@ export function LeafletMap({
             const desa = addr.suburb || addr.village || addr.quarter || addr.neighbourhood || addr.residential || fallback.desa;
             const kec = addr.city_district || addr.subdistrict || addr.district || addr.municipality || fallback.kecamatan;
             const kab = addr.city || addr.town || addr.regency || addr.county || fallback.kabupaten;
-            const prov = addr.state || addr.province || fallback.provinsi;
+            const prov = normalizeProvince(addr.state || addr.province || fallback.provinsi, lat, lng) || fallback.provinsi;
 
             const resolvePosko = (p = "", k = "", c = "") => {
               const lp = p.toLowerCase();
