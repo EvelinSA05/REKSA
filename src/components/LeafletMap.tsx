@@ -35,7 +35,15 @@ interface LeafletMapProps {
   height?: string;
 }
 
+export function isWithinIndonesia(lat: number, lng: number): boolean {
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -11.5 && lat <= 6.5 && lng >= 94.5 && lng <= 141.5;
+}
+
 export function normalizeProvince(raw: string = '', lat?: number, lng?: number): string {
+  if (lat !== undefined && lng !== undefined && !isWithinIndonesia(lat, lng)) {
+    return '';
+  }
+
   if (!raw) {
     if (lat !== undefined && lng !== undefined) {
       if (lat < -6.8 && lat > -8.9 && lng > 111.0 && lng < 115.0) return 'Jawa Timur';
@@ -399,7 +407,10 @@ export function LeafletMap({
         const kec = admin6 || data.locality || fallback.kecamatan;
         const desa = admin7 || (data.city && data.city !== kab && data.city !== admin5 ? data.city : null) || data.locality || kec || fallback.desa;
 
+        const isOutsideID = !isWithinIndonesia(lat, lng);
+
         const resolvePosko = (p = "", k = "", c = "") => {
+          if (isOutsideID) return "Wilayah di luar cakupan BPBD RI";
           const lp = p.toLowerCase();
           const lk = k.toLowerCase();
           const lc = c.toLowerCase();
@@ -423,14 +434,14 @@ export function LeafletMap({
         const info: LocationInfo = {
           lat: Number(lat.toFixed(6)),
           lng: Number(lng.toFixed(6)),
-          desa: (desa || fallback.desa).replace(/Kelurahan\s+/i, "Kel. ").replace(/Desa\s+/i, "Desa "),
-          kecamatan: (kec || fallback.kecamatan).replace(/Kecamatan\s+/i, ""),
-          kabupaten: (kab || fallback.kabupaten),
-          provinsi: (prov || fallback.provinsi),
+          desa: isOutsideID ? "Di Luar Wilayah RI" : (desa || fallback.desa).replace(/Kelurahan\s+/i, "Kel. ").replace(/Desa\s+/i, "Desa "),
+          kecamatan: isOutsideID ? "Di Luar Wilayah RI" : (kec || fallback.kecamatan).replace(/Kecamatan\s+/i, ""),
+          kabupaten: isOutsideID ? "Wilayah Luar Negeri" : (kab || fallback.kabupaten),
+          provinsi: isOutsideID ? "" : (prov || fallback.provinsi),
           poskoName: resolvePosko(prov, kab, kec),
         };
 
-        setActiveAddress(`${info.desa}, Kec. ${info.kecamatan}, ${info.kabupaten}`);
+        setActiveAddress(isOutsideID ? `Koordinat luar negeri (${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}) - Periksa VPN/Proxy` : `${info.desa}, Kec. ${info.kecamatan}, ${info.kabupaten}`);
         onLocationPickedRef.current?.(info);
         resolved = true;
       }
@@ -451,9 +462,11 @@ export function LeafletMap({
             const desa = addr.suburb || addr.village || addr.quarter || addr.neighbourhood || addr.residential || fallback.desa;
             const kec = addr.city_district || addr.subdistrict || addr.district || addr.municipality || fallback.kecamatan;
             const kab = addr.city || addr.town || addr.regency || addr.county || fallback.kabupaten;
-            const prov = normalizeProvince(addr.state || addr.province || fallback.provinsi, lat, lng) || fallback.provinsi;
+            const isOutsideID = !isWithinIndonesia(lat, lng);
+            const prov = isOutsideID ? "" : (normalizeProvince(addr.state || addr.province || fallback.provinsi, lat, lng) || fallback.provinsi);
 
             const resolvePosko = (p = "", k = "", c = "") => {
+              if (isOutsideID) return "Wilayah di luar cakupan BPBD RI";
               const lp = p.toLowerCase();
               const lk = k.toLowerCase();
               const lc = c.toLowerCase();
@@ -477,14 +490,14 @@ export function LeafletMap({
             const info: LocationInfo = {
               lat: Number(lat.toFixed(6)),
               lng: Number(lng.toFixed(6)),
-              desa: `${road}${desa}`.replace(/Kelurahan\s+/i, "Kel. ").replace(/Desa\s+/i, "Desa "),
-              kecamatan: (kec || fallback.kecamatan).replace(/Kecamatan\s+/i, ""),
-              kabupaten: (kab || fallback.kabupaten),
-              provinsi: (prov || fallback.provinsi),
+              desa: isOutsideID ? "Di Luar Wilayah RI" : `${road}${desa}`.replace(/Kelurahan\s+/i, "Kel. ").replace(/Desa\s+/i, "Desa "),
+              kecamatan: isOutsideID ? "Di Luar Wilayah RI" : (kec || fallback.kecamatan).replace(/Kecamatan\s+/i, ""),
+              kabupaten: isOutsideID ? "Wilayah Luar Negeri" : (kab || fallback.kabupaten),
+              provinsi: isOutsideID ? "" : (prov || fallback.provinsi),
               poskoName: resolvePosko(prov, kab, kec),
             };
 
-            setActiveAddress(`${info.desa}, Kec. ${info.kecamatan}, ${info.kabupaten}`);
+            setActiveAddress(isOutsideID ? `Koordinat luar negeri (${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}) - Periksa VPN/Proxy` : `${info.desa}, Kec. ${info.kecamatan}, ${info.kabupaten}`);
             onLocationPickedRef.current?.(info);
             resolved = true;
           }
