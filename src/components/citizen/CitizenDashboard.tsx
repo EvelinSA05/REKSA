@@ -346,52 +346,68 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
               </p>
             </div>
 
-            {/* Mission Selector Tabs (if more than 1 mission) */}
+            {/* Mission Selector Dropdown */}
             {displayMissions.length > 1 && (
               <div 
-                className="mission-selector-tabs"
+                className="mission-selector-dropdown-wrap"
                 style={{ 
                   display: "flex", 
-                  gap: "6px", 
-                  overflowX: "auto", 
-                  maxWidth: "100%", 
-                  paddingBottom: "4px",
-                  WebkitOverflowScrolling: "touch"
+                  alignItems: "center", 
+                  gap: "8px",
+                  background: "#ffffff",
+                  padding: "6px 12px",
+                  borderRadius: "10px",
+                  border: "1.5px solid #cbd5e1",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)"
                 }}
               >
-                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", alignSelf: "center", whiteSpace: "nowrap" }}>
-                  Misi:
-                </span>
-                {displayMissions.map((m) => {
-                  const isSel = m.id === currentMission.id;
-                  const shortCode = (m.kode_misi || "Misi").replace(/^MISI-ASG-?/i, "Misi ");
-                  let shortCategory = m.kebutuhan?.kategori_kebutuhan || m.muatan || "Bantuan";
-                  if (shortCategory.includes("&")) {
-                    shortCategory = shortCategory.split("&")[0].trim();
-                  }
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setSelectedMisiId(m.id)}
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: "8px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        border: isSel ? "1.5px solid #013220" : "1px solid #cbd5e1",
-                        background: isSel ? "#013220" : "#ffffff",
-                        color: isSel ? "#ffffff" : "#334155",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {shortCode}: {shortCategory}
-                    </button>
-                  );
-                })}
+                <label 
+                  htmlFor="citizen-mission-select"
+                  style={{ 
+                    fontSize: "0.78rem", 
+                    fontWeight: 800, 
+                    color: "var(--forest, #013220)", 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: "6px", 
+                    whiteSpace: "nowrap", 
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em"
+                  }}
+                >
+                  <AppIcon name="map" size={14} style={{ color: "var(--forest, #013220)" }} />
+                  <span>Pilih Misi:</span>
+                </label>
+                <select
+                  id="citizen-mission-select"
+                  value={currentMission.id}
+                  onChange={(e) => setSelectedMisiId(e.target.value)}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    cursor: "pointer",
+                    outline: "none",
+                    padding: "4px 8px"
+                  }}
+                >
+                  {displayMissions.map((m) => {
+                    const shortCode = (m.kode_misi || "Misi").replace(/^MISI-ASG-?/i, "Misi ");
+                    let shortCategory = m.kebutuhan?.kategori_kebutuhan || m.muatan || "Bantuan";
+                    if (shortCategory.includes("&")) {
+                      shortCategory = shortCategory.split("&")[0].trim();
+                    }
+                    const statusNote = m.status_tahapan ? ` [${m.status_tahapan}]` : "";
+                    return (
+                      <option key={m.id} value={m.id}>
+                        {shortCode}: {shortCategory}{statusNote}
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
             )}
           </div>
