@@ -11,7 +11,7 @@ import {
 } from "../../App";
 import { apiService } from "../../services/api";
 import { analyzeReportTriage, generateAiConditionDescription } from "../../utils/reksaAiEngine";
-import { normalizeProvince } from "../LeafletMap";
+import { normalizeProvince, isWithinIndonesia } from "../LeafletMap";
 
 interface CitizenReportProps {
   complete: () => void;
@@ -1160,6 +1160,19 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                                   setPickedLat(rLat);
                                   setPickedLng(rLng);
 
+                                  const inID = isWithinIndonesia(rLat, rLng);
+                                  if (!inID) {
+                                    alert(
+                                      `⚠️ Peringatan Lokasi (${rLat.toFixed(4)}, ${rLng.toFixed(4)}):\n\n` +
+                                      `Browser Anda mendeteksi titik koordinat di luar wilayah Indonesia (misalnya Jepang / Osaka).\n\n` +
+                                      `Penyebab: Anda sedang terhubung menggunakan VPN atau Proxy aktif pada browser/laptop, atau IP internet diarahkan ke luar negeri.\n\n` +
+                                      `Solusi:\n` +
+                                      `1. Matikan VPN / Proxy Anda lalu tekan 'Gunakan Posisi Saya' kembali.\n` +
+                                      `2. Atau gunakan tombol 'Pusatkan Titik ke Jawa Timur (Surabaya)' pada banner peringatan di atas peta untuk langsung kembali ke wilayah Indonesia.`
+                                    );
+                                    return;
+                                  }
+
                                   // Immediate reverse geocoding to fill Provinsi, Kabupaten, Kecamatan, Desa instantly
                                   try {
                                     const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${rLat}&longitude=${rLng}&localityLanguage=id`;
@@ -1237,6 +1250,60 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       <Icon name="pin" /> {isDetectingGPS ? "Mendeteksi Posisi..." : "Gunakan Posisi Saya"}
                     </button>
                   </div>
+
+                  {/* Warning banner when coordinates are outside Indonesia (e.g. VPN/Proxy in Japan) */}
+                  {!isWithinIndonesia(Number(pickedLat), Number(pickedLng)) && (
+                    <div style={{
+                      background: "#fffbeb",
+                      border: "1px solid #fde68a",
+                      borderRadius: "10px",
+                      padding: "12px 14px",
+                      marginBottom: "12px",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "10px",
+                      fontSize: "0.82rem",
+                      color: "#92400e"
+                    }}>
+                      <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>⚠️</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, marginBottom: "4px" }}>
+                          Titik Posisi Terdeteksi di Luar Indonesia ({Number(pickedLat).toFixed(4)}, {Number(pickedLng).toFixed(4)})
+                        </div>
+                        <p style={{ margin: "0 0 8px", color: "#78350f", lineHeight: 1.4 }}>
+                          Browser Anda mendeteksi lokasi di luar negeri (kemungkinan karena <strong>VPN atau Proxy sedang aktif</strong> di perangkat Anda). Sistem BPBD REKSA hanya melayani wilayah bencana di Indonesia. Silakan nonaktifkan VPN Anda, atau klik tombol di bawah untuk memusatkan titik kembali ke wilayah Indonesia:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPickedLat(-7.2654);
+                            setPickedLng(112.7521);
+                            setProvince("Jawa Timur");
+                            setRegency("Kota Surabaya");
+                            setDistrict("Gubeng");
+                            setVillage("Gubeng");
+                            setPoskoTarget("Posko BPBD Provinsi Jawa Timur (Komando Wilayah)");
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            background: "#013220",
+                            color: "#fff",
+                            border: "none",
+                            padding: "6px 14px",
+                            borderRadius: "6px",
+                            fontSize: "0.80rem",
+                            fontWeight: 600,
+                            cursor: "pointer"
+                          }}
+                        >
+                          🇮🇩 Pusatkan Titik ke Jawa Timur (Surabaya)
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="report-map-wrapper">
                     <MapView 
                       hideCard 
@@ -1244,18 +1311,23 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       initialLat={Number.isFinite(Number(pickedLat)) ? Number(pickedLat) : -7.2654}
                       initialLng={Number.isFinite(Number(pickedLng)) ? Number(pickedLng) : 112.7521}
                       onLocationPicked={(info: any) => {
-                        if (info?.desa) setVillage(info.desa);
-                        if (info?.kecamatan) setDistrict(info.kecamatan);
-                        if (info?.kabupaten) setRegency(info.kabupaten);
-                        if (info?.provinsi) {
-                          const norm = normalizeProvince(info.provinsi, info?.lat, info?.lng);
-                          setProvince(norm);
-                          if (info?.kabupaten) {
-                            const assigned = getAssignedPosko(norm, info.kabupaten);
-                            if (assigned) setPoskoTarget(assigned);
+                        const inID = isWithinIndonesia(Number(info?.lat), Number(info?.lng));
+                        if (inID) {
+                          if (info?.desa) setVillage(info.desa);
+                          if (info?.kecamatan) setDistrict(info.kecamatan);
+                          if (info?.kabupaten) setRegency(info.kabupaten);
+                          if (info?.provinsi) {
+                            const norm = normalizeProvince(info.provinsi, info?.lat, info?.lng);
+                            if (norm) {
+                              setProvince(norm);
+                              if (info?.kabupaten) {
+                                const assigned = getAssignedPosko(norm, info.kabupaten);
+                                if (assigned) setPoskoTarget(assigned);
+                              }
+                            }
                           }
+                          if (info?.poskoName) setPoskoTarget(info.poskoName);
                         }
-                        if (info?.poskoName) setPoskoTarget(info.poskoName);
                         if (info?.lat != null && info?.lng != null && !isNaN(Number(info.lat)) && !isNaN(Number(info.lng))) {
                           setPickedLat(Number(info.lat));
                           setPickedLng(Number(info.lng));
