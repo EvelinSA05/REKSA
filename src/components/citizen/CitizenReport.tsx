@@ -11,12 +11,24 @@ import {
 } from "../../App";
 import { apiService } from "../../services/api";
 import { analyzeReportTriage, generateAiConditionDescription } from "../../utils/reksaAiEngine";
+import { normalizeProvince } from "../LeafletMap";
 
 interface CitizenReportProps {
   complete: () => void;
   update: RouterProps["update"];
   state?: SharedState;
 }
+
+const INDONESIA_PROVINCES = [
+  "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", 
+  "DI Yogyakarta", "Bali", "Sumatera Utara", "Sumatera Barat", "Sumatera Selatan",
+  "Riau", "Kepulauan Riau", "Jambi", "Bengkulu", "Lampung", "Kepulauan Bangka Belitung",
+  "Aceh", "Kalimantan Barat", "Kalimantan Tengah", "Kalimantan Selatan", "Kalimantan Timur",
+  "Kalimantan Utara", "Sulawesi Utara", "Sulawesi Tengah", "Sulawesi Selatan", "Sulawesi Tenggara",
+  "Gorontalo", "Sulawesi Barat", "Nusa Tenggara Barat", "Nusa Tenggara Timur",
+  "Maluku", "Maluku Utara", "Papua", "Papua Barat", "Papua Selatan", "Papua Tengah",
+  "Papua Pegunungan", "Papua Barat Daya"
+];
 
 const POSKO_DATABASE: Record<string, string[]> = {
   "Jawa Timur": [
@@ -999,12 +1011,12 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       }}
                     >
                       <option value="">-- Pilih Provinsi --</option>
-                      {[
-                        "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", 
-                        "DI Yogyakarta", "Bali", "Sumatera Utara", "Sulawesi Selatan", "Kalimantan Timur"
-                      ].map((p) => (
+                      {INDONESIA_PROVINCES.map((p) => (
                         <option key={p} value={p}>{p}</option>
                       ))}
+                      {province && !INDONESIA_PROVINCES.includes(province) && (
+                        <option value={province}>{province}</option>
+                      )}
                     </select>
                   </div>
                   <div className="form-group">
@@ -1137,14 +1149,62 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         if (navigator.geolocation) {
                           setIsDetectingGPS(true);
                           navigator.geolocation.getCurrentPosition(
-                            (pos) => {
+                            async (pos) => {
                               setIsDetectingGPS(false);
                               if (pos?.coords) {
                                 const lat = Number(pos.coords.latitude);
                                 const lng = Number(pos.coords.longitude);
                                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                                  setPickedLat(Number(lat.toFixed(6)));
-                                  setPickedLng(Number(lng.toFixed(6)));
+                                  const rLat = Number(lat.toFixed(6));
+                                  const rLng = Number(lng.toFixed(6));
+                                  setPickedLat(rLat);
+                                  setPickedLng(rLng);
+
+                                  // Immediate reverse geocoding to fill Provinsi, Kabupaten, Kecamatan, Desa instantly
+                                  try {
+                                    const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${rLat}&longitude=${rLng}&localityLanguage=id`;
+                                    const res = await fetch(bdcUrl);
+                                    if (res.ok) {
+                                      const data = await res.json();
+                                      const admins = data.localityInfo?.administrative || [];
+                                      const admin4 = admins.find((a: any) => a.adminLevel === 4)?.name;
+                                      const admin5 = admins.find((a: any) => a.adminLevel === 5)?.name;
+                                      const admin6 = admins.find((a: any) => a.adminLevel === 6)?.name;
+                                      const admin7 = admins.find((a: any) => a.adminLevel >= 7)?.name;
+
+                                      const normProv = normalizeProvince(admin4 || data.principalSubdivision || "", rLat, rLng);
+                                      if (normProv) {
+                                        setProvince(normProv);
+                                      }
+
+                                      let normKab = admin5 || (data.city && data.city !== normProv && data.city !== admin6 ? data.city : "");
+                                      if (normKab) {
+                                        if (!normKab.toLowerCase().startsWith("kota") && !normKab.toLowerCase().startsWith("kabupaten") && !normKab.toLowerCase().startsWith("kab.")) {
+                                          if (normKab.toLowerCase().includes("jakarta")) {
+                                            normKab = `Kota ${normKab.replace(/^Kota\s+/i, '')}`;
+                                          } else if (/surabaya|bandung|semarang|medan|makassar|denpasar|bogor|bekasi|depok|tangerang|malang|pasuruan|probolinggo|kediri|blitar|madiun|batu/i.test(normKab)) {
+                                            normKab = `Kota ${normKab}`;
+                                          } else {
+                                            normKab = `Kabupaten ${normKab}`;
+                                          }
+                                        }
+                                        setRegency(normKab);
+                                      }
+
+                                      const normKec = admin6 || data.locality || "";
+                                      if (normKec) setDistrict(normKec);
+
+                                      const normDesa = admin7 || (data.city && data.city !== normKab && data.city !== admin5 ? data.city : null) || data.locality || normKec || "";
+                                      if (normDesa) setVillage(normDesa);
+
+                                      if (normProv && normKab) {
+                                        const assigned = getAssignedPosko(normProv, normKab);
+                                        if (assigned) setPoskoTarget(assigned);
+                                      }
+                                    }
+                                  } catch (err) {
+                                    console.warn("Direct GPS geocode fallback to MapView", err);
+                                  }
                                 }
                               }
                             },
@@ -1187,7 +1247,14 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         if (info?.desa) setVillage(info.desa);
                         if (info?.kecamatan) setDistrict(info.kecamatan);
                         if (info?.kabupaten) setRegency(info.kabupaten);
-                        if (info?.provinsi) setProvince(info.provinsi);
+                        if (info?.provinsi) {
+                          const norm = normalizeProvince(info.provinsi, info?.lat, info?.lng);
+                          setProvince(norm);
+                          if (info?.kabupaten) {
+                            const assigned = getAssignedPosko(norm, info.kabupaten);
+                            if (assigned) setPoskoTarget(assigned);
+                          }
+                        }
                         if (info?.poskoName) setPoskoTarget(info.poskoName);
                         if (info?.lat != null && info?.lng != null && !isNaN(Number(info.lat)) && !isNaN(Number(info.lng))) {
                           setPickedLat(Number(info.lat));
