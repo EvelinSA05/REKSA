@@ -26,6 +26,209 @@ const SHELTER_OPTIONS = [
   "Fasilitas Umum / Tempat Ibadah",
 ];
 
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder?: string;
+  style?: React.CSSProperties;
+}
+
+function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "-- Pilih --",
+  style,
+}: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%", minWidth: 0, ...style }}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="form-control"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "pointer",
+          textAlign: "left",
+          padding: "10px 14px",
+          background: "#ffffff",
+          borderColor: isOpen ? "#013220" : undefined,
+          boxShadow: isOpen ? "0 0 0 2px rgba(1, 50, 32, 0.12)" : undefined,
+          height: "44px",
+          lineHeight: 1,
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
+        <span
+          style={{
+            fontSize: "0.88rem",
+            color: value ? "var(--forest, #013220)" : "#94a3b8",
+            fontWeight: value ? 600 : 400,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            flex: 1,
+            paddingRight: "8px",
+            minWidth: 0,
+          }}
+        >
+          {value || placeholder}
+        </span>
+
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            color: "#64748b",
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease",
+            flexShrink: 0,
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div
+          role="listbox"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            zIndex: 90,
+            background: "#ffffff",
+            border: "1px solid #cbd5e1",
+            borderRadius: "10px",
+            boxShadow: "0 10px 25px -4px rgba(0, 0, 0, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05)",
+            padding: "4px",
+            maxHeight: "260px",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            role="option"
+            aria-selected={!value}
+            onClick={() => {
+              onChange("");
+              setIsOpen(false);
+            }}
+            style={{
+              padding: "9px 12px",
+              fontSize: "0.86rem",
+              color: "#94a3b8",
+              borderRadius: "6px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              transition: "background 0.12s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#f8fafc";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            {placeholder}
+          </div>
+
+          {options.map((opt) => {
+            const isSelected = value === opt;
+            return (
+              <div
+                key={opt}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(opt);
+                  setIsOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                  padding: "9px 12px",
+                  fontSize: "0.86rem",
+                  fontWeight: isSelected ? 600 : 400,
+                  color: isSelected ? "#013220" : "#1f2937",
+                  background: isSelected ? "#ecfdf5" : "transparent",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  transition: "all 0.12s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = "#f1f5f9";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                <span
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    flex: 1,
+                  }}
+                >
+                  {opt}
+                </span>
+                {isSelected && (
+                  <span style={{ color: "#059669", fontWeight: 700, fontSize: "0.9rem", flexShrink: 0 }}>
+                    ✓
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const INDONESIA_PROVINCES = [
   "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", 
   "DI Yogyakarta", "Bali", "Sumatera Utara", "Sumatera Barat", "Sumatera Selatan",
@@ -155,29 +358,14 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [applicantNik, setApplicantNik] = useState<string>(() => initialDraft?.applicantNik || "");
   const [poskoTarget, setPoskoTarget] = useState<string>(() => initialDraft?.poskoTarget || "");
   const [shelterStatus, setShelterStatus] = useState<string>(() => initialDraft?.shelterStatus || "");
-  const [isShelterDropdownOpen, setIsShelterDropdownOpen] = useState<boolean>(false);
-  const shelterDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Click outside and escape handler for custom shelter dropdown
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (shelterDropdownRef.current && !shelterDropdownRef.current.contains(e.target as Node)) {
-        setIsShelterDropdownOpen(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsShelterDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
   const [province, setProvince] = useState<string>(() => initialDraft?.province || "");
+
+  const provinceOptions = useMemo(() => {
+    if (province && !INDONESIA_PROVINCES.includes(province)) {
+      return [province, ...INDONESIA_PROVINCES];
+    }
+    return INDONESIA_PROVINCES;
+  }, [province]);
   const [regency, setRegency] = useState<string>(() => initialDraft?.regency || "");
   const [district, setDistrict] = useState<string>(() => initialDraft?.district || "");
   const [village, setVillage] = useState<string>(() => initialDraft?.village || "");
@@ -1011,197 +1199,32 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       style={{ width: "100%", minWidth: 0 }}
                     />
                   </div>
-                  <div className="form-group" ref={shelterDropdownRef} style={{ position: "relative", minWidth: 0 }}>
+                  <div className="form-group" style={{ position: "relative", minWidth: 0 }}>
                     <label className="form-label">Status Domisili / Lokasi Warga</label>
-
-                    {/* Custom Dropdown Trigger */}
-                    <button
-                      type="button"
-                      aria-haspopup="listbox"
-                      aria-expanded={isShelterDropdownOpen}
-                      onClick={() => setIsShelterDropdownOpen((prev) => !prev)}
-                      className="form-control"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        padding: "10px 14px",
-                        background: "#ffffff",
-                        borderColor: isShelterDropdownOpen ? "#013220" : undefined,
-                        boxShadow: isShelterDropdownOpen ? "0 0 0 2px rgba(1, 50, 32, 0.12)" : undefined,
-                        height: "44px",
-                        lineHeight: 1,
-                        width: "100%",
-                        minWidth: 0,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "0.88rem",
-                          color: shelterStatus ? "var(--forest, #013220)" : "#94a3b8",
-                          fontWeight: shelterStatus ? 600 : 400,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          flex: 1,
-                          paddingRight: "8px",
-                          minWidth: 0,
-                        }}
-                      >
-                        {shelterStatus || "-- Pilih Status Domisili / Lokasi --"}
-                      </span>
-
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="18"
-                        height="18"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{
-                          color: "#64748b",
-                          transform: isShelterDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                          transition: "transform 0.2s ease",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-
-                    {/* Custom Dropdown Menu (1 Baris per opsi, UI bersih tanpa emoji) */}
-                    {isShelterDropdownOpen && (
-                      <div
-                        role="listbox"
-                        style={{
-                          position: "absolute",
-                          top: "calc(100% + 4px)",
-                          left: 0,
-                          right: 0,
-                          zIndex: 90,
-                          background: "#ffffff",
-                          border: "1px solid #cbd5e1",
-                          borderRadius: "10px",
-                          boxShadow: "0 10px 25px -4px rgba(0, 0, 0, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05)",
-                          padding: "4px",
-                          maxHeight: "260px",
-                          overflowY: "auto",
-                        }}
-                      >
-                        <div
-                          role="option"
-                          aria-selected={!shelterStatus}
-                          onClick={() => {
-                            setShelterStatus("");
-                            setIsShelterDropdownOpen(false);
-                          }}
-                          style={{
-                            padding: "9px 12px",
-                            fontSize: "0.86rem",
-                            color: "#94a3b8",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            transition: "background 0.12s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "#f8fafc";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "transparent";
-                          }}
-                        >
-                          -- Pilih Status Domisili / Lokasi --
-                        </div>
-
-                        {SHELTER_OPTIONS.map((opt) => {
-                          const isSelected = shelterStatus === opt;
-                          return (
-                            <div
-                              key={opt}
-                              role="option"
-                              aria-selected={isSelected}
-                              onClick={() => {
-                                setShelterStatus(opt);
-                                setIsShelterDropdownOpen(false);
-                              }}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                gap: "8px",
-                                padding: "9px 12px",
-                                fontSize: "0.86rem",
-                                fontWeight: isSelected ? 600 : 400,
-                                color: isSelected ? "#013220" : "#1f2937",
-                                background: isSelected ? "#ecfdf5" : "transparent",
-                                borderRadius: "6px",
-                                cursor: "pointer",
-                                transition: "all 0.12s ease",
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!isSelected) {
-                                  e.currentTarget.style.background = "#f1f5f9";
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!isSelected) {
-                                  e.currentTarget.style.background = "transparent";
-                                }
-                              }}
-                            >
-                              <span
-                                style={{
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  flex: 1,
-                                }}
-                              >
-                                {opt}
-                              </span>
-                              {isSelected && (
-                                <span style={{ color: "#059669", fontWeight: 700, fontSize: "0.9rem", flexShrink: 0 }}>
-                                  ✓
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <CustomSelect
+                      value={shelterStatus}
+                      onChange={setShelterStatus}
+                      options={SHELTER_OPTIONS}
+                      placeholder="-- Pilih Status Domisili / Lokasi --"
+                    />
                   </div>
                 </div>
 
                 <div className="form-row-two">
-                  <div className="form-group">
+                  <div className="form-group" style={{ minWidth: 0 }}>
                     <label className="form-label">Provinsi</label>
-                    <select 
-                      className="form-control select" 
-                      value={province} 
-                      onChange={(e) => {
-                        const newProv = e.target.value;
+                    <CustomSelect
+                      value={province}
+                      onChange={(newProv) => {
                         setProvince(newProv);
                         const assigned = getAssignedPosko(newProv, regency);
                         setPoskoTarget(assigned);
                       }}
-                    >
-                      <option value="">-- Pilih Provinsi --</option>
-                      {INDONESIA_PROVINCES.map((p) => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                      {province && !INDONESIA_PROVINCES.includes(province) && (
-                        <option value={province}>{province}</option>
-                      )}
-                    </select>
+                      options={provinceOptions}
+                      placeholder="-- Pilih Provinsi --"
+                    />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group" style={{ minWidth: 0 }}>
                     <label className="form-label">Kabupaten / Kota</label>
                     <input 
                       type="text" 
@@ -1675,35 +1698,27 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                 {(() => {
                   const availCfg = getAvailabilityConfig(category);
                   return (
-                    <div className="form-group">
+                    <div className="form-group" style={{ minWidth: 0 }}>
                       <label className="form-label">{availCfg.label}</label>
-                      <select 
-                        className="form-control select" 
-                        value={availabilityCondition} 
-                        onChange={(e) => setAvailabilityCondition(e.target.value)}
-                      >
-                        <option value="">-- Pilih Kondisi Ketersediaan --</option>
-                        {availCfg.options.map((opt) => (
-                          <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                      </select>
+                      <CustomSelect
+                        value={availabilityCondition}
+                        onChange={setAvailabilityCondition}
+                        options={availCfg.options}
+                        placeholder="-- Pilih Kondisi Ketersediaan --"
+                      />
                     </div>
                   );
                 })()}
 
                 {/* 4. URGENSI MENURUT PELAPOR */}
-                <div className="form-group">
+                <div className="form-group" style={{ minWidth: 0 }}>
                   <label className="form-label">Seberapa mendesak kebutuhan ini menurut Anda?</label>
-                  <select 
-                    className="form-control select" 
-                    value={citizenUrgency} 
-                    onChange={(e) => setCitizenUrgency(e.target.value)}
-                  >
-                    <option value="">-- Pilih Tingkat Urgensi --</option>
-                    <option value="Bisa menunggu">Bisa menunggu</option>
-                    <option value="Perlu segera">Perlu segera</option>
-                    <option value="Sangat mendesak">Sangat mendesak</option>
-                  </select>
+                  <CustomSelect
+                    value={citizenUrgency}
+                    onChange={setCitizenUrgency}
+                    options={["Bisa menunggu", "Perlu segera", "Sangat mendesak"]}
+                    placeholder="-- Pilih Tingkat Urgensi --"
+                  />
                   <small style={{ color: "#758378", marginTop: "6px", display: "block", fontSize: "0.82rem" }}>
                     *Masukan estimasi langsung dari pelapor. Sistem REKSA akan menganalisis data ini dan divalidasi oleh Koordinator Tanggap Bencana Posko BPBD.
                   </small>
