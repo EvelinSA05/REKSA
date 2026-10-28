@@ -19,6 +19,60 @@ interface CitizenReportProps {
   state?: SharedState;
 }
 
+export interface ShelterOption {
+  value: string;
+  label: string;
+  desc: string;
+  tag: string;
+  icon: string;
+  badgeBg: string;
+  badgeColor: string;
+  badgeBorder: string;
+}
+
+export const SHELTER_OPTIONS: ShelterOption[] = [
+  {
+    value: "Rumah Tinggal Pribadi (Terdampak Langsung)",
+    label: "Rumah Tinggal Pribadi (Terdampak Langsung)",
+    desc: "Menetap di kediaman sendiri yang terdampak langsung oleh bencana",
+    tag: "Terdampak Langsung",
+    icon: "🏠",
+    badgeBg: "#ecfdf5",
+    badgeColor: "#065f46",
+    badgeBorder: "#a7f3d0",
+  },
+  {
+    value: "Posko Pengungsian Komunal",
+    label: "Posko Pengungsian Komunal",
+    desc: "Tenda pleton BPBD, aula gedung serbaguna, atau balai pengungsian bersama",
+    tag: "Titik Pengungsian",
+    icon: "⛺",
+    badgeBg: "#eff6ff",
+    badgeColor: "#1e40af",
+    badgeBorder: "#bfdbfe",
+  },
+  {
+    value: "Menumpang di Kerabat / Tetangga",
+    label: "Menumpang di Kerabat / Tetangga",
+    desc: "Mengungsi sementara di kediaman sanak saudara atau tetangga yang aman",
+    tag: "Evakuasi Mandiri",
+    icon: "👥",
+    badgeBg: "#fef3c7",
+    badgeColor: "#92400e",
+    badgeBorder: "#fde68a",
+  },
+  {
+    value: "Fasilitas Umum / Tempat Ibadah",
+    label: "Fasilitas Umum / Tempat Ibadah",
+    desc: "Masjid, gereja, balai RW, sekolah, atau fasilitas publik darurat",
+    tag: "Fasilitas Publik",
+    icon: "🏛️",
+    badgeBg: "#f3e8ff",
+    badgeColor: "#6b21a8",
+    badgeBorder: "#e9d5ff",
+  },
+];
+
 const INDONESIA_PROVINCES = [
   "Jawa Timur", "Jawa Barat", "Jawa Tengah", "DKI Jakarta", "Banten", 
   "DI Yogyakarta", "Bali", "Sumatera Utara", "Sumatera Barat", "Sumatera Selatan",
@@ -148,6 +202,28 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const [applicantNik, setApplicantNik] = useState<string>(() => initialDraft?.applicantNik || "");
   const [poskoTarget, setPoskoTarget] = useState<string>(() => initialDraft?.poskoTarget || "");
   const [shelterStatus, setShelterStatus] = useState<string>(() => initialDraft?.shelterStatus || "");
+  const [isShelterDropdownOpen, setIsShelterDropdownOpen] = useState<boolean>(false);
+  const shelterDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside and escape handler for custom shelter dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shelterDropdownRef.current && !shelterDropdownRef.current.contains(e.target as Node)) {
+        setIsShelterDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsShelterDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
   const [province, setProvince] = useState<string>(() => initialDraft?.province || "");
   const [regency, setRegency] = useState<string>(() => initialDraft?.regency || "");
   const [district, setDistrict] = useState<string>(() => initialDraft?.district || "");
@@ -981,19 +1057,258 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       maxLength={16}
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Status Domisili / Lokasi Warga</label>
-                    <select 
-                      className="form-control select" 
-                      value={shelterStatus} 
-                      onChange={(e) => setShelterStatus(e.target.value)}
+                  <div className="form-group" ref={shelterDropdownRef} style={{ position: "relative" }}>
+                    <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>Status Domisili / Lokasi Warga</span>
+                      {shelterStatus && (
+                        <span style={{ fontSize: "0.74rem", color: "#059669", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                          <span>✓</span> Terpilih
+                        </span>
+                      )}
+                    </label>
+
+                    {/* Custom Dropdown Trigger Button */}
+                    <button
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded={isShelterDropdownOpen}
+                      onClick={() => setIsShelterDropdownOpen((prev) => !prev)}
+                      style={{
+                        width: "100%",
+                        minHeight: "44px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "10px",
+                        padding: "8px 14px",
+                        background: isShelterDropdownOpen ? "#fbfdfc" : "#ffffff",
+                        border: isShelterDropdownOpen ? "2px solid #013220" : shelterStatus ? "1.5px solid #059669" : "1.5px solid #d4ded3",
+                        borderRadius: "12px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.18s ease",
+                        boxShadow: isShelterDropdownOpen ? "0 0 0 3px rgba(1, 50, 32, 0.12)" : "none",
+                        outline: "none",
+                      }}
                     >
-                      <option value="">-- Pilih Status Domisili / Lokasi --</option>
-                      <option value="Rumah Tinggal Pribadi (Terdampak Langsung)">Rumah Tinggal Pribadi (Terdampak Langsung)</option>
-                      <option value="Posko Pengungsian Komunal">Posko Pengungsian Komunal</option>
-                      <option value="Menumpang di Kerabat / Tetangga">Menumpang di Kerabat / Tetangga</option>
-                      <option value="Fasilitas Umum / Tempat Ibadah">Fasilitas Umum / Tempat Ibadah</option>
-                    </select>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
+                        {(() => {
+                          const selectedObj = SHELTER_OPTIONS.find((o) => o.value === shelterStatus);
+                          if (!selectedObj) {
+                            return (
+                              <span style={{ fontSize: "0.88rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                                <span style={{ fontSize: "1.05rem" }}>📍</span>
+                                <span>-- Pilih Status Domisili / Lokasi --</span>
+                              </span>
+                            );
+                          }
+                          return (
+                            <>
+                              <span style={{
+                                width: "30px",
+                                height: "30px",
+                                borderRadius: "8px",
+                                background: selectedObj.badgeBg,
+                                color: selectedObj.badgeColor,
+                                border: `1px solid ${selectedObj.badgeBorder}`,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "1rem",
+                                flexShrink: 0
+                              }}>
+                                {selectedObj.icon}
+                              </span>
+                              <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                                <span style={{
+                                  fontSize: "0.88rem",
+                                  fontWeight: 700,
+                                  color: "#013220",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis"
+                                }}>
+                                  {selectedObj.label}
+                                </span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="18"
+                          height="18"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{
+                            color: isShelterDropdownOpen ? "#013220" : "#64748b",
+                            transform: isShelterDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                            transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            flexShrink: 0
+                          }}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </div>
+                    </button>
+
+                    {/* Custom Dropdown Popover Menu */}
+                    {isShelterDropdownOpen && (
+                      <div
+                        role="listbox"
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 6px)",
+                          left: 0,
+                          right: 0,
+                          zIndex: 80,
+                          background: "#ffffff",
+                          border: "1.5px solid #10b981",
+                          borderRadius: "14px",
+                          boxShadow: "0 14px 34px -4px rgba(1, 50, 32, 0.20), 0 6px 16px rgba(0, 0, 0, 0.08)",
+                          padding: "6px",
+                          maxHeight: "360px",
+                          overflowY: "auto",
+                        }}
+                      >
+                        <div style={{
+                          padding: "8px 10px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "#64748b",
+                          borderBottom: "1px solid #f1f5f9",
+                          marginBottom: "4px",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}>
+                          <span>Pilihan Domisili / Lokasi Warga</span>
+                          <span style={{ fontSize: "0.70rem", color: "#10b981", fontWeight: 600 }}>4 Opsi</span>
+                        </div>
+
+                        {SHELTER_OPTIONS.map((opt) => {
+                          const isSelected = shelterStatus === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => {
+                                setShelterStatus(opt.value);
+                                setIsShelterDropdownOpen(false);
+                              }}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                padding: "10px 12px",
+                                borderRadius: "10px",
+                                cursor: "pointer",
+                                background: isSelected ? "#ecfdf5" : "transparent",
+                                border: isSelected ? "1px solid #a7f3d0" : "1px solid transparent",
+                                transition: "all 0.15s ease",
+                                marginBottom: "4px"
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.background = "#f8fafc";
+                                  e.currentTarget.style.borderColor = "#e2e8f0";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.background = "transparent";
+                                  e.currentTarget.style.borderColor = "transparent";
+                                }
+                              }}
+                            >
+                              <div style={{
+                                width: "38px",
+                                height: "38px",
+                                borderRadius: "10px",
+                                background: opt.badgeBg,
+                                color: opt.badgeTextColor,
+                                border: `1px solid ${opt.badgeBorder}`,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "1.2rem",
+                                flexShrink: 0
+                              }}>
+                                {opt.icon}
+                              </div>
+
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "2px" }}>
+                                  <span style={{
+                                    fontSize: "0.88rem",
+                                    fontWeight: isSelected ? 800 : 700,
+                                    color: isSelected ? "#065f46" : "#0f172a",
+                                    lineHeight: 1.3
+                                  }}>
+                                    {opt.label}
+                                  </span>
+                                  <span style={{
+                                    fontSize: "0.68rem",
+                                    fontWeight: 700,
+                                    padding: "1px 7px",
+                                    borderRadius: "6px",
+                                    background: opt.badgeBg,
+                                    color: opt.badgeTextColor,
+                                    border: `1px solid ${opt.badgeBorder}`,
+                                    whiteSpace: "nowrap"
+                                  }}>
+                                    {opt.tag}
+                                  </span>
+                                </div>
+                                <div style={{
+                                  fontSize: "0.78rem",
+                                  color: isSelected ? "#047857" : "#64748b",
+                                  lineHeight: 1.35
+                                }}>
+                                  {opt.desc}
+                                </div>
+                              </div>
+
+                              <div style={{ flexShrink: 0, marginLeft: "4px" }}>
+                                {isSelected ? (
+                                  <div style={{
+                                    width: "22px",
+                                    height: "22px",
+                                    borderRadius: "50%",
+                                    background: "#10b981",
+                                    color: "#ffffff",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "12px",
+                                    fontWeight: "bold",
+                                    boxShadow: "0 2px 4px rgba(16, 185, 129, 0.35)"
+                                  }}>
+                                    ✓
+                                  </div>
+                                ) : (
+                                  <div style={{
+                                    width: "18px",
+                                    height: "18px",
+                                    borderRadius: "50%",
+                                    border: "1.5px solid #cbd5e1"
+                                  }} />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
