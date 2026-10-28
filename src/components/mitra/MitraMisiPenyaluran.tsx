@@ -3,6 +3,7 @@ import { MisiItem, apiService } from "../../services/api";
 import { AppIcon } from "../common/Icons";
 import { MissionLiveTrackingMap } from "../common/MissionLiveTrackingMap";
 import { getFieldEvidencePhoto } from "../../App";
+import { BastPrintModal } from "../common/BastPrintModal";
 
 interface MitraMisiPenyaluranProps {
   misiList: MisiItem[];
@@ -146,6 +147,7 @@ export function MitraMisiPenyaluran({
   const [obstacleType, setObstacleType] = useState("Akses Jalan Terputus (Longsor)");
   const [obstacleNotes, setObstacleNotes] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedBastMisi, setSelectedBastMisi] = useState<MisiItem | null>(null);
 
   // Mission selector & bulk navigation states
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -446,6 +448,7 @@ export function MitraMisiPenyaluran({
   }
 
   const currentIdx = getStepIndex(currentMission?.status_tahapan || "");
+  const isMissionCompleted = currentMission?.status_tahapan === "Selesai";
 
   return (
     <main className="workspace mitra-tasks-workspace" style={{ maxWidth: "1280px", margin: "0 auto", padding: "28px 24px" }}>
@@ -1195,16 +1198,24 @@ export function MitraMisiPenyaluran({
           }}
         >
           <div style={{ fontSize: "0.86rem", color: "#64748b", lineHeight: 1.5 }}>
-            {currentIdx < 3 ? (
-              <span>Klik tombol aksi begitu armada siap bergerak atau telah menyelesaikan tahapan saat ini.</span>
-            ) : currentIdx === 3 ? (
+            {isMissionCompleted ? (
+              <span style={{ color: "#15803d", fontWeight: 700 }}>
+                ✅ Penyaluran selesai tuntas! Berita Acara Serah Terima (BAST) telah diverifikasi &amp; ditandatangani sah oleh pihak warga/penerima.
+              </span>
+            ) : currentIdx === 4 ? (
               <span style={{ color: "#b45309", fontWeight: 600 }}>
-                Logistik telah diserahkan di lokasi. Siap beralih ke konfirmasi penerimaan fisik terukur.
+                📦 Logistik telah diserahkan di lokasi. Menunggu verifikasi fisik barang &amp; tanda tangan BAST oleh warga/penerima.
+              </span>
+            ) : currentIdx === 3 ? (
+              <span style={{ color: "#0369a1", fontWeight: 600 }}>
+                📍 Armada telah sampai di lokasi. Klik tombol untuk menurunkan logistik dan mengalihkan ke konfirmasi penerimaan warga.
+              </span>
+            ) : currentIdx === 2 ? (
+              <span style={{ color: "#0369a1", fontWeight: 600 }}>
+                🚚 Armada sedang dalam perjalanan. Klik tombol setelah tiba di lokasi untuk menyerahkan logistik.
               </span>
             ) : (
-              <span style={{ color: "#15803d", fontWeight: 600 }}>
-                Logistik telah tiba dan siap dituntaskan dengan penandatanganan serah terima.
-              </span>
+              <span>Klik tombol aksi begitu armada siap bergerak atau telah menyelesaikan tahapan saat ini.</span>
             )}
           </div>
 
@@ -1218,7 +1229,7 @@ export function MitraMisiPenyaluran({
               width: "100%",
             }}
           >
-            {currentIdx < 4 && (
+            {currentIdx < 4 && !isMissionCompleted && (
               <button
                 type="button"
                 className="reksa-btn reksa-btn-primary"
@@ -1247,37 +1258,72 @@ export function MitraMisiPenyaluran({
                     : currentIdx === 1
                     ? "Mulai Perjalanan Menuju Lokasi"
                     : currentIdx === 2
-                    ? "Tiba di Lokasi & Serahkan Bantuan"
-                    : "Ajukan Menunggu Konfirmasi"}
+                    ? "Sudah Sampai di Lokasi & Serahkan Logistik"
+                    : "Serahkan Logistik & Ajukan Konfirmasi Warga"}
                 </span>
                 <AppIcon name="arrow-right" size={14} />
               </button>
             )}
 
-            {(currentIdx === 3 || currentIdx === 4) && (
-              <button
-                type="button"
-                className="reksa-btn reksa-btn-success"
-                disabled={isUpdating}
-                onClick={() => handleConfirmFinalReceipt(currentMission)}
+            {currentIdx === 4 && !isMissionCompleted && (
+              <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "8px",
-                  background: "#15803d",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  padding: "10px 22px",
+                  gap: "10px",
+                  background: "#fffbeb",
+                  border: "1px solid #fde68a",
+                  color: "#92400e",
+                  fontWeight: 600,
+                  padding: "10px 18px",
                   borderRadius: "10px",
-                  border: "none",
-                  cursor: isUpdating ? "not-allowed" : "pointer",
-                  opacity: isUpdating ? 0.7 : 1,
-                  boxShadow: "0 2px 8px rgba(21, 128, 61, 0.2)",
+                  fontSize: "0.86rem",
                 }}
               >
-                <AppIcon name="check" size={15} />
-                <span>{isUpdating ? "Memproses..." : "Konfirmasi Serah Terima Selesai Tuntas"}</span>
-              </button>
+                <AppIcon name="clock" size={16} style={{ color: "#d97706" }} />
+                <span>Menunggu Bukti Verifikasi Fisik &amp; Tanda Tangan BAST dari Warga</span>
+              </div>
+            )}
+
+            {isMissionCompleted && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    background: "#dcfce7",
+                    color: "#15803d",
+                    padding: "8px 16px",
+                    borderRadius: "10px",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <AppIcon name="check" size={15} />
+                  <span>✓ Penyaluran Tuntas &amp; Terverifikasi 2 Pihak</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBastMisi(currentMission)}
+                  style={{
+                    background: "#013220",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "10px",
+                    padding: "8px 18px",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <AppIcon name="file" size={14} />
+                  <span>Cetak Dokumen BAST Sah</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1716,6 +1762,13 @@ export function MitraMisiPenyaluran({
             </div>
           </div>
         </div>
+      )}
+      {/* DIGITAL BAST PRINT / DOWNLOAD MODAL */}
+      {selectedBastMisi && (
+        <BastPrintModal
+          misi={selectedBastMisi}
+          onClose={() => setSelectedBastMisi(null)}
+        />
       )}
     </main>
   );
