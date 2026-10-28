@@ -30,7 +30,7 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
   const [selectedQuick, setSelectedQuick] = useState(0);
   const [clarificationModalCase, setClarificationModalCase] = useState<CaseRecord | null>(null);
   
-  const currentCases = (state.casesList || []).filter(
+  const rawCases = (state.casesList || []).filter(
     (c) =>
       Boolean(
         (c.isOwn || c.applicantName === "Andi Pratama" || c.applicantName?.toLowerCase().includes("andi") || c.id === "RK-2026-J348QJ") &&
@@ -39,6 +39,21 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
         !c.id.startsWith("RK-MULTI-")
       )
   );
+
+  // Deduplikasi tampilan: hindari duplikasi tampilan jika ada laporan dengan kebutuhan, volume, dan lokasi identik
+  const currentCases = useMemo(() => {
+    const seen = new Set<string>();
+    const result: CaseRecord[] = [];
+    for (const c of rawCases) {
+      const sig = `${(c.item || "").trim().toLowerCase()}|${(c.qty || "").trim().toLowerCase()}|${(c.village || c.location || "").trim().toLowerCase()}`;
+      if (!seen.has(c.id) && !seen.has(sig)) {
+        seen.add(c.id);
+        seen.add(sig);
+        result.push(c);
+      }
+    }
+    return result;
+  }, [rawCases]);
   const hasCases = currentCases.length > 0;
   const clarificationCases = currentCases.filter((c) => c.status === "Perlu Klarifikasi");
 
