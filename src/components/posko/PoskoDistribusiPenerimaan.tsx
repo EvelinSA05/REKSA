@@ -103,6 +103,146 @@ export function PoskoDistribusiPenerimaan({
   // Digital BAST Print/Download Modal
   const [selectedBastMisi, setSelectedBastMisi] = useState<MisiItem | null>(null);
 
+  // Satgas TRC BPBD Last-Mile Dispatch Stages (4 Tahapan)
+  const BPBD_DISPATCH_STAGES = [
+    { id: 1, name: "Logistik Siap di Posko", desc: "Pengecekan stok & muat ke armada Satgas TRC BPBD" },
+    { id: 2, name: "Satgas TRC Meluncur ke Warga", desc: "Truk taktis 4x4 BPBD dalam perjalanan ke lokasi" },
+    { id: 3, name: "Tiba di Titik Pengungsian", desc: "Armada tiba di tenda warga, siap serah terima fisik" },
+    { id: 4, name: "Serah Terima Warga (BAST)", desc: "Penerimaan fisik sah diverifikasi & BAST terbit" },
+  ];
+
+  const [bpbdMissionStages, setBpbdMissionStages] = useState<Record<string | number, number>>(() => {
+    try {
+      const s = localStorage.getItem("reksa_bpbd_mission_stages");
+      return s ? JSON.parse(s) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const getBpbdStage = (m: MisiItem): number => {
+    if (m.status_tahapan === "Selesai") return 4;
+    if (bpbdMissionStages[m.id] !== undefined) return bpbdMissionStages[m.id];
+    if (bpbdMissionStages[m.kode_misi] !== undefined) return bpbdMissionStages[m.kode_misi];
+    if (
+      m.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
+      m.status_tahapan === "Menunggu Konfirmasi Penerimaan" ||
+      m.status_tahapan === "Tiba di lokasi"
+    ) {
+      return 3;
+    }
+    if (m.status_tahapan === "Dalam Perjalanan") return 2;
+    return 1;
+  };
+
+  const handleAdvanceBpbdDispatch = async (m: MisiItem) => {
+    const currentStage = getBpbdStage(m);
+    const nextStage = Math.min(4, currentStage + 1);
+
+    if (nextStage === 4) {
+      openConfirmModal(m);
+      return;
+    }
+
+    const nextStages = { ...bpbdMissionStages, [m.id]: nextStage, [m.kode_misi]: nextStage };
+    setBpbdMissionStages(nextStages);
+    try {
+      localStorage.setItem("reksa_bpbd_mission_stages", JSON.stringify(nextStages));
+    } catch (_) {}
+
+    const newTahapan =
+      nextStage === 2
+        ? "Dalam Perjalanan"
+        : nextStage === 3
+        ? "Tiba di Lokasi & Diserahkan"
+        : "Selesai";
+
+    const newCatatan =
+      nextStage === 2
+        ? "Armada Satgas TRC BPBD bergerak meluncur membawa logistik menuju lokasi warga."
+        : nextStage === 3
+        ? "Armada Satgas TRC BPBD tiba di lokasi pengungsian warga. Siap proses serah terima."
+        : "Penyaluran tuntas diserahkan oleh Satgas TRC BPBD kepada warga.";
+
+    // 1. Optimistic instant local storage update for missions
+    let updatedMisiList: MisiItem[] = [];
+    try {
+      const sMisi = localStorage.getItem("reksa_misi_db");
+      let list: any[] = sMisi ? JSON.parse(sMisi) : (effectiveMisiList || []);
+      list = list.map((item: any) => {
+        if (item.id === m.id || item.kode_misi === m.kode_misi) {
+          return {
+            ...item,
+            status_tahapan: newTahapan,
+            armada_info: item.armada_info?.includes("TRC") ? item.armada_info : "Truk Taktis 4x4 Satgas TRC BPBD (Distribusi Lapangan)",
+            responder_name: "Satgas TRC BPBD (Tim Reaksi Cepat)",
+            catatan_lapangan: newCatatan,
+            bpbd_stage: nextStage,
+          };
+        }
+        return item;
+      });
+      updatedMisiList = list;
+      localStorage.setItem("reksa_misi_db", JSON.stringify(list));
+    } catch (_) {}
+
+    // 2. Optimistic instant local storage update for cases
+    let updatedCasesDb: any[] = [];
+    try {
+      const sCases = localStorage.getItem("reksa_cases_db");
+      if (sCases) {
+        let casesList = JSON.parse(sCases);
+        const nextCaseStatus =
+          nextStage === 2
+            ? "Dalam Pengiriman"
+            : nextStage === 3
+            ? "Menunggu Konfirmasi Penerimaan"
+            : "Selesai";
+
+        casesList = casesList.map((c: any) => {
+          const isTarget =
+            (m.kebutuhan_id && (c.rawId === m.kebutuhan_id || String(c.rawId) === String(m.kebutuhan_id))) ||
+            (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === (m as any).kode_kasus));
+          if (isTarget) {
+            return {
+              ...c,
+              status: nextCaseStatus,
+              delivered: nextStage === 4 ? 1000 : c.delivered,
+            };
+          }
+          return c;
+        });
+        updatedCasesDb = casesList;
+        localStorage.setItem("reksa_cases_db", JSON.stringify(casesList));
+      }
+    } catch (_) {}
+
+    update?.({
+      misiList: updatedMisiList.length > 0 ? updatedMisiList : undefined,
+      casesList: updatedCasesDb.length > 0 ? updatedCasesDb : undefined,
+    });
+
+    if (nextStage === 2) {
+      notify?.(`🚚 Armada Satgas TRC BPBD diberangkatkan menuju lokasi warga! Live tracking GPS aktif.`);
+    } else if (nextStage === 3) {
+      notify?.(`📍 Satgas TRC BPBD tiba di lokasi pengungsian warga. Siap proses serah terima dan BAST.`);
+    }
+
+    // 3. Background server sync
+    (async () => {
+      try {
+        await Promise.race([
+          apiService.advanceMisiStep(m.id, {
+            status_tahapan: newTahapan,
+            catatan_lapangan: newCatatan,
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3500)),
+        ]);
+        onRefresh?.().catch(() => {});
+      } catch (_) {}
+    })();
+  };
+
   const activeMissions = effectiveMisiList.filter((m) => m.status_tahapan !== "Selesai");
   const arrivedMissions = effectiveMisiList.filter(
     (m) =>
@@ -191,6 +331,12 @@ export function PoskoDistribusiPenerimaan({
       }
 
       // 1. Update status misi di reksa_misi_db menjadi 'Selesai'
+      const nextStages = { ...bpbdMissionStages, [targetMisi.id]: 4, [targetMisi.kode_misi]: 4 };
+      setBpbdMissionStages(nextStages);
+      try {
+        localStorage.setItem("reksa_bpbd_mission_stages", JSON.stringify(nextStages));
+      } catch (_) {}
+
       let updatedMisiList: MisiItem[] = [];
       try {
         const sMisi = localStorage.getItem("reksa_misi_db");
@@ -706,6 +852,256 @@ export function PoskoDistribusiPenerimaan({
                     </div>
                   </div>
                 </div>
+
+                {/* 5.5 KONSOL OPERASIONAL DISPATCHING SATGAS TRC BPBD (LAST-MILE KE WARGA) */}
+                {(() => {
+                  const currentBpbdStage = getBpbdStage(m);
+                  return (
+                    <div
+                      style={{
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "12px",
+                          flexWrap: "wrap",
+                          gap: "8px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span
+                            style={{
+                              background: "#013220",
+                              color: "#ffffff",
+                              fontSize: "0.72rem",
+                              fontWeight: 800,
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              letterSpacing: "0.04em",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Satgas TRC BPBD
+                          </span>
+                          <strong style={{ fontSize: "0.92rem", color: "#013220" }}>
+                            Tahapan Penyaluran Armada BPBD ke Warga (Last-Mile)
+                          </strong>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: "0.8rem",
+                            color: currentBpbdStage === 4 ? "#15803d" : "#0284c7",
+                            fontWeight: 700,
+                            background: currentBpbdStage === 4 ? "#dcfce7" : "#e0f2fe",
+                            padding: "3px 10px",
+                            borderRadius: "12px",
+                          }}
+                        >
+                          Tahap {currentBpbdStage} dari 4 {currentBpbdStage === 4 ? "Selesai" : "Berjalan"}
+                        </span>
+                      </div>
+
+                      {/* 4-Step Visual Stepper */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                          gap: "10px",
+                          marginBottom: "14px",
+                        }}
+                      >
+                        {BPBD_DISPATCH_STAGES.map((st) => {
+                          const isPast = currentBpbdStage > st.id;
+                          const isCurr = currentBpbdStage === st.id;
+                          return (
+                            <div
+                              key={st.id}
+                              style={{
+                                background: isCurr ? "#ecfdf5" : isPast ? "#ffffff" : "#f8fafc",
+                                border: isCurr ? "2px solid #10b981" : isPast ? "1px solid #a7f3d0" : "1px solid #e2e8f0",
+                                borderRadius: "10px",
+                                padding: "10px 12px",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "22px",
+                                  height: "22px",
+                                  borderRadius: "50%",
+                                  background: isPast ? "#10b981" : isCurr ? "#013220" : "#cbd5e1",
+                                  color: "#ffffff",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "0.74rem",
+                                  fontWeight: 800,
+                                  flexShrink: 0,
+                                  marginTop: "1px",
+                                }}
+                              >
+                                {isPast ? "✓" : st.id}
+                              </div>
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "0.82rem",
+                                    fontWeight: 700,
+                                    color: isCurr ? "#013220" : isPast ? "#047857" : "#64748b",
+                                    marginBottom: "2px",
+                                  }}
+                                >
+                                  {st.name}
+                                </div>
+                                <div style={{ fontSize: "0.75rem", color: "#64748b", lineHeight: 1.35 }}>
+                                  {st.desc}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action Bar for Satgas BPBD Dispatch */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "10px",
+                          borderTop: "1px solid #e2e8f0",
+                          paddingTop: "12px",
+                        }}
+                      >
+                        <div style={{ fontSize: "0.82rem", color: "#475569" }}>
+                          {currentBpbdStage === 1 && (
+                            <span>📦 Logistik titipan telah diterima di posko. Klik tombol untuk menggerakkan armada Satgas TRC BPBD.</span>
+                          )}
+                          {currentBpbdStage === 2 && (
+                            <span style={{ color: "#0369a1", fontWeight: 600 }}>🚚 Armada Satgas TRC BPBD sedang bergerak di rute GPS menuju lokasi warga.</span>
+                          )}
+                          {currentBpbdStage === 3 && (
+                            <span style={{ color: "#b45309", fontWeight: 600 }}>📍 Armada Satgas TRC BPBD telah tiba di tenda warga. Lakukan serah terima fisik &amp; BAST.</span>
+                          )}
+                          {currentBpbdStage === 4 && (
+                            <span style={{ color: "#15803d", fontWeight: 700 }}>✅ Penyaluran selesai tuntas. Berita Acara Serah Terima (BAST) telah diterbitkan sah.</span>
+                          )}
+                        </div>
+
+                        <div>
+                          {currentBpbdStage === 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleAdvanceBpbdDispatch(m)}
+                              style={{
+                                background: "#013220",
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "8px",
+                                padding: "8px 16px",
+                                fontSize: "0.82rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                boxShadow: "0 2px 6px rgba(1, 50, 32, 0.2)",
+                              }}
+                            >
+                              <AppIcon name="truck" size={14} />
+                              <span>Berangkatkan Armada Satgas TRC BPBD</span>
+                              <AppIcon name="arrow-right" size={12} />
+                            </button>
+                          )}
+
+                          {currentBpbdStage === 2 && (
+                            <button
+                              type="button"
+                              onClick={() => handleAdvanceBpbdDispatch(m)}
+                              style={{
+                                background: "#059669",
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "8px",
+                                padding: "8px 16px",
+                                fontSize: "0.82rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                boxShadow: "0 2px 6px rgba(5, 150, 105, 0.25)",
+                              }}
+                            >
+                              <AppIcon name="pin" size={14} />
+                              <span>Tiba di Titik Warga &amp; Serahkan Bantuan</span>
+                              <AppIcon name="arrow-right" size={12} />
+                            </button>
+                          )}
+
+                          {currentBpbdStage === 3 && (
+                            <button
+                              type="button"
+                              onClick={() => handleAdvanceBpbdDispatch(m)}
+                              style={{
+                                background: "#013220",
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "8px",
+                                padding: "8px 16px",
+                                fontSize: "0.82rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                boxShadow: "0 2px 6px rgba(1, 50, 32, 0.2)",
+                              }}
+                            >
+                              <AppIcon name="check" size={14} />
+                              <span>Verifikasi Serah Terima Warga &amp; BAST</span>
+                              <AppIcon name="arrow-right" size={12} />
+                            </button>
+                          )}
+
+                          {currentBpbdStage === 4 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedBastMisi(m)}
+                              style={{
+                                background: "#f0fdf4",
+                                color: "#15803d",
+                                border: "1px solid #86efac",
+                                borderRadius: "8px",
+                                padding: "7px 14px",
+                                fontSize: "0.8rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              <AppIcon name="file" size={13} />
+                              <span>Cetak BAST Digital Warga</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* 6. Dedicated Footer Action Bar */}
                 <div className="posko-case-footer-row">
