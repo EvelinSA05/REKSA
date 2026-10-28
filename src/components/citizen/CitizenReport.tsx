@@ -2087,7 +2087,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                     try {
                       const apiCall = apiService.createKebutuhan(payload);
                       const timeoutPromise = new Promise<never>((_, reject) =>
-                        setTimeout(() => reject(new Error("Timeout (network sync)")), 4000)
+                        setTimeout(() => reject(new Error("Timeout (network sync)")), 20000)
                       );
                       const res = await Promise.race([apiCall, timeoutPromise]);
                       if (res && res.success && res.data) {
