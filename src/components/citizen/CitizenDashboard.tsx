@@ -69,7 +69,7 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
 
   // Real-time logistic tracking missions for citizen
   const [localMisiList, setLocalMisiList] = useState<MisiItem[]>(state.misiList || []);
-  const [selectedMisiId, setSelectedMisiId] = useState<number | null>(null);
+  const [selectedMisiId, setSelectedMisiId] = useState<number | string | null>(null);
 
   useEffect(() => {
     if (state.misiList && state.misiList.length > 0) {
@@ -114,8 +114,8 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
 
   const currentMission = useMemo(() => {
     if (displayMissions.length === 0) return null;
-    if (selectedMisiId) {
-      const found = displayMissions.find((m) => m.id === selectedMisiId);
+    if (selectedMisiId !== null && selectedMisiId !== undefined && selectedMisiId !== "") {
+      const found = displayMissions.find((m) => String(m.id) === String(selectedMisiId));
       if (found) return found;
     }
     return displayMissions[0];
@@ -396,8 +396,11 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                 </label>
                 <select
                   id="citizen-mission-select"
-                  value={currentMission.id}
-                  onChange={(e) => setSelectedMisiId(e.target.value)}
+                  value={String(currentMission.id ?? "")}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedMisiId(val);
+                  }}
                   style={{
                     border: "none",
                     background: "transparent",
@@ -417,7 +420,7 @@ export function CitizenDashboard({ state, update, setPage, name }: CitizenDashbo
                     }
                     const statusNote = m.status_tahapan ? ` [${m.status_tahapan}]` : "";
                     return (
-                      <option key={m.id} value={m.id}>
+                      <option key={m.id} value={String(m.id)}>
                         {shortCode}: {shortCategory}{statusNote}
                       </option>
                     );
