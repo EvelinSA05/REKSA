@@ -1188,15 +1188,13 @@ export function MitraMisiPenyaluran({
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "16px",
+            flexDirection: "column",
+            gap: "14px",
             paddingTop: "20px",
             borderTop: "1px solid #f1f5f9",
           }}
         >
-          <div style={{ fontSize: "0.86rem", color: "#64748b", maxWidth: "560px" }}>
+          <div style={{ fontSize: "0.86rem", color: "#64748b", lineHeight: 1.5 }}>
             {currentIdx < 3 ? (
               <span>Klik tombol aksi begitu armada siap bergerak atau telah menyelesaikan tahapan saat ini.</span>
             ) : currentIdx === 3 ? (
@@ -1210,7 +1208,16 @@ export function MitraMisiPenyaluran({
             )}
           </div>
 
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              gap: "12px",
+              flexWrap: "wrap",
+              width: "100%",
+            }}
+          >
             {currentIdx < 4 && (
               <button
                 type="button"
