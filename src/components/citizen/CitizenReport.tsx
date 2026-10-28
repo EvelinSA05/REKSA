@@ -999,7 +999,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
             {step === 2 && (
               <div className="form-fields-group">
                 <div className="form-row-two">
-                  <div className="form-group">
+                  <div className="form-group" style={{ minWidth: 0 }}>
                     <label className="form-label">NIK Pemohon / ID Warga</label>
                     <input 
                       type="text" 
@@ -1008,9 +1008,10 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       onChange={(e) => setApplicantNik(e.target.value)} 
                       placeholder="Contoh: 3202110482910002 (16 digit)"
                       maxLength={16}
+                      style={{ width: "100%", minWidth: 0 }}
                     />
                   </div>
-                  <div className="form-group" ref={shelterDropdownRef} style={{ position: "relative" }}>
+                  <div className="form-group" ref={shelterDropdownRef} style={{ position: "relative", minWidth: 0 }}>
                     <label className="form-label">Status Domisili / Lokasi Warga</label>
 
                     {/* Custom Dropdown Trigger */}
@@ -1032,6 +1033,8 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                         boxShadow: isShelterDropdownOpen ? "0 0 0 2px rgba(1, 50, 32, 0.12)" : undefined,
                         height: "44px",
                         lineHeight: 1,
+                        width: "100%",
+                        minWidth: 0,
                       }}
                     >
                       <span
@@ -1044,6 +1047,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                           textOverflow: "ellipsis",
                           flex: 1,
                           paddingRight: "8px",
+                          minWidth: 0,
                         }}
                       >
                         {shelterStatus || "-- Pilih Status Domisili / Lokasi --"}
