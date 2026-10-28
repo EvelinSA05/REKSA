@@ -3632,31 +3632,31 @@ input,select,textarea{background:var(--white);border-color:var(--line)}
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .form-row-three {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .form-row-two .form-group,
 .form-row-three .form-group {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-width: 0;
 }
 
 .form-row-two .form-label,
 .form-row-three .form-label {
-  min-height: 38px;
+  min-height: 24px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   line-height: 1.35;
-  margin-bottom: 2px;
+  margin-bottom: 6px;
 }
 
 .category-pills-row {
