@@ -336,6 +336,35 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   const initialDraft = getInitialDraft();
 
   const [step, setStep] = useState<number>(() => initialDraft?.step || 1);
+  const formTopRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.documentElement.scrollTo({ top: 0, behavior: "smooth" });
+    document.body.scrollTo({ top: 0, behavior: "smooth" });
+    if (formTopRef.current) {
+      formTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const goToStep = (targetStep: number) => {
+    setStep(targetStep);
+    scrollToTop();
+    setTimeout(scrollToTop, 50);
+  };
+
+  // Scroll to top of the next form step automatically whenever step changes
+  const isFirstMount = useRef(true);
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    scrollToTop();
+    const t = setTimeout(scrollToTop, 60);
+    return () => clearTimeout(t);
+  }, [step]);
+
   const [success, setSuccess] = useState(false);
   const [submittedCaseId, setSubmittedCaseId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -859,7 +888,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
   }
 
   return (
-    <main className="workspace report-workspace">
+    <main className="workspace report-workspace" ref={formTopRef}>
       <PageHead 
         eyebrow={`Langkah ${step} dari 5`} 
         title="Laporkan Kebutuhan Darurat" 
@@ -896,7 +925,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                   background: isDone || isActive ? shade.bg : "#e8ede7",
                   color: isDone || isActive ? shade.text : "#758378",
                 }}
-                onClick={() => i + 1 <= step && setStep(i + 1)}
+                onClick={() => i + 1 <= step && goToStep(i + 1)}
               >
                 <span 
                   className="step-trapezoid-num"
@@ -2219,7 +2248,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
               <Button 
                 variant="secondary" 
                 disabled={step === 1 || isSubmitting} 
-                onClick={() => setStep(step - 1)}
+                onClick={() => goToStep(step - 1)}
               >
                 Kembali
               </Button>
@@ -2251,7 +2280,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
               disabled={isSubmitting}
               onClick={() => { 
                 if (step < 5) {
-                  setStep(step + 1); 
+                  goToStep(step + 1); 
                 } else { 
                   // Cegah pengiriman ganda: tombol hanya bisa ditekan 1x dan langsung disabled
                   if (isSubmittingRef.current) return;
