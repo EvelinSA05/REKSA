@@ -31,6 +31,7 @@ interface CustomSelectProps {
   onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
+  align?: "left" | "right";
   style?: React.CSSProperties;
 }
 
@@ -39,6 +40,7 @@ function CustomSelect({
   onChange,
   options,
   placeholder = "-- Pilih --",
+  align = "left",
   style,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,6 +73,7 @@ function CustomSelect({
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
         className="form-control"
+        title={value || placeholder}
         style={{
           display: "flex",
           alignItems: "center",
@@ -81,8 +84,8 @@ function CustomSelect({
           background: "#ffffff",
           borderColor: isOpen ? "#013220" : undefined,
           boxShadow: isOpen ? "0 0 0 2px rgba(1, 50, 32, 0.12)" : undefined,
-          height: "44px",
-          lineHeight: 1,
+          minHeight: "44px",
+          height: "auto",
           width: "100%",
           minWidth: 0,
         }}
@@ -92,9 +95,9 @@ function CustomSelect({
             fontSize: "0.88rem",
             color: value ? "var(--forest, #013220)" : "#94a3b8",
             fontWeight: value ? 600 : 400,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            whiteSpace: "normal",
+            lineHeight: 1.35,
+            wordBreak: "normal",
             flex: 1,
             paddingRight: "8px",
             minWidth: 0,
@@ -117,6 +120,7 @@ function CustomSelect({
             transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
             transition: "transform 0.2s ease",
             flexShrink: 0,
+            marginLeft: "auto",
           }}
         >
           <polyline points="6 9 12 15 18 9" />
@@ -129,15 +133,18 @@ function CustomSelect({
           style={{
             position: "absolute",
             top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
+            ...(align === "right" ? { right: 0 } : { left: 0 }),
+            minWidth: "100%",
+            width: "max-content",
+            maxWidth: "min(460px, calc(100vw - 32px))",
+            boxSizing: "border-box",
             zIndex: 90,
             background: "#ffffff",
             border: "1px solid #cbd5e1",
             borderRadius: "10px",
             boxShadow: "0 10px 25px -4px rgba(0, 0, 0, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05)",
             padding: "4px",
-            maxHeight: "260px",
+            maxHeight: "280px",
             overflowY: "auto",
           }}
         >
@@ -149,14 +156,13 @@ function CustomSelect({
               setIsOpen(false);
             }}
             style={{
-              padding: "9px 12px",
+              padding: "10px 14px",
               fontSize: "0.86rem",
               color: "#94a3b8",
               borderRadius: "6px",
               cursor: "pointer",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              whiteSpace: "normal",
+              lineHeight: 1.35,
               transition: "background 0.12s ease",
             }}
             onMouseEnter={(e) => {
@@ -184,9 +190,9 @@ function CustomSelect({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: "8px",
-                  padding: "9px 12px",
-                  fontSize: "0.86rem",
+                  gap: "10px",
+                  padding: "10px 14px",
+                  fontSize: "0.88rem",
                   fontWeight: isSelected ? 600 : 400,
                   color: isSelected ? "#013220" : "#1f2937",
                   background: isSelected ? "#ecfdf5" : "transparent",
@@ -207,16 +213,16 @@ function CustomSelect({
               >
                 <span
                   style={{
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    whiteSpace: "normal",
+                    lineHeight: 1.4,
+                    wordBreak: "normal",
                     flex: 1,
                   }}
                 >
                   {opt}
                 </span>
                 {isSelected && (
-                  <span style={{ color: "#059669", fontWeight: 700, fontSize: "0.9rem", flexShrink: 0 }}>
+                  <span style={{ color: "#059669", fontWeight: 700, fontSize: "0.95rem", flexShrink: 0, marginLeft: "8px" }}>
                     ✓
                   </span>
                 )}
@@ -1206,6 +1212,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       onChange={setShelterStatus}
                       options={SHELTER_OPTIONS}
                       placeholder="-- Pilih Status Domisili / Lokasi --"
+                      align="right"
                     />
                   </div>
                 </div>
