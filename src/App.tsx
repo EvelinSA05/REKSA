@@ -6859,10 +6859,52 @@ export default function App() {
             });
 
           const dbCaseIds = new Set(dbCases.map((c) => c.id));
-          const localUserReports = (prev.casesList || []).filter(
-            (c) => Boolean(c.isOwn && !c.id.startsWith("RK-UJI-") && !c.id.includes("TEST") && !dbCaseIds.has(c.id))
-          );
-          const mergedCases = [...localUserReports, ...dbCases];
+
+          // Deduplikasi pintar: singkirkan laporan lokal sementara jika data resminya sudah tercatat di database remote
+          const replacedLocalIds = new Set<string>();
+          const localUserReports = (prev.casesList || []).filter((c) => {
+            if (!c.isOwn || c.id.startsWith("RK-UJI-") || c.id.includes("TEST") || dbCaseIds.has(c.id)) {
+              return false;
+            }
+            // Cek apakah data ini identik dengan salah satu record di dbCases (sama kebutuhan, volume, lokasi, & pelapor)
+            const isDuplicate = dbCases.some((db) => {
+              const sameItem = (db.item || "").trim().toLowerCase() === (c.item || "").trim().toLowerCase();
+              const sameQty = (db.qty || "").trim().toLowerCase() === (c.qty || "").trim().toLowerCase();
+              const sameVillage = Boolean(db.village && c.village && db.village.trim().toLowerCase() === c.village.trim().toLowerCase());
+              const sameLoc = Boolean(db.location && c.location && db.location.trim().toLowerCase() === c.location.trim().toLowerCase());
+              const sameApplicant = (db.applicantName || "").toLowerCase().includes("andi") ||
+                                    (db.applicantName || "").toLowerCase() === (c.applicantName || "").toLowerCase();
+              return sameItem && sameQty && (sameVillage || sameLoc) && sameApplicant;
+            });
+            if (isDuplicate) {
+              replacedLocalIds.add(c.id);
+              return false;
+            }
+            return true;
+          });
+
+          // Jika ada ID lokal sementara yang digantikan oleh record DB resmi, bersihkan dari reksa_user_reported_ids
+          if (replacedLocalIds.size > 0) {
+            const cleanReportedIds = getUserReportedIds().filter((id) => !replacedLocalIds.has(id));
+            localStorage.setItem("reksa_user_reported_ids", JSON.stringify(cleanReportedIds));
+          }
+
+          // Gabungkan dbCases lebih dulu agar data resmi database diprioritaskan
+          const combinedCandidates = [...dbCases, ...localUserReports];
+
+          // Final safety deduplication pass: pastikan tidak ada ID ganda atau record identik
+          const seenCaseIds = new Set<string>();
+          const seenCaseSigs = new Set<string>();
+          const mergedCases: CaseRecord[] = [];
+
+          for (const item of combinedCandidates) {
+            const sig = `${(item.item || "").trim().toLowerCase()}|${(item.qty || "").trim().toLowerCase()}|${(item.village || item.location || "").trim().toLowerCase()}|${(item.applicantName || "").trim().toLowerCase()}`;
+            if (!seenCaseIds.has(item.id) && !seenCaseSigs.has(sig)) {
+              seenCaseIds.add(item.id);
+              seenCaseSigs.add(sig);
+              mergedCases.push(item);
+            }
+          }
 
           // Pastikan ID laporan milik user lokal tetap tersimpan di userReportedIds
           const currentReportedIds = new Set(getUserReportedIds());
