@@ -84,10 +84,12 @@ function CustomSelect({
           background: "#ffffff",
           borderColor: isOpen ? "#013220" : undefined,
           boxShadow: isOpen ? "0 0 0 2px rgba(1, 50, 32, 0.12)" : undefined,
+          height: "44px",
           minHeight: "44px",
-          height: "auto",
+          maxHeight: "44px",
           width: "100%",
           minWidth: 0,
+          boxSizing: "border-box",
         }}
       >
         <span
@@ -95,9 +97,9 @@ function CustomSelect({
             fontSize: "0.88rem",
             color: value ? "var(--forest, #013220)" : "#94a3b8",
             fontWeight: value ? 600 : 400,
-            whiteSpace: "normal",
-            lineHeight: 1.35,
-            wordBreak: "normal",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
             flex: 1,
             paddingRight: "8px",
             minWidth: 0,
