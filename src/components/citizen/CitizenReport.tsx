@@ -1586,9 +1586,11 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
             {step === 3 && (
               <div className="form-fields-group">
                 {/* 1. JUMLAH ORANG TERDAMPAK & JUMLAH KK TERDAMPAK (INPUT MANUAL USER) */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Berapa orang yang terdampak? (Jiwa)</label>
+                <div className="form-row-two" style={{ marginBottom: "14px" }}>
+                  <div className="form-group" style={{ margin: 0, minWidth: 0 }}>
+                    <label className="form-label" style={{ minHeight: "44px", display: "flex", alignItems: "flex-end", marginBottom: "6px" }}>
+                      Berapa orang yang terdampak? (Jiwa)
+                    </label>
                     <input 
                       type="number" 
                       min={1}
@@ -1596,14 +1598,17 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       value={affectedPeople} 
                       onChange={(e) => setAffectedPeople(e.target.value ? Number(e.target.value) : "")} 
                       placeholder="Contoh: 21 jiwa"
+                      style={{ width: "100%", height: "44px" }}
                     />
                     <small style={{ color: "#758378", marginTop: "4px", display: "block", fontSize: "0.82rem" }}>
                       Total jiwa warga terdampak langsung di lokasi.
                     </small>
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label className="form-label">Berapa KK yang terdampak?</label>
+                  <div className="form-group" style={{ margin: 0, minWidth: 0 }}>
+                    <label className="form-label" style={{ minHeight: "44px", display: "flex", alignItems: "flex-end", marginBottom: "6px" }}>
+                      Berapa KK yang terdampak?
+                    </label>
                     <input 
                       type="number" 
                       min={1}
@@ -1611,6 +1616,7 @@ export function CitizenReport({ complete, update, state }: CitizenReportProps) {
                       value={familyCount} 
                       onChange={(e) => setFamilyCount(e.target.value ? Number(e.target.value) : "")} 
                       placeholder="Contoh: 5 KK"
+                      style={{ width: "100%", height: "44px" }}
                     />
                     <small style={{ color: "#758378", marginTop: "4px", display: "block", fontSize: "0.82rem" }}>
                       Jumlah Kepala Keluarga (KK).
