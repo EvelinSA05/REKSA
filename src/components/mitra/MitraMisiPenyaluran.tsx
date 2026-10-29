@@ -527,16 +527,18 @@ export function MitraMisiPenyaluran({
           style={{
             background: "#ffffff",
             borderRadius: "14px",
-            padding: "18px 20px",
+            padding: "16px 18px",
             border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
             <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Misi Aktif
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center", flexShrink: 0 }}>
               <AppIcon name="truck" size={16} />
             </div>
           </div>
@@ -553,16 +555,18 @@ export function MitraMisiPenyaluran({
           style={{
             background: "#ffffff",
             borderRadius: "14px",
-            padding: "18px 20px",
+            padding: "16px 18px",
             border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
             <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Tahapan Terkini
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center", flexShrink: 0 }}>
               <AppIcon name="clock" size={16} />
             </div>
           </div>
@@ -579,23 +583,47 @@ export function MitraMisiPenyaluran({
           style={{
             background: "#ffffff",
             borderRadius: "14px",
-            padding: "18px 20px",
+            padding: "16px 18px",
             border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
             <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Muatan Aktif
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center", flexShrink: 0 }}>
               <AppIcon name="box" size={16} />
             </div>
           </div>
-          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div
+            style={{
+              fontSize: (currentMission.muatan?.length || 0) > 16 ? "1.25rem" : "1.65rem",
+              fontWeight: 800,
+              color: "#013220",
+              lineHeight: 1.15,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={currentMission.muatan}
+          >
             {currentMission.muatan}
           </div>
-          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <small
+            style={{
+              color: "#64748b",
+              fontSize: "0.78rem",
+              marginTop: "4px",
+              display: "block",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={currentMission.armada_info || "Armada Mitra"}
+          >
             {currentMission.armada_info || "Armada Mitra"}
           </small>
         </div>
@@ -605,23 +633,25 @@ export function MitraMisiPenyaluran({
           style={{
             background: "#ffffff",
             borderRadius: "14px",
-            padding: "18px 20px",
+            padding: "16px 18px",
             border: "1px solid rgba(1, 50, 32, 0.1)",
             boxShadow: "0 2px 8px rgba(1, 50, 32, 0.03)",
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
             <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#80866e", letterSpacing: "0.04em", textTransform: "uppercase" }}>
               Kendala Terlapor
             </span>
-            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "rgba(1, 50, 32, 0.08)", color: "#013220", display: "grid", placeItems: "center", flexShrink: 0 }}>
               <AppIcon name="alert-triangle" size={16} />
             </div>
           </div>
           <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "#013220", lineHeight: 1.1 }}>
             {activeMissions.filter((m) => m.status_kendala).length} Kendala
           </div>
-          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block" }}>
+          <small style={{ color: "#64748b", fontSize: "0.78rem", marginTop: "4px", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {currentMission.status_kendala ? "Ada laporan jalur" : "Rute operasional lancar"}
           </small>
         </div>
