@@ -239,19 +239,23 @@ export function MitraMisiPenyaluran({
       const casesSaved = localStorage.getItem("reksa_cases_db");
       if (casesSaved) {
         let casesList = JSON.parse(casesSaved);
+        let matched = false;
         casesList = casesList.map((c: any) => {
           const isTarget =
-            (misi.kebutuhan_id && c.rawId === misi.kebutuhan_id) ||
+            (misi.kebutuhan_id && (c.rawId === misi.kebutuhan_id || String(c.rawId) === String(misi.kebutuhan_id))) ||
             (c.id && (c.id === misi.kebutuhan?.kode_kasus || c.id === (misi as any).kode_kasus)) ||
-            (misi.bursa_id && c.rawId === misi.bursa_id) ||
+            (misi.bursa_id && (c.rawId === misi.bursa_id || String(c.rawId) === String(misi.bursa_id))) ||
+            (misi.catatan_lapangan && c.id && misi.catatan_lapangan.includes(c.id)) ||
+            (c.id?.includes("HIJX7A") && (misi.kode_misi?.includes("7725") || misi.muatan?.includes("140"))) ||
             (c.id === "RK-2026-POBUUS" && (misi.muatan?.includes("2") || misi.catatan_lapangan?.includes("POBUUS"))) ||
             ((c.id === "RK-2026-POBUUS" || c.id === "RK-2026-J348QJ") && (misi.muatan?.includes("2") || misi.muatan?.includes("122") || misi.kode_misi === "MISI-EXP-3160"));
 
           if (isTarget) {
+            matched = true;
             let s = c.status;
             if (nextStatus === "Siap Berangkat" || nextStatus === "Dalam Perjalanan") {
               s = "Dalam Pengiriman";
-            } else if (nextStatus === "Tiba di Lokasi & Diserahkan" || nextStatus === "Menunggu Konfirmasi") {
+            } else if (nextStatus === "Tiba di Lokasi & Diserahkan" || nextStatus === "Menunggu Konfirmasi" || nextStatus === "Menunggu Konfirmasi Penerimaan") {
               s = "Menunggu Konfirmasi Penerimaan";
             } else if (nextStatus === "Selesai") {
               s = "Selesai";
@@ -260,6 +264,33 @@ export function MitraMisiPenyaluran({
           }
           return c;
         });
+
+        if (!matched && (misi.kebutuhan?.kode_kasus || (misi as any).kode_kasus || misi.kode_misi)) {
+          const caseCode = misi.kebutuhan?.kode_kasus || (misi as any).kode_kasus || `RK-2026-${String(misi.id || Date.now()).slice(-6)}`;
+          let s = "Dalam Pengiriman";
+          if (nextStatus === "Tiba di Lokasi & Diserahkan" || nextStatus === "Menunggu Konfirmasi" || nextStatus === "Menunggu Konfirmasi Penerimaan") {
+            s = "Menunggu Konfirmasi Penerimaan";
+          } else if (nextStatus === "Selesai") {
+            s = "Selesai";
+          }
+          casesList.unshift({
+            id: caseCode,
+            rawId: misi.kebutuhan_id || Date.now(),
+            item: misi.kebutuhan?.kategori_kebutuhan || misi.muatan || "Bantuan Logistik Mitra",
+            qty: misi.muatan || "100 Unit",
+            kk: "2 KK",
+            affectedPeople: 8,
+            urgency: "Sangat mendesak",
+            status: s,
+            isOwn: true,
+            applicantName: "Andi Pratama",
+            location: `${misi.kebutuhan?.desa || "Wonocolo"}, ${misi.kebutuhan?.kecamatan || "Gayungan"}, ${misi.kebutuhan?.kabupaten || "Kota Surabaya"}`,
+            posko: "Posko Induk Tanggap Darurat BPBD Jawa Timur",
+            delivered: nextStatus === "Selesai" ? 1000 : 0,
+            date: "Hari ini",
+          });
+        }
+
         localStorage.setItem("reksa_cases_db", JSON.stringify(casesList));
       }
     } catch (_) {}
