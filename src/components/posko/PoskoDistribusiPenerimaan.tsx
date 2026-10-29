@@ -199,19 +199,48 @@ export function PoskoDistribusiPenerimaan({
             ? "Menunggu Konfirmasi Penerimaan"
             : "Selesai";
 
+        let matchedCase = false;
         casesList = casesList.map((c: any) => {
           const isTarget =
             (m.kebutuhan_id && (c.rawId === m.kebutuhan_id || String(c.rawId) === String(m.kebutuhan_id))) ||
-            (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === (m as any).kode_kasus));
+            (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === (m as any).kode_kasus)) ||
+            (m.bursa_id && (c.rawId === m.bursa_id || String(c.rawId) === String(m.bursa_id))) ||
+            (m.catatan_lapangan && c.id && m.catatan_lapangan.includes(c.id)) ||
+            (m.kode_misi === "MISI-ASG-002" && c.id === "RK-2026-00128") ||
+            (m.kode_misi === "MISI-ASG-001" && c.id === "RK-2026-00124") ||
+            (m.kode_misi === "MISI-ASG-005" && c.id === "RK-2026-J348QJ");
           if (isTarget) {
+            matchedCase = true;
             return {
               ...c,
               status: nextCaseStatus,
+              isOwn: true,
               delivered: nextStage === 4 ? 1000 : c.delivered,
             };
           }
           return c;
         });
+
+        // Jika kasus belum tersimpan di reksa_cases_db lokal, tambahkan agar warga bisa konfirmasi BAST
+        if (!matchedCase && (m.kebutuhan?.kode_kasus || (m as any).kode_kasus)) {
+          const caseCode = m.kebutuhan?.kode_kasus || (m as any).kode_kasus;
+          casesList.unshift({
+            id: caseCode,
+            rawId: m.kebutuhan_id || Date.now(),
+            item: m.kebutuhan?.kategori_kebutuhan || m.muatan || "Bantuan Logistik Satgas TRC BPBD",
+            qty: m.muatan || "1 Paket",
+            kk: "1 KK",
+            affectedPeople: 4,
+            urgency: "Sangat mendesak",
+            status: nextCaseStatus,
+            isOwn: true,
+            applicantName: "Andi Pratama",
+            location: `${m.kebutuhan?.desa || "Gubeng"}, ${m.kebutuhan?.kecamatan || "Gubeng"}, ${m.kebutuhan?.kabupaten || "Kota Surabaya"}`,
+            posko: "Posko Induk Tanggap Darurat BPBD Jawa Timur",
+            delivered: nextStage === 4 ? 1000 : 0,
+            date: "Hari ini",
+          });
+        }
         updatedCasesDb = casesList;
         localStorage.setItem("reksa_cases_db", JSON.stringify(casesList));
       }

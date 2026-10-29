@@ -54,11 +54,17 @@ export function CitizenCaseList({
     }
   } catch {}
 
-  // Pastikan kasus RK-2026-J348QJ (122 Titik / Pemulihan Sarana) selalu ada di daftar kasus warga
+  // Pastikan kasus dengan misi penyaluran (seperti RK-2026-J348QJ, RK-2026-00128, dll) selalu tersedia
   if (!allCases.some((c) => c.id === "RK-2026-J348QJ")) {
     const jCase = DEMO_SEED_CASES.find((c) => c.id === "RK-2026-J348QJ");
     if (jCase) {
       allCases = [{ ...jCase, isOwn: true, status: "Menunggu Konfirmasi Penerimaan" }, ...allCases];
+    }
+  }
+  if (!allCases.some((c) => c.id === "RK-2026-00128")) {
+    const sCase = DEMO_SEED_CASES.find((c) => c.id === "RK-2026-00128");
+    if (sCase) {
+      allCases = [...allCases, { ...sCase, isOwn: true, status: "Menunggu Konfirmasi Penerimaan" }];
     }
   }
 
@@ -106,9 +112,13 @@ export function CitizenCaseList({
       c.status === "Tiba di Lokasi & Diserahkan" ||
       c.status === "Tiba di lokasi" ||
       c.id === "RK-2026-J348QJ" ||
+      c.id === "RK-2026-00128" ||
       c.id?.includes("J348QJ") ||
+      c.id?.includes("00128") ||
       c.id?.includes("P09UUS") ||
       c.id?.includes("POBUUS") ||
+      c.id?.includes("HIJX7A") ||
+      c.id?.includes("9W46U") ||
       (c.item?.includes("Fasilitas") && (c.qty?.includes("122") || c.qty?.includes("2")))
     ) {
       return true;
@@ -120,7 +130,7 @@ export function CitizenCaseList({
         (m.kebutuhan?.kode_kasus && m.kebutuhan.kode_kasus === c.id) ||
         (m.kode_kasus && m.kode_kasus === c.id) ||
         (m.catatan_lapangan && m.catatan_lapangan.includes(c.id)) ||
-        (c.id && (c.id.includes("P09UUS") || c.id.includes("POBUUS") || c.id.includes("J348QJ"))) ||
+        (c.id && (c.id.includes("P09UUS") || c.id.includes("POBUUS") || c.id.includes("J348QJ") || c.id.includes("HIJX7A") || c.id.includes("9W46U"))) ||
         (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2") || m.muatan?.includes("2") || m.muatan?.includes("122"))) ||
         (c.location?.includes("Buduran") && (m.armada_info?.includes("Buduran") || m.kebutuhan?.desa?.includes("Buduran") || m.muatan?.includes("2")))
     );
@@ -129,9 +139,11 @@ export function CitizenCaseList({
       matchingMisi &&
       (matchingMisi.status_tahapan === "Tiba di Lokasi & Diserahkan" ||
        matchingMisi.status_tahapan === "Menunggu Konfirmasi" ||
+       matchingMisi.status_tahapan === "Menunggu Konfirmasi Penerimaan" ||
        matchingMisi.status_tahapan === "Tiba di lokasi" ||
        matchingMisi.status_tahapan === "Siap Serah Terima" ||
-       matchingMisi.status_tahapan === "Dalam Perjalanan")
+       matchingMisi.bpbd_stage === 3 ||
+       matchingMisi.bpbd_stage === 4)
     );
   };
 
@@ -140,10 +152,16 @@ export function CitizenCaseList({
       (c.isOwn ||
         c.applicantName === "Andi Pratama" ||
         c.applicantName?.toLowerCase().includes("andi") ||
+        checkCaseWaitingReceipt(c) ||
+        c.status === "Menunggu Konfirmasi Penerimaan" ||
         c.id.includes("P09UUS") ||
         c.id.includes("POBUUS") ||
         c.id === "RK-2026-J348QJ" ||
+        c.id === "RK-2026-00128" ||
         c.id.includes("J348QJ") ||
+        c.id.includes("00128") ||
+        c.id.includes("HIJX7A") ||
+        c.id.includes("9W46U") ||
         (c.item?.includes("Fasilitas") && (c.qty?.includes("122") || c.qty?.includes("2") || c.kk?.includes("2")))) &&
       !c.id.startsWith("RK-UJI-") &&
       !c.id.includes("TEST") &&
@@ -166,11 +184,16 @@ export function CitizenCaseList({
   const data = allCases.filter((c) => {
     const isDummy = c.id.startsWith("RK-UJI-") || c.id.includes("TEST") || c.id.startsWith("RK-MULTI-");
     const matchesOwn = !own || isCaseOwnedByUser(c);
-    const matchesCompleted = !completed || (historyScope === "semua" ? true : c.status === "Selesai");
+    const isConfirmationFilter = filter.includes("Konfirmasi") || filter.includes("Dikonfirmasi");
+    const matchesCompleted =
+      !completed ||
+      isConfirmationFilter ||
+      checkCaseWaitingReceipt(c) ||
+      (historyScope === "semua" ? true : c.status === "Selesai");
     const matchesFilter =
       filter === "Semua" ||
       (filter === "Perlu Klarifikasi" && c.status === "Perlu Klarifikasi") ||
-      ((filter.includes("Konfirmasi") || filter.includes("Dikonfirmasi")) && checkCaseWaitingReceipt(c)) ||
+      (isConfirmationFilter && checkCaseWaitingReceipt(c)) ||
       c.urgency === filter ||
       (filter === "Sangat mendesak" && (c.urgency === "Kritis" || c.urgency === "Sangat mendesak")) ||
       (filter === "Perlu segera" && (c.urgency === "Tinggi" || c.urgency === "Perlu segera")) ||
@@ -247,11 +270,12 @@ export function CitizenCaseList({
           (m.bursa_id && (m.bursa_id === confirmingReceiptCase.rawId || String(m.bursa_id) === String(confirmingReceiptCase.rawId))) ||
           m.kebutuhan?.kode_kasus === confirmingReceiptCase.id ||
           m.kode_kasus === confirmingReceiptCase.id ||
+          (m.catatan_lapangan && m.catatan_lapangan.includes(confirmingReceiptCase.id)) ||
           (confirmingReceiptCase.id?.includes("P09UUS") && (m.kode_misi?.includes("3160") || m.muatan?.includes("2") || m.muatan?.includes("Titik"))) ||
           (confirmingReceiptCase.id === "RK-2026-POBUUS" && m.muatan?.includes("2")) ||
-          confirmingReceiptCase.id === "RK-2026-J348QJ" ||
-          m.kode_misi === "MISI-ASG-005" ||
-          (confirmingReceiptCase.item?.includes("Fasilitas") && (m.muatan?.includes("2") || m.muatan?.includes("122")));
+          (confirmingReceiptCase.id === "RK-2026-J348QJ" && (m.kode_misi === "MISI-ASG-005" || m.kebutuhan_id === 13 || m.muatan?.includes("122") || m.muatan?.includes("Titik"))) ||
+          (confirmingReceiptCase.id === "RK-2026-00128" && (m.kode_misi === "MISI-ASG-002" || m.kebutuhan_id === 5 || m.muatan?.includes("20"))) ||
+          ((confirmingReceiptCase.id?.includes("HIJX7A") || confirmingReceiptCase.id?.includes("9W46U")) && (m.muatan?.includes("140") || m.catatan_lapangan?.includes("HIJX7A")));
 
         if (isMatch) {
           matched = true;

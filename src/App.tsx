@@ -6998,6 +6998,10 @@ export default function App() {
                 c.id?.includes("P09UUS") ||
                 c.id?.includes("POBUUS") ||
                 c.id === "RK-2026-J348QJ" ||
+                c.id === "RK-2026-00128" ||
+                c.id?.includes("HIJX7A") ||
+                c.id?.includes("9W46U") ||
+                c.status === "Menunggu Konfirmasi Penerimaan" ||
                 c.applicantName === "Andi Pratama" ||
                 c.applicantName?.toLowerCase().includes("andi") ||
                 (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2")))
@@ -7010,20 +7014,31 @@ export default function App() {
                   (m.kebutuhan_id && (c.rawId === m.kebutuhan_id || String(c.rawId) === String(m.kebutuhan_id))) ||
                   (c.id && (c.id === m.kebutuhan?.kode_kasus || c.id === m.kode_kasus)) ||
                   (m.bursa_id && (c.rawId === m.bursa_id || String(c.rawId) === String(m.bursa_id))) ||
+                  (m.catatan_lapangan && c.id && m.catatan_lapangan.includes(c.id)) ||
                   (c.id?.includes("P09UUS") || c.id?.includes("POBUUS")) ||
+                  ((c.id?.includes("HIJX7A") || c.id?.includes("9W46U")) && (m.muatan?.includes("140") || m.catatan_lapangan?.includes("HIJX7A"))) ||
                   (c.item?.includes("Fasilitas") && (c.qty?.includes("2") || c.kk?.includes("2") || m.muatan?.includes("2") || m.muatan?.includes("122"))) ||
+                  (c.id === "RK-2026-00128" && (m.kode_misi === "MISI-ASG-002" || m.kebutuhan_id === 5)) ||
                   c.id === "RK-2026-J348QJ" ||
                   (c.qty?.includes("122") && m.muatan?.includes("122"))
               );
 
-              if (matchingMisi || c.id === "RK-2026-J348QJ") {
+              if (matchingMisi || c.id === "RK-2026-J348QJ" || c.id === "RK-2026-00128") {
                 let syncedStatus = c.status;
-                const mStatus = matchingMisi?.status_tahapan || "Tiba di Lokasi & Diserahkan";
-                if (mStatus === "Tiba di Lokasi & Diserahkan" || mStatus === "Menunggu Konfirmasi" || c.id === "RK-2026-J348QJ") {
+                const mStatus = matchingMisi?.status_tahapan || (c.id === "RK-2026-J348QJ" || c.id === "RK-2026-00128" ? "Tiba di Lokasi & Diserahkan" : "");
+                if (
+                  mStatus === "Tiba di Lokasi & Diserahkan" ||
+                  mStatus === "Menunggu Konfirmasi" ||
+                  mStatus === "Menunggu Konfirmasi Penerimaan" ||
+                  matchingMisi?.bpbd_stage === 3 ||
+                  c.id === "RK-2026-J348QJ" ||
+                  c.id === "RK-2026-00128"
+                ) {
                   syncedStatus = "Menunggu Konfirmasi Penerimaan";
-                } else if (mStatus === "Dalam Perjalanan" || mStatus === "Siap Berangkat") {
+                  isOwnUpdated = true;
+                } else if (mStatus === "Dalam Perjalanan" || mStatus === "Siap Berangkat" || matchingMisi?.bpbd_stage === 2) {
                   syncedStatus = "Dalam Pengiriman";
-                } else if (mStatus === "Selesai") {
+                } else if (mStatus === "Selesai" || matchingMisi?.bpbd_stage === 4) {
                   syncedStatus = "Selesai";
                 }
 
